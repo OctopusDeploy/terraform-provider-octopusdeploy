@@ -63,7 +63,7 @@ resource "octopusdeploy_process" "example" {
 }
 
 # Templated script step
-resource "octopusdeploy_templated_process_step" "script" {
+resource "octopusdeploy_process_templated_step" "script" {
   process_id  = octopusdeploy_process.example.id
   name = "Templated Step"
   template_id = octopusdeploy_step_template.my_script.id
