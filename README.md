@@ -6,14 +6,14 @@ This repository contains the source code for the Terraform Provider for [Octopus
 
 ## 🪄 Installation and Configuration
 
-The Terraform Provider for Octopus Deploy is available via the Terraform Registry: [OctopusDeployLabs/octopusdeploy](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy). To install this provider, copy and paste this code into your Terraform configuration:
+The Terraform Provider for Octopus Deploy is available via the Terraform Registry: [OctopusDeployLabs/octopusdeploy](https://registry.terraform.io/providers/OctopusDeploy/octopusdeploy). To install this provider, copy and paste this code into your Terraform configuration:
 
 ```hcl
 terraform {
   required_providers {
     octopusdeploy = {
-      source = "OctopusDeployLabs/octopusdeploy"
-      version = "version-number" # example: 0.21.1
+      source = "OctopusDeploy/octopusdeploy"
+      version = "version-number" # example: 1.0.0
     }
   }
 }
