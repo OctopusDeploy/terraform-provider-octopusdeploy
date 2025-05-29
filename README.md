@@ -1,9 +1,5 @@
 # 🐙 Terraform Provider for Octopus Deploy
 
-## :warning: Warning
-
-The Terraform Provider for Octopus Deploy is under active development and undergoing migration from Terraform SDK to Terraform Plugin Framework. Its functionality can and will change; it is a v0.\* product until its robustness can be assured. Please be aware that types like resources can and will be modified over time. It is strongly recommended to `validate` and `plan` configuration prior to committing changes via `apply`.
-
 ## About
 
 This repository contains the source code for the Terraform Provider for [Octopus Deploy](https://octopus.com). It supports provisioning/configuring of Octopus Deploy instances via [Terraform](https://www.terraform.io/). Documentation and guides for using this provider are located on the Terraform Registry: [Documentation](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs).
