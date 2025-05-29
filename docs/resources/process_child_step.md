@@ -95,7 +95,7 @@ resource "octopusdeploy_process_child_step" "run_script" {
 - `environments` (Set of String) A set of environments within which this step will run.
 - `excluded_environments` (Set of String) A set of environments that this step will be skipped in.
 - `execution_properties` (Map of String) A collection of step execution properties where the key is the property name and the value is its value.
-- `git_dependencies` (Attributes Map) References of git dependencies for this step where key is a name of the reference (can be empty). Is the Git equivalent of packages (see [below for nested schema](#nestedatt--git_dependencies))
+- `git_dependencies` (Attributes Map) References of git dependencies for this step where key is a name of the reference and empty name defines primary dependency. Is the Git equivalent of packages (see [below for nested schema](#nestedatt--git_dependencies))
 - `is_disabled` (Boolean) Indicates the disabled status of this step.
 - `is_required` (Boolean) Indicates the required status of this step.
 - `notes` (String) The notes associated with this step.

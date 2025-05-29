@@ -308,7 +308,7 @@ func ProcessStepGitDependencyAttributeTypes() map[string]attr.Type {
 
 func resourceActionGitDependenciesAttribute() resourceSchema.MapNestedAttribute {
 	return resourceSchema.MapNestedAttribute{
-		Description:  "References of git dependencies for this step where key is a name of the reference (can be empty). Is the Git equivalent of packages",
+		Description:  "References of git dependencies for this step where key is a name of the reference and empty name defines primary dependency. Is the Git equivalent of packages",
 		Optional:     true,
 		Computed:     true,
 		Default:      mapdefault.StaticValue(types.MapValueMust(ProcessStepGitDependencyObjectType(), map[string]attr.Value{})),

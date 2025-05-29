@@ -7,3 +7,20 @@ subcategory: "Examples"
 
 This example show how to create a standardised space and project that can be used to quickly setup applications used as
 microservices.
+
+## Create Space, Project with Deployment Process
+Consuming terraform module with standard configuration for Space and Project
+
+{{ tffile "examples/creating-a-standardised-space-and-project/main.tf" }}
+
+## Space and Project configuration module
+Module with standard configuration to be reused for multiple applications
+
+### variables.tf
+{{ tffile "examples/creating-a-standardised-space-and-project/space-project-module/variables.tf" }}
+
+### main.tf
+{{ tffile "examples/creating-a-standardised-space-and-project/space-project-module/main.tf" }}
+
+### output.tf
+{{ tffile "examples/creating-a-standardised-space-and-project/space-project-module/output.tf" }}
