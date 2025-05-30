@@ -21,6 +21,7 @@ type Config struct {
 	SpaceID        string
 	Client         *client.Client
 	OctopusVersion string
+	// Can be nil when server doesn't support feature toggles API endpoint
 	FeatureToggles map[string]bool
 }
 
@@ -39,10 +40,7 @@ func (c *Config) SetOctopus(ctx context.Context) diag.Diagnostics {
 		return diags
 	}
 
-	if featuresError := c.SetFeatureToggles(ctx); featuresError != nil {
-		diags.AddError("failed to load feature toggles", featuresError.Error())
-		return diags
-	}
+	c.SetFeatureToggles(ctx)
 
 	tflog.Debug(ctx, "SetOctopus completed")
 	return diags
@@ -75,12 +73,14 @@ func (c *Config) GetClient(ctx context.Context) error {
 	return nil
 }
 
-func (c *Config) SetFeatureToggles(ctx context.Context) error {
+func (c *Config) SetFeatureToggles(ctx context.Context) {
 	tflog.Debug(ctx, "SetFeatureToggles")
 
 	response, err := configuration.Get(c.Client, &configuration.FeatureToggleConfigurationQuery{})
 	if err != nil {
-		return err
+		tflog.Debug(ctx, fmt.Sprintf("Unable to load feature toggles: %q", err.Error()))
+		c.FeatureToggles = nil
+		return
 	}
 
 	features := make(map[string]bool, len(response.FeatureToggles))
@@ -91,7 +91,6 @@ func (c *Config) SetFeatureToggles(ctx context.Context) error {
 	c.FeatureToggles = features
 
 	tflog.Debug(ctx, fmt.Sprintf("SetFeatureToggles completed with %d features", len(c.FeatureToggles)))
-	return nil
 }
 
 func (c *Config) SetOctopusVersion(ctx context.Context) error {
@@ -191,9 +190,11 @@ func ResourceConfiguration(req resource.ConfigureRequest, resp *resource.Configu
 }
 
 // FeatureToggleEnabled Reports whether feature toggle enabled on connected Octopus Server instance.
-//
-// Returns true for enabled toggle and false for disabled or non-existent feature toggle
 func (c *Config) FeatureToggleEnabled(toggle string) bool {
+	if c.FeatureToggles == nil {
+		return true
+	}
+
 	if enabled, ok := c.FeatureToggles[toggle]; ok {
 		return enabled
 	}
