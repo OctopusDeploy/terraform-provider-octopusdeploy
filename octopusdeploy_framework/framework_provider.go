@@ -136,6 +136,13 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewDeploymentFreezeTenantResource,
 		NewGitTriggerResource,
 		NewBuiltInTriggerResource,
+		NewProcessResource,
+		NewProcessStepResource,
+		NewProcessStepsOrderResource,
+		NewProcessChildStepResource,
+		NewProcessChildStepsOrderResource,
+		NewProcessTemplatedStepResource,
+		NewProcessTemplatedChildStepResource,
 	}
 }
 

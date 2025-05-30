@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"fmt"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -143,6 +144,16 @@ func GetNumber(val types.Int64) int {
 	return v
 }
 
+func ConvertMapToStringMap(ctx context.Context, values types.Map) (map[string]types.String, diag.Diagnostics) {
+	stringValues := make(map[string]types.String, len(values.Elements()))
+	diags := values.ElementsAs(ctx, &stringValues, false)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return stringValues, diag.Diagnostics{}
+}
+
 func ConvertMapStringToMapAttrValue(m map[string]string) map[string]attr.Value {
 	result := make(map[string]attr.Value, len(m))
 	for k, v := range m {
@@ -165,11 +176,60 @@ func ConvertMapStringArrayToMapAttrValue(ctx context.Context, m map[string][]str
 	return result, diags
 }
 
+func ConvertPropertiesToAttributeValuesMap(properties map[string]core.PropertyValue) (types.Map, diag.Diagnostics) {
+	attributeValues := make(map[string]attr.Value, len(properties))
+	for key, value := range properties {
+		attributeValues[key] = types.StringValue(value.Value)
+	}
+
+	valuesMap, diags := types.MapValue(types.StringType, attributeValues)
+	if diags.HasError() {
+		return types.MapNull(types.StringType), diags
+	}
+
+	return valuesMap, diags
+}
+
 const sep = ":"
 
 func BuildCompositeId(keys ...string) string {
 	return strings.Join(keys, sep)
 }
+
 func SplitCompositeId(id string) []string {
 	return strings.Split(id, sep)
+}
+
+func BuildStringSetOrEmpty(values []string) types.Set {
+	if values == nil {
+		return types.SetValueMust(types.StringType, []attr.Value{})
+	} else {
+		return types.SetValueMust(types.StringType, ToValueSlice(values))
+	}
+}
+
+func MergePropertyValues(ctx context.Context, properties map[string]core.PropertyValue, values types.Map) diag.Diagnostics {
+	newValues := make(map[string]types.String, len(values.Elements()))
+	diags := values.ElementsAs(ctx, &newValues, false)
+	if diags.HasError() {
+		return diags
+	}
+
+	for key, value := range newValues {
+		if value.IsNull() {
+			properties[key] = core.NewPropertyValue("", false)
+		} else {
+			properties[key] = core.NewPropertyValue(value.ValueString(), false)
+		}
+	}
+
+	return diag.Diagnostics{}
+}
+
+func ConvertToPropertyValue(value types.String, sensitive bool) core.PropertyValue {
+	if value.IsNull() {
+		return core.NewPropertyValue("", sensitive)
+	} else {
+		return core.NewPropertyValue(value.ValueString(), sensitive)
+	}
 }
