@@ -31,6 +31,7 @@ This resource manages machine policies in Octopus Deploy.
 - `machine_connectivity_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_connectivity_policy))
 - `machine_health_check_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_health_check_policy))
 - `machine_update_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_update_policy))
+- `machine_package_cache_retention_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_package_cache_retention_policy))
 - `polling_request_queue_timeout` (Number) In nanoseconds.
 - `space_id` (String) The space ID associated with this resource.
 
@@ -99,4 +100,15 @@ Optional:
 - `tentacle_update_account_id` (String) The Account ID to perform any Tentacle updates under.
 - `tentacle_update_behavior` (String) The behaviour of how Tentacle machines are updated. Valid values are `NeverUpdate` and `Update`.
 
+<a id="nestedblock--machine_package_cache_retention_policy"></a>
+### Nested Schema for `machine_package_cache_retention_policy`
 
+Required:
+- `strategy` (String) The behaviour of the cache retention policy. Valid values are `Default` and `Quantities`.
+
+Optional:
+
+- `quantity_of_packages_to_keep` (Number) The number of packages to keep.
+- `package_unit` (String) The method of counting packages when applying the Quantities strategy. Valid value is `Items`
+- `quantity_of_versions_to_keep` (Number) The number of package versions to keep.
+- `version_unit` (String) The method of counting package versions when applying the Quantities strategy. Valid value is `Items`.
