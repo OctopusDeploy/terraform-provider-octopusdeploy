@@ -63,6 +63,12 @@ func expandMachinePolicy(d *schema.ResourceData) *machinepolicies.MachinePolicy 
 		}
 	}
 
+	if v, ok := d.GetOk("machine_package_cache_retention_policy"); ok {
+		if len(v.(*schema.Set).List()) > 0 {
+			machinePolicy.MachinePackageCacheRetentionPolicy = expandMachinePackageCacheRetentionPolicy(v)
+		}
+	}
+
 	if v, ok := d.GetOk("name"); ok {
 		machinePolicy.Name = v.(string)
 	}
@@ -85,20 +91,21 @@ func flattenMachinePolicy(machinePolicy *machinepolicies.MachinePolicy) map[stri
 	}
 
 	return map[string]interface{}{
-		"connection_connect_timeout":      machinePolicy.ConnectionConnectTimeout,
-		"connection_retry_count_limit":    machinePolicy.ConnectionRetryCountLimit,
-		"connection_retry_sleep_interval": machinePolicy.ConnectionRetrySleepInterval,
-		"connection_retry_time_limit":     machinePolicy.ConnectionRetryTimeLimit,
-		"description":                     machinePolicy.Description,
-		"id":                              machinePolicy.GetID(),
-		"is_default":                      machinePolicy.IsDefault,
-		"machine_cleanup_policy":          flattenMachineCleanupPolicy(machinePolicy.MachineCleanupPolicy),
-		"machine_connectivity_policy":     flattenMachineConnectivityPolicy(machinePolicy.MachineConnectivityPolicy),
-		"machine_health_check_policy":     flattenMachineHealthCheckPolicy(machinePolicy.MachineHealthCheckPolicy),
-		"machine_update_policy":           flattenMachineUpdatePolicy(machinePolicy.MachineUpdatePolicy),
-		"name":                            machinePolicy.Name,
-		"polling_request_queue_timeout":   machinePolicy.PollingRequestQueueTimeout,
-		"space_id":                        machinePolicy.SpaceID,
+		"connection_connect_timeout":             machinePolicy.ConnectionConnectTimeout,
+		"connection_retry_count_limit":           machinePolicy.ConnectionRetryCountLimit,
+		"connection_retry_sleep_interval":        machinePolicy.ConnectionRetrySleepInterval,
+		"connection_retry_time_limit":            machinePolicy.ConnectionRetryTimeLimit,
+		"description":                            machinePolicy.Description,
+		"id":                                     machinePolicy.GetID(),
+		"is_default":                             machinePolicy.IsDefault,
+		"machine_cleanup_policy":                 flattenMachineCleanupPolicy(machinePolicy.MachineCleanupPolicy),
+		"machine_connectivity_policy":            flattenMachineConnectivityPolicy(machinePolicy.MachineConnectivityPolicy),
+		"machine_health_check_policy":            flattenMachineHealthCheckPolicy(machinePolicy.MachineHealthCheckPolicy),
+		"machine_update_policy":                  flattenMachineUpdatePolicy(machinePolicy.MachineUpdatePolicy),
+		"machine_package_cache_retention_policy": flattenMachinePackageCacheRetentionPolicy(machinePolicy.MachinePackageCacheRetentionPolicy),
+		"name":                                   machinePolicy.Name,
+		"polling_request_queue_timeout":          machinePolicy.PollingRequestQueueTimeout,
+		"space_id":                               machinePolicy.SpaceID,
 	}
 }
 
@@ -181,6 +188,13 @@ func getMachinePolicySchema() map[string]*schema.Schema {
 			Optional: true,
 			Type:     schema.TypeSet,
 		},
+		"machine_package_cache_retention_policy": {
+			Computed: true,
+			Elem:     &schema.Resource{Schema: getMachinePackageCacheRetentionPolicySchema()},
+			MaxItems: 1,
+			Optional: true,
+			Type:     schema.TypeSet,
+		},
 		"name": getNameSchema(true),
 		"polling_request_queue_timeout": {
 			Default:     2 * time.Minute,
@@ -218,6 +232,10 @@ func setMachinePolicy(ctx context.Context, d *schema.ResourceData, machinePolicy
 
 	if err := d.Set("machine_update_policy", flattenMachineUpdatePolicy(machinePolicy.MachineUpdatePolicy)); err != nil {
 		return fmt.Errorf("error setting machine_update_policy: %s", err)
+	}
+
+	if err := d.Set("machine_package_cache_retention_policy", flattenMachinePackageCacheRetentionPolicy(machinePolicy.MachinePackageCacheRetentionPolicy)); err != nil {
+		return fmt.Errorf("error setting machine_package_cache_retention_policy: %s", err)
 	}
 
 	return nil
