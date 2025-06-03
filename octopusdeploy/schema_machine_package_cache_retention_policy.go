@@ -17,9 +17,15 @@ func expandMachinePackageCacheRetentionPolicy(values interface{}) *machinepolici
 
 	flattenedMap := flattenedValues.List()[0].(map[string]interface{})
 
-	machinePackageCacheRetentionPolicy := machinepolicies.NewMachinePackageCacheRetentionPolicy()
+	machinePackageCacheRetentionPolicy := machinepolicies.NewDefaultMachinePackageCacheRetentionPolicy()
 
 	if v, ok := flattenedMap["strategy"]; ok {
+		var strategy = v.(string)
+
+		if strategy == "Default" {
+			return machinePackageCacheRetentionPolicy
+		}
+
 		machinePackageCacheRetentionPolicy.Strategy = v.(string)
 	}
 
@@ -49,6 +55,12 @@ func expandMachinePackageCacheRetentionPolicy(values interface{}) *machinepolici
 func flattenMachinePackageCacheRetentionPolicy(machineUpdatePolicy *machinepolicies.MachinePackageCacheRetentionPolicy) []interface{} {
 	if machineUpdatePolicy == nil {
 		return nil
+	}
+
+	if machineUpdatePolicy.Strategy == "Default" {
+		return []interface{}{map[string]interface{}{
+			"strategy": machineUpdatePolicy.Strategy,
+		}}
 	}
 
 	return []interface{}{map[string]interface{}{
