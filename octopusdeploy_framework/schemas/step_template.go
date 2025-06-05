@@ -205,12 +205,12 @@ func GetStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 					Computed:    true,
 				},
 				"feed_id": util.ResourceString().
-					Description("ID of the feed (can be empty for deferred package).").
+					Description("ID of the feed.").
 					Required().
 					Build(),
 				"id": GetIdResourceSchema(),
 				"name": util.ResourceString().
-					Description("Package name (can be empty for deferred package).").
+					Description("Package name.").
 					Required().
 					Build(),
 				"package_id": util.ResourceString().
