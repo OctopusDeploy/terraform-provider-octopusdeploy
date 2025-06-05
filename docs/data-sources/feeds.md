@@ -47,6 +47,7 @@ Read-Only:
 - `access_key` (String) The AWS access key to use when authenticating against Amazon Web Services.
 - `api_version` (String)
 - `delete_unreleased_packages_after_days` (Number)
+- `delete_packages_associated_with_releases` (Boolean)
 - `download_attempts` (Number) The number of times a deployment should attempt to download a package from this feed before failing.
 - `download_retry_backoff_seconds` (Number) The number of seconds to apply as a linear back off between download attempts.
 - `feed_type` (String) A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.

@@ -110,6 +110,10 @@ func (f FeedsSchema) GetDatasourceSchema() datasourceSchema.Schema {
 						"delete_unreleased_packages_after_days": datasourceSchema.Int64Attribute{
 							Computed: true,
 						},
+						"delete_packages_associated_with_releases": datasourceSchema.BoolAttribute{
+							Description: "when true, octopus does not need to keep packages used by releases and runbook runs on the dashboard",
+							Computed:    true,
+						},
 						"access_key": datasourceSchema.StringAttribute{
 							Computed:    true,
 							Description: "The AWS access key to use when authenticating against Amazon Web Services.",
