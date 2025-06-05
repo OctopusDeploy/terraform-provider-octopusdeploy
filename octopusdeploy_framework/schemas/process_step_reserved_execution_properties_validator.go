@@ -9,6 +9,10 @@ import (
 
 type reservedExecutionPropertiesValidator struct{}
 
+func warnAboutReservedExecutionProperties() validator.Map {
+	return &reservedExecutionPropertiesValidator{}
+}
+
 func (v reservedExecutionPropertiesValidator) Description(ctx context.Context) string {
 	return "execution properties must not contain reserved properties"
 }
@@ -39,10 +43,6 @@ func (v reservedExecutionPropertiesValidator) ValidateMap(ctx context.Context, r
 			)
 		}
 	}
-}
-
-func warnAboutReservedExecutionProperties() validator.Map {
-	return &reservedExecutionPropertiesValidator{}
 }
 
 type reservedExecutionPropertyWarning struct {
