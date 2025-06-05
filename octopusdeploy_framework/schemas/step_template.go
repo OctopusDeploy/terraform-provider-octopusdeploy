@@ -204,18 +204,20 @@ func GetStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 					Optional:    true,
 					Computed:    true,
 				},
-				"feed_id": rs.StringAttribute{
-					Description: "ID of the feed.",
-					Required:    true,
-				},
-				"id":   GetIdResourceSchema(),
-				"name": GetNameResourceSchema(true),
-				"package_id": rs.StringAttribute{
-					Description: "The ID of the package to use.",
-					Optional:    true,
-					Required:    false,
-					Computed:    true,
-				},
+				"feed_id": util.ResourceString().
+					Description("ID of the feed.").
+					Required().
+					Build(),
+				"id": GetIdResourceSchema(),
+				"name": util.ResourceString().
+					Description("Package name.").
+					Required().
+					Build(),
+				"package_id": util.ResourceString().
+					Description("The ID of the package to use.").
+					Optional().
+					Computed().
+					Build(),
 				"properties": rs.SingleNestedAttribute{
 					Description: "Properties for the package.",
 					Required:    true,
