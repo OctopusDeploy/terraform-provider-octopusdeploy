@@ -46,6 +46,7 @@ Read-Only:
 
 - `access_key` (String) The AWS access key to use when authenticating against Amazon Web Services.
 - `api_version` (String)
+- `delete_packages_associated_with_releases` (Boolean) When true, Octopus does not need to keep packages used by releases and runbook runs on the dashboard.
 - `delete_unreleased_packages_after_days` (Number)
 - `download_attempts` (Number) The number of times a deployment should attempt to download a package from this feed before failing.
 - `download_retry_backoff_seconds` (Number) The number of seconds to apply as a linear back off between download attempts.
