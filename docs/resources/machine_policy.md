@@ -30,6 +30,7 @@ This resource manages machine policies in Octopus Deploy.
 - `machine_cleanup_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_cleanup_policy))
 - `machine_connectivity_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_connectivity_policy))
 - `machine_health_check_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_health_check_policy))
+- `machine_package_cache_retention_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_package_cache_retention_policy))
 - `machine_update_policy` (Block Set, Max: 1) (see [below for nested schema](#nestedblock--machine_update_policy))
 - `polling_request_queue_timeout` (Number) In nanoseconds.
 - `space_id` (String) The space ID associated with this resource.
@@ -87,6 +88,21 @@ Optional:
 - `run_type` (String)
 - `script_body` (String)
 
+
+
+<a id="nestedblock--machine_package_cache_retention_policy"></a>
+### Nested Schema for `machine_package_cache_retention_policy`
+
+Required:
+
+- `strategy` (String) The behaviour of the cache retention policy. Valid values are `Default` (let Octopus decide), `Quantities` (keep by a specified number of packages and versions).
+
+Optional:
+
+- `package_unit` (String) The method of counting packages when applying the Quantities strategy.
+- `quantity_of_packages_to_keep` (Number) The number of packages to keep.
+- `quantity_of_versions_to_keep` (Number) The number of package versions to keep.
+- `version_unit` (String) The method of counting package versions when applying the Quantities strategy.
 
 
 <a id="nestedblock--machine_update_policy"></a>

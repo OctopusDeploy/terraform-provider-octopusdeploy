@@ -43,6 +43,7 @@ Read-Only:
 - `machine_cleanup_policy` (Set of Object) (see [below for nested schema](#nestedobjatt--machine_policies--machine_cleanup_policy))
 - `machine_connectivity_policy` (Set of Object) (see [below for nested schema](#nestedobjatt--machine_policies--machine_connectivity_policy))
 - `machine_health_check_policy` (Set of Object) (see [below for nested schema](#nestedobjatt--machine_policies--machine_health_check_policy))
+- `machine_package_cache_retention_policy` (Set of Object) (see [below for nested schema](#nestedobjatt--machine_policies--machine_package_cache_retention_policy))
 - `machine_update_policy` (Set of Object) (see [below for nested schema](#nestedobjatt--machine_policies--machine_update_policy))
 - `name` (String)
 - `polling_request_queue_timeout` (Number)
@@ -94,6 +95,18 @@ Read-Only:
 - `run_type` (String)
 - `script_body` (String)
 
+
+
+<a id="nestedobjatt--machine_policies--machine_package_cache_retention_policy"></a>
+### Nested Schema for `machine_policies.machine_package_cache_retention_policy`
+
+Read-Only:
+
+- `package_unit` (String)
+- `quantity_of_packages_to_keep` (Number)
+- `quantity_of_versions_to_keep` (Number)
+- `strategy` (String)
+- `version_unit` (String)
 
 
 <a id="nestedobjatt--machine_policies--machine_update_policy"></a>
