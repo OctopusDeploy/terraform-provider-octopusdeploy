@@ -103,7 +103,7 @@ jobs:
 
   tests-combine-summaries:
     if: always()
-    name: Combine Test Reports
+    name: Ensure Tests Pass
     needs: [ tests ]
     runs-on: ubuntu-latest
     steps:
