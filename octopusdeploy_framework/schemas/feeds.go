@@ -111,7 +111,7 @@ func (f FeedsSchema) GetDatasourceSchema() datasourceSchema.Schema {
 							Computed: true,
 						},
 						"delete_packages_associated_with_releases": datasourceSchema.BoolAttribute{
-							Description: "when true, octopus does not need to keep packages used by releases and runbook runs on the dashboard",
+							Description: "When true, Octopus does not need to keep packages used by releases and runbook runs on the dashboard.",
 							Computed:    true,
 						},
 						"access_key": datasourceSchema.StringAttribute{
