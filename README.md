@@ -2,11 +2,11 @@
 
 ## About
 
-This repository contains the source code for the Terraform Provider for [Octopus Deploy](https://octopus.com). It supports provisioning/configuring of Octopus Deploy instances via [Terraform](https://www.terraform.io/). Documentation and guides for using this provider are located on the Terraform Registry: [Documentation](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs).
+This repository contains the source code for the Terraform Provider for [Octopus Deploy](https://octopus.com). It supports provisioning/configuring of Octopus Deploy instances via [Terraform](https://www.terraform.io/). Documentation and guides for using this provider are located on the Terraform Registry: [Documentation](https://registry.terraform.io/providers/OctopusDeploy/octopusdeploy/latest/docs).
 
 ## 🪄 Installation and Configuration
 
-The Terraform Provider for Octopus Deploy is available via the Terraform Registry: [OctopusDeployLabs/octopusdeploy](https://registry.terraform.io/providers/OctopusDeploy/octopusdeploy). To install this provider, copy and paste this code into your Terraform configuration:
+The Terraform Provider for Octopus Deploy is available via the Terraform Registry: [OctopusDeploy/octopusdeploy](https://registry.terraform.io/providers/OctopusDeploy/octopusdeploy). To install this provider, copy and paste this code into your Terraform configuration:
 
 ```hcl
 terraform {
@@ -40,13 +40,13 @@ Run `terraform init` to initialize this provider and enable resource management.
 
 ## 🛠 Build Instructions
 
-A build of this Terraform Provider can be created using the [Makefile](https://github.com/OctopusDeployLabs/terraform-provider-octopusdeploy/blob/master/Makefile) provided in the source:
+A build of this Terraform Provider can be created using the [Makefile](https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/blob/main/Makefile) provided in the source:
 
 ```shell
 $ make
 ```
 
-This will generate a binary that will be installed to the local plugins folder. Once installed, the provider may be used through the following configuration:
+This will generate a binary that will be installed to the local plugins' folder. Once installed, the provider may be used through the following configuration:
 
 ```hcl
 terraform {

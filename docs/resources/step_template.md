@@ -42,7 +42,7 @@ This resource manages step_templates in Octopus Deploy.
 Required:
 
 - `feed_id` (String) ID of the feed.
-- `name` (String) The name of this resource.
+- `name` (String) Package name.
 - `properties` (Attributes) Properties for the package. (see [below for nested schema](#nestedatt--packages--properties))
 
 Optional:
