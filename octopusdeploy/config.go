@@ -1,8 +1,12 @@
 package octopusdeploy
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
+	"os"
+	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
@@ -16,6 +20,78 @@ type Config struct {
 	AccessToken string
 	SpaceID     string
 }
+
+// Start of OctoAI patch
+
+type HeaderRoundTripper struct {
+	Transport http.RoundTripper
+	Headers   map[string]string
+}
+
+func (h *HeaderRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	for key, value := range h.Headers {
+		req.Header.Set(key, value)
+	}
+	return h.Transport.RoundTrip(req)
+}
+
+func getHttpClient(octopusUrl string) (*http.Client, error) {
+	if isDirectlyAccessibleOctopusInstance(octopusUrl) {
+		return createHttpClient(octopusUrl)
+	}
+
+	return nil, nil
+}
+
+// isDirectlyAccessibleOctopusInstance determines if the host should be contacted directly
+func isDirectlyAccessibleOctopusInstance(octopusUrl string) bool {
+	serviceEnabled, found := os.LookupEnv("REDIRECTION_SERVICE_ENABLED")
+
+	if !found || serviceEnabled != "true" {
+		return true
+	}
+
+	parsedUrl, err := url.Parse(octopusUrl)
+
+	// Contact the server directly if the URL is invalid
+	if err != nil {
+		return true
+	}
+
+	return strings.HasSuffix(parsedUrl.Hostname(), ".octopus.app") ||
+		strings.HasSuffix(parsedUrl.Hostname(), ".testoctopus.com") ||
+		parsedUrl.Hostname() == "localhost" ||
+		parsedUrl.Hostname() == "127.0.0.1"
+}
+
+func createHttpClient(octopusUrl string) (*http.Client, error) {
+
+	serviceApiKey, found := os.LookupEnv("REDIRECTION_SERVICE_API_KEY")
+
+	if !found {
+		return nil, errors.New("REDIRECTION_SERVICE_API_KEY is required")
+	}
+
+	parsedUrl, err := url.Parse(octopusUrl)
+
+	if err != nil {
+		return nil, err
+	}
+
+	headers := map[string]string{
+		"X_REDIRECTION_UPSTREAM_HOST":   parsedUrl.Hostname(),
+		"X_REDIRECTION_SERVICE_API_KEY": serviceApiKey,
+	}
+
+	return &http.Client{
+		Transport: &HeaderRoundTripper{
+			Transport: http.DefaultTransport,
+			Headers:   headers,
+		},
+	}, nil
+}
+
+// End of OctoAI patch
 
 // Client returns a new Octopus Deploy client
 func (c *Config) Client() (*client.Client, diag.Diagnostics) {
@@ -54,7 +130,14 @@ func getClientForSpace(c *Config, spaceID string) (*client.Client, error) {
 		return nil, err
 	}
 
-	return client.NewClientWithCredentials(nil, apiURL, credential, spaceID, "TerraformProvider")
+	// Start of OctoAI patch
+	httpClient, err := getHttpClient(c.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.NewClientWithCredentials(httpClient, apiURL, credential, spaceID, "TerraformProvider")
+	// End of OctoAI patch
 }
 
 func getApiCredential(c *Config) (client.ICredential, error) {
