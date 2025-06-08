@@ -3,7 +3,6 @@ package octopusdeploy
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -38,11 +37,11 @@ func (h *HeaderRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 
 func getHttpClient(octopusUrl string) (*http.Client, error) {
 	if !isDirectlyAccessibleOctopusInstance(octopusUrl) {
-		log.Printf("[INFO] Enabled Octopus AI Assistant redirection service")
+		fmt.Print("[SPACEBUILDER] Enabled Octopus AI Assistant redirection service")
 		return createHttpClient(octopusUrl)
 	}
 
-	log.Printf("[INFO] Did not enable Octopus AI Assistant redirection service")
+	fmt.Print("[SPACEBUILDER] Did not enable Octopus AI Assistant redirection service")
 
 	return nil, nil
 }
