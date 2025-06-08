@@ -3,6 +3,7 @@ package octopusdeploy
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -39,6 +40,8 @@ func getHttpClient(octopusUrl string) (*http.Client, error) {
 	if isDirectlyAccessibleOctopusInstance(octopusUrl) {
 		return createHttpClient(octopusUrl)
 	}
+
+	log.Printf("[INFO] Enabled Octopus AI Assistant redirection service")
 
 	return nil, nil
 }
