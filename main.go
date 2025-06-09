@@ -41,10 +41,10 @@ func main() {
 
 	opts := []tf6server.ServeOpt{}
 
-	var providerName = "registry.terraform.io/OctopusDeployLabs/octopusdeploy"
+	var providerName = "registry.opentofu.org/octopusdeploy/octopusdeploy"
 	if debugMode {
 		opts = append(opts, tf6server.WithManagedDebug())
-		providerName = "octopus.com/com/octopusdeploy"
+		//providerName = "octopus.com/com/octopusdeploy"
 	}
 
 	err = tf6server.Serve(providerName, muxServer.ProviderServer, opts...)

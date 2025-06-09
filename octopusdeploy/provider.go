@@ -105,5 +105,5 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		config.SpaceID = spaceID.(string)
 	}
 
-	return config.Client()
+	return config.Client(ctx)
 }

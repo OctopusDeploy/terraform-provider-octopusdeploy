@@ -1,8 +1,10 @@
 package octopusdeploy
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,13 +37,13 @@ func (h *HeaderRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	return h.Transport.RoundTrip(req)
 }
 
-func getHttpClient(octopusUrl *url.URL) (*http.Client, *url.URL, error) {
+func getHttpClient(ctx context.Context, octopusUrl *url.URL) (*http.Client, *url.URL, error) {
 	if !isDirectlyAccessibleOctopusInstance(octopusUrl) {
-		fmt.Print("[SPACEBUILDER] Enabled Octopus AI Assistant redirection service")
+		tflog.Warn(ctx, "[SPACEBUILDER] Enabled Octopus AI Assistant redirection service")
 		return createHttpClient(octopusUrl)
 	}
 
-	fmt.Print("[SPACEBUILDER] Did not enable Octopus AI Assistant redirection service")
+	tflog.Warn(ctx, "[SPACEBUILDER] Did not enable Octopus AI Assistant redirection service")
 
 	return nil, octopusUrl, nil
 }
@@ -96,8 +98,8 @@ func createHttpClient(octopusUrl *url.URL) (*http.Client, *url.URL, error) {
 // End of OctoAI patch
 
 // Client returns a new Octopus Deploy client
-func (c *Config) Client() (*client.Client, diag.Diagnostics) {
-	octopus, err := getClientForDefaultSpace(c)
+func (c *Config) Client(ctx context.Context) (*client.Client, diag.Diagnostics) {
+	octopus, err := getClientForDefaultSpace(ctx, c)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
@@ -108,7 +110,7 @@ func (c *Config) Client() (*client.Client, diag.Diagnostics) {
 			return nil, diag.FromErr(err)
 		}
 
-		octopus, err = getClientForSpace(c, space.GetID())
+		octopus, err = getClientForSpace(ctx, c, space.GetID())
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}
@@ -117,11 +119,11 @@ func (c *Config) Client() (*client.Client, diag.Diagnostics) {
 	return octopus, nil
 }
 
-func getClientForDefaultSpace(c *Config) (*client.Client, error) {
-	return getClientForSpace(c, "")
+func getClientForDefaultSpace(ctx context.Context, c *Config) (*client.Client, error) {
+	return getClientForSpace(ctx, c, "")
 }
 
-func getClientForSpace(c *Config, spaceID string) (*client.Client, error) {
+func getClientForSpace(ctx context.Context, c *Config, spaceID string) (*client.Client, error) {
 	apiURL, err := url.Parse(c.Address)
 	if err != nil {
 		return nil, err
@@ -133,7 +135,7 @@ func getClientForSpace(c *Config, spaceID string) (*client.Client, error) {
 	}
 
 	// Start of OctoAI patch
-	httpClient, url, err := getHttpClient(apiURL)
+	httpClient, url, err := getHttpClient(ctx, apiURL)
 	if err != nil {
 		return nil, err
 	}
