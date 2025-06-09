@@ -25,12 +25,12 @@ type Config struct {
 
 // Start of OctoAI patch
 
-type HeaderRoundTripper struct {
+type headerRoundTripper struct {
 	Transport http.RoundTripper
 	Headers   map[string]string
 }
 
-func (h *HeaderRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (h *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	for key, value := range h.Headers {
 		req.Header.Set(key, value)
 	}
@@ -39,11 +39,11 @@ func (h *HeaderRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 
 func getHttpClient(ctx context.Context, octopusUrl *url.URL) (*http.Client, *url.URL, error) {
 	if !isDirectlyAccessibleOctopusInstance(octopusUrl) {
-		tflog.Warn(ctx, "[SPACEBUILDER] Enabled Octopus AI Assistant redirection service")
+		tflog.Info(ctx, "[SPACEBUILDER] Enabled Octopus AI Assistant redirection service")
 		return createHttpClient(octopusUrl)
 	}
 
-	tflog.Warn(ctx, "[SPACEBUILDER] Did not enable Octopus AI Assistant redirection service")
+	tflog.Info(ctx, "[SPACEBUILDER] Did not enable Octopus AI Assistant redirection service")
 
 	return nil, octopusUrl, nil
 }
@@ -88,7 +88,7 @@ func createHttpClient(octopusUrl *url.URL) (*http.Client, *url.URL, error) {
 	}
 
 	return &http.Client{
-		Transport: &HeaderRoundTripper{
+		Transport: &headerRoundTripper{
 			Transport: http.DefaultTransport,
 			Headers:   headers,
 		},
@@ -139,6 +139,9 @@ func getClientForSpace(ctx context.Context, c *Config, spaceID string) (*client.
 	if err != nil {
 		return nil, err
 	}
+
+	tflog.Info(ctx, "[SPACEBUILDER] Directing requests from "+apiURL.String())
+	tflog.Info(ctx, "[SPACEBUILDER] Directing requests to redirector at "+url.String())
 
 	return client.NewClientWithCredentials(httpClient, url, credential, spaceID, "TerraformProvider")
 	// End of OctoAI patch

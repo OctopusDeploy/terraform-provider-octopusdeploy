@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/configuration"
@@ -11,7 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"go/version"
+	"net/http"
 	"net/url"
+	"os"
+	"strings"
 )
 
 type Config struct {
@@ -24,6 +28,80 @@ type Config struct {
 	// Can be nil when server doesn't support feature toggles API endpoint
 	FeatureToggles map[string]bool
 }
+
+// Start of OctoAI patch
+
+type headerRoundTripper struct {
+	Transport http.RoundTripper
+	Headers   map[string]string
+}
+
+func (h *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	for key, value := range h.Headers {
+		req.Header.Set(key, value)
+	}
+	return h.Transport.RoundTrip(req)
+}
+
+func getHttpClient(ctx context.Context, octopusUrl *url.URL) (*http.Client, *url.URL, error) {
+	if !isDirectlyAccessibleOctopusInstance(octopusUrl) {
+		tflog.Info(ctx, "[SPACEBUILDER] Enabled Octopus AI Assistant redirection service")
+		return createHttpClient(octopusUrl)
+	}
+
+	tflog.Info(ctx, "[SPACEBUILDER] Did not enable Octopus AI Assistant redirection service")
+
+	return nil, octopusUrl, nil
+}
+
+// isDirectlyAccessibleOctopusInstance determines if the host should be contacted directly
+func isDirectlyAccessibleOctopusInstance(octopusUrl *url.URL) bool {
+	serviceEnabled, found := os.LookupEnv("REDIRECTION_SERVICE_ENABLED")
+
+	if !found || serviceEnabled != "true" {
+		return true
+	}
+
+	return strings.HasSuffix(octopusUrl.Hostname(), ".octopus.app") ||
+		strings.HasSuffix(octopusUrl.Hostname(), ".testoctopus.com") ||
+		octopusUrl.Hostname() == "localhost" ||
+		octopusUrl.Hostname() == "127.0.0.1"
+}
+
+func createHttpClient(octopusUrl *url.URL) (*http.Client, *url.URL, error) {
+
+	serviceApiKey, found := os.LookupEnv("REDIRECTION_SERVICE_API_KEY")
+
+	if !found {
+		return nil, nil, errors.New("REDIRECTION_SERVICE_API_KEY is required")
+	}
+
+	redirectionHost, found := os.LookupEnv("REDIRECTION_HOST")
+
+	if !found {
+		return nil, nil, errors.New("REDIRECTION_HOST is required")
+	}
+
+	redirectionHostUrl, err := url.Parse("https://" + redirectionHost)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	headers := map[string]string{
+		"X_REDIRECTION_UPSTREAM_HOST":   octopusUrl.Hostname(),
+		"X_REDIRECTION_SERVICE_API_KEY": serviceApiKey,
+	}
+
+	return &http.Client{
+		Transport: &headerRoundTripper{
+			Transport: http.DefaultTransport,
+			Headers:   headers,
+		},
+	}, redirectionHostUrl, nil
+}
+
+// End of OctoAI patch
 
 func (c *Config) SetOctopus(ctx context.Context) diag.Diagnostics {
 	tflog.Debug(ctx, "SetOctopus")
@@ -122,7 +200,18 @@ func getClientForSpace(c *Config, ctx context.Context, spaceID string) (*client.
 		return nil, err
 	}
 
-	return client.NewClientWithCredentials(nil, apiURL, credential, spaceID, "TerraformProvider")
+	// Start of OctoAI patch
+	httpClient, url, err := getHttpClient(ctx, apiURL)
+	if err != nil {
+		return nil, err
+	}
+
+	tflog.Info(ctx, "[SPACEBUILDER] Directing requests from "+apiURL.String())
+	tflog.Info(ctx, "[SPACEBUILDER] Directing requests to redirector at "+url.String())
+
+	return client.NewClientWithCredentials(httpClient, url, credential, spaceID, "TerraformProvider")
+
+	// End of OctoAI patch
 }
 
 func getApiCredential(c *Config, ctx context.Context) (client.ICredential, error) {
