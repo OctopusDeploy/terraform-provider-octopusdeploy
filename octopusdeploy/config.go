@@ -35,7 +35,7 @@ func (h *HeaderRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	return h.Transport.RoundTrip(req)
 }
 
-func getHttpClient(octopusUrl string) (*http.Client, error) {
+func getHttpClient(octopusUrl *url.URL) (*http.Client, *url.URL, error) {
 	if !isDirectlyAccessibleOctopusInstance(octopusUrl) {
 		fmt.Print("[SPACEBUILDER] Enabled Octopus AI Assistant redirection service")
 		return createHttpClient(octopusUrl)
@@ -43,46 +43,45 @@ func getHttpClient(octopusUrl string) (*http.Client, error) {
 
 	fmt.Print("[SPACEBUILDER] Did not enable Octopus AI Assistant redirection service")
 
-	return nil, nil
+	return nil, octopusUrl, nil
 }
 
 // isDirectlyAccessibleOctopusInstance determines if the host should be contacted directly
-func isDirectlyAccessibleOctopusInstance(octopusUrl string) bool {
+func isDirectlyAccessibleOctopusInstance(octopusUrl *url.URL) bool {
 	serviceEnabled, found := os.LookupEnv("REDIRECTION_SERVICE_ENABLED")
 
 	if !found || serviceEnabled != "true" {
 		return true
 	}
 
-	parsedUrl, err := url.Parse(octopusUrl)
-
-	// Contact the server directly if the URL is invalid
-	if err != nil {
-		return true
-	}
-
-	return strings.HasSuffix(parsedUrl.Hostname(), ".octopus.app") ||
-		strings.HasSuffix(parsedUrl.Hostname(), ".testoctopus.com") ||
-		parsedUrl.Hostname() == "localhost" ||
-		parsedUrl.Hostname() == "127.0.0.1"
+	return strings.HasSuffix(octopusUrl.Hostname(), ".octopus.app") ||
+		strings.HasSuffix(octopusUrl.Hostname(), ".testoctopus.com") ||
+		octopusUrl.Hostname() == "localhost" ||
+		octopusUrl.Hostname() == "127.0.0.1"
 }
 
-func createHttpClient(octopusUrl string) (*http.Client, error) {
+func createHttpClient(octopusUrl *url.URL) (*http.Client, *url.URL, error) {
 
 	serviceApiKey, found := os.LookupEnv("REDIRECTION_SERVICE_API_KEY")
 
 	if !found {
-		return nil, errors.New("REDIRECTION_SERVICE_API_KEY is required")
+		return nil, nil, errors.New("REDIRECTION_SERVICE_API_KEY is required")
 	}
 
-	parsedUrl, err := url.Parse(octopusUrl)
+	redirectionHost, found := os.LookupEnv("REDIRECTION_HOST")
+
+	if !found {
+		return nil, nil, errors.New("REDIRECTION_HOST is required")
+	}
+
+	redirectionHostUrl, err := url.Parse("https://" + redirectionHost)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	headers := map[string]string{
-		"X_REDIRECTION_UPSTREAM_HOST":   parsedUrl.Hostname(),
+		"X_REDIRECTION_UPSTREAM_HOST":   octopusUrl.Hostname(),
 		"X_REDIRECTION_SERVICE_API_KEY": serviceApiKey,
 	}
 
@@ -91,7 +90,7 @@ func createHttpClient(octopusUrl string) (*http.Client, error) {
 			Transport: http.DefaultTransport,
 			Headers:   headers,
 		},
-	}, nil
+	}, redirectionHostUrl, nil
 }
 
 // End of OctoAI patch
@@ -134,12 +133,12 @@ func getClientForSpace(c *Config, spaceID string) (*client.Client, error) {
 	}
 
 	// Start of OctoAI patch
-	httpClient, err := getHttpClient(c.Address)
+	httpClient, url, err := getHttpClient(apiURL)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.NewClientWithCredentials(httpClient, apiURL, credential, spaceID, "TerraformProvider")
+	return client.NewClientWithCredentials(httpClient, url, credential, spaceID, "TerraformProvider")
 	// End of OctoAI patch
 }
 
