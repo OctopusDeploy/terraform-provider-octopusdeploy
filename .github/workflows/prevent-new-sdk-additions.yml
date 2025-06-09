@@ -10,6 +10,7 @@ on:
 
 jobs:
   detect-new-sdk-files:
+    name: Prevent New SDK Files
     runs-on: ubuntu-latest
 
     steps:
