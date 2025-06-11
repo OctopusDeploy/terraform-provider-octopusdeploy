@@ -108,10 +108,11 @@ func (f FeedsSchema) GetDatasourceSchema() datasourceSchema.Schema {
 							},
 						},
 						"delete_unreleased_packages_after_days": datasourceSchema.Int64Attribute{
-							Computed: true,
+							Description: "Sets the package retention in days. Set delete_packages_associated_with_releases to choose which packages are kept.",
+							Computed:    true,
 						},
 						"delete_packages_associated_with_releases": datasourceSchema.BoolAttribute{
-							Description: "When true, Octopus does not need to keep packages used by releases and runbook runs on the dashboard.",
+							Description: "When true, only packages associated with releases or runbook runs on the dashboard are kept. When false, packages associated with any releases or runbook runs are kept.",
 							Computed:    true,
 						},
 						"access_key": datasourceSchema.StringAttribute{
