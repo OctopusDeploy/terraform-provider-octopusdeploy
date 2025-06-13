@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
@@ -96,7 +97,27 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	err = validateVariable(&variableSet, newVariable, variableOwnerId.ValueString())
+	// Start of OctoAI patch
+	// Retry logic to address the issue documented at https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/29
+	for i := 0; i < 3; i++ {
+		variableSet, err = variables.GetAll(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString())
+
+		if err != nil {
+			resp.Diagnostics.AddError("get variables failed", err.Error())
+			return
+		}
+
+		err = validateVariable(&variableSet, newVariable, variableOwnerId.ValueString())
+
+		if err == nil {
+			break
+		}
+
+		tflog.Info(ctx, "retrying to get the newly created variable")
+		time.Sleep(time.Second)
+	}
+	// End of OctoAI patch
+
 	if err != nil {
 		resp.Diagnostics.AddError("create variable failed", err.Error())
 		return
