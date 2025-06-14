@@ -99,7 +99,7 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 
 	// Start of OctoAI patch
 	// Retry logic to address the issue documented at https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/29
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 30; i++ {
 		variableSet, err = variables.GetAll(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString())
 
 		if err != nil {
