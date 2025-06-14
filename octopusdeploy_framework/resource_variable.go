@@ -113,7 +113,7 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 			break
 		}
 
-		tflog.Info(ctx, "retrying to get the newly created variable: "+fmt.Sprint(i))
+		tflog.Info(ctx, "retrying to get the newly created variable "+newVariable.Name+": "+fmt.Sprint(i))
 		time.Sleep(time.Second)
 	}
 	// End of OctoAI patch
