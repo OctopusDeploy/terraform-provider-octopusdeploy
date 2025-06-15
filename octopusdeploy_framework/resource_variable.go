@@ -91,19 +91,12 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 
 	tflog.Info(ctx, fmt.Sprintf("creating variable: %#v", newVariable))
 
-	variableSet, err := variables.AddSingle(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString(), newVariable)
-	if err != nil {
-		resp.Diagnostics.AddError("create variable failed", err.Error())
-		return
-	}
-
 	// Start of OctoAI patch
 	// Retry logic to address the issue documented at https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/29
 	for i := 0; i < 60; i++ {
-		variableSet, err = variables.GetAll(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString())
-
+		variableSet, err := variables.AddSingle(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString(), newVariable)
 		if err != nil {
-			resp.Diagnostics.AddError("get variables failed", err.Error())
+			resp.Diagnostics.AddError("create variable failed", err.Error())
 			return
 		}
 
