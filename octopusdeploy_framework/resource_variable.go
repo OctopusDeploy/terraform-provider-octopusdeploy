@@ -93,6 +93,7 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 
 	// Start of OctoAI patch
 	// Retry logic to address the issue documented at https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/29
+	var validateError error
 	for i := 0; i < 60; i++ {
 		variableSet, err := variables.AddSingle(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString(), newVariable)
 		if err != nil {
@@ -100,9 +101,9 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 			return
 		}
 
-		err = validateVariable(&variableSet, newVariable, variableOwnerId.ValueString())
+		validateError = validateVariable(&variableSet, newVariable, variableOwnerId.ValueString())
 
-		if err == nil {
+		if validateError == nil {
 			break
 		}
 
@@ -111,8 +112,8 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 	}
 	// End of OctoAI patch
 
-	if err != nil {
-		resp.Diagnostics.AddError("create variable failed", err.Error())
+	if validateError != nil {
+		resp.Diagnostics.AddError("create variable failed", validateError.Error())
 		return
 	}
 
