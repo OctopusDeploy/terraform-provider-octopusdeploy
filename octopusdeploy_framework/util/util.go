@@ -3,11 +3,14 @@ package util
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strings"
 )
 
 func GetProviderName() string {
@@ -232,4 +235,67 @@ func ConvertToPropertyValue(value types.String, sensitive bool) core.PropertyVal
 	} else {
 		return core.NewPropertyValue(value.ValueString(), sensitive)
 	}
+}
+
+func GetStringPointer(s types.String) *string {
+	if s.IsNull() {
+		return nil
+	}
+	value := s.ValueString()
+	return &value
+}
+
+func GetOptionalStringPointer(value types.String) *string {
+	if value.IsNull() {
+		return nil
+	}
+	str := value.ValueString()
+	return &str
+}
+func MapOptionalStringValue(value string) types.String {
+	if value == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(value)
+}
+func GetOptionalIntValue(value types.Int64) int {
+	if value.IsNull() {
+		return 0
+	}
+	return int(value.ValueInt64())
+}
+
+func MapOptionalIntValue(value int) types.Int64 {
+	if value == 0 {
+		return types.Int64Null()
+	}
+	return types.Int64Value(int64(value))
+}
+
+func GetOptionalString(value types.String) string {
+	if value.IsNull() {
+		return ""
+	}
+	return value.ValueString()
+}
+
+func CalculateStateTime(ctx context.Context, stateValue timetypes.RFC3339, updatedValue time.Time) (timetypes.RFC3339, diag.Diagnostics) {
+	stateTime, diags := stateValue.ValueRFC3339Time()
+	if diags.HasError() {
+		return timetypes.RFC3339{}, diags
+	}
+	stateTimeUTC := timetypes.NewRFC3339TimeValue(stateTime.UTC())
+	updatedValueUTC := updatedValue.UTC()
+	valuesAreEqual, diags := stateTimeUTC.StringSemanticEquals(ctx, timetypes.NewRFC3339TimeValue(updatedValueUTC))
+	if diags.HasError() {
+		return timetypes.NewRFC3339Null(), diags
+	}
+
+	if valuesAreEqual {
+		return stateValue, diags
+	}
+
+	location := stateTime.Location()
+	newValue := timetypes.NewRFC3339TimeValue(updatedValueUTC.In(location))
+	return newValue, diags
 }
