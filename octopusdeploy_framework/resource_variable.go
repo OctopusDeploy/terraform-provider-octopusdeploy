@@ -94,7 +94,7 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 	// Start of OctoAI patch
 	// Retry logic to address the issue documented at https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/29
 	var validateError error
-	for i := 0; i < 60; i++ {
+	for i := 0; i < 10; i++ {
 		variableSet, err := variables.AddSingle(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString(), newVariable)
 		if err != nil {
 			resp.Diagnostics.AddError("create variable failed", err.Error())
