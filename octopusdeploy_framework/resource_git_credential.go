@@ -2,12 +2,12 @@ package octopusdeploy_framework
 
 import (
 	"context"
-
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/credentials"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -27,7 +27,14 @@ type gitCredentialResourceModel struct {
 	Username    types.String `tfsdk:"username"`
 	Password    types.String `tfsdk:"password"`
 
+	RepositoryRestrictions *gitCredentialRepositoryRestrictionResourceModel `tfsdk:"repository_restrictions"`
+
 	schemas.ResourceModel
+}
+
+type gitCredentialRepositoryRestrictionResourceModel struct {
+	Enabled             types.Bool `tfsdk:"enabled"`
+	AllowedRepositories types.Set  `tfsdk:"allowed_repositories"`
 }
 
 func NewGitCredentialResource() resource.Resource {
@@ -162,6 +169,17 @@ func expandGitCredential(model *gitCredentialResourceModel) *credentials.Resourc
 		gitCredential.SpaceID = model.SpaceID.ValueString()
 	}
 
+	if model.RepositoryRestrictions != nil && model.RepositoryRestrictions.Enabled.ValueBool() {
+		var allowedRepositories = make([]string, 0, len(model.RepositoryRestrictions.AllowedRepositories.Elements()))
+		for _, url := range model.RepositoryRestrictions.AllowedRepositories.Elements() {
+			allowedRepositories = append(allowedRepositories, url.(types.String).ValueString())
+		}
+		gitCredential.RepositoryRestrictions = &credentials.RepositoryRestrictions{Enabled: true, AllowedRepositories: allowedRepositories}
+	} else {
+		//Default to disabled if state doesn't have it
+		gitCredential.RepositoryRestrictions = &credentials.RepositoryRestrictions{Enabled: false, AllowedRepositories: []string{}}
+	}
+
 	tflog.Debug(context.Background(), "Expanded Git credential", map[string]interface{}{
 		"id":          gitCredential.ID,
 		"name":        gitCredential.Name,
@@ -169,6 +187,7 @@ func expandGitCredential(model *gitCredentialResourceModel) *credentials.Resourc
 		"space_id":    gitCredential.SpaceID,
 		"username":    username,
 		// Don't log the password
+		"repository_restrictions": gitCredential.RepositoryRestrictions,
 	})
 
 	return gitCredential
@@ -186,10 +205,11 @@ func setGitCredential(ctx context.Context, model *gitCredentialResourceModel, re
 	model.Description = types.StringValue(resource.Description)
 
 	tflog.Debug(ctx, "Setting Git credential state", map[string]interface{}{
-		"id":          resource.GetID(),
-		"space_id":    resource.SpaceID,
-		"name":        resource.GetName(),
-		"description": resource.Description,
+		"id":                      resource.GetID(),
+		"space_id":                resource.SpaceID,
+		"name":                    resource.GetName(),
+		"description":             resource.Description,
+		"repository_restrictions": resource.RepositoryRestrictions,
 	})
 
 	if usernamePassword, ok := resource.Details.(*credentials.UsernamePassword); ok && usernamePassword != nil {
@@ -201,12 +221,35 @@ func setGitCredential(ctx context.Context, model *gitCredentialResourceModel, re
 		})
 	}
 
+	if resource.RepositoryRestrictions != nil {
+		var allowedRepositories = make([]string, 0, len(resource.RepositoryRestrictions.AllowedRepositories))
+		for _, id := range resource.RepositoryRestrictions.AllowedRepositories {
+			allowedRepositories = append(allowedRepositories, id)
+		}
+		repositoriesList, _ := types.SetValueFrom(
+			ctx,
+			types.StringType,
+			allowedRepositories,
+		)
+
+		model.RepositoryRestrictions = &gitCredentialRepositoryRestrictionResourceModel{
+			Enabled:             types.BoolValue(resource.RepositoryRestrictions.Enabled),
+			AllowedRepositories: repositoriesList,
+		}
+	} else { //Default to disabled if resource doesn't have it
+		model.RepositoryRestrictions = &gitCredentialRepositoryRestrictionResourceModel{
+			Enabled:             types.BoolValue(false),
+			AllowedRepositories: types.SetValueMust(types.StringType, make([]attr.Value, 0)),
+		}
+	}
+
 	tflog.Debug(ctx, "Git credential state set", map[string]interface{}{
-		"id":          model.ID.ValueString(),
-		"name":        model.Name.ValueString(),
-		"space_id":    model.SpaceID.ValueString(),
-		"type":        model.Type.ValueString(),
-		"description": model.Description.ValueString(),
-		"username":    model.Username.ValueString(),
+		"id":                      model.ID.ValueString(),
+		"name":                    model.Name.ValueString(),
+		"space_id":                model.SpaceID.ValueString(),
+		"type":                    model.Type.ValueString(),
+		"description":             model.Description.ValueString(),
+		"username":                model.Username.ValueString(),
+		"repository_restrictions": model.RepositoryRestrictions,
 	})
 }

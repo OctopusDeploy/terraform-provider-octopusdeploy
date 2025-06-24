@@ -3,9 +3,12 @@ package schemas
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const (
@@ -42,7 +45,38 @@ func (g GitCredentialSchema) GetResourceSchema() resourceSchema.Schema {
 				Description("The password for the Git credential.").
 				Validators(stringvalidator.LengthAtLeast(1)).
 				Build(),
+			"repository_restrictions": gitCredentialRepositoryRestrictionAttribute(),
 		},
+	}
+}
+
+func gitCredentialRepositoryRestrictionAttribute() resourceSchema.SingleNestedAttribute {
+	return resourceSchema.SingleNestedAttribute{
+		Description: "Sets the repository restrictions associated with the Git credential.",
+		Attributes: map[string]resourceSchema.Attribute{
+			"enabled": util.ResourceBool().
+				Description("Whether repository restrictions are enabled.").
+				Required().
+				Build(),
+			"allowed_repositories": util.ResourceSet(types.StringType).
+				Description("Set of allowed repository URL's.").
+				Required().
+				Build(),
+		},
+		Optional: true,
+		Computed: true,
+		Default: objectdefault.StaticValue(
+			types.ObjectValueMust(
+				map[string]attr.Type{
+					"enabled":              types.BoolType,
+					"allowed_repositories": types.SetType{ElemType: types.StringType},
+				},
+				map[string]attr.Value{
+					"enabled":              types.BoolValue(false),
+					"allowed_repositories": types.SetValueMust(types.StringType, make([]attr.Value, 0)),
+				},
+			),
+		),
 	}
 }
 
