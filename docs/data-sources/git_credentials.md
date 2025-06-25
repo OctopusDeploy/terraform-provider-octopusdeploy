@@ -30,6 +30,10 @@ Use this data source to retrieve information about Git credentials in Octopus De
 <a id="nestedatt--git_credentials"></a>
 ### Nested Schema for `git_credentials`
 
+Optional:
+
+- `repository_restrictions` (Attributes) Sets the repository restrictions associated with the Git credential. (see [below for nested schema](#nestedatt--git_credentials--repository_restrictions))
+
 Read-Only:
 
 - `description` (String) The description of this Git Credential.
@@ -39,4 +43,10 @@ Read-Only:
 - `type` (String) The Git credential authentication type.
 - `username` (String) The username for the Git credential.
 
+<a id="nestedatt--git_credentials--repository_restrictions"></a>
+### Nested Schema for `git_credentials.repository_restrictions`
 
+Required:
+
+- `allowed_repositories` (Set of String) Set of allowed repository URL's.
+- `enabled` (Boolean) Whether repository restrictions are enabled.
