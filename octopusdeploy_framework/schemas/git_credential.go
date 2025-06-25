@@ -119,14 +119,13 @@ func gitCredentialRepositoryRestrictionDataSourceAttribute() datasourceSchema.Si
 		Attributes: map[string]datasourceSchema.Attribute{
 			"enabled": util.ResourceBool().
 				Description("Whether repository restrictions are enabled.").
-				Required().
+				Computed().
 				Build(),
 			"allowed_repositories": util.ResourceSet(types.StringType).
 				Description("Set of allowed repository URL's.").
-				Required().
+				Computed().
 				Build(),
 		},
-		Optional: true,
 		Computed: true,
 	}
 }
