@@ -103,11 +103,30 @@ func (g GitCredentialSchema) GetDatasourceSchema() datasourceSchema.Schema {
 
 func GetGitCredentialDatasourceAttributes() map[string]datasourceSchema.Attribute {
 	return map[string]datasourceSchema.Attribute{
-		"id":          util.DataSourceString().Computed().Description("The unique ID for this resource.").Build(),
-		"space_id":    util.DataSourceString().Computed().Description("The space ID associated with this Git Credential.").Build(),
-		"name":        util.DataSourceString().Computed().Description("The name of this Git Credential.").Build(),
-		"description": util.DataSourceString().Computed().Description("The description of this Git Credential.").Build(),
-		"type":        util.DataSourceString().Computed().Description("The Git credential authentication type.").Build(),
-		"username":    util.DataSourceString().Computed().Description("The username for the Git credential.").Build(),
+		"id":                      util.DataSourceString().Computed().Description("The unique ID for this resource.").Build(),
+		"space_id":                util.DataSourceString().Computed().Description("The space ID associated with this Git Credential.").Build(),
+		"name":                    util.DataSourceString().Computed().Description("The name of this Git Credential.").Build(),
+		"description":             util.DataSourceString().Computed().Description("The description of this Git Credential.").Build(),
+		"type":                    util.DataSourceString().Computed().Description("The Git credential authentication type.").Build(),
+		"username":                util.DataSourceString().Computed().Description("The username for the Git credential.").Build(),
+		"repository_restrictions": gitCredentialRepositoryRestrictionDataSourceAttribute(),
+	}
+}
+
+func gitCredentialRepositoryRestrictionDataSourceAttribute() datasourceSchema.SingleNestedAttribute {
+	return datasourceSchema.SingleNestedAttribute{
+		Description: "Sets the repository restrictions associated with the Git credential.",
+		Attributes: map[string]datasourceSchema.Attribute{
+			"enabled": util.ResourceBool().
+				Description("Whether repository restrictions are enabled.").
+				Required().
+				Build(),
+			"allowed_repositories": util.ResourceSet(types.StringType).
+				Description("Set of allowed repository URL's.").
+				Required().
+				Build(),
+		},
+		Optional: true,
+		Computed: true,
 	}
 }
