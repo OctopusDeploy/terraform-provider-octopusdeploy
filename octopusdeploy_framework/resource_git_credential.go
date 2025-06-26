@@ -169,12 +169,12 @@ func expandGitCredential(model *gitCredentialResourceModel) *credentials.Resourc
 		gitCredential.SpaceID = model.SpaceID.ValueString()
 	}
 
-	if model.RepositoryRestrictions != nil && model.RepositoryRestrictions.Enabled.ValueBool() {
+	if model.RepositoryRestrictions != nil {
 		var allowedRepositories = make([]string, 0, len(model.RepositoryRestrictions.AllowedRepositories.Elements()))
 		for _, url := range model.RepositoryRestrictions.AllowedRepositories.Elements() {
 			allowedRepositories = append(allowedRepositories, url.(types.String).ValueString())
 		}
-		gitCredential.RepositoryRestrictions = &credentials.RepositoryRestrictions{Enabled: true, AllowedRepositories: allowedRepositories}
+		gitCredential.RepositoryRestrictions = &credentials.RepositoryRestrictions{Enabled: model.RepositoryRestrictions.Enabled.ValueBool(), AllowedRepositories: allowedRepositories}
 	} else {
 		//Default to disabled if state doesn't have it
 		gitCredential.RepositoryRestrictions = &credentials.RepositoryRestrictions{Enabled: false, AllowedRepositories: []string{}}
