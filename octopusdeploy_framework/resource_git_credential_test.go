@@ -40,8 +40,8 @@ func testGitCredential(localName string, name string, description string) string
 		  username     = "git_user"
 		  password     = "secret_password"
           repository_restrictions = {
-		    enabled = true
-			allowed_repositories = ["https://foo1.com", "http://bar2.com/*"]
+		    enabled = false
+			allowed_repositories = []
           }
 	}`, localName, name, description)
 }
