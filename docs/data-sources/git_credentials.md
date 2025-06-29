@@ -35,8 +35,17 @@ Read-Only:
 - `description` (String) The description of this Git Credential.
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this Git Credential.
+- `repository_restrictions` (Attributes) Sets the repository restrictions associated with the Git credential. (see [below for nested schema](#nestedatt--git_credentials--repository_restrictions))
 - `space_id` (String) The space ID associated with this Git Credential.
 - `type` (String) The Git credential authentication type.
 - `username` (String) The username for the Git credential.
+
+<a id="nestedatt--git_credentials--repository_restrictions"></a>
+### Nested Schema for `git_credentials.repository_restrictions`
+
+Read-Only:
+
+- `allowed_repositories` (Set of String) Set of allowed repository URL's.
+- `enabled` (Boolean) Whether repository restrictions are enabled.
 
 
