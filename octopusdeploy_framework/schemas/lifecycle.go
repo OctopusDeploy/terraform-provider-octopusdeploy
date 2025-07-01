@@ -2,6 +2,8 @@ package schemas
 
 import (
 	"context"
+	"strings"
+
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -16,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strings"
 )
 
 var _ EntitySchema = LifecycleSchema{}
@@ -205,7 +206,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		return
 	}
 
-	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.ShouldKeepForever.IsNull() {
+	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
 		quantityToKeep := retentionPolicy.QuantityToKeep.ValueInt64()
 		shouldKeepForever := retentionPolicy.ShouldKeepForever.ValueBool()
 
@@ -224,7 +225,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		}
 	}
 
-	if !retentionPolicy.Unit.IsNull() {
+	if !retentionPolicy.Unit.IsNull() && !retentionPolicy.Unit.IsUnknown() {
 		unit := retentionPolicy.Unit.ValueString()
 		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
 			resp.Diagnostics.AddAttributeError(
