@@ -187,17 +187,6 @@ func resourceConfiguration(req resource.ConfigureRequest, resp *resource.Configu
 
 	return p
 }
-func setDefaultRetentionPolicies(data *lifecycleTypeResourceModel) {
-	defaultPolicy := flattenRetentionPeriod(core.NewRetentionPeriod(30, "Days", false))
-
-	if data.ReleaseRetentionPolicy.IsNull() || len(data.ReleaseRetentionPolicy.Elements()) == 0 {
-		data.ReleaseRetentionPolicy = defaultPolicy
-	}
-
-	if data.TentacleRetentionPolicy.IsNull() || len(data.TentacleRetentionPolicy.Elements()) == 0 {
-		data.TentacleRetentionPolicy = defaultPolicy
-	}
-}
 
 func flattenLifecycleResource(lifecycle *lifecycles.Lifecycle) *lifecycleTypeResourceModel {
 	flattenedLifecycle := &lifecycleTypeResourceModel{
