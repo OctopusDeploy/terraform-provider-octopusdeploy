@@ -11,7 +11,6 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -109,9 +108,15 @@ func expandProject(ctx context.Context, model projectResourceModel) *projects.Pr
 	}
 
 	if !model.ReleaseCreationStrategy.IsNull() {
-		var strategy releaseCreationStrategyModel
-		model.ReleaseCreationStrategy.ElementsAs(ctx, &strategy, false)
-		project.ReleaseCreationStrategy = expandReleaseCreationStrategy(strategy)
+		var strategyList []releaseCreationStrategyModel
+		diags := model.ReleaseCreationStrategy.ElementsAs(ctx, &strategyList, false)
+		if diags.HasError() {
+			tflog.Error(ctx, fmt.Sprintf("Error converting release creation strategy settings: %v\n", diags))
+		} else {
+			if len(strategyList) > 0 {
+				project.ReleaseCreationStrategy = expandReleaseCreationStrategy(strategyList[0])
+			}
+		}
 	}
 
 	if !model.Template.IsNull() {
@@ -306,20 +311,25 @@ func expandReleaseCreationStrategy(model releaseCreationStrategyModel) *projects
 		ChannelID:                    model.ChannelID.ValueString(),
 		ReleaseCreationPackageStepID: model.ReleaseCreationPackageStepID.ValueString(),
 	}
-	if !model.ReleaseCreationPackage.IsNull() {
-		var releaseCreationPackage deploymentActionPackageModel
-		model.ReleaseCreationPackage.As(context.Background(), &releaseCreationPackage, basetypes.ObjectAsOptions{})
-		strategy.ReleaseCreationPackage = expandDeploymentActionPackage(releaseCreationPackage)
+	if model.ReleaseCreationPackage != nil {
+		strategy.ReleaseCreationPackage = expandDeploymentActionPackage(model.ReleaseCreationPackage[0])
 	}
 	return strategy
 }
 
 func expandDeploymentActionPackage(model deploymentActionPackageModel) *packages.DeploymentActionPackage {
-	return &packages.DeploymentActionPackage{
-		DeploymentAction: model.DeploymentAction.ValueString(),
-		PackageReference: model.PackageReference.ValueString(),
+	deploymentActionPackage := &packages.DeploymentActionPackage{}
+
+	if !model.DeploymentAction.IsNull() {
+		deploymentActionPackage.DeploymentAction = model.DeploymentAction.ValueString()
 	}
+	if !model.PackageReference.IsNull() {
+		deploymentActionPackage.PackageReference = model.PackageReference.ValueString()
+	}
+
+	return deploymentActionPackage
 }
+
 func expandTemplates(templates []templateModel) []actiontemplates.ActionTemplateParameter {
 	result := make([]actiontemplates.ActionTemplateParameter, len(templates))
 	for i, template := range templates {
