@@ -178,6 +178,8 @@ func createContainerRegistryFeedResourceFromAzureData(data *schemas.AzureContain
 	feed.SpaceID = data.SpaceID.ValueString()
 	feed.APIVersion = data.APIVersion.ValueString()
 	feed.RegistryPath = data.RegistryPath.ValueString()
+	feed.Username = data.Username.ValueString()
+	feed.Password = core.NewSensitiveValue(data.Password.ValueString())
 	feed.OidcAuthentication = oidc
 
 	return feed, nil
