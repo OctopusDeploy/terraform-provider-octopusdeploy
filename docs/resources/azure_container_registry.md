@@ -23,7 +23,7 @@ resource "octopusdeploy_azure_container_registry" "example" {
 resource "octopusdeploy_azure_container_register" "example_with_oidc" {
     name          = "Test Azure Container Registry (OK to Delete)"
     feed_uri      = "https://test-azure.azurecr.io"
-    oidc_authentication {
+    oidc_authentication = {
       client_id     = "client_id"
       tenant_id     = "tenant_id"
       audience      = "audience"
@@ -66,6 +66,8 @@ Optional:
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 terraform import [options] octopusdeploy_azure_container_registry.<name> <feed-id>
