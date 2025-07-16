@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	ds "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	rs "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -54,12 +55,13 @@ type StepTemplatePackageType struct {
 }
 
 type StepTemplateParameterType struct {
-	ID              types.String `tfsdk:"id"`
-	Name            types.String `tfsdk:"name"`
-	Label           types.String `tfsdk:"label"`
-	HelpText        types.String `tfsdk:"help_text"`
-	DisplaySettings types.Map    `tfsdk:"display_settings"`
-	DefaultValue    types.String `tfsdk:"default_value"`
+	ID                    types.String `tfsdk:"id"`
+	Name                  types.String `tfsdk:"name"`
+	Label                 types.String `tfsdk:"label"`
+	HelpText              types.String `tfsdk:"help_text"`
+	DisplaySettings       types.Map    `tfsdk:"display_settings"`
+	DefaultValue          types.String `tfsdk:"default_value"`
+	DefaultSensitiveValue types.String `tfsdk:"default_sensitive_value"`
 }
 
 type StepTemplateGitDependencyType struct {
@@ -142,15 +144,29 @@ func GetStepTemplateParameterResourceSchema() rs.ListNestedAttribute {
 		Required:    true,
 		NestedObject: rs.NestedAttributeObject{
 			Attributes: map[string]rs.Attribute{
-				"default_value": rs.StringAttribute{
-					Description: "A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.",
-					Optional:    true,
-					Computed:    true,
-					Default:     stringdefault.StaticString(""),
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
-				},
+				"default_value": util.ResourceString().
+					Description("A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.").
+					Optional().
+					Computed().
+					Default(stringdefault.StaticString("")).
+					//PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+					Validators(
+						stringvalidator.ConflictsWith(
+							path.MatchRelative().AtParent().AtName("default_sensitive_value"),
+						),
+					).
+					Build(),
+				"default_sensitive_value": util.ResourceString().
+					Description("Use this when parameter display settings set to 'Sensitive'").
+					Optional().
+					Sensitive().
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+					Validators(
+						stringvalidator.ConflictsWith(
+							path.MatchRelative().AtParent().AtName("default_value"),
+						),
+					).
+					Build(),
 				"display_settings": rs.MapAttribute{
 					Description: "The display settings for the parameter.",
 					Optional:    true,
@@ -319,6 +335,12 @@ func GetStepTemplateAttributes() map[string]attr.Type {
 	}
 }
 
+func StepTemplatePackageObjectType() types.ObjectType {
+	return types.ObjectType{
+		AttrTypes: GetStepTemplatePackageTypeAttributes(),
+	}
+}
+
 func GetStepTemplatePackageTypeAttributes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":                   types.StringType,
@@ -339,17 +361,6 @@ func GetStepTemplatePackagePropertiesTypeAttributes() map[string]attr.Type {
 	}
 }
 
-func GetStepTemplateParameterTypeAttributes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"id":               types.StringType,
-		"name":             types.StringType,
-		"label":            types.StringType,
-		"help_text":        types.StringType,
-		"display_settings": types.MapType{ElemType: types.StringType},
-		"default_value":    types.StringType,
-	}
-}
-
 func StepTemplateGitDependencyObjectType() types.ObjectType {
 	return types.ObjectType{
 		AttrTypes: GetStepTemplateGitDependencyTypeAttributes(),
@@ -364,5 +375,23 @@ func GetStepTemplateGitDependencyTypeAttributes() map[string]attr.Type {
 		"git_credential_type": types.StringType,
 		"file_path_filters":   types.ListType{ElemType: types.StringType},
 		"git_credential_id":   types.StringType,
+	}
+}
+
+func StepTemplateParameterObjectType() types.ObjectType {
+	return types.ObjectType{
+		AttrTypes: GetStepTemplateParameterTypeAttributes(),
+	}
+}
+
+func GetStepTemplateParameterTypeAttributes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":                      types.StringType,
+		"name":                    types.StringType,
+		"label":                   types.StringType,
+		"help_text":               types.StringType,
+		"display_settings":        types.MapType{ElemType: types.StringType},
+		"default_value":           types.StringType,
+		"default_sensitive_value": types.StringType,
 	}
 }

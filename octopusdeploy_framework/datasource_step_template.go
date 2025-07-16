@@ -71,7 +71,7 @@ func convertStepTemplateAttributes(at *actiontemplates.ActionTemplate) (types.Ob
 
 	params := make([]attr.Value, len(at.Parameters))
 	for i, param := range at.Parameters {
-		p, dg := convertStepTemplateParameterAttribute(param)
+		p, dg := convertStepTemplateParameterAttribute(param, nil)
 		diags.Append(dg...)
 		params[i] = p
 	}
