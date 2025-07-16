@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	ds "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	rs "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -154,11 +153,6 @@ func GetStepTemplateParameterResourceSchema() rs.ListNestedAttribute {
 					Description("Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'").
 					Optional().
 					Sensitive().
-					Validators(
-						stringvalidator.ConflictsWith(
-							path.MatchRelative().AtParent().AtName("default_value"),
-						),
-					).
 					Build(),
 				"display_settings": rs.MapAttribute{
 					Description: "The display settings for the parameter.",

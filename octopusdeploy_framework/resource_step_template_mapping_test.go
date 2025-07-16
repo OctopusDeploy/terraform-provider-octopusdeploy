@@ -437,7 +437,7 @@ func TestStepTemplateParametersValidationWhenSensitiveDefaultValueSetForNonSensi
 	assert.Equal(t, expectedDiagnostics, diagnostics, "Expected diagnostics to contain errors")
 }
 
-func TestStepTemplateParametersValidationWhenBothSensitiveAndNonSensitiveDefaultValuesAreSetNoErrorIsAdded(t *testing.T) {
+func TestStepTemplateParametersValidationWhenBothSensitiveAndNonSensitiveDefaultValuesAreSet(t *testing.T) {
 	// Validation on default_sensitive_value will handle this scenario
 	// We don't want to pollute output with multiple errors for same reason
 	ctx := context.Background()
@@ -491,5 +491,10 @@ func TestStepTemplateParametersValidationWhenBothSensitiveAndNonSensitiveDefault
 	// Act
 	diags := validateStepTemplateParameters(ctx, &state)
 
-	assert.False(t, diags.HasError(), "Expected diagnostics not to contain errors")
+	diagnostics := make([]diag.Severity, len(diags))
+	for i, d := range diags {
+		diagnostics[i] = d.Severity()
+	}
+	expectedDiagnostics := []diag.Severity{diag.SeverityError, diag.SeverityError}
+	assert.Equal(t, expectedDiagnostics, diagnostics, "Expected diagnostics to contain errors")
 }
