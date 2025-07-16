@@ -547,14 +547,14 @@ func validateStepTemplateParameterSensitivity(param schemas.StepTemplateParamete
 	hasPlainDefaultValue := !param.DefaultValue.IsNull() && !param.DefaultValue.IsUnknown() && param.DefaultValue.ValueString() != ""
 	hasDefaultSensitiveValue := !param.DefaultSensitiveValue.IsNull() && !param.DefaultSensitiveValue.IsUnknown() && param.DefaultSensitiveValue.ValueString() != ""
 
-	if isSensitiveControlType && hasPlainDefaultValue {
+	if isSensitiveControlType && hasPlainDefaultValue && !hasDefaultSensitiveValue {
 		diags.AddError(
 			"Invalid step template parameter configuration",
 			fmt.Sprintf("Parameter '%s' has display setting 'Octopus.ControlType=Sensitive' but uses 'default_value' instead of 'default_sensitive_value'. Sensitive parameters should use the 'default_sensitive_value' attribute.", param.Name.ValueString()),
 		)
 	}
 
-	if !isSensitiveControlType && hasDefaultSensitiveValue {
+	if !isSensitiveControlType && hasDefaultSensitiveValue && !hasPlainDefaultValue {
 		diags.AddError(
 			"Invalid step template parameter configuration",
 			fmt.Sprintf("Parameter '%s' has non-sensitive display setting 'Octopus.ControlType', but uses 'default_sensitive_value'. Non-sensitive parameters should use the 'default_value' attribute.", param.Name.ValueString()),
