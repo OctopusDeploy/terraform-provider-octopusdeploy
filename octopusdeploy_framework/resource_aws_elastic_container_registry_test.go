@@ -93,6 +93,14 @@ func TestAccOctopusDeployAwsEcrFeedWithOIDC(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_aws_elastic_container_registry." + localName
 
+	accessKeySecretKeyConfig := `
+resource "octopusdeploy_aws_elastic_container_registry" "%s" {
+  name       = "AWS ECR With AccessKey"
+  region     = "us-east-1"
+  access_key = "testaccesskey"
+  secret_key = "testsecretkey"
+}
+`
 	oidcConfig := `
 resource "octopusdeploy_aws_elastic_container_registry" "%s" {
   name       = "AWS ECR OIDC Registry"
@@ -111,6 +119,16 @@ resource "octopusdeploy_aws_elastic_container_registry" "%s" {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
+				Config: fmt.Sprintf(accessKeySecretKeyConfig, localName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "name", "AWS ECR With AccessKey"),
+					resource.TestCheckResourceAttr(prefix, "region", "us-east-1"),
+					resource.TestCheckResourceAttr(prefix, "access_key", "testaccesskey"),
+					resource.TestCheckResourceAttr(prefix, "secret_key", "testsecretkey"),
+					resource.TestCheckNoResourceAttr(prefix, "oidc_authentication"),
+				),
+			},
+			{
 				Config: fmt.Sprintf(oidcConfig, localName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(prefix, "name", "AWS ECR OIDC Registry"),
@@ -120,6 +138,8 @@ resource "octopusdeploy_aws_elastic_container_registry" "%s" {
 					resource.TestCheckResourceAttr(prefix, "oidc_authentication.audience", "audience"),
 					resource.TestCheckTypeSetElemAttr(prefix, "oidc_authentication.subject_keys.*", "feed"),
 					resource.TestCheckTypeSetElemAttr(prefix, "oidc_authentication.subject_keys.*", "space"),
+					resource.TestCheckNoResourceAttr(prefix, "access_key"),
+					resource.TestCheckNoResourceAttr(prefix, "secret_key"),
 				),
 			},
 		},
