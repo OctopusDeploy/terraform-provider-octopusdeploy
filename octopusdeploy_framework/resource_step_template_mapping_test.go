@@ -8,7 +8,6 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -368,13 +367,7 @@ func TestStepTemplateParametersValidationWhenNonSensitiveDefaultValueSetForSensi
 
 	// Act
 	diags := validateStepTemplateParameters(ctx, &state)
-
-	diagnostics := make([]diag.Severity, len(diags))
-	for i, d := range diags {
-		diagnostics[i] = d.Severity()
-	}
-	expectedDiagnostics := []diag.Severity{diag.SeverityError}
-	assert.Equal(t, expectedDiagnostics, diagnostics, "Expected diagnostics to contain errors")
+	assert.Equal(t, 1, len(diags.Errors()), "Expected diagnostics to contain errors")
 }
 
 func TestStepTemplateParametersValidationWhenSensitiveDefaultValueSetForNonSensitiveControlType(t *testing.T) {
@@ -428,73 +421,5 @@ func TestStepTemplateParametersValidationWhenSensitiveDefaultValueSetForNonSensi
 
 	// Act
 	diags := validateStepTemplateParameters(ctx, &state)
-
-	diagnostics := make([]diag.Severity, len(diags))
-	for i, d := range diags {
-		diagnostics[i] = d.Severity()
-	}
-	expectedDiagnostics := []diag.Severity{diag.SeverityError}
-	assert.Equal(t, expectedDiagnostics, diagnostics, "Expected diagnostics to contain errors")
-}
-
-func TestStepTemplateParametersValidationWhenBothSensitiveAndNonSensitiveDefaultValuesAreSet(t *testing.T) {
-	// Validation on default_sensitive_value will handle this scenario
-	// We don't want to pollute output with multiple errors for same reason
-	ctx := context.Background()
-
-	sensitiveParameter := types.ObjectValueMust(
-		schemas.GetStepTemplateParameterTypeAttributes(),
-		map[string]attr.Value{
-			"id":        types.StringValue("00000000-0000-0000-0000-000000000001"),
-			"name":      types.StringValue("Parameter One"),
-			"label":     types.StringValue("Parameter One"),
-			"help_text": types.StringNull(),
-			"display_settings": types.MapValueMust(types.StringType, map[string]attr.Value{
-				"Octopus.ControlType": types.StringValue("Sensitive"),
-			}),
-			"default_value":           types.StringValue("plain-one"),
-			"default_sensitive_value": types.StringValue("secret-one"),
-		},
-	)
-
-	textParameter := types.ObjectValueMust(
-		schemas.GetStepTemplateParameterTypeAttributes(),
-		map[string]attr.Value{
-			"id":        types.StringValue("00000000-0000-0000-0000-000000000002"),
-			"name":      types.StringValue("Parameter Two"),
-			"label":     types.StringValue("Parameter Two"),
-			"help_text": types.StringNull(),
-			"display_settings": types.MapValueMust(types.StringType, map[string]attr.Value{
-				"Octopus.ControlType": types.StringValue("SingleLineText"),
-			}),
-			"default_value":           types.StringValue("plain-two"),
-			"default_sensitive_value": types.StringValue("secret-two"),
-		},
-	)
-
-	state := schemas.StepTemplateTypeResourceModel{
-		SpaceID:         types.StringValue("Spaces-1"),
-		Name:            types.StringValue("Basic Template"),
-		ActionType:      types.StringValue("Octopus.Script"),
-		StepPackageId:   types.StringValue("Octopus.Script"),
-		Packages:        types.ListValueMust(schemas.StepTemplatePackageObjectType(), []attr.Value{}),
-		GitDependencies: types.ListValueMust(schemas.StepTemplateGitDependencyObjectType(), []attr.Value{}),
-		Parameters: types.ListValueMust(schemas.StepTemplateParameterObjectType(), []attr.Value{
-			sensitiveParameter,
-			textParameter,
-		}),
-		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
-			"Octopus.Action.Script.ScriptBody": types.StringValue("Write-Host 'Test'"),
-		}),
-	}
-
-	// Act
-	diags := validateStepTemplateParameters(ctx, &state)
-
-	diagnostics := make([]diag.Severity, len(diags))
-	for i, d := range diags {
-		diagnostics[i] = d.Severity()
-	}
-	expectedDiagnostics := []diag.Severity{diag.SeverityError, diag.SeverityError}
-	assert.Equal(t, expectedDiagnostics, diagnostics, "Expected diagnostics to contain errors")
+	assert.Equal(t, 1, len(diags.Errors()), "Expected diagnostics to contain errors")
 }

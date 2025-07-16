@@ -524,37 +524,38 @@ func validateStepTemplateParameters(ctx context.Context, data *schemas.StepTempl
 	}
 
 	for _, parameter := range parameters {
-		diags.Append(validateStepTemplateParameterSensitivity(parameter)...)
+		diags.Append(validateStepTemplateParameterDefaultValue(parameter)...)
 	}
 
 	return diags
 }
 
-func validateStepTemplateParameterSensitivity(param schemas.StepTemplateParameterType) diag.Diagnostics {
+func validateStepTemplateParameterDefaultValue(param schemas.StepTemplateParameterType) diag.Diagnostics {
 	diags := diag.Diagnostics{}
 
-	controlType := ""
+	isSensitive := false
 	if !param.DisplaySettings.IsNull() && !param.DisplaySettings.IsUnknown() {
 		displaySettings := param.DisplaySettings.Elements()
 		if controlTypeValue, exists := displaySettings["Octopus.ControlType"]; exists {
 			if ctrlTypeStr, ok := controlTypeValue.(types.String); ok {
-				controlType = ctrlTypeStr.ValueString()
+				isSensitive = ctrlTypeStr.ValueString() == "Sensitive"
 			}
 		}
 	}
 
-	isSensitiveControlType := controlType == "Sensitive"
-	hasPlainDefaultValue := !param.DefaultValue.IsNull() && !param.DefaultValue.IsUnknown() && param.DefaultValue.ValueString() != ""
-	hasDefaultSensitiveValue := !param.DefaultSensitiveValue.IsNull() && !param.DefaultSensitiveValue.IsUnknown() && param.DefaultSensitiveValue.ValueString() != ""
+	hasPlainValue := !param.DefaultValue.IsNull() && !param.DefaultValue.IsUnknown() && param.DefaultValue.ValueString() != ""
+	hasSensitiveValue := !param.DefaultSensitiveValue.IsNull() && !param.DefaultSensitiveValue.IsUnknown()
 
-	if isSensitiveControlType && hasPlainDefaultValue && !hasDefaultSensitiveValue {
+	if isSensitive && hasPlainValue {
 		diags.AddError(
 			"Invalid step template parameter configuration",
 			fmt.Sprintf("Parameter '%s' has display setting 'Octopus.ControlType=Sensitive' but uses 'default_value' instead of 'default_sensitive_value'. Sensitive parameters should use the 'default_sensitive_value' attribute.", param.Name.ValueString()),
 		)
+
+		return diags
 	}
 
-	if !isSensitiveControlType && hasDefaultSensitiveValue && !hasPlainDefaultValue {
+	if !isSensitive && hasSensitiveValue {
 		diags.AddError(
 			"Invalid step template parameter configuration",
 			fmt.Sprintf("Parameter '%s' has non-sensitive display setting 'Octopus.ControlType', but uses 'default_sensitive_value'. Non-sensitive parameters should use the 'default_value' attribute.", param.Name.ValueString()),
