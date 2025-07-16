@@ -293,15 +293,16 @@ func mapStepTemplateParametersFromState(stateParameters []schemas.StepTemplatePa
 			DisplaySettings: util.ConvertAttrStringMapToStringMap(val.DisplaySettings.Elements()),
 		}
 
-		// Set default value
-		if val.DefaultSensitiveValue.IsUnknown() || val.DefaultSensitiveValue.IsNull() {
-			value := core.NewPropertyValue(val.DefaultValue.ValueString(), false)
-			templateParameter.DefaultValue = &value
-		} else {
+		// Determine default value
+		defaultValue := val.DefaultValue.ValueString()
+		isSensitive := false
+		if !val.DefaultSensitiveValue.IsUnknown() && !val.DefaultSensitiveValue.IsNull() {
 			// Is sensitive
-			value := core.NewPropertyValue(val.DefaultSensitiveValue.ValueString(), true)
-			templateParameter.DefaultValue = &value
+			defaultValue = val.DefaultSensitiveValue.ValueString()
+			isSensitive = true
 		}
+		value := core.NewPropertyValue(defaultValue, isSensitive)
+		templateParameter.DefaultValue = &value
 
 		// Confirm unique Id
 		id := val.ID.ValueString()

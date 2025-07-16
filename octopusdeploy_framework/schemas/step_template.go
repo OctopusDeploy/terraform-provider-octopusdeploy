@@ -156,7 +156,7 @@ func GetStepTemplateParameterResourceSchema() rs.ListNestedAttribute {
 					).
 					Build(),
 				"default_sensitive_value": util.ResourceString().
-					Description("Use this when parameter display settings set to 'Sensitive'").
+					Description("Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'").
 					Optional().
 					Sensitive().
 					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
