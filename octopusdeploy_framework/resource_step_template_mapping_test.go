@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-func TestAccMapStepTemplateParametersFromStateSingleLineText(t *testing.T) {
+func TestMapStepTemplateParametersFromStateSingleLineText(t *testing.T) {
 	ctx := context.Background()
 
 	defaultValue := "defaultValue"
@@ -82,7 +82,7 @@ func TestAccMapStepTemplateParametersFromStateSingleLineText(t *testing.T) {
 	assert.Equal(t, expectedTemplate, template)
 }
 
-func TestAccMapStepTemplateParametersToStateSingleLineText(t *testing.T) {
+func TestMapStepTemplateParametersToStateSingleLineText(t *testing.T) {
 	ctx := context.Background()
 
 	defaultValue := "random-value"
@@ -155,7 +155,7 @@ func TestAccMapStepTemplateParametersToStateSingleLineText(t *testing.T) {
 	assert.Equal(t, expectedState, state)
 }
 
-func TestAccMapStepTemplateParametersFromStateSensitive(t *testing.T) {
+func TestMapStepTemplateParametersFromStateSensitive(t *testing.T) {
 	ctx := context.Background()
 
 	sensitiveValue := "secret-value"
@@ -223,7 +223,7 @@ func TestAccMapStepTemplateParametersFromStateSensitive(t *testing.T) {
 	assert.Equal(t, expectedTemplate, template)
 }
 
-func TestAccMapStepTemplateParametersToStateSensitive(t *testing.T) {
+func TestMapStepTemplateParametersToStateSensitive(t *testing.T) {
 	ctx := context.Background()
 
 	parameterDefaultValue := core.NewPropertyValue("", true) // Sensitive value is empty when returned from the Server
@@ -317,7 +317,7 @@ func TestAccMapStepTemplateParametersToStateSensitive(t *testing.T) {
 	assert.Equal(t, expectedState, state)
 }
 
-func TestAccMapStepTemplateParametersValidationWhenNonSensitiveDefaultValueSetForSensitiveControlType(t *testing.T) {
+func TestStepTemplateParametersValidationWhenNonSensitiveDefaultValueSetForSensitiveControlType(t *testing.T) {
 	ctx := context.Background()
 
 	sensitiveParameter := types.ObjectValueMust(
@@ -377,7 +377,7 @@ func TestAccMapStepTemplateParametersValidationWhenNonSensitiveDefaultValueSetFo
 	assert.Equal(t, expectedDiagnostics, diagnostics, "Expected diagnostics to contain errors")
 }
 
-func TestAccMapStepTemplateParametersValidationWhenSensitiveDefaultValueSetForNonSensitiveControlType(t *testing.T) {
+func TestStepTemplateParametersValidationWhenSensitiveDefaultValueSetForNonSensitiveControlType(t *testing.T) {
 	ctx := context.Background()
 
 	sensitiveParameter := types.ObjectValueMust(

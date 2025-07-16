@@ -149,7 +149,6 @@ func GetStepTemplateParameterResourceSchema() rs.ListNestedAttribute {
 					Optional().
 					Computed().
 					Default(stringdefault.StaticString("")).
-					//PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Validators(
 						stringvalidator.ConflictsWith(
 							path.MatchRelative().AtParent().AtName("default_sensitive_value"),
