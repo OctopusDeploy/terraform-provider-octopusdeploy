@@ -148,6 +148,7 @@ func GetStepTemplateParameterResourceSchema() rs.ListNestedAttribute {
 					Optional().
 					Computed().
 					Default(stringdefault.StaticString("")).
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 				"default_sensitive_value": util.ResourceString().
 					Description("Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'").
