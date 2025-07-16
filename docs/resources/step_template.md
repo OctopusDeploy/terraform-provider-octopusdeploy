@@ -79,6 +79,7 @@ Required:
 
 Optional:
 
+- `default_sensitive_value` (String, Sensitive) Use this when parameter display settings set to 'Sensitive'
 - `default_value` (String) A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.
 - `display_settings` (Map of String) The display settings for the parameter.
 - `help_text` (String) The help presented alongside the parameter input.
