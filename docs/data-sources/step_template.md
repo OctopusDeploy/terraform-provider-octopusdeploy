@@ -87,6 +87,7 @@ Read-Only:
 
 Read-Only:
 
+- `default_sensitive_value` (String)
 - `default_value` (String)
 - `display_settings` (Map of String)
 - `help_text` (String)
