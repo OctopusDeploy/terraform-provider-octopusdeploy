@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/feeds"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"testing"
@@ -17,50 +18,51 @@ type azureFeedTestData struct {
 	password     string
 }
 
-// TODO: uncomment the below test cases when deploy v2025.2 is released for download.
 func TestAccOctopusDeployAzureFeed(t *testing.T) {
-	// localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	// prefix := "octopusdeploy_azure_container_registry." + localName
-	// createData := azureFeedTestData{
-	// 	name:         acctest.RandStringFromCharSet(20, acctest.CharSetAlpha),
-	// 	uri:          "https://azure.io.test",
-	// 	registryPath: acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-	// 	apiVersion:   acctest.RandStringFromCharSet(8, acctest.CharSetAlpha),
-	// 	username:     acctest.RandStringFromCharSet(16, acctest.CharSetAlpha),
-	// 	password:     acctest.RandStringFromCharSet(300, acctest.CharSetAlpha),
-	// }
-	// updateData := azureFeedTestData{
-	// 	name:         createData.name + "-updated",
-	// 	uri:          "https://azure.io.test.updated",
-	// 	registryPath: createData.registryPath + "-updated",
-	// 	apiVersion:   createData.apiVersion + "-updated",
-	// 	username:     createData.username + "-updated",
-	// 	password:     createData.password + "-updated",
-	// }
-	// withMinimumData := azureFeedTestData{
-	// 	name: "Azure Registry Minimum",
-	// 	uri:  "https://test-azure.minimum",
-	// }
-	//
-	// resource.Test(t, resource.TestCase{
-	// 	CheckDestroy:             func(s *terraform.State) error { return testAzureFeedCheckDestroy(s) },
-	// 	PreCheck:                 func() { TestAccPreCheck(t) },
-	// 	ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-	// 	Steps: []resource.TestStep{
-	// 		{
-	// 			Config: testAzureFeedBasic(createData, localName),
-	// 			Check:  testAssertAzureFeedAttributes(createData, prefix),
-	// 		},
-	// 		{
-	// 			Config: testAzureFeedBasic(updateData, localName),
-	// 			Check:  testAssertAzureFeedAttributes(updateData, prefix),
-	// 		},
-	// 		{
-	// 			Config: testAzureFeedWithMinimumData(withMinimumData, localName),
-	// 			Check:  testAssertAzureFeedMinimumAttributes(withMinimumData, prefix),
-	// 		},
-	// 	},
-	// })
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_azure_container_registry." + localName
+	createData := azureFeedTestData{
+		name:         acctest.RandStringFromCharSet(20, acctest.CharSetAlpha),
+		uri:          "https://azure.io.test",
+		registryPath: acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+		apiVersion:   acctest.RandStringFromCharSet(8, acctest.CharSetAlpha),
+		username:     acctest.RandStringFromCharSet(16, acctest.CharSetAlpha),
+		password:     acctest.RandStringFromCharSet(300, acctest.CharSetAlpha),
+	}
+	updateData := azureFeedTestData{
+		name:         createData.name + "-updated",
+		uri:          "https://azure.io.test.updated",
+		registryPath: createData.registryPath + "-updated",
+		apiVersion:   createData.apiVersion + "-updated",
+		username:     createData.username + "-updated",
+		password:     createData.password + "-updated",
+	}
+	withMinimumData := azureFeedTestData{
+		name:     "Azure Registry Minimum",
+		uri:      "https://test-azure.minimum",
+		username: createData.username + "-updated",
+		password: createData.password + "-updated",
+	}
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             func(s *terraform.State) error { return testAzureFeedCheckDestroy(s) },
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAzureFeedBasic(createData, localName),
+				Check:  testAssertAzureFeedAttributes(createData, prefix),
+			},
+			{
+				Config: testAzureFeedBasic(updateData, localName),
+				Check:  testAssertAzureFeedAttributes(updateData, prefix),
+			},
+			{
+				Config: testAzureFeedWithMinimumData(withMinimumData, localName),
+				Check:  testAssertAzureFeedMinimumAttributes(withMinimumData, prefix),
+			},
+		},
+	})
 }
 
 func testAzureFeedBasic(data azureFeedTestData, localName string) string {
@@ -86,14 +88,18 @@ func testAzureFeedBasic(data azureFeedTestData, localName string) string {
 
 func testAzureFeedWithMinimumData(data azureFeedTestData, localName string) string {
 	return fmt.Sprintf(`
-		resource "octopusdeploy_azure_container_registry" "%s" {
-			name			= "%s"
-			feed_uri		= "%s"
-		}
-	`,
+  resource "octopusdeploy_azure_container_registry" "%s" {
+   name      = "%s"
+   feed_uri  = "%s"
+   username  = "%s"
+   password  = "%s"
+  }
+ `,
 		localName,
 		data.name,
 		data.uri,
+		data.username,
+		data.password,
 	)
 }
 
@@ -112,10 +118,10 @@ func testAssertAzureFeedMinimumAttributes(expected azureFeedTestData, prefix str
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(prefix, "name", expected.name),
 		resource.TestCheckResourceAttr(prefix, "feed_uri", expected.uri),
+		resource.TestCheckResourceAttr(prefix, "username", expected.username),
+		resource.TestCheckResourceAttr(prefix, "password", expected.password),
 		resource.TestCheckNoResourceAttr(prefix, "registry_path"),
 		resource.TestCheckNoResourceAttr(prefix, "api_version"),
-		resource.TestCheckNoResourceAttr(prefix, "username"),
-		resource.TestCheckNoResourceAttr(prefix, "password"),
 	)
 }
 
@@ -132,4 +138,65 @@ func testAzureFeedCheckDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func TestAccOctopusDeployAzureFeedWithOIDC(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_azure_container_registry." + localName
+
+	usernamePasswordConfig := `
+resource "octopusdeploy_azure_container_registry" "%s" {
+  name          = "Azure Registry With UserPass"
+  feed_uri      = "https://test-azure-userpass.azurecr.io"
+  registry_path = "test-userpass-registry"
+  username      = "testuser"
+  password      = "testpassword"
+}
+`
+	oidcConfig := `
+resource "octopusdeploy_azure_container_registry" "%s" {
+  name         = "Azure OIDC Registry"
+  feed_uri     = "https://test-azure-oidc.azurecr.io"
+  registry_path = "test-oidc-registry"
+  oidc_authentication = {
+    client_id   = "00000000-0000-0000-0000-000000000000"
+    tenant_id   = "11111111-1111-1111-1111-111111111111"
+    audience    = "audience"
+    subject_keys = ["feed", "space"]
+  }
+}
+`
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             func(s *terraform.State) error { return testAzureFeedCheckDestroy(s) },
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(usernamePasswordConfig, localName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "name", "Azure Registry With UserPass"),
+					resource.TestCheckResourceAttr(prefix, "feed_uri", "https://test-azure-userpass.azurecr.io"),
+					resource.TestCheckResourceAttr(prefix, "registry_path", "test-userpass-registry"),
+					resource.TestCheckResourceAttr(prefix, "username", "testuser"),
+					resource.TestCheckResourceAttr(prefix, "password", "testpassword"),
+					resource.TestCheckNoResourceAttr(prefix, "oidc_authentication"),
+				),
+			},
+			{
+				Config: fmt.Sprintf(oidcConfig, localName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "name", "Azure OIDC Registry"),
+					resource.TestCheckResourceAttr(prefix, "feed_uri", "https://test-azure-oidc.azurecr.io"),
+					resource.TestCheckResourceAttr(prefix, "registry_path", "test-oidc-registry"),
+					resource.TestCheckResourceAttr(prefix, "oidc_authentication.client_id", "00000000-0000-0000-0000-000000000000"),
+					resource.TestCheckResourceAttr(prefix, "oidc_authentication.tenant_id", "11111111-1111-1111-1111-111111111111"),
+					resource.TestCheckResourceAttr(prefix, "oidc_authentication.audience", "audience"),
+					resource.TestCheckTypeSetElemAttr(prefix, "oidc_authentication.subject_keys.*", "feed"),
+					resource.TestCheckTypeSetElemAttr(prefix, "oidc_authentication.subject_keys.*", "space"),
+					resource.TestCheckNoResourceAttr(prefix, "username"),
+					resource.TestCheckNoResourceAttr(prefix, "password"),
+				),
+			},
+		},
+	})
 }
