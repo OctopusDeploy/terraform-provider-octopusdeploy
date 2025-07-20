@@ -1,0 +1,1 @@
+terraform import [options] octopusdeploy_step_template.<name> "<template-id>"
