@@ -13,7 +13,6 @@ This resource manages step_templates in Octopus Deploy.
 ## Example Usage
 
 ```terraform
-# Notice how default sensitive value is set for step template parameter "My.Secret"
 resource "octopusdeploy_step_template" "example" {
   action_type     = "Octopus.Script"
   name            = "Example"
