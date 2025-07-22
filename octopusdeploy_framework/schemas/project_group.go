@@ -33,6 +33,7 @@ func (p ProjectGroupSchema) GetDatasourceSchema() datasourceSchema.Schema {
 						"id":          GetIdDatasourceSchema(true),
 						"space_id":    GetSpaceIdDatasourceSchema(description, true),
 						"name":        GetReadonlyNameDatasourceSchema(),
+						"slug":        GetSlugDatasourceSchema(projectGroupDescription, true),
 						"description": GetDescriptionDatasourceSchema(projectGroupDescription),
 					},
 				},
@@ -45,6 +46,7 @@ func (p ProjectGroupSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":          GetIdResourceSchema(),
+			"slug":        GetSlugResourceSchema(projectGroupDescription),
 			"space_id":    GetSpaceIdResourceSchema(projectGroupDescription),
 			"name":        GetNameResourceSchema(true),
 			"description": GetDescriptionResourceSchema(projectGroupDescription),
@@ -54,6 +56,7 @@ func (p ProjectGroupSchema) GetResourceSchema() resourceSchema.Schema {
 
 type ProjectGroupTypeResourceModel struct {
 	Name        types.String `tfsdk:"name"`
+	Slug        types.String `tfsdk:"slug"`
 	SpaceID     types.String `tfsdk:"space_id"`
 	Description types.String `tfsdk:"description"`
 
