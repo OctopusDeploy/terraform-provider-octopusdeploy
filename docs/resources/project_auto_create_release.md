@@ -102,8 +102,8 @@ resource "octopusdeploy_deployment_process" "example" {
 
 # Auto create release configuration
 resource "octopusdeploy_project_auto_create_release" "example" {
-  deployment_process_id = octopusdeploy_deployment_process.example.id
-  channel_id            = octopusdeploy_channel.default.id
+  project_id = octopusdeploy_project.example.id
+  channel_id = octopusdeploy_channel.default.id
   
   release_creation_package {
     deployment_action = octopusdeploy_deployment_process.example.step[0].action[0].name
@@ -111,7 +111,6 @@ resource "octopusdeploy_project_auto_create_release" "example" {
   }
   
   # release_creation_package_step_id is computed automatically if not provided
-  # project_id is automatically derived from deployment_process_id
 }
 ```
 
