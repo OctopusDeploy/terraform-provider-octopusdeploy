@@ -13,7 +13,7 @@ import (
 
 func (r *projectAutoCreateReleaseResource) validateAutoCreateReleaseConfiguration(ctx context.Context, project *projects.Project, data *schemas.ProjectAutoCreateReleaseResourceModel) error {
 	// Validate deployment process exists
-	if err := r.validateDeploymentProcessExists(ctx, project, data.DeploymentProcessID.ValueString()); err != nil {
+	if err := r.validateDeploymentProcessExists(ctx, project.SpaceID, data.DeploymentProcessID.ValueString()); err != nil {
 		return err
 	}
 
@@ -30,12 +30,12 @@ func (r *projectAutoCreateReleaseResource) validateAutoCreateReleaseConfiguratio
 	return nil
 }
 
-func (r *projectAutoCreateReleaseResource) validateDeploymentProcessExists(ctx context.Context, project *projects.Project, deploymentProcessID string) error {
+func (r *projectAutoCreateReleaseResource) validateDeploymentProcessExists(ctx context.Context, spaceID, deploymentProcessID string) error {
 	if deploymentProcessID == "" {
 		return fmt.Errorf("deployment_process_id is required")
 	}
 
-	_, err := deployments.GetDeploymentProcessByID(r.Client, project.SpaceID, deploymentProcessID)
+	_, err := deployments.GetDeploymentProcessByID(r.Client, spaceID, deploymentProcessID)
 	if err != nil {
 		return fmt.Errorf("deployment process with ID %s does not exist: %w", deploymentProcessID, err)
 	}
