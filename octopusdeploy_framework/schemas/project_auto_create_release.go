@@ -20,8 +20,8 @@ func (r ProjectAutoCreateReleaseSchema) GetResourceSchema() resourceSchema.Schem
 				Description("The unique identifier for this resource.").
 				Computed().
 				Build(),
-			"project_id": util.ResourceString().
-				Description("The ID of the project for which to enable automatic release creation.").
+			"deployment_process_id": util.ResourceString().
+				Description("The ID of the deployment process to enforce dependency on.").
 				PlanModifiers(stringplanmodifier.RequiresReplace()).
 				Required().
 				Build(),
@@ -67,7 +67,7 @@ func (r ProjectAutoCreateReleaseSchema) GetDatasourceSchema() datasourceSchema.S
 
 type ProjectAutoCreateReleaseResourceModel struct {
 	ID                           types.String                              `tfsdk:"id"`
-	ProjectID                    types.String                              `tfsdk:"project_id"`
+	DeploymentProcessID          types.String                              `tfsdk:"deployment_process_id"`
 	SpaceID                      types.String                              `tfsdk:"space_id"`
 	ChannelID                    types.String                              `tfsdk:"channel_id"`
 	ReleaseCreationPackageStepID types.String                              `tfsdk:"release_creation_package_step_id"`

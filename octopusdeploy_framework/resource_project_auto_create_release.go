@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -38,11 +39,18 @@ func (r *projectAutoCreateReleaseResource) ImportState(ctx context.Context, req 
 	// Import format: project_id
 	projectID := req.ID
 
-	// Create empty state with project ID
+	// Get the project to fetch its deployment process ID
+	project, err := projects.GetByID(r.Client, r.Config.SpaceID, projectID)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read project during import", fmt.Sprintf("Unable to read project with ID %s: %s", projectID, err.Error()))
+		return
+	}
+
+	// Create empty state with deployment process ID
 	empty := &schemas.ProjectAutoCreateReleaseResourceModel{
 		ID:                           types.StringValue(projectID + "-auto-create-release"),
-		ProjectID:                    types.StringValue(projectID),
-		SpaceID:                      types.StringNull(),
+		DeploymentProcessID:          types.StringValue(project.DeploymentProcessID),
+		SpaceID:                      types.StringValue(project.SpaceID),
 		ChannelID:                    types.StringNull(),
 		ReleaseCreationPackageStepID: types.StringNull(),
 		ReleaseCreationPackage:       []schemas.ProjectAutoCreateReleaseCreationPackage{},
@@ -58,8 +66,22 @@ func (r *projectAutoCreateReleaseResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	projectID := data.ProjectID.ValueString()
+	deploymentProcessID := data.DeploymentProcessID.ValueString()
 	spaceID := data.SpaceID.ValueString()
+
+	if deploymentProcessID == "" {
+		resp.Diagnostics.AddError("Invalid configuration", "deployment_process_id is required")
+		return
+	}
+
+	// Get deployment process to derive project ID
+	deploymentProcess, err := deployments.GetDeploymentProcessByID(r.Client, spaceID, deploymentProcessID)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read deployment process", fmt.Sprintf("Unable to read deployment process with ID %s: %s", deploymentProcessID, err.Error()))
+		return
+	}
+
+	projectID := deploymentProcess.ProjectID
 
 	// Get the project
 	project, err := projects.GetByID(r.Client, spaceID, projectID)
@@ -72,6 +94,11 @@ func (r *projectAutoCreateReleaseResource) Create(ctx context.Context, req resou
 	if data.SpaceID.IsNull() || data.SpaceID.IsUnknown() {
 		data.SpaceID = types.StringValue(project.SpaceID)
 		spaceID = project.SpaceID
+	}
+
+	// Set deployment process ID if not provided
+	if data.DeploymentProcessID.IsNull() || data.DeploymentProcessID.IsUnknown() {
+		data.DeploymentProcessID = types.StringValue(project.DeploymentProcessID)
 	}
 
 	// Validate the auto create release configuration
@@ -113,8 +140,22 @@ func (r *projectAutoCreateReleaseResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	projectID := state.ProjectID.ValueString()
+	deploymentProcessID := state.DeploymentProcessID.ValueString()
 	spaceID := state.SpaceID.ValueString()
+
+	if deploymentProcessID == "" {
+		resp.Diagnostics.AddError("Invalid state", "deployment_process_id is required")
+		return
+	}
+
+	// Get deployment process to derive project ID
+	deploymentProcess, err := deployments.GetDeploymentProcessByID(r.Client, spaceID, deploymentProcessID)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read deployment process", fmt.Sprintf("Unable to read deployment process with ID %s: %s", deploymentProcessID, err.Error()))
+		return
+	}
+
+	projectID := deploymentProcess.ProjectID
 
 	// Get the project
 	project, err := projects.GetByID(r.Client, spaceID, projectID)
@@ -143,8 +184,22 @@ func (r *projectAutoCreateReleaseResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	projectID := data.ProjectID.ValueString()
+	deploymentProcessID := data.DeploymentProcessID.ValueString()
 	spaceID := data.SpaceID.ValueString()
+
+	if deploymentProcessID == "" {
+		resp.Diagnostics.AddError("Invalid configuration", "deployment_process_id is required")
+		return
+	}
+
+	// Get deployment process to derive project ID
+	deploymentProcess, err := deployments.GetDeploymentProcessByID(r.Client, spaceID, deploymentProcessID)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read deployment process", fmt.Sprintf("Unable to read deployment process with ID %s: %s", deploymentProcessID, err.Error()))
+		return
+	}
+
+	projectID := deploymentProcess.ProjectID
 
 	// Get the project
 	project, err := projects.GetByID(r.Client, spaceID, projectID)
@@ -189,8 +244,22 @@ func (r *projectAutoCreateReleaseResource) Delete(ctx context.Context, req resou
 		return
 	}
 
-	projectID := state.ProjectID.ValueString()
+	deploymentProcessID := state.DeploymentProcessID.ValueString()
 	spaceID := state.SpaceID.ValueString()
+
+	if deploymentProcessID == "" {
+		resp.Diagnostics.AddError("Invalid state", "deployment_process_id is required")
+		return
+	}
+
+	// Get deployment process to derive project ID
+	deploymentProcess, err := deployments.GetDeploymentProcessByID(r.Client, spaceID, deploymentProcessID)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read deployment process", fmt.Sprintf("Unable to read deployment process with ID %s: %s", deploymentProcessID, err.Error()))
+		return
+	}
+
+	projectID := deploymentProcess.ProjectID
 
 	// Get the project
 	project, err := projects.GetByID(r.Client, spaceID, projectID)
@@ -220,5 +289,6 @@ func (r *projectAutoCreateReleaseResource) mapDataToProject(ctx context.Context,
 
 func (r *projectAutoCreateReleaseResource) mapProjectToData(ctx context.Context, project *projects.Project, data *schemas.ProjectAutoCreateReleaseResourceModel) {
 	data.SpaceID = types.StringValue(project.SpaceID)
+	data.DeploymentProcessID = types.StringValue(project.DeploymentProcessID)
 	flatten(ctx, project.ReleaseCreationStrategy, data)
 }
