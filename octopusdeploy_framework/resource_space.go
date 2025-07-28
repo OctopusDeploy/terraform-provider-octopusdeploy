@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tasks"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -244,6 +245,12 @@ func (s *spaceResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
 	}
 
+	// Cancel all running tasks before deleting the space
+	if err := s.cancelRunningTasks(ctx, data.ID.ValueString()); err != nil {
+		resp.Diagnostics.AddError("Error cancelling running tasks", err.Error())
+		return
+	}
+
 	if err := s.Client.Spaces.DeleteByID(data.ID.ValueString()); err != nil {
 		resp.Diagnostics.AddError("unable to delete space", err.Error())
 		return
@@ -277,4 +284,36 @@ func addSpaceManagers(spaceID string, teamIDs []string) []string {
 	}
 	newSlice = append(newSlice, teamIDs...)
 	return newSlice
+}
+
+// cancelRunningTasks cancels all running tasks in a space
+func (s *spaceResource) cancelRunningTasks(ctx context.Context, spaceID string) error {
+	tflog.Debug(ctx, fmt.Sprintf("Cancelling running tasks in space %s", spaceID))
+
+	// Query for running tasks in the space
+	tasksQuery := tasks.TasksQuery{
+		IsRunning: true,
+		Spaces:    []string{spaceID},
+	}
+
+	// Get the task service and query for running tasks
+	runningTasks, err := s.Client.Tasks.Get(tasksQuery)
+
+	if err != nil {
+		return fmt.Errorf("failed to get running tasks: %w", err)
+	}
+
+	// Cancel each running task
+	for _, task := range runningTasks.Items {
+		tflog.Debug(ctx, fmt.Sprintf("Cancelling task %s (%s)", task.GetID(), task.Name))
+
+		_, err := tasks.Cancel(s.Client, spaceID, task.GetID())
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Failed to cancel task %s: %v", task.GetID(), err))
+			// Attempt to cancel remaining tasks anyway
+		}
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Cancelled %d running tasks in space %s", len(runningTasks.Items), spaceID))
+	return nil
 }
