@@ -47,6 +47,11 @@ func (r *amazonWebServicesAccountResource) Create(ctx context.Context, req resou
 	})
 
 	account := expandAmazonWebServicesAccount(ctx, plan)
+	if account == nil {
+		resp.Diagnostics.AddError("Error creating Amazon Web Services account", "Failed to expand account model")
+		return
+	}
+
 	createdAccount, err := accounts.Add(r.Config.Client, account)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating Amazon Web Services account", err.Error())
@@ -85,9 +90,20 @@ func (r *amazonWebServicesAccountResource) Update(ctx context.Context, req resou
 	}
 
 	account := expandAmazonWebServicesAccount(ctx, plan)
-	updatedAccount, err := accounts.Update(r.Client, account)
+	if account == nil {
+		resp.Diagnostics.AddError("Error updating Amazon Web Services account", "Failed to expand account model")
+		return
+	}
+
+	_, err := accounts.Update(r.Client, account)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating Amazon Web Services account", err.Error())
+		return
+	}
+
+	updatedAccount, err := accounts.GetByID(r.Client, plan.SpaceId.ValueString(), plan.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading updated Amazon Web Services account", err.Error())
 		return
 	}
 
@@ -119,7 +135,13 @@ func expandAmazonWebServicesAccount(ctx context.Context, model schemas.AmazonWeb
 	var accountAccessKey = model.AccessKey.ValueString()
 	var accountSecretKey = core.NewSensitiveValue(model.SecretKey.ValueString())
 
-	account, _ := accounts.NewAmazonWebServicesAccount(accountName, accountAccessKey, accountSecretKey)
+	account, err := accounts.NewAmazonWebServicesAccount(accountName, accountAccessKey, accountSecretKey)
+	if err != nil {
+		tflog.Error(ctx, "Failed to create Amazon Web Services account", map[string]interface{}{
+			"error": err.Error(),
+		})
+		return nil
+	}
 
 	account.SetID(model.ID.ValueString())
 	account.SetDescription(model.Description.ValueString())
