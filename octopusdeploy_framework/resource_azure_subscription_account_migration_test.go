@@ -60,7 +60,7 @@ resource "octopusdeploy_azure_subscription_account" "azure_account" {
 
 func testAzureSubscriptionAccountDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "octopusdeploy_azure_account" {
+		if rs.Type != "octopusdeploy_azure_subscription_account" {
 			account, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID)
 			if err == nil && account != nil {
 				return fmt.Errorf("account (%s) still exists", rs.Primary.ID)
@@ -73,7 +73,7 @@ func testAzureSubscriptionAccountDestroy(s *terraform.State) error {
 
 func testAzureSubscriptionAccountUpdated(t *testing.T) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		accountId := s.RootModule().Resources["octopusdeploy_aws_account.aws_account"].Primary.ID
+		accountId := s.RootModule().Resources["octopusdeploy_azure_subscription_account.azure_account"].Primary.ID
 		account, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), accountId)
 		if err != nil {
 			return fmt.Errorf("failed to retrieve account by ID: %s", err)
@@ -82,7 +82,7 @@ func testAzureSubscriptionAccountUpdated(t *testing.T) resource.TestCheckFunc {
 		azureAccount := account.(*accounts.AzureSubscriptionAccount)
 
 		assert.NotEmpty(t, azureAccount.GetID(), "Account ID did not match expected value")
-		assert.Equal(t, azureAccount.Name, "Updated test account", "Account name did not match expected value")
+		assert.Equal(t, azureAccount.Name, "Update Azure Subscription Account", "Account name did not match expected value")
 
 		return nil
 	}
