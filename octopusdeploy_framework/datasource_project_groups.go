@@ -35,6 +35,7 @@ func getNestedGroupAttributes() map[string]attr.Type {
 		"id":          types.StringType,
 		"space_id":    types.StringType,
 		"name":        types.StringType,
+		"slug":        types.StringType,
 		"description": types.StringType,
 	}
 }
@@ -47,7 +48,7 @@ func (p *projectGroupsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	resp.Schema = schemas.ProjectGroupSchema{}.GetDatasourceSchema()
 }
 
-func (p *projectGroupsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (p *projectGroupsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	p.Config = DataSourceConfiguration(req, resp)
 }
 
@@ -97,15 +98,13 @@ func (p *projectGroupsDataSource) Read(ctx context.Context, req datasource.ReadR
 		g.ID = types.StringValue(projectGroup.ID)
 		g.SpaceID = types.StringValue(projectGroup.SpaceID)
 		g.Name = types.StringValue(projectGroup.Name)
+		g.Slug = types.StringValue(projectGroup.Slug)
 		g.Description = types.StringValue(projectGroup.Description)
 		newGroups = append(newGroups, g)
 	}
 
 	util.DatasourceResultCount(ctx, "project groups", len(newGroups))
 
-	for _, projectGroup := range newGroups {
-		tflog.Debug(ctx, "mapped group "+projectGroup.Name.ValueString())
-	}
 	g, _ := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: getNestedGroupAttributes()}, newGroups)
 
 	data.ProjectGroups = g

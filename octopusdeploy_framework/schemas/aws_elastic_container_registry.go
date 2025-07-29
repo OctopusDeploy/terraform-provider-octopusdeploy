@@ -28,7 +28,6 @@ func (a AwsElasticContainerRegistrySchema) GetResourceSchema() resourceSchema.Sc
 			"access_key": resourceSchema.StringAttribute{
 				Optional:    true,
 				Description: "The AWS access key to use when authenticating against Amazon Web Services.",
-				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
