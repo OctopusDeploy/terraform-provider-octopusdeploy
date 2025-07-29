@@ -219,9 +219,9 @@ func flattenChannelRules(rules []channels.ChannelRule, currentRules types.List) 
 	}
 
 	var flattenedRules = make([]attr.Value, len(rules))
-	for _, rule := range rules {
+	for i, rule := range rules {
 		obj := flattenChannelRule(&rule)
-		flattenedRules = append(flattenedRules, obj)
+		flattenedRules[i] = obj
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}, flattenedRules)
@@ -239,9 +239,9 @@ func flattenChannelRule(rule *channels.ChannelRule) types.Object {
 
 func flattenChannelRuleDeploymentActionPackages(actionPackages []packages.DeploymentActionPackage) types.List {
 	var flattenedActionPackages = make([]attr.Value, len(actionPackages))
-	for _, actionPackage := range actionPackages {
+	for i, actionPackage := range actionPackages {
 		obj := flattenChannelRuleDeploymentActionPackage(&actionPackage)
-		flattenedActionPackages = append(flattenedActionPackages, obj)
+		flattenedActionPackages[i] = obj
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleDeploymentActionPackageAttrTypes()}, flattenedActionPackages)
