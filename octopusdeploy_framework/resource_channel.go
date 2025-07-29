@@ -146,7 +146,7 @@ func expandChannelRules(rules types.List) []channels.ChannelRule {
 		channelRules = append(channelRules, channelRule)
 	}
 
-	return nil
+	return channelRules
 }
 
 func expandChannelRule(rule map[string]interface{}) channels.ChannelRule {
