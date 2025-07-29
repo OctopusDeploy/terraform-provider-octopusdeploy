@@ -3,7 +3,6 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
@@ -11,6 +10,7 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -315,5 +315,24 @@ func (s *spaceResource) cancelRunningTasks(ctx context.Context, spaceID string) 
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Cancelled %d running tasks in space %s", len(runningTasks.Items), spaceID))
+
+	// Check if there are still running tasks
+	tflog.Debug(ctx, fmt.Sprintf("Checking for remaining running tasks in space %s", spaceID))
+
+	remainingTasks, err := s.Client.Tasks.Get(tasksQuery)
+
+	if err != nil {
+		return fmt.Errorf("failed to get running tasks while checking: %w", err)
+	}
+
+	if len(remainingTasks.Items) > 0 {
+		tflog.Warn(ctx, fmt.Sprintf("Warning: %d tasks are still running in space %s after cancellation attempt", len(remainingTasks.Items), spaceID))
+		for _, task := range remainingTasks.Items {
+			tflog.Warn(ctx, fmt.Sprintf("Running task: %s (%s)", task.GetID(), task.Name))
+		}
+	} else {
+		tflog.Debug(ctx, fmt.Sprintf("No running tasks remain in space %s", spaceID))
+	}
+
 	return nil
 }
