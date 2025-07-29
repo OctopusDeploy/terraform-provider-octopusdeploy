@@ -84,7 +84,7 @@ resource "octopusdeploy_aws_account" "aws_account" {
 
 func testAmazonWebServicesAccountDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "octopusdeploy_aws_account" {
+		if rs.Type == "octopusdeploy_aws_account" {
 			account, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID)
 			if err == nil && account != nil {
 				return fmt.Errorf("account (%s) still exists", rs.Primary.ID)
