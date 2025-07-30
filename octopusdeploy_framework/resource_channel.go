@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -37,6 +38,9 @@ func (r *channelResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *channelResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var plan schemas.ChannelModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -59,6 +63,9 @@ func (r *channelResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *channelResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var state schemas.ChannelModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -79,6 +86,9 @@ func (r *channelResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *channelResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var plan schemas.ChannelModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -98,6 +108,9 @@ func (r *channelResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *channelResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var state schemas.ChannelModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
