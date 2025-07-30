@@ -182,11 +182,7 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 	model.ID = types.StringValue(channel.GetID())
 	model.Description = types.StringValue(channel.Description)
 
-	if !channel.IsDefault && model.IsDefault.IsNull() {
-		model.IsDefault = types.BoolNull()
-	} else {
-		model.IsDefault = types.BoolValue(channel.IsDefault)
-	}
+        model.IsDefault = types.BoolValue(channel.IsDefault)
 
 	if channel.LifecycleID == "" && model.LifecycleId.IsNull() {
 		model.LifecycleId = types.StringNull()
