@@ -199,11 +199,7 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 
 	model.Rule = flattenChannelRules(channel.Rules, model.Rule)
 
-	if channel.SpaceID == "" && model.SpaceId.IsNull() {
-		model.SpaceId = types.StringNull()
-	} else {
-		model.SpaceId = types.StringValue(channel.SpaceID)
-	}
+        model.SpaceId = types.StringValue(channel.SpaceID)
 
 	model.TenantTags = flattenStringList(channel.TenantTags, model.TenantTags)
 
