@@ -182,16 +182,16 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 	model.ID = types.StringValue(channel.GetID())
 	model.Description = types.StringValue(channel.Description)
 
-        model.IsDefault = types.BoolValue(channel.IsDefault)
+	model.IsDefault = types.BoolValue(channel.IsDefault)
 
-	model.LifecycleID = types.StringValue(channel.LifecycleID)
+	model.LifecycleId = types.StringValue(channel.LifecycleID)
 
 	model.Name = types.StringValue(channel.Name)
 	model.ProjectId = types.StringValue(channel.ProjectID)
 
 	model.Rule = flattenChannelRules(channel.Rules, model.Rule)
 
-        model.SpaceId = types.StringValue(channel.SpaceID)
+	model.SpaceId = types.StringValue(channel.SpaceID)
 
 	model.TenantTags = flattenStringList(channel.TenantTags, model.TenantTags)
 
