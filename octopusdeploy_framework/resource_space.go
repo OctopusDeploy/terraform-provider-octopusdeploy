@@ -293,19 +293,26 @@ func (s *spaceResource) cancelRunningTasks(ctx context.Context, spaceID string) 
 	// Query for running tasks in the space
 	tasksQuery := tasks.TasksQuery{
 		IsRunning: true,
-		Spaces:    []string{spaceID},
 	}
 
-	// Get the task service and query for running tasks
+	// Get the task service and query for all running tasks
 	runningTasks, err := s.Client.Tasks.Get(tasksQuery)
 
 	if err != nil {
 		return fmt.Errorf("failed to get running tasks: %w", err)
 	}
 
-	// Cancel each running task
+	var runningTasksInSpace []*tasks.Task
+
 	for _, task := range runningTasks.Items {
-		tflog.Debug(ctx, fmt.Sprintf("Cancelling task %s (%s)", task.GetID(), task.Name))
+		if task.SpaceID == spaceID {
+			runningTasksInSpace = append(runningTasksInSpace, task)
+		}
+	}
+
+	// Cancel each running task
+	for _, task := range runningTasksInSpace {
+		tflog.Info(ctx, fmt.Sprintf("Cancelling task %s (%s)", task.GetID(), task.Name))
 
 		_, err := tasks.Cancel(s.Client, spaceID, task.GetID())
 		if err != nil {
@@ -325,7 +332,15 @@ func (s *spaceResource) cancelRunningTasks(ctx context.Context, spaceID string) 
 		return fmt.Errorf("failed to get running tasks while checking: %w", err)
 	}
 
-	if len(remainingTasks.Items) > 0 {
+	var remainingRunningTasksInSpace []*tasks.Task
+
+	for _, task := range remainingTasks.Items {
+		if task.SpaceID == spaceID {
+			remainingRunningTasksInSpace = append(remainingRunningTasksInSpace, task)
+		}
+	}
+
+	if len(remainingRunningTasksInSpace) > 0 {
 		tflog.Warn(ctx, fmt.Sprintf("Warning: %d tasks are still running in space %s after cancellation attempt", len(remainingTasks.Items), spaceID))
 		for _, task := range remainingTasks.Items {
 			tflog.Warn(ctx, fmt.Sprintf("Running task: %s (%s)", task.GetID(), task.Name))
