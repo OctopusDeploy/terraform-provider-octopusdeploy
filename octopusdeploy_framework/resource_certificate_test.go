@@ -38,31 +38,35 @@ func TestAccOctopusDeployCertificateBasic(t *testing.T) {
 func testCertificateBasic(localName string, name string, certificateData string, password string) string {
 	return fmt.Sprintf(`
 locals {
-  environments = {
-    alpha = {
+  environments = [
+    {
+      key        = "alpha"
       name       = "TFA1"
       sort_order = 1
-    }
-    development = {
+    },
+    {
+      key        = "development"
       name       = "TFB1"
       sort_order = 2
-    }
-    test = {
+    },
+    {
+      key        = "test"
       name       = "TFC1"
       sort_order = 3
-    }
-    prod = {
+    },
+    {
+      key        = "prod"
       name       = "TFD1"
       sort_order = 4
     }
-  }
+  ]
   certificate_scopes = ["alpha", "development"]
 }
 
 resource "octopusdeploy_environment" "environment" {
-  for_each   = local.environments
-  name       = each.value.name
-  sort_order = each.value.sort_order
+  count      = length(local.environments)
+  name       = local.environments[count.index].name
+  sort_order = local.environments[count.index].sort_order
 
   lifecycle {
     prevent_destroy       = false
@@ -74,7 +78,12 @@ resource "octopusdeploy_certificate" "%s" {
   certificate_data = "%s"
   name             = "%s"
   password         = "%s"
-  environments     = [for scope in local.certificate_scopes : octopusdeploy_environment.environment[scope].id]
+  environments     = [
+    for scope in local.certificate_scopes : 
+    octopusdeploy_environment.environment[
+      index(local.environments[*].key, scope)
+    ].id
+  ]
 }
 `, localName, certificateData, name, password)
 }
