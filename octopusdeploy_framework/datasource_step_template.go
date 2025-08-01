@@ -71,7 +71,7 @@ func convertStepTemplateAttributes(at *actiontemplates.ActionTemplate) (types.Ob
 
 	params := make([]attr.Value, len(at.Parameters))
 	for i, param := range at.Parameters {
-		p, dg := convertStepTemplateParameterAttribute(param)
+		p, dg := convertStepTemplateParameterAttribute(param, nil)
 		diags.Append(dg...)
 		params[i] = p
 	}
@@ -94,6 +94,15 @@ func convertStepTemplateAttributes(at *actiontemplates.ActionTemplate) (types.Ob
 	propertiesMap, dg := types.MapValue(types.StringType, props)
 	diags.Append(dg...)
 
+	gitDepends := make([]attr.Value, len(at.GitDependencies))
+	for i, gitDep := range at.GitDependencies {
+		gd, dg := convertStepTemplateGitDependencyAttribute(gitDep)
+		diags.Append(dg...)
+		gitDepends[i] = gd
+	}
+	gitDependsListValue, dg := types.ListValue(types.ObjectType{AttrTypes: schemas.GetStepTemplateGitDependencyTypeAttributes()}, gitDepends)
+	diags.Append(dg...)
+
 	if diags.HasError() {
 		return types.ObjectNull(schemas.GetStepTemplateParameterTypeAttributes()), diags
 	}
@@ -108,6 +117,7 @@ func convertStepTemplateAttributes(at *actiontemplates.ActionTemplate) (types.Ob
 		"action_type":                  types.StringValue(at.ActionType),
 		"community_action_template_id": types.StringValue(at.CommunityActionTemplateID),
 		"packages":                     packageListValue,
+		"git_dependencies":             gitDependsListValue,
 		"parameters":                   paramsListValue,
 		"properties":                   propertiesMap,
 	})

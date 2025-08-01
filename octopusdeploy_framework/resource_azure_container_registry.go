@@ -3,13 +3,13 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/feeds"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -44,21 +44,21 @@ func (r *azureContainerRegistryFeedTypeResource) Create(ctx context.Context, req
 		return
 	}
 
-	dockerContainerRegistryFeed, err := createDockerContainerRegistryFeedResourceFromAzureData(data)
+	azureContainerRegistryFeed, err := createContainerRegistryFeedResourceFromAzureData(data)
 	if err != nil {
 		return
 	}
 
-	tflog.Info(ctx, fmt.Sprintf("creating Azure Container Registry feed: %s", dockerContainerRegistryFeed.GetName()))
+	tflog.Info(ctx, fmt.Sprintf("creating Azure Container Registry feed: %s", azureContainerRegistryFeed.GetName()))
 
 	client := r.Config.Client
-	createdFeed, err := feeds.Add(client, dockerContainerRegistryFeed)
+	createdFeed, err := feeds.Add(client, azureContainerRegistryFeed)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to create Azure Container Registry feed", err.Error())
 		return
 	}
 
-	updateAzureDataFromDockerContainerRegistryFeed(data, data.SpaceID.ValueString(), createdFeed.(*feeds.DockerContainerRegistry))
+	updateDataFromAzureContainerRegistryFeed(data, data.SpaceID.ValueString(), createdFeed.(*feeds.AzureContainerRegistry))
 
 	tflog.Info(ctx, fmt.Sprintf("Azure Container Registry feed created (%s)", data.ID))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -81,11 +81,19 @@ func (r *azureContainerRegistryFeedTypeResource) Read(ctx context.Context, req r
 		}
 		return
 	}
+	if feed.GetFeedType() == "Docker" {
+		resp.Diagnostics.AddWarning("This resource will be updated from a Docker Feed to an ACR feed on it's next update", "This Azure Container Registry feed has been created as a docker container. This issue was resolved with https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/39. On the next update this resource will be updated to an Azure Container Registry feed type.")
+		dockerFeed := feed.(*feeds.DockerContainerRegistry)
+		updateDataFromDockerContainerRegistryFeedForACR(data, data.SpaceID.ValueString(), dockerFeed)
+		tflog.Info(ctx, fmt.Sprintf("Azure Container Registry feed read (%s)", dockerFeed.GetID()))
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
 
-	dockerContainerRegistry := feed.(*feeds.DockerContainerRegistry)
-	updateAzureDataFromDockerContainerRegistryFeed(data, data.SpaceID.ValueString(), dockerContainerRegistry)
+	azureContainerRegistry := feed.(*feeds.AzureContainerRegistry)
+	updateDataFromAzureContainerRegistryFeed(data, data.SpaceID.ValueString(), azureContainerRegistry)
 
-	tflog.Info(ctx, fmt.Sprintf("Azure Container Registry feed read (%s)", dockerContainerRegistry.GetID()))
+	tflog.Info(ctx, fmt.Sprintf("Azure Container Registry feed read (%s)", azureContainerRegistry.GetID()))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -98,8 +106,15 @@ func (r *azureContainerRegistryFeedTypeResource) Update(ctx context.Context, req
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("updating Azure Container Registry feed '%s'", data.ID.ValueString()))
+	client := r.Config.Client
 
-	feed, err := createDockerContainerRegistryFeedResourceFromAzureData(data)
+	err := ensureFeedIsAzureContainerRegistry(ctx, data, client, resp)
+	if err != nil {
+		resp.Diagnostics.AddError("unable to update Azure Container Registry feed", err.Error())
+		return
+	}
+
+	feed, err := createContainerRegistryFeedResourceFromAzureData(data)
 	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load Azure Container Registry feed", err.Error())
@@ -108,14 +123,13 @@ func (r *azureContainerRegistryFeedTypeResource) Update(ctx context.Context, req
 
 	tflog.Info(ctx, fmt.Sprintf("updating Azure Container Registry feed (%s)", data.ID))
 
-	client := r.Config.Client
 	updatedFeed, err := feeds.Update(client, feed)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to update Azure Container Registry feed", err.Error())
 		return
 	}
 
-	updateAzureDataFromDockerContainerRegistryFeed(data, state.SpaceID.ValueString(), updatedFeed.(*feeds.DockerContainerRegistry))
+	updateDataFromAzureContainerRegistryFeed(data, state.SpaceID.ValueString(), updatedFeed.(*feeds.AzureContainerRegistry))
 
 	tflog.Info(ctx, fmt.Sprintf("Azure Container Registry feed updated (%s)", data.ID))
 
@@ -136,8 +150,24 @@ func (r *azureContainerRegistryFeedTypeResource) Delete(ctx context.Context, req
 	}
 }
 
-func createDockerContainerRegistryFeedResourceFromAzureData(data *schemas.AzureContainerRegistryFeedTypeResourceModel) (*feeds.DockerContainerRegistry, error) {
-	feed, err := feeds.NewDockerContainerRegistry(data.Name.ValueString())
+func createContainerRegistryFeedResourceFromAzureData(data *schemas.AzureContainerRegistryFeedTypeResourceModel) (*feeds.AzureContainerRegistry, error) {
+	var oidc *feeds.AzureContainerRegistryOidcAuthentication
+
+	if data.OidcAuthentication != nil {
+		oidc = &feeds.AzureContainerRegistryOidcAuthentication{
+			ClientId:    data.OidcAuthentication.ClientId.ValueString(),
+			TenantId:    data.OidcAuthentication.TenantId.ValueString(),
+			Audience:    data.OidcAuthentication.Audience.ValueString(),
+			SubjectKeys: util.ExpandStringList(data.OidcAuthentication.SubjectKey),
+		}
+	}
+
+	feed, err := feeds.NewAzureContainerRegistry(
+		data.Name.ValueString(),
+		data.Username.ValueString(),
+		core.NewSensitiveValue(data.Password.ValueString()),
+		oidc)
+
 	if err != nil {
 		return nil, err
 	}
@@ -145,16 +175,17 @@ func createDockerContainerRegistryFeedResourceFromAzureData(data *schemas.AzureC
 	feed.ID = data.ID.ValueString()
 	feed.FeedURI = data.FeedUri.ValueString()
 	feed.PackageAcquisitionLocationOptions = nil
-	feed.Password = core.NewSensitiveValue(data.Password.ValueString())
 	feed.SpaceID = data.SpaceID.ValueString()
-	feed.Username = data.Username.ValueString()
 	feed.APIVersion = data.APIVersion.ValueString()
 	feed.RegistryPath = data.RegistryPath.ValueString()
+	feed.Username = data.Username.ValueString()
+	feed.Password = core.NewSensitiveValue(data.Password.ValueString())
+	feed.OidcAuthentication = oidc
 
 	return feed, nil
 }
 
-func updateAzureDataFromDockerContainerRegistryFeed(data *schemas.AzureContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.DockerContainerRegistry) {
+func updateDataFromAzureContainerRegistryFeed(data *schemas.AzureContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.AzureContainerRegistry) {
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)
@@ -169,6 +200,78 @@ func updateAzureDataFromDockerContainerRegistryFeed(data *schemas.AzureContainer
 	}
 
 	data.ID = types.StringValue(feed.ID)
+
+	if feed.OidcAuthentication != nil {
+		data.OidcAuthentication = &schemas.AzureContainerRegistryOidcAuthenticationResourceModel{
+			ClientId:   types.StringValue(feed.OidcAuthentication.ClientId),
+			TenantId:   types.StringValue(feed.OidcAuthentication.TenantId),
+			Audience:   types.StringValue(feed.OidcAuthentication.Audience),
+			SubjectKey: util.FlattenStringList(feed.OidcAuthentication.SubjectKeys),
+		}
+	}
+}
+
+// // This is a workaround since the old provider/server saved acr registries as docker registries
+func updateDataFromDockerContainerRegistryFeedForACR(data *schemas.AzureContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.DockerContainerRegistry) {
+	data.FeedUri = types.StringValue(feed.FeedURI)
+	data.Name = types.StringValue(feed.Name)
+	data.SpaceID = types.StringValue(spaceId)
+	if feed.APIVersion != "" {
+		data.APIVersion = types.StringValue(feed.APIVersion)
+	}
+	if feed.RegistryPath != "" {
+		data.RegistryPath = types.StringValue(feed.RegistryPath)
+	}
+	if feed.Username != "" {
+		data.Username = types.StringValue(feed.Username)
+	}
+
+	data.ID = types.StringValue(feed.ID)
+	data.OidcAuthentication = nil
+}
+
+// ensureFeedIsAzureContainerRegistry handles a legacy case where ACR feeds were created as docker feeds.
+// We're only trying to update the feed type since server inadvertently supports feed type changes when they have
+// the same base class. In this case though it will not map any ACR specific properties until the feed type
+// has been updated first.
+func ensureFeedIsAzureContainerRegistry(ctx context.Context, data *schemas.AzureContainerRegistryFeedTypeResourceModel, client *client.Client, resp *resource.UpdateResponse) error {
+	currentFeed, err := feeds.GetByID(client, data.SpaceID.ValueString(), data.ID.ValueString())
+	if currentFeed.GetFeedType() == "Docker" {
+		if err != nil {
+			resp.Diagnostics.AddError("unable to load Azure Container Registry feed", err.Error())
+			return err
+		}
+
+		newAcrFeed, err := feeds.NewAzureContainerRegistry(
+			currentFeed.GetName(),
+			currentFeed.GetUsername(),
+			currentFeed.GetPassword(),
+			nil,
+		)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to convert Docker feed to Azure Container Registry feed", err.Error())
+			return err
+		}
+
+		dockerFeed := currentFeed.(*feeds.DockerContainerRegistry)
+		newAcrFeed.ID = dockerFeed.ID
+		newAcrFeed.FeedURI = dockerFeed.FeedURI
+		newAcrFeed.PackageAcquisitionLocationOptions = dockerFeed.PackageAcquisitionLocationOptions
+		newAcrFeed.SpaceID = dockerFeed.SpaceID
+		newAcrFeed.APIVersion = dockerFeed.APIVersion
+		newAcrFeed.RegistryPath = dockerFeed.RegistryPath
+		newAcrFeed.Password = dockerFeed.Password
+		newAcrFeed.Username = dockerFeed.Username
+
+		_, err = feeds.Update(client, newAcrFeed)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to update feed type to Azure Container Registry", err.Error())
+			return err
+		}
+		tflog.Info(ctx, fmt.Sprintf("Feed type updated from Docker to Azure Container Registry (%s)", dockerFeed.ID))
+		return nil
+	}
+	return nil
 }
 
 func (*azureContainerRegistryFeedTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	ds "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	rs "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -34,6 +35,7 @@ type StepTemplateTypeResourceModel struct {
 	Name                      types.String `tfsdk:"name"`
 	Description               types.String `tfsdk:"description"`
 	Packages                  types.List   `tfsdk:"packages"`
+	GitDependencies           types.List   `tfsdk:"git_dependencies"`
 	Parameters                types.List   `tfsdk:"parameters"`
 	Properties                types.Map    `tfsdk:"properties"`
 	StepPackageId             types.String `tfsdk:"step_package_id"`
@@ -52,12 +54,22 @@ type StepTemplatePackageType struct {
 }
 
 type StepTemplateParameterType struct {
-	ID              types.String `tfsdk:"id"`
-	Name            types.String `tfsdk:"name"`
-	Label           types.String `tfsdk:"label"`
-	HelpText        types.String `tfsdk:"help_text"`
-	DisplaySettings types.Map    `tfsdk:"display_settings"`
-	DefaultValue    types.String `tfsdk:"default_value"`
+	ID                    types.String `tfsdk:"id"`
+	Name                  types.String `tfsdk:"name"`
+	Label                 types.String `tfsdk:"label"`
+	HelpText              types.String `tfsdk:"help_text"`
+	DisplaySettings       types.Map    `tfsdk:"display_settings"`
+	DefaultValue          types.String `tfsdk:"default_value"`
+	DefaultSensitiveValue types.String `tfsdk:"default_sensitive_value"`
+}
+
+type StepTemplateGitDependencyType struct {
+	Name              types.String `tfsdk:"name"`
+	RepositoryUri     types.String `tfsdk:"repository_uri"`
+	DefaultBranch     types.String `tfsdk:"default_branch"`
+	GitCredentialType types.String `tfsdk:"git_credential_type"`
+	FilePathFilters   types.List   `tfsdk:"file_path_filters"`
+	GitCredentialId   types.String `tfsdk:"git_credential_id"`
 }
 
 type StepTemplateSchema struct{}
@@ -113,8 +125,9 @@ func (s StepTemplateSchema) GetResourceSchema() rs.Schema {
 				Computed:    true,
 				Default:     stringdefault.StaticString(""),
 			},
-			"packages":   GetStepTemplatePackageResourceSchema(),
-			"parameters": GetStepTemplateParameterResourceSchema(),
+			"packages":         GetStepTemplatePackageResourceSchema(),
+			"git_dependencies": GetStepTemplateGitDependencySchema(),
+			"parameters":       GetStepTemplateParameterResourceSchema(),
 			"properties": rs.MapAttribute{
 				Description: "Properties for the step template",
 				Required:    true,
@@ -130,15 +143,18 @@ func GetStepTemplateParameterResourceSchema() rs.ListNestedAttribute {
 		Required:    true,
 		NestedObject: rs.NestedAttributeObject{
 			Attributes: map[string]rs.Attribute{
-				"default_value": rs.StringAttribute{
-					Description: "A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.",
-					Optional:    true,
-					Computed:    true,
-					Default:     stringdefault.StaticString(""),
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
-				},
+				"default_value": util.ResourceString().
+					Description("A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.").
+					Optional().
+					Computed().
+					Default(stringdefault.StaticString("")).
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+					Build(),
+				"default_sensitive_value": util.ResourceString().
+					Description("Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'").
+					Optional().
+					Sensitive().
+					Build(),
 				"display_settings": rs.MapAttribute{
 					Description: "The display settings for the parameter.",
 					Optional:    true,
@@ -192,18 +208,20 @@ func GetStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 					Optional:    true,
 					Computed:    true,
 				},
-				"feed_id": rs.StringAttribute{
-					Description: "ID of the feed.",
-					Required:    true,
-				},
-				"id":   GetIdResourceSchema(),
-				"name": GetNameResourceSchema(true),
-				"package_id": rs.StringAttribute{
-					Description: "The ID of the package to use.",
-					Optional:    true,
-					Required:    false,
-					Computed:    true,
-				},
+				"feed_id": util.ResourceString().
+					Description("ID of the feed.").
+					Required().
+					Build(),
+				"id": GetIdResourceSchema(),
+				"name": util.ResourceString().
+					Description("Package name.").
+					Required().
+					Build(),
+				"package_id": util.ResourceString().
+					Description("The ID of the package to use.").
+					Optional().
+					Computed().
+					Build(),
 				"properties": rs.SingleNestedAttribute{
 					Description: "Properties for the package.",
 					Required:    true,
@@ -241,6 +259,53 @@ func GetStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 	}
 }
 
+func GetStepTemplateGitDependencySchema() rs.ListNestedAttribute {
+	return rs.ListNestedAttribute{
+		Description: "List of Git dependencies for the step template.",
+		Optional:    true,
+		Computed:    true,
+		Default: listdefault.StaticValue(types.ListValueMust(
+			types.ObjectType{AttrTypes: StepTemplateGitDependencyObjectType().AttrTypes},
+			[]attr.Value{})),
+
+		NestedObject: rs.NestedAttributeObject{
+			Attributes: map[string]rs.Attribute{
+				"name": rs.StringAttribute{
+					Description: "The name of the Git dependency.",
+					Optional:    true,
+					Computed:    true,
+					Default:     stringdefault.StaticString(""),
+				},
+				"repository_uri": rs.StringAttribute{
+					Description: "The Git URI for the repository where this resource is sourced from.",
+					Required:    true,
+				},
+				"default_branch": rs.StringAttribute{
+					Description: "Name of the default branch of the repository.",
+					Required:    true,
+				},
+				"git_credential_type": rs.StringAttribute{
+					Description: "The Git credential authentication type.",
+					Required:    true,
+				},
+				"file_path_filters": rs.ListAttribute{
+					Description: "List of file path filters used to narrow down the directory where files are to be sourced from.",
+					Optional:    true,
+					Computed:    true,
+					Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+					ElementType: types.StringType,
+				},
+				"git_credential_id": rs.StringAttribute{
+					Description: "ID of an existing Git credential.",
+					Optional:    true,
+					Computed:    true,
+					Default:     stringdefault.StaticString(""), //need to add default empty string
+				},
+			},
+		},
+	}
+}
+
 func GetStepTemplateAttributes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":                           types.StringType,
@@ -252,8 +317,15 @@ func GetStepTemplateAttributes() map[string]attr.Type {
 		"action_type":                  types.StringType,
 		"community_action_template_id": types.StringType,
 		"packages":                     types.ListType{ElemType: types.ObjectType{AttrTypes: GetStepTemplatePackageTypeAttributes()}},
+		"git_dependencies":             types.ListType{ElemType: types.ObjectType{AttrTypes: GetStepTemplateGitDependencyTypeAttributes()}},
 		"parameters":                   types.ListType{ElemType: types.ObjectType{AttrTypes: GetStepTemplateParameterTypeAttributes()}},
 		"properties":                   types.MapType{ElemType: types.StringType},
+	}
+}
+
+func StepTemplatePackageObjectType() types.ObjectType {
+	return types.ObjectType{
+		AttrTypes: GetStepTemplatePackageTypeAttributes(),
 	}
 }
 
@@ -277,13 +349,37 @@ func GetStepTemplatePackagePropertiesTypeAttributes() map[string]attr.Type {
 	}
 }
 
+func StepTemplateGitDependencyObjectType() types.ObjectType {
+	return types.ObjectType{
+		AttrTypes: GetStepTemplateGitDependencyTypeAttributes(),
+	}
+}
+
+func GetStepTemplateGitDependencyTypeAttributes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name":                types.StringType,
+		"repository_uri":      types.StringType,
+		"default_branch":      types.StringType,
+		"git_credential_type": types.StringType,
+		"file_path_filters":   types.ListType{ElemType: types.StringType},
+		"git_credential_id":   types.StringType,
+	}
+}
+
+func StepTemplateParameterObjectType() types.ObjectType {
+	return types.ObjectType{
+		AttrTypes: GetStepTemplateParameterTypeAttributes(),
+	}
+}
+
 func GetStepTemplateParameterTypeAttributes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":               types.StringType,
-		"name":             types.StringType,
-		"label":            types.StringType,
-		"help_text":        types.StringType,
-		"display_settings": types.MapType{ElemType: types.StringType},
-		"default_value":    types.StringType,
+		"id":                      types.StringType,
+		"name":                    types.StringType,
+		"label":                   types.StringType,
+		"help_text":               types.StringType,
+		"display_settings":        types.MapType{ElemType: types.StringType},
+		"default_value":           types.StringType,
+		"default_sensitive_value": types.StringType,
 	}
 }

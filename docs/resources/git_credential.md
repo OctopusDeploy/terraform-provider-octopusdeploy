@@ -24,11 +24,20 @@ Manages a Git credential in Octopus Deploy.
 ### Optional
 
 - `description` (String) The description of this Git Credential.
+- `repository_restrictions` (Attributes) Sets the repository restrictions associated with the Git credential. (see [below for nested schema](#nestedatt--repository_restrictions))
 - `space_id` (String) The space ID associated with this Git Credential.
 - `type` (String) The Git credential authentication type.
 
 ### Read-Only
 
 - `id` (String) The unique ID for this resource.
+
+<a id="nestedatt--repository_restrictions"></a>
+### Nested Schema for `repository_restrictions`
+
+Required:
+
+- `allowed_repositories` (Set of String) Set of allowed repository URL's.
+- `enabled` (Boolean) Whether repository restrictions are enabled.
 
 

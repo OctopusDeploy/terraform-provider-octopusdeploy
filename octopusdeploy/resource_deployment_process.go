@@ -16,13 +16,14 @@ import (
 
 func resourceDeploymentProcess() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceDeploymentProcessCreate,
-		DeleteContext: resourceDeploymentProcessDelete,
-		Description:   "This resource manages deployment processes in Octopus Deploy.",
-		Importer:      getImporter(),
-		ReadContext:   resourceDeploymentProcessRead,
-		Schema:        getDeploymentProcessSchema(),
-		UpdateContext: resourceDeploymentProcessUpdate,
+		DeprecationMessage: "The 'octopusdeploy_deployment_process' resource is deprecated and will be removed in a future version. Please use the octopusdeploy_process resource instead.",
+		CreateContext:      resourceDeploymentProcessCreate,
+		DeleteContext:      resourceDeploymentProcessDelete,
+		Description:        "This resource manages deployment processes in Octopus Deploy.",
+		Importer:           getImporter(),
+		ReadContext:        resourceDeploymentProcessRead,
+		Schema:             getDeploymentProcessSchema(),
+		UpdateContext:      resourceDeploymentProcessUpdate,
 	}
 }
 

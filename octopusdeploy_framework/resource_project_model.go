@@ -72,9 +72,9 @@ type versioningStrategyModel struct {
 }
 
 type releaseCreationStrategyModel struct {
-	ChannelID                    types.String `tfsdk:"channel_id"`
-	ReleaseCreationPackageStepID types.String `tfsdk:"release_creation_package_step_id"`
-	ReleaseCreationPackage       types.Object `tfsdk:"release_creation_package"`
+	ChannelID                    types.String                   `tfsdk:"channel_id"`
+	ReleaseCreationPackageStepID types.String                   `tfsdk:"release_creation_package_step_id"`
+	ReleaseCreationPackage       []deploymentActionPackageModel `tfsdk:"release_creation_package"`
 }
 
 type deploymentActionPackageModel struct {

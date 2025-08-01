@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/gitdependencies"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -21,7 +22,10 @@ type stepTemplateTypeResource struct {
 	*Config
 }
 
-var _ resource.ResourceWithImportState = &stepTemplateTypeResource{}
+var (
+	_ resource.ResourceWithImportState    = &stepTemplateTypeResource{}
+	_ resource.ResourceWithValidateConfig = &stepTemplateTypeResource{}
+)
 
 func NewStepTemplateResource() resource.Resource {
 	return &stepTemplateTypeResource{}
@@ -43,6 +47,16 @@ func (*stepTemplateTypeResource) ImportState(ctx context.Context, req resource.I
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+func (r *stepTemplateTypeResource) ValidateConfig(ctx context.Context, request resource.ValidateConfigRequest, response *resource.ValidateConfigResponse) {
+	var data schemas.StepTemplateTypeResourceModel
+	response.Diagnostics.Append(request.Config.Get(ctx, &data)...)
+	if response.Diagnostics.HasError() {
+		return
+	}
+
+	response.Diagnostics.Append(validateStepTemplateParameters(ctx, &data)...)
+}
+
 func (r *stepTemplateTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data schemas.StepTemplateTypeResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -62,7 +76,7 @@ func (r *stepTemplateTypeResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	resp.Diagnostics.Append(mapStepTemplateToResourceModel(&data, actionTemplate)...)
+	resp.Diagnostics.Append(mapStepTemplateToResourceModel(ctx, &data, actionTemplate)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -81,7 +95,7 @@ func (r *stepTemplateTypeResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	resp.Diagnostics.Append(mapStepTemplateToResourceModel(&data, actionTemplate)...)
+	resp.Diagnostics.Append(mapStepTemplateToResourceModel(ctx, &data, actionTemplate)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -115,7 +129,7 @@ func (r *stepTemplateTypeResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	resp.Diagnostics.Append(mapStepTemplateToResourceModel(&data, updatedActionTemplate)...)
+	resp.Diagnostics.Append(mapStepTemplateToResourceModel(ctx, &data, updatedActionTemplate)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -136,7 +150,7 @@ func (r *stepTemplateTypeResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
-func mapStepTemplateToResourceModel(data *schemas.StepTemplateTypeResourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
+func mapStepTemplateToResourceModel(ctx context.Context, data *schemas.StepTemplateTypeResourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
 	resp := diag.Diagnostics{}
 
 	data.ID = types.StringValue(at.ID)
@@ -148,7 +162,7 @@ func mapStepTemplateToResourceModel(data *schemas.StepTemplateTypeResourceModel,
 	data.ActionType = types.StringValue(at.ActionType)
 
 	// Parameters
-	sParams, dg := convertStepTemplateToParameterAttributes(at.Parameters)
+	sParams, dg := convertStepTemplateToParameterAttributes(ctx, at.Parameters, data.Parameters)
 	resp.Append(dg...)
 	data.Parameters = sParams
 
@@ -165,6 +179,11 @@ func mapStepTemplateToResourceModel(data *schemas.StepTemplateTypeResourceModel,
 	pkgs, dg := convertStepTemplateToPackageAttributes(at.Packages)
 	resp.Append(dg...)
 	data.Packages = pkgs
+
+	//GitDependencies
+	gitDepends, dg := convertStepTemplateToGitDependencyAttributes(at.GitDependencies)
+	resp.Append(dg...)
+	data.GitDependencies = gitDepends
 
 	return resp
 }
@@ -197,6 +216,12 @@ func mapStepTemplateResourceModelToActionTemplate(ctx context.Context, data sche
 		return at, resp
 	}
 
+	gitDepends := make([]schemas.StepTemplateGitDependencyType, 0, len(data.GitDependencies.Elements()))
+	resp.Append(data.GitDependencies.ElementsAs(ctx, &gitDepends, false)...)
+	if resp.HasError() {
+		return at, resp
+	}
+
 	if len(props) > 0 {
 		templateProps := make(map[string]core.PropertyValue, len(props))
 		for key, val := range props {
@@ -223,31 +248,74 @@ func mapStepTemplateResourceModelToActionTemplate(ctx context.Context, data sche
 		}
 	}
 
-	at.Parameters = make([]actiontemplates.ActionTemplateParameter, len(params))
-	if len(params) > 0 {
-		paramIDMap := make(map[string]bool, len(params))
-		for i, val := range params {
-			defaultValue := core.NewPropertyValue(val.DefaultValue.ValueString(), false)
-			at.Parameters[i] = actiontemplates.ActionTemplateParameter{
-				DefaultValue:    &defaultValue,
-				Name:            val.Name.ValueString(),
-				Label:           val.Label.ValueString(),
-				HelpText:        val.HelpText.ValueString(),
-				DisplaySettings: util.ConvertAttrStringMapToStringMap(val.DisplaySettings.Elements()),
+	parameters, parameterDiags := mapStepTemplateParametersFromState(params)
+	resp.Append(parameterDiags...)
+	at.Parameters = parameters
+
+	at.GitDependencies = make([]gitdependencies.GitDependency, len(gitDepends))
+	if len(gitDepends) > 0 {
+		for i, val := range gitDepends {
+			var filePathFilters []string
+			if err := val.FilePathFilters.ElementsAs(context.Background(), &filePathFilters, false); err != nil {
+				return at, resp
 			}
-			id := val.ID.ValueString()
-			if _, ok := paramIDMap[id]; ok {
-				resp.AddError("ID conflict", fmt.Sprintf("conflicting UUID's within parameters list: %s", id))
+			at.GitDependencies[i] = gitdependencies.GitDependency{
+				Name:              val.Name.ValueString(),
+				RepositoryUri:     val.RepositoryUri.ValueString(),
+				DefaultBranch:     val.DefaultBranch.ValueString(),
+				GitCredentialType: val.GitCredentialType.ValueString(),
+				FilePathFilters:   filePathFilters,
+				GitCredentialId:   val.GitCredentialId.ValueString(),
 			}
-			paramIDMap[val.ID.ValueString()] = true
-			at.Parameters[i].ID = id
-			at.Parameters[i].ID = val.ID.ValueString()
 		}
 	}
+
 	if resp.HasError() {
 		return at, resp
 	}
 	return at, resp
+}
+
+func mapStepTemplateParametersFromState(stateParameters []schemas.StepTemplateParameterType) ([]actiontemplates.ActionTemplateParameter, diag.Diagnostics) {
+	diags := diag.Diagnostics{}
+
+	templateParameters := make([]actiontemplates.ActionTemplateParameter, len(stateParameters))
+	if len(stateParameters) == 0 {
+		return templateParameters, diags
+	}
+
+	paramIDMap := make(map[string]bool, len(stateParameters))
+	for i, val := range stateParameters {
+		templateParameter := actiontemplates.ActionTemplateParameter{
+			Name:            val.Name.ValueString(),
+			Label:           val.Label.ValueString(),
+			HelpText:        val.HelpText.ValueString(),
+			DisplaySettings: util.ConvertAttrStringMapToStringMap(val.DisplaySettings.Elements()),
+		}
+
+		// Determine default value
+		defaultValue := val.DefaultValue.ValueString()
+		isSensitive := false
+		if !val.DefaultSensitiveValue.IsUnknown() && !val.DefaultSensitiveValue.IsNull() {
+			// Is sensitive
+			defaultValue = val.DefaultSensitiveValue.ValueString()
+			isSensitive = true
+		}
+		value := core.NewPropertyValue(defaultValue, isSensitive)
+		templateParameter.DefaultValue = &value
+
+		// Confirm unique Id
+		id := val.ID.ValueString()
+		if _, ok := paramIDMap[id]; ok {
+			diags.AddError("ID conflict", fmt.Sprintf("conflicting UUID's within parameters list: %s", id))
+		}
+		paramIDMap[id] = true
+		templateParameter.ID = id
+
+		templateParameters[i] = templateParameter
+	}
+
+	return templateParameters, diags
 }
 
 func convertStepTemplateToPackageAttributes(atPackage []packages.PackageReference) (types.List, diag.Diagnostics) {
@@ -269,37 +337,102 @@ func convertStepTemplateToPackageAttributes(atPackage []packages.PackageReferenc
 	return pkgSet, dg
 }
 
-func convertStepTemplateToParameterAttributes(atParams []actiontemplates.ActionTemplateParameter) (types.List, diag.Diagnostics) {
+func convertStepTemplateToParameterAttributes(ctx context.Context, atParams []actiontemplates.ActionTemplateParameter, stateParameters types.List) (types.List, diag.Diagnostics) {
+	diags := diag.Diagnostics{}
+
+	lookup := make(map[string]*schemas.StepTemplateParameterType)
+	if !(stateParameters.IsNull() || stateParameters.IsUnknown()) {
+		stateElements := make([]schemas.StepTemplateParameterType, 0, len(stateParameters.Elements()))
+		diags.Append(stateParameters.ElementsAs(ctx, &stateElements, false)...)
+		if diags.HasError() {
+			return types.ListNull(types.ObjectType{AttrTypes: schemas.GetStepTemplateParameterTypeAttributes()}), diags
+		}
+
+		for _, stateParameter := range stateElements {
+			lookup[stateParameter.ID.ValueString()] = &stateParameter
+		}
+	}
+
+	parameters := make([]attr.Value, len(atParams))
+	for i, val := range atParams {
+		objVal, dg := convertStepTemplateParameterAttribute(val, lookup[val.ID])
+		diags.Append(dg...)
+		if diags.HasError() {
+			return types.ListNull(types.ObjectType{AttrTypes: schemas.GetStepTemplateParameterTypeAttributes()}), diags
+		}
+		parameters[i] = objVal
+	}
+
+	parametersList, dg := types.ListValue(types.ObjectType{AttrTypes: schemas.GetStepTemplateParameterTypeAttributes()}, parameters)
+	diags.Append(dg...)
+
+	if diags.HasError() {
+		return types.ListNull(types.ObjectType{AttrTypes: schemas.GetStepTemplateParameterTypeAttributes()}), diags
+	}
+
+	return parametersList, diags
+}
+
+func convertStepTemplateToGitDependencyAttributes(atParams []gitdependencies.GitDependency) (types.List, diag.Diagnostics) {
 	resp := diag.Diagnostics{}
 	params := make([]attr.Value, len(atParams))
 	for i, val := range atParams {
-		objVal, dg := convertStepTemplateParameterAttribute(val)
+		objVal, dg := convertStepTemplateGitDependencyAttribute(val)
 		resp.Append(dg...)
 		if resp.HasError() {
-			return types.ListNull(types.ObjectType{AttrTypes: schemas.GetStepTemplateParameterTypeAttributes()}), resp
+			return types.ListNull(types.ObjectType{AttrTypes: schemas.GetStepTemplateGitDependencyTypeAttributes()}), resp
 		}
 		params[i] = objVal
 	}
-	sParams, dg := types.ListValue(types.ObjectType{AttrTypes: schemas.GetStepTemplateParameterTypeAttributes()}, params)
+	sParams, dg := types.ListValue(types.ObjectType{AttrTypes: schemas.GetStepTemplateGitDependencyTypeAttributes()}, params)
 	resp.Append(dg...)
 	if resp.HasError() {
-		return types.ListNull(types.ObjectType{AttrTypes: schemas.GetStepTemplateParameterTypeAttributes()}), resp
+		return types.ListNull(types.ObjectType{AttrTypes: schemas.GetStepTemplateGitDependencyTypeAttributes()}), resp
 	}
 	return sParams, resp
 }
 
-func convertStepTemplateParameterAttribute(atp actiontemplates.ActionTemplateParameter) (types.Object, diag.Diagnostics) {
+func convertStepTemplateGitDependencyAttribute(atp gitdependencies.GitDependency) (types.Object, diag.Diagnostics) {
+	filePathFilters, dg := types.ListValue(types.StringType, util.ToValueSlice(atp.FilePathFilters))
+	if dg.HasError() {
+		return types.ObjectNull(schemas.GetStepTemplateGitDependencyTypeAttributes()), dg
+	}
+	return types.ObjectValue(schemas.GetStepTemplateGitDependencyTypeAttributes(), map[string]attr.Value{
+		"name":                types.StringValue(atp.Name),
+		"repository_uri":      types.StringValue(atp.RepositoryUri),
+		"default_branch":      types.StringValue(atp.DefaultBranch),
+		"git_credential_type": types.StringValue(atp.GitCredentialType),
+		"file_path_filters":   filePathFilters,
+		"git_credential_id":   types.StringValue(atp.GitCredentialId),
+	})
+}
+
+func convertStepTemplateParameterAttribute(atp actiontemplates.ActionTemplateParameter, stateParameter *schemas.StepTemplateParameterType) (types.Object, diag.Diagnostics) {
 	displaySettings, dg := types.MapValue(types.StringType, util.ConvertStringMapToAttrStringMap(atp.DisplaySettings))
+
 	if dg.HasError() {
 		return types.ObjectNull(schemas.GetStepTemplateParameterTypeAttributes()), dg
 	}
+
+	// Set sensitive value to the value from current state.
+	// This to avoid difference between planned and applied values ("unexpected new value"),
+	// because Server never returns sensitive values from the API
+	defaultValue := types.StringValue("")
+	defaultSensitiveValue := types.StringNull()
+	if atp.DefaultValue.IsSensitive && stateParameter != nil {
+		defaultSensitiveValue = stateParameter.DefaultSensitiveValue
+	} else {
+		defaultValue = types.StringValue(atp.DefaultValue.Value)
+	}
+
 	return types.ObjectValue(schemas.GetStepTemplateParameterTypeAttributes(), map[string]attr.Value{
-		"id":               types.StringValue(atp.ID),
-		"name":             types.StringValue(atp.Name),
-		"label":            types.StringValue(atp.Label),
-		"help_text":        types.StringValue(atp.HelpText),
-		"default_value":    types.StringValue(atp.DefaultValue.Value),
-		"display_settings": displaySettings,
+		"id":                      types.StringValue(atp.ID),
+		"name":                    types.StringValue(atp.Name),
+		"label":                   types.StringValue(atp.Label),
+		"help_text":               types.StringValue(atp.HelpText),
+		"default_value":           defaultValue,
+		"default_sensitive_value": defaultSensitiveValue,
+		"display_settings":        displaySettings,
 	})
 }
 
@@ -378,4 +511,56 @@ func convertAttributeStepTemplatePackageProperty(prop map[string]attr.Value) map
 		atpp["SelectionMode"] = selectionMode.(types.String).ValueString()
 	}
 	return atpp
+}
+
+func validateStepTemplateParameters(ctx context.Context, data *schemas.StepTemplateTypeResourceModel) diag.Diagnostics {
+	diags := diag.Diagnostics{}
+
+	parameters := make([]schemas.StepTemplateParameterType, 0, len(data.Parameters.Elements()))
+	appendDiags := data.Parameters.ElementsAs(ctx, &parameters, false)
+	diags.Append(appendDiags...)
+	if diags.HasError() {
+		return diags
+	}
+
+	for _, parameter := range parameters {
+		diags.Append(validateStepTemplateParameterDefaultValue(parameter)...)
+	}
+
+	return diags
+}
+
+func validateStepTemplateParameterDefaultValue(param schemas.StepTemplateParameterType) diag.Diagnostics {
+	diags := diag.Diagnostics{}
+
+	isSensitive := false
+	if !param.DisplaySettings.IsNull() && !param.DisplaySettings.IsUnknown() {
+		displaySettings := param.DisplaySettings.Elements()
+		if controlTypeValue, exists := displaySettings["Octopus.ControlType"]; exists {
+			if ctrlTypeStr, ok := controlTypeValue.(types.String); ok {
+				isSensitive = ctrlTypeStr.ValueString() == "Sensitive"
+			}
+		}
+	}
+
+	hasPlainValue := !param.DefaultValue.IsNull() && !param.DefaultValue.IsUnknown() && param.DefaultValue.ValueString() != ""
+	hasSensitiveValue := !param.DefaultSensitiveValue.IsNull() && !param.DefaultSensitiveValue.IsUnknown()
+
+	if isSensitive && hasPlainValue {
+		diags.AddError(
+			"Invalid step template parameter configuration",
+			fmt.Sprintf("Parameter '%s' has display setting 'Octopus.ControlType=Sensitive' but uses 'default_value' instead of 'default_sensitive_value'. Sensitive parameters should use the 'default_sensitive_value' attribute.", param.Name.ValueString()),
+		)
+
+		return diags
+	}
+
+	if !isSensitive && hasSensitiveValue {
+		diags.AddError(
+			"Invalid step template parameter configuration",
+			fmt.Sprintf("Parameter '%s' has non-sensitive display setting 'Octopus.ControlType', but uses 'default_sensitive_value'. Non-sensitive parameters should use the 'default_value' attribute.", param.Name.ValueString()),
+		)
+	}
+
+	return diags
 }

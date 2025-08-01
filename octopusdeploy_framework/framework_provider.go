@@ -2,14 +2,13 @@ package octopusdeploy_framework
 
 import (
 	"context"
-	"os"
-
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"os"
 )
 
 type octopusDeployFrameworkProvider struct {
@@ -58,8 +57,9 @@ func (p *octopusDeployFrameworkProvider) Configure(ctx context.Context, req prov
 		config.Address = os.Getenv("OCTOPUS_URL")
 	}
 	config.SpaceID = providerData.SpaceID.ValueString()
-	if err := config.GetClient(ctx); err != nil {
-		resp.Diagnostics.AddError("failed to load client", err.Error())
+
+	if diags := config.SetOctopus(ctx); diags.HasError() {
+		resp.Diagnostics.Append(diags...)
 	}
 
 	resp.DataSourceData = &config
@@ -93,6 +93,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 
 func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewCertificateResource,
 		NewSpaceResource,
 		NewProjectGroupResource,
 		NewMavenFeedResource,
@@ -136,6 +137,15 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewDeploymentFreezeTenantResource,
 		NewGitTriggerResource,
 		NewBuiltInTriggerResource,
+		NewProcessResource,
+		NewProcessStepResource,
+		NewProcessStepsOrderResource,
+		NewProcessChildStepResource,
+		NewProcessChildStepsOrderResource,
+		NewProcessTemplatedStepResource,
+		NewProcessTemplatedChildStepResource,
+		NewProjectDeploymentFreezeResource,
+		NewProjectAutoCreateReleaseResource,
 	}
 }
 
