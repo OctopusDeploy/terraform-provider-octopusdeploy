@@ -49,7 +49,7 @@ func (r *certificateResource) Create(ctx context.Context, req resource.CreateReq
 	certificate := expandCertificate(ctx, plan)
 	createdCertificate, err := certificates.Add(r.Config.Client, certificate)
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating certificate`", err.Error())
+		resp.Diagnostics.AddError("Error creating certificate", err.Error())
 		return
 	}
 

@@ -3,9 +3,12 @@ package schemas
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const (
@@ -42,7 +45,38 @@ func (g GitCredentialSchema) GetResourceSchema() resourceSchema.Schema {
 				Description("The password for the Git credential.").
 				Validators(stringvalidator.LengthAtLeast(1)).
 				Build(),
+			"repository_restrictions": gitCredentialRepositoryRestrictionAttribute(),
 		},
+	}
+}
+
+func gitCredentialRepositoryRestrictionAttribute() resourceSchema.SingleNestedAttribute {
+	return resourceSchema.SingleNestedAttribute{
+		Description: "Sets the repository restrictions associated with the Git credential.",
+		Attributes: map[string]resourceSchema.Attribute{
+			"enabled": util.ResourceBool().
+				Description("Whether repository restrictions are enabled.").
+				Required().
+				Build(),
+			"allowed_repositories": util.ResourceSet(types.StringType).
+				Description("Set of allowed repository URL's.").
+				Required().
+				Build(),
+		},
+		Optional: true,
+		Computed: true,
+		Default: objectdefault.StaticValue(
+			types.ObjectValueMust(
+				map[string]attr.Type{
+					"enabled":              types.BoolType,
+					"allowed_repositories": types.SetType{ElemType: types.StringType},
+				},
+				map[string]attr.Value{
+					"enabled":              types.BoolValue(false),
+					"allowed_repositories": types.SetValueMust(types.StringType, make([]attr.Value, 0)),
+				},
+			),
+		),
 	}
 }
 
@@ -69,11 +103,29 @@ func (g GitCredentialSchema) GetDatasourceSchema() datasourceSchema.Schema {
 
 func GetGitCredentialDatasourceAttributes() map[string]datasourceSchema.Attribute {
 	return map[string]datasourceSchema.Attribute{
-		"id":          util.DataSourceString().Computed().Description("The unique ID for this resource.").Build(),
-		"space_id":    util.DataSourceString().Computed().Description("The space ID associated with this Git Credential.").Build(),
-		"name":        util.DataSourceString().Computed().Description("The name of this Git Credential.").Build(),
-		"description": util.DataSourceString().Computed().Description("The description of this Git Credential.").Build(),
-		"type":        util.DataSourceString().Computed().Description("The Git credential authentication type.").Build(),
-		"username":    util.DataSourceString().Computed().Description("The username for the Git credential.").Build(),
+		"id":                      util.DataSourceString().Computed().Description("The unique ID for this resource.").Build(),
+		"space_id":                util.DataSourceString().Computed().Description("The space ID associated with this Git Credential.").Build(),
+		"name":                    util.DataSourceString().Computed().Description("The name of this Git Credential.").Build(),
+		"description":             util.DataSourceString().Computed().Description("The description of this Git Credential.").Build(),
+		"type":                    util.DataSourceString().Computed().Description("The Git credential authentication type.").Build(),
+		"username":                util.DataSourceString().Computed().Description("The username for the Git credential.").Build(),
+		"repository_restrictions": gitCredentialRepositoryRestrictionDataSourceAttribute(),
+	}
+}
+
+func gitCredentialRepositoryRestrictionDataSourceAttribute() datasourceSchema.SingleNestedAttribute {
+	return datasourceSchema.SingleNestedAttribute{
+		Description: "Sets the repository restrictions associated with the Git credential.",
+		Attributes: map[string]datasourceSchema.Attribute{
+			"enabled": util.ResourceBool().
+				Description("Whether repository restrictions are enabled.").
+				Computed().
+				Build(),
+			"allowed_repositories": util.ResourceSet(types.StringType).
+				Description("Set of allowed repository URL's.").
+				Computed().
+				Build(),
+		},
+		Computed: true,
 	}
 }

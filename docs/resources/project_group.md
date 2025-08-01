@@ -29,6 +29,7 @@ resource "octopusdeploy_project_group" "example" {
 ### Optional
 
 - `description` (String) The description of this project group.
+- `slug` (String) The unique slug of this project group
 - `space_id` (String) The space ID associated with this project group.
 
 ### Read-Only
