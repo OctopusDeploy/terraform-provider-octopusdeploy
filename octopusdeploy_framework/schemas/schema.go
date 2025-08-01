@@ -469,8 +469,8 @@ func getCertificateDataFormatResourceSchema() resourceSchema.Attribute {
 }
 
 func getEnvironmentsResourceSchema() resourceSchema.Attribute {
-	return resourceSchema.ListAttribute{
-		Description: "A list of environment IDs associated with this resource.",
+	return resourceSchema.SetAttribute{
+		Description: "A set of environment IDs associated with this resource.",
 		Computed:    true,
 		Optional:    true,
 		ElementType: types.StringType,
