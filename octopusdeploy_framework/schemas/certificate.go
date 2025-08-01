@@ -14,7 +14,7 @@ type CertificateModel struct {
 	Archived                 types.String `tfsdk:"archived"`
 	CertificateData          types.String `tfsdk:"certificate_data"`
 	CertificateDataFormat    types.String `tfsdk:"certificate_data_format"`
-	EnvironmentIDs           types.List   `tfsdk:"environments"`
+	EnvironmentIDs           types.Set    `tfsdk:"environments"`
 	HasPrivateKey            types.Bool   `tfsdk:"has_private_key"`
 	IsExpired                types.Bool   `tfsdk:"is_expired"`
 	IssuerCommonName         types.String `tfsdk:"issuer_common_name"`
