@@ -34,6 +34,13 @@ type GitCredentialDatasourceModel struct {
 	Description types.String `tfsdk:"description"`
 	Type        types.String `tfsdk:"type"`
 	Username    types.String `tfsdk:"username"`
+
+	RepositoryRestrictions *gitCredentialRepositoryRestrictionDataSourceModel `tfsdk:"repository_restrictions"`
+}
+
+type gitCredentialRepositoryRestrictionDataSourceModel struct {
+	Enabled             types.Bool `tfsdk:"enabled"`
+	AllowedRepositories types.Set  `tfsdk:"allowed_repositories"`
 }
 
 func NewGitCredentialsDataSource() datasource.DataSource {
@@ -79,7 +86,7 @@ func (g *gitCredentialsDataSource) Read(ctx context.Context, req datasource.Read
 
 	flattenedGitCredentials := make([]GitCredentialDatasourceModel, 0, len(existingGitCredentials.Items))
 	for _, gitCredential := range existingGitCredentials.Items {
-		flattenedGitCredential := FlattenGitCredential(gitCredential)
+		flattenedGitCredential := FlattenGitCredential(ctx, gitCredential)
 		flattenedGitCredentials = append(flattenedGitCredentials, *flattenedGitCredential)
 	}
 
@@ -97,16 +104,24 @@ func (g *gitCredentialsDataSource) Read(ctx context.Context, req datasource.Read
 
 func GetGitCredentialAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":          types.StringType,
-		"space_id":    types.StringType,
-		"name":        types.StringType,
-		"description": types.StringType,
-		"type":        types.StringType,
-		"username":    types.StringType,
+		"id":                      types.StringType,
+		"space_id":                types.StringType,
+		"name":                    types.StringType,
+		"description":             types.StringType,
+		"type":                    types.StringType,
+		"username":                types.StringType,
+		"repository_restrictions": types.ObjectType{AttrTypes: GetGitCredentialRepositoryRestrictionsAttrTypes()},
 	}
 }
 
-func FlattenGitCredential(credential *credentials.Resource) *GitCredentialDatasourceModel {
+func GetGitCredentialRepositoryRestrictionsAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"enabled":              types.BoolType,
+		"allowed_repositories": types.SetType{ElemType: types.StringType},
+	}
+}
+
+func FlattenGitCredential(ctx context.Context, credential *credentials.Resource) *GitCredentialDatasourceModel {
 	if credential == nil {
 		return nil
 	}
@@ -121,6 +136,28 @@ func FlattenGitCredential(credential *credentials.Resource) *GitCredentialDataso
 
 	if usernamePassword, ok := credential.Details.(*credentials.UsernamePassword); ok {
 		model.Username = types.StringValue(usernamePassword.Username)
+	}
+
+	if credential.RepositoryRestrictions != nil {
+		var allowedRepositories = make([]string, 0, len(credential.RepositoryRestrictions.AllowedRepositories))
+		for _, id := range credential.RepositoryRestrictions.AllowedRepositories {
+			allowedRepositories = append(allowedRepositories, id)
+		}
+		repositoriesList, _ := types.SetValueFrom(
+			ctx,
+			types.StringType,
+			allowedRepositories,
+		)
+
+		model.RepositoryRestrictions = &gitCredentialRepositoryRestrictionDataSourceModel{
+			Enabled:             types.BoolValue(credential.RepositoryRestrictions.Enabled),
+			AllowedRepositories: repositoriesList,
+		}
+	} else { //Default to disabled if resource doesn't have it
+		model.RepositoryRestrictions = &gitCredentialRepositoryRestrictionDataSourceModel{
+			Enabled:             types.BoolValue(false),
+			AllowedRepositories: types.SetValueMust(types.StringType, make([]attr.Value, 0)),
+		}
 	}
 
 	return model

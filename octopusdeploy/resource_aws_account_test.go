@@ -22,8 +22,8 @@ func TestAccAWSAccountBasic(t *testing.T) {
 	newAccessKey := acctest.RandString(acctest.RandIntRange(20, 3000))
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy: testAccountCheckDestroy,
-		PreCheck:     func() { testAccPreCheck(t) },
+		CheckDestroy:             testAccountCheckDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{

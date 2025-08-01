@@ -3,6 +3,7 @@ package octopusdeploy
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/machinepolicies"
@@ -63,6 +64,12 @@ func expandMachinePolicy(d *schema.ResourceData) *machinepolicies.MachinePolicy 
 		}
 	}
 
+	if v, ok := d.GetOk("machine_package_cache_retention_policy"); ok {
+		if len(v.(*schema.Set).List()) > 0 {
+			machinePolicy.MachinePackageCacheRetentionPolicy = expandMachinePackageCacheRetentionPolicy(v)
+		}
+	}
+
 	if v, ok := d.GetOk("name"); ok {
 		machinePolicy.Name = v.(string)
 	}
@@ -85,20 +92,21 @@ func flattenMachinePolicy(machinePolicy *machinepolicies.MachinePolicy) map[stri
 	}
 
 	return map[string]interface{}{
-		"connection_connect_timeout":      machinePolicy.ConnectionConnectTimeout,
-		"connection_retry_count_limit":    machinePolicy.ConnectionRetryCountLimit,
-		"connection_retry_sleep_interval": machinePolicy.ConnectionRetrySleepInterval,
-		"connection_retry_time_limit":     machinePolicy.ConnectionRetryTimeLimit,
-		"description":                     machinePolicy.Description,
-		"id":                              machinePolicy.GetID(),
-		"is_default":                      machinePolicy.IsDefault,
-		"machine_cleanup_policy":          flattenMachineCleanupPolicy(machinePolicy.MachineCleanupPolicy),
-		"machine_connectivity_policy":     flattenMachineConnectivityPolicy(machinePolicy.MachineConnectivityPolicy),
-		"machine_health_check_policy":     flattenMachineHealthCheckPolicy(machinePolicy.MachineHealthCheckPolicy),
-		"machine_update_policy":           flattenMachineUpdatePolicy(machinePolicy.MachineUpdatePolicy),
-		"name":                            machinePolicy.Name,
-		"polling_request_queue_timeout":   machinePolicy.PollingRequestQueueTimeout,
-		"space_id":                        machinePolicy.SpaceID,
+		"connection_connect_timeout":             machinePolicy.ConnectionConnectTimeout,
+		"connection_retry_count_limit":           machinePolicy.ConnectionRetryCountLimit,
+		"connection_retry_sleep_interval":        machinePolicy.ConnectionRetrySleepInterval,
+		"connection_retry_time_limit":            machinePolicy.ConnectionRetryTimeLimit,
+		"description":                            machinePolicy.Description,
+		"id":                                     machinePolicy.GetID(),
+		"is_default":                             machinePolicy.IsDefault,
+		"machine_cleanup_policy":                 flattenMachineCleanupPolicy(machinePolicy.MachineCleanupPolicy),
+		"machine_connectivity_policy":            flattenMachineConnectivityPolicy(machinePolicy.MachineConnectivityPolicy),
+		"machine_health_check_policy":            flattenMachineHealthCheckPolicy(machinePolicy.MachineHealthCheckPolicy),
+		"machine_update_policy":                  flattenMachineUpdatePolicy(machinePolicy.MachineUpdatePolicy),
+		"machine_package_cache_retention_policy": flattenMachinePackageCacheRetentionPolicy(machinePolicy.MachinePackageCacheRetentionPolicy),
+		"name":                                   machinePolicy.Name,
+		"polling_request_queue_timeout":          machinePolicy.PollingRequestQueueTimeout,
+		"space_id":                               machinePolicy.SpaceID,
 	}
 }
 
@@ -181,6 +189,13 @@ func getMachinePolicySchema() map[string]*schema.Schema {
 			Optional: true,
 			Type:     schema.TypeSet,
 		},
+		"machine_package_cache_retention_policy": {
+			Computed: true,
+			Elem:     &schema.Resource{Schema: getMachinePackageCacheRetentionPolicySchema()},
+			MaxItems: 1,
+			Optional: true,
+			Type:     schema.TypeSet,
+		},
 		"name": getNameSchema(true),
 		"polling_request_queue_timeout": {
 			Default:     2 * time.Minute,
@@ -220,5 +235,115 @@ func setMachinePolicy(ctx context.Context, d *schema.ResourceData, machinePolicy
 		return fmt.Errorf("error setting machine_update_policy: %s", err)
 	}
 
+	if err := d.Set("machine_package_cache_retention_policy", flattenMachinePackageCacheRetentionPolicy(machinePolicy.MachinePackageCacheRetentionPolicy)); err != nil {
+		return fmt.Errorf("error setting machine_package_cache_retention_policy: %s", err)
+	}
+
 	return nil
+}
+
+func expandMachinePackageCacheRetentionPolicy(values interface{}) *machinepolicies.MachinePackageCacheRetentionPolicy {
+	if values == nil {
+		return nil
+	}
+	flattenedValues := values.(*schema.Set)
+	if len(flattenedValues.List()) == 0 {
+		return nil
+	}
+
+	flattenedMap := flattenedValues.List()[0].(map[string]interface{})
+
+	machinePackageCacheRetentionPolicy := machinepolicies.NewDefaultMachinePackageCacheRetentionPolicy()
+
+	if v, ok := flattenedMap["strategy"]; ok {
+		var strategy = v.(string)
+
+		if strategy == "Default" {
+			return machinePackageCacheRetentionPolicy
+		}
+
+		machinePackageCacheRetentionPolicy.Strategy = v.(string)
+	}
+
+	if v, ok := flattenedMap["quantity_of_packages_to_keep"]; ok {
+		int32Val := int32(v.(int))
+		machinePackageCacheRetentionPolicy.QuantityOfPackagesToKeep = int32Val
+	}
+
+	if v, ok := flattenedMap["package_unit"]; ok {
+		var stringPackageUnit = v.(string)
+		machinePackageCacheRetentionPolicy.PackageUnit = stringPackageUnit
+	}
+
+	if v, ok := flattenedMap["quantity_of_versions_to_keep"]; ok {
+		int32Val := int32(v.(int))
+		machinePackageCacheRetentionPolicy.QuantityOfVersionsToKeep = int32Val
+	}
+
+	if v, ok := flattenedMap["version_unit"]; ok {
+		var stringVersionUnit = v.(string)
+		machinePackageCacheRetentionPolicy.VersionUnit = stringVersionUnit
+	}
+
+	return machinePackageCacheRetentionPolicy
+}
+
+func flattenMachinePackageCacheRetentionPolicy(machineUpdatePolicy *machinepolicies.MachinePackageCacheRetentionPolicy) []interface{} {
+	if machineUpdatePolicy == nil {
+		return nil
+	}
+
+	if machineUpdatePolicy.Strategy == "Default" {
+		return []interface{}{map[string]interface{}{
+			"strategy": machineUpdatePolicy.Strategy,
+		}}
+	}
+
+	return []interface{}{map[string]interface{}{
+		"strategy":                     machineUpdatePolicy.Strategy,
+		"quantity_of_packages_to_keep": machineUpdatePolicy.QuantityOfPackagesToKeep,
+		"package_unit":                 machineUpdatePolicy.PackageUnit,
+		"quantity_of_versions_to_keep": machineUpdatePolicy.QuantityOfVersionsToKeep,
+		"version_unit":                 machineUpdatePolicy.VersionUnit,
+	}}
+}
+
+func getMachinePackageCacheRetentionPolicySchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"strategy": {
+			Required: true,
+			Type:     schema.TypeString,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+				"Default",
+				"Quantities",
+			}, false)),
+			Description: "The behaviour of the cache retention policy. Valid values are `Default` (let Octopus decide), `Quantities` (keep by a specified number of packages and versions).",
+		},
+		"quantity_of_packages_to_keep": {
+			Optional:    true,
+			Type:        schema.TypeInt,
+			Description: "The number of packages to keep.",
+		},
+		"package_unit": {
+			Optional: true,
+			Type:     schema.TypeString,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+				"Items",
+			}, false)),
+			Description: "The method of counting packages when applying the Quantities strategy.",
+		},
+		"quantity_of_versions_to_keep": {
+			Optional:    true,
+			Type:        schema.TypeInt,
+			Description: "The number of package versions to keep.",
+		},
+		"version_unit": {
+			Optional: true,
+			Type:     schema.TypeString,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
+				"Items",
+			}, false)),
+			Description: "The method of counting package versions when applying the Quantities strategy.",
+		},
+	}
 }
