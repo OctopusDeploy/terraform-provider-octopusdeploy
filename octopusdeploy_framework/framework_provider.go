@@ -144,6 +144,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewProcessTemplatedStepResource,
 		NewProcessTemplatedChildStepResource,
 		NewProjectDeploymentFreezeResource,
+		NewProjectAutoCreateReleaseResource,
 	}
 }
 
