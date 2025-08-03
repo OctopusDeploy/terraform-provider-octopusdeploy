@@ -95,6 +95,7 @@ func (r *projectGroupTypeResource) Update(ctx context.Context, req resource.Upda
 	group.Name = data.Name.ValueString()
 	group.Description = data.Description.ValueString()
 	group.SpaceID = data.SpaceID.ValueString()
+	group.Slug = data.Slug.ValueString()
 
 	updatedProjectGroup, err := projectgroups.Update(r.Config.Client, *group)
 	if err != nil {
@@ -125,4 +126,5 @@ func updateProjectGroup(data *schemas.ProjectGroupTypeResourceModel, group *proj
 	data.Name = types.StringValue(group.Name)
 	data.SpaceID = types.StringValue(group.SpaceID)
 	data.Description = types.StringValue(group.Description)
+	data.Slug = types.StringValue(group.Slug)
 }

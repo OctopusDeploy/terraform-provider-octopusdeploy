@@ -1,0 +1,14 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **WARNING This resource is deprecated and will be removed in a future version. Please use the `octopusdeploy_process` resource instead.
+
+{{ .SchemaMarkdown | trimspace }}
