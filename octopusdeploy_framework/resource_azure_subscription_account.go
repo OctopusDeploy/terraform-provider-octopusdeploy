@@ -124,8 +124,15 @@ func expandAzureSubscriptionAccount(ctx context.Context, model schemas.AzureSubs
 
 	account.SetID(model.ID.ValueString())
 	account.AzureEnvironment = model.AzureEnvironment.ValueString()
-	account.CertificateBytes = core.NewSensitiveValue(model.Certificate.ValueString())
-	account.CertificateThumbprint = model.CertificateThumbprint.ValueString()
+
+	if !model.Certificate.IsNull() && !model.Certificate.IsUnknown() {
+		account.CertificateBytes = core.NewSensitiveValue(model.Certificate.ValueString())
+	}
+
+	if !model.CertificateThumbprint.IsNull() && !model.CertificateThumbprint.IsUnknown() {
+		account.CertificateThumbprint = model.CertificateThumbprint.ValueString()
+	}
+
 	account.SetDescription(model.Description.ValueString())
 	account.SetEnvironmentIDs(expandStringList(model.Environments))
 	account.ManagementEndpoint = model.ManagementEndpoint.ValueString()
@@ -137,7 +144,6 @@ func expandAzureSubscriptionAccount(ctx context.Context, model schemas.AzureSubs
 	account.SetTenantIDs(expandStringList(model.Tenants))
 
 	return account
-
 }
 
 func flattenAzureSubscriptionAccount(ctx context.Context, account *accounts.AzureSubscriptionAccount, model schemas.AzureSubscriptionAccountModel) schemas.AzureSubscriptionAccountModel {
@@ -156,6 +162,10 @@ func flattenAzureSubscriptionAccount(ctx context.Context, account *accounts.Azur
 	model.TenantTags = flattenStringList(account.TenantTags, model.TenantTags)
 
 	// Note: We don't flatten the certificate as it's sensitive and not returned by the API
+	// If a certificate is not provided in the plan, set it to null to avoid unknown attribute errors
+	if model.Certificate.IsUnknown() {
+		model.Certificate = types.StringNull()
+	}
 
 	return model
 }
