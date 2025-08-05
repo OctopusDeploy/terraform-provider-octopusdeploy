@@ -50,12 +50,18 @@ const azureSubscriptionAccountConfig = `
 resource "octopusdeploy_azure_subscription_account" "azure_account" {
   name            = "Azure Subscription Account"
   subscription_id = "00000000-0000-0000-0000-000000000000"
+  azure_environment = "AzureCloud"
+  management_endpoint = "https://management.azure.com"
+  storage_endpoint_suffix = "foofoofoofoofoofoofoofoo"
  }`
 
 const updatedAzureSubscriptionAccountConfig = ` 
 resource "octopusdeploy_azure_subscription_account" "azure_account" {
   name            = "Update Azure Subscription Account"
   subscription_id = "00000000-0000-0000-0000-000000000000"
+  azure_environment = "AzureCloud"
+  management_endpoint = "https://mangement.azure.com"
+  storage_endpoint_suffix = "foofoofoofoofoofoofoofoo"
 }`
 
 func testAzureSubscriptionAccountDestroy(s *terraform.State) error {
