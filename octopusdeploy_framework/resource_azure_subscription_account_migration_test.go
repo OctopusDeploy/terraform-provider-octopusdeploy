@@ -20,8 +20,8 @@ func TestAzureSubscriptionAccountResource_UpgradeFromSDK_ToPluginFramework(t *te
 			{
 				ExternalProviders: map[string]resource.ExternalProvider{
 					"octopusdeploy": {
-						VersionConstraint: "0.43.1",
-						Source:            "OctopusDeployLabs/octopusdeploy",
+						VersionConstraint: "1.1.4",
+						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
 				Config: azureSubscriptionAccountConfig,
