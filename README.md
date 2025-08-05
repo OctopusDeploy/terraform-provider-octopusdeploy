@@ -172,6 +172,16 @@ or
 go generate main.go
 ```
 
+## Releases
+
+The release process is automated through GitHub Actions. To create a new release:
+
+1. Pull down the latest `main` branch with all merged changes
+2. Tag it with the appropriate version (v1.x.x), we use SemVer
+3. Push the tag and GitHub Actions will handle the rest
+
+The repository uses [conventional commits](https://www.conventionalcommits.org/) for automated changelog generation. The generated changelogs provide a good starting point, but you can view and edit them directly on the [GitHub release page](https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/releases) once published.
+
 ## 🤝 Contributions
 
 Contributions are welcome! :heart: Please read our [Contributing Guide](CONTRIBUTING.md) for information about how to get involved in this project.
