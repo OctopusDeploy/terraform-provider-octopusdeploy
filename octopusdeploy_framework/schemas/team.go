@@ -11,17 +11,17 @@ const TeamResourceDescription = "team"
 type TeamSchema struct{}
 
 type TeamModel struct {
-	CanBeDeleted          types.String `tfsdk:"can_be_deleted"`
-	CanBeRenamed          types.String `tfsdk:"can_be_renamed"`
-	CanChangeMembers      types.String `tfsdk:"can_change_members"`
-	CanChangeRoles        types.String `tfsdk:"can_change_roles"`
+	CanBeDeleted          types.Bool   `tfsdk:"can_be_deleted"`
+	CanBeRenamed          types.Bool   `tfsdk:"can_be_renamed"`
+	CanChangeMembers      types.Bool   `tfsdk:"can_change_members"`
+	CanChangeRoles        types.Bool   `tfsdk:"can_change_roles"`
 	Description           types.String `tfsdk:"description"`
 	ExternalSecurityGroup types.List   `tfsdk:"external_security_group"`
 	ID                    types.String `tfsdk:"id"`
 	Name                  types.String `tfsdk:"name"`
 	SpaceID               types.String `tfsdk:"space_id"`
-	Users                 types.List   `tfsdk:"users"`
-	UserRole              types.List   `tfsdk:"user_role"`
+	Users                 types.Set    `tfsdk:"users"`
+	UserRole              types.Set    `tfsdk:"user_role"`
 
 	ResourceModel
 }
@@ -34,30 +34,31 @@ func (t TeamSchema) GetResourceSchema() resourceSchema.Schema {
 			"name":        GetNameResourceSchema(true),
 			"description": GetDescriptionResourceSchema(TeamResourceDescription),
 			"space_id":    GetSpaceIdResourceSchema(TeamResourceDescription),
-			"users": resourceSchema.ListAttribute{
+			"users": resourceSchema.SetAttribute{
 				Description: "A list of user IDs designated to be members of this team.",
 				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"user_role": resourceSchema.ListNestedAttribute{
+			"user_role": resourceSchema.SetNestedAttribute{
 				Optional:     true,
 				Computed:     true,
 				NestedObject: GetUserRoleSchema(),
 			},
 			"external_security_group": GetSecurityGroupSchema(),
-			"can_be_deleted": resourceSchema.StringAttribute{
+			"can_be_deleted": resourceSchema.BoolAttribute{
 				Optional: true,
 				Computed: true,
 			},
-			"can_be_renamed": resourceSchema.StringAttribute{
+			"can_be_renamed": resourceSchema.BoolAttribute{
 				Optional: true,
 				Computed: true,
 			},
-			"can_change_members": resourceSchema.StringAttribute{
+			"can_change_members": resourceSchema.BoolAttribute{
 				Optional: true,
 				Computed: true,
 			},
-			"can_change_roles": resourceSchema.StringAttribute{
+			"can_change_roles": resourceSchema.BoolAttribute{
 				Optional: true,
 				Computed: true,
 			},
