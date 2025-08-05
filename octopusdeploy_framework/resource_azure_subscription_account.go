@@ -163,6 +163,7 @@ func flattenAzureSubscriptionAccount(ctx context.Context, account *accounts.Azur
 
 	// Note: We don't flatten the certificate as it's sensitive and not returned by the API
 	// If a certificate is not provided in the plan, set it to null to avoid unknown attribute errors
+	// This is better handled by marking the attribute as WriteOnly (requires terraform plugin framework v1.14 or later)
 	if model.Certificate.IsUnknown() {
 		model.Certificate = types.StringNull()
 	}
