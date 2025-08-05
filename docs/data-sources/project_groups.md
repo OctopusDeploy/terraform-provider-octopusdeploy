@@ -45,6 +45,7 @@ Read-Only:
 - `description` (String) The description of this project group.
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
+- `slug` (String) The unique slug of this project group
 - `space_id` (String) The space ID associated with this project group.
 
 

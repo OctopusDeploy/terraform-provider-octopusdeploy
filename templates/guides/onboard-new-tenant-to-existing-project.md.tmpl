@@ -1,0 +1,19 @@
+---
+page_title: "Onboard a new Tenant to existing Project"
+subcategory: "Examples"
+---
+
+# Onboard a new Tenant to existing Project
+
+This example show how to configure new Tenant and connect it to existing projects. This can be used to onboard new customers to existing applications
+
+
+## Existing ecosystem
+These resources are the "pre-requisites" and assumed already exists in Terraform state
+
+{{ tffile "examples/onboard-new-tenant-to-existing-project/existing-ecosystem.tf" }}
+
+## New Tenant
+Adds new tenant with corresponding tags and connects to deployment targets
+
+{{ tffile "examples/onboard-new-tenant-to-existing-project/main.tf" }}

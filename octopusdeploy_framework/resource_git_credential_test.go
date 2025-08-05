@@ -24,6 +24,8 @@ func TestGitCredentialBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
+					resource.TestCheckResourceAttr(resourceName, "repository_restrictions.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "repository_restrictions.allowed_repositories.#", "0"),
 				),
 				Config: testGitCredential(localName, name, description),
 			},
@@ -37,5 +39,9 @@ func testGitCredential(localName string, name string, description string) string
 		  description  = "%s"
 		  username     = "git_user"
 		  password     = "secret_password"
+          repository_restrictions = {
+		    enabled = false
+			allowed_repositories = []
+          }
 	}`, localName, name, description)
 }
