@@ -17,7 +17,6 @@ type TeamModel struct {
 	CanChangeRoles        types.Bool   `tfsdk:"can_change_roles"`
 	Description           types.String `tfsdk:"description"`
 	ExternalSecurityGroup types.List   `tfsdk:"external_security_group"`
-	ID                    types.String `tfsdk:"id"`
 	Name                  types.String `tfsdk:"name"`
 	SpaceID               types.String `tfsdk:"space_id"`
 	Users                 types.Set    `tfsdk:"users"`
@@ -40,12 +39,6 @@ func (t TeamSchema) GetResourceSchema() resourceSchema.Schema {
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"user_role": resourceSchema.SetNestedAttribute{
-				Optional:     true,
-				Computed:     true,
-				NestedObject: GetUserRoleSchema(),
-			},
-			"external_security_group": GetSecurityGroupSchema(),
 			"can_be_deleted": resourceSchema.BoolAttribute{
 				Optional: true,
 				Computed: true,
@@ -63,24 +56,31 @@ func (t TeamSchema) GetResourceSchema() resourceSchema.Schema {
 				Computed: true,
 			},
 		},
+		Blocks: map[string]resourceSchema.Block{
+			"user_role": resourceSchema.SetNestedBlock{
+				Description:  "User roles associated with this team.",
+				NestedObject: GetUserRoleSchema(),
+			},
+			"external_security_group": GetSecurityGroupSchema(),
+		},
 	}
 }
 
-func GetUserRoleSchema() resourceSchema.NestedAttributeObject {
-	return resourceSchema.NestedAttributeObject{
+func GetUserRoleSchema() resourceSchema.NestedBlockObject {
+	return resourceSchema.NestedBlockObject{
 		Attributes: map[string]resourceSchema.Attribute{
-			"environment_ids": resourceSchema.ListAttribute{
+			"environment_ids": resourceSchema.SetAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
 			},
 			"id": resourceSchema.StringAttribute{
 				Computed: true,
 			},
-			"project_group_ids": resourceSchema.ListAttribute{
+			"project_group_ids": resourceSchema.SetAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
 			},
-			"project_ids": resourceSchema.ListAttribute{
+			"project_ids": resourceSchema.SetAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -90,7 +90,7 @@ func GetUserRoleSchema() resourceSchema.NestedAttributeObject {
 			"team_id": resourceSchema.StringAttribute{
 				Computed: true,
 			},
-			"tenant_ids": resourceSchema.ListAttribute{
+			"tenant_ids": resourceSchema.SetAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -101,11 +101,9 @@ func GetUserRoleSchema() resourceSchema.NestedAttributeObject {
 	}
 }
 
-func GetSecurityGroupSchema() resourceSchema.ListNestedAttribute {
-	return resourceSchema.ListNestedAttribute{
-		Optional: true,
-		Computed: true,
-		NestedObject: resourceSchema.NestedAttributeObject{
+func GetSecurityGroupSchema() resourceSchema.ListNestedBlock {
+	return resourceSchema.ListNestedBlock{
+		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"display_id_and_name": resourceSchema.BoolAttribute{
 					Optional: true,
