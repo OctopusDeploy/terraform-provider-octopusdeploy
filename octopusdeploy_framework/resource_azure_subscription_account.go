@@ -47,14 +47,14 @@ func (r *azureSubscriptionAccountResource) Create(ctx context.Context, req resou
 		"name": plan.Name.ValueString(),
 	})
 
-	account := expandAzureSubscriptionAccount(ctx, plan)
+	account := mapAzureSubscriptionAccountStateToResource(ctx, plan)
 	createdAccount, err := accounts.Add(r.Client, account)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating Azure subscription account", err.Error())
 		return
 	}
 
-	state := flattenAzureSubscriptionAccount(ctx, createdAccount.(*accounts.AzureSubscriptionAccount), plan)
+	state := mapAzureSubscriptionAccountResourceToState(ctx, createdAccount.(*accounts.AzureSubscriptionAccount), plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -73,7 +73,7 @@ func (r *azureSubscriptionAccountResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	newState := flattenAzureSubscriptionAccount(ctx, account.(*accounts.AzureSubscriptionAccount), state)
+	newState := mapAzureSubscriptionAccountResourceToState(ctx, account.(*accounts.AzureSubscriptionAccount), state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 
 }
@@ -85,14 +85,14 @@ func (r *azureSubscriptionAccountResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	account := expandAzureSubscriptionAccount(ctx, plan)
+	account := mapAzureSubscriptionAccountStateToResource(ctx, plan)
 	updatedAccount, err := accounts.Update(r.Client, account)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating Azure subscription account", err.Error())
 		return
 	}
 
-	state := flattenAzureSubscriptionAccount(ctx, updatedAccount.(*accounts.AzureSubscriptionAccount), plan)
+	state := mapAzureSubscriptionAccountResourceToState(ctx, updatedAccount.(*accounts.AzureSubscriptionAccount), plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 
 }
@@ -116,7 +116,7 @@ func (*azureSubscriptionAccountResource) ImportState(ctx context.Context, req re
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func expandAzureSubscriptionAccount(ctx context.Context, model schemas.AzureSubscriptionAccountModel) *accounts.AzureSubscriptionAccount {
+func mapAzureSubscriptionAccountStateToResource(ctx context.Context, model schemas.AzureSubscriptionAccountModel) *accounts.AzureSubscriptionAccount {
 	var name = model.Name.ValueString()
 	var subscriptionId, _ = uuid.Parse(model.SubscriptionID.ValueString())
 
@@ -146,7 +146,7 @@ func expandAzureSubscriptionAccount(ctx context.Context, model schemas.AzureSubs
 	return account
 }
 
-func flattenAzureSubscriptionAccount(ctx context.Context, account *accounts.AzureSubscriptionAccount, model schemas.AzureSubscriptionAccountModel) schemas.AzureSubscriptionAccountModel {
+func mapAzureSubscriptionAccountResourceToState(ctx context.Context, account *accounts.AzureSubscriptionAccount, model schemas.AzureSubscriptionAccountModel) schemas.AzureSubscriptionAccountModel {
 	model.ID = types.StringValue(account.GetID())
 	model.AzureEnvironment = types.StringValue(account.AzureEnvironment)
 	model.CertificateThumbprint = types.StringValue(account.CertificateThumbprint)
@@ -156,7 +156,15 @@ func flattenAzureSubscriptionAccount(ctx context.Context, account *accounts.Azur
 	model.Name = types.StringValue(account.GetName())
 	model.SubscriptionID = types.StringValue(account.SubscriptionID.String())
 	model.SpaceID = types.StringValue(account.GetSpaceID())
-	model.StorageEndpointSuffix = types.StringValue(account.StorageEndpointSuffix)
+
+	var storageEndpointSuffix = types.StringValue(account.StorageEndpointSuffix)
+	if model.StorageEndpointSuffix.IsNull() && storageEndpointSuffix.Equal(types.StringValue("")) {
+		// Prevent .storage_endpoint_suffix: was null, but now cty.StringVal("") error
+		model.StorageEndpointSuffix = types.StringNull()
+	} else {
+		model.StorageEndpointSuffix = storageEndpointSuffix
+	}
+
 	model.TenantedDeploymentParticipation = types.StringValue(string(account.GetTenantedDeploymentMode()))
 	model.Tenants = flattenStringList(account.GetTenantIDs(), model.Tenants)
 	model.TenantTags = flattenStringList(account.TenantTags, model.TenantTags)
