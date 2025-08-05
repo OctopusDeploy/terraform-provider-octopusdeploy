@@ -8,8 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -79,7 +77,6 @@ func (a AzureSubscriptionAccountSchema) GetResourceSchema() resourceSchema.Schem
 				Validators: []validator.String{
 					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("azure_environment")),
 				},
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"name":     GetNameResourceSchema(true),
 			"space_id": GetSpaceIdResourceSchema(AzureSubscriptionAccountDescription),
@@ -89,7 +86,6 @@ func (a AzureSubscriptionAccountSchema) GetResourceSchema() resourceSchema.Schem
 				Validators: []validator.String{
 					stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("azure_environment")),
 				},
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"subscription_id": resourceSchema.StringAttribute{
 				Description: "The subscription ID of this resource.",
