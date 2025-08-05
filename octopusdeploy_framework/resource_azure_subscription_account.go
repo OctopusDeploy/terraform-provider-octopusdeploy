@@ -152,7 +152,15 @@ func mapAzureSubscriptionAccountResourceToState(ctx context.Context, account *ac
 	model.CertificateThumbprint = types.StringValue(account.CertificateThumbprint)
 	model.Description = types.StringValue(account.GetDescription())
 	model.Environments = flattenStringList(account.GetEnvironmentIDs(), model.Environments)
-	model.ManagementEndpoint = types.StringValue(account.ManagementEndpoint)
+
+	var managementEndpoint = types.StringValue(account.ManagementEndpoint)
+	if model.ManagementEndpoint.IsNull() && managementEndpoint.Equal(types.StringValue("")) {
+		// Prevent .management_endpoint: was null, but now cty.StringVal("") error
+		model.ManagementEndpoint = types.StringNull()
+	} else {
+		model.ManagementEndpoint = managementEndpoint
+	}
+
 	model.Name = types.StringValue(account.GetName())
 	model.SubscriptionID = types.StringValue(account.SubscriptionID.String())
 	model.SpaceID = types.StringValue(account.GetSpaceID())
