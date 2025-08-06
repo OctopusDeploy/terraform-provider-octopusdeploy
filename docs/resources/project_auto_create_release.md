@@ -3,12 +3,12 @@
 page_title: "octopusdeploy_project_auto_create_release Resource - terraform-provider-octopusdeploy"
 subcategory: ""
 description: |-
-  This resource manages automatic release creation for a project. When enabled, new releases will be automatically created when new versions of the specified packages are available. The referenced packages must use built-in package repository feeds.
+  
 ---
 
 # octopusdeploy_project_auto_create_release (Resource)
 
-This resource manages automatic release creation for a project. When enabled, new releases will be automatically created when new versions of the specified packages are available. The referenced packages must use built-in package repository feeds.
+~> **NOTE `octopusdeploy_auto_create_release` has been deprecated:** use `octopusdeploy_built_in_trigger` instead. 
 
 ## Example Usage
 
