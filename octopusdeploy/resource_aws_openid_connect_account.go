@@ -48,7 +48,7 @@ func resourceAmazonWebServicesOpenIDConnectAccountDelete(ctx context.Context, d 
 	log.Printf("[INFO] deleting AWS OIDC account (%s)", d.Id())
 
 	client := m.(*client.Client)
-	if err := client.Accounts.DeleteByID(d.Id()); err != nil {
+	if err := accounts.DeleteByID(client, d.Get("space_id").(string), d.Id()); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -62,7 +62,7 @@ func resourceAmazonWebServicesOpenIDConnectAccountRead(ctx context.Context, d *s
 	log.Printf("[INFO] reading AWS OIDC account (%s)", d.Id())
 
 	client := m.(*client.Client)
-	accountResource, err := client.Accounts.GetByID(d.Id())
+	accountResource, err := accounts.GetByID(client, d.Get("space_id").(string), d.Id())
 	if err != nil {
 		return errors.ProcessApiError(ctx, d, err, "AWS OIDC account")
 	}
