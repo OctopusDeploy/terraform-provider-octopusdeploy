@@ -170,11 +170,17 @@ func createAwsElasticContainerRegistryResourceFromData(data *schemas.AwsElasticC
 
 	feed.PackageAcquisitionLocationOptions = packageAcquisitionLocationOptions
 	feed.SpaceID = data.SpaceID.ValueString()
+	feed.AccessKey = data.AccessKey.ValueString()
+	feed.SecretKey = core.NewSensitiveValue(data.SecretKey.ValueString())
+	feed.OidcAuthentication = oidc
+
 	return feed, nil
 }
 
 func updateDataFromAwsElasticContainerRegistryFeed(data *schemas.AwsElasticContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.AwsElasticContainerRegistry) {
-	data.AccessKey = types.StringValue(feed.AccessKey)
+	if feed.AccessKey != "" {
+		data.AccessKey = types.StringValue(feed.AccessKey)
+	}
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)
 	data.Region = types.StringValue(feed.Region)

@@ -49,7 +49,7 @@ func (r *certificateResource) Create(ctx context.Context, req resource.CreateReq
 	certificate := expandCertificate(ctx, plan)
 	createdCertificate, err := certificates.Add(r.Config.Client, certificate)
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating certificate`", err.Error())
+		resp.Diagnostics.AddError("Error creating certificate", err.Error())
 		return
 	}
 
@@ -125,7 +125,7 @@ func expandCertificate(ctx context.Context, model schemas.CertificateModel) *cer
 
 	certificate.Archived = model.Archived.ValueString()
 	certificate.CertificateDataFormat = model.CertificateDataFormat.ValueString()
-	certificate.EnvironmentIDs = expandStringList(model.EnvironmentIDs)
+	certificate.EnvironmentIDs = expandStringSet(model.EnvironmentIDs)
 	certificate.HasPrivateKey = model.HasPrivateKey.ValueBool()
 	certificate.IsExpired = model.IsExpired.ValueBool()
 	certificate.IssuerCommonName = model.IssuerCommonName.ValueString()
@@ -156,7 +156,7 @@ func flattenCertificate(ctx context.Context, certificate *certificates.Certifica
 	model.ID = types.StringValue(certificate.GetID())
 	model.Archived = types.StringValue(certificate.Archived)
 	model.CertificateDataFormat = types.StringValue(certificate.CertificateDataFormat)
-	model.EnvironmentIDs = flattenStringList(certificate.EnvironmentIDs, model.EnvironmentIDs)
+	model.EnvironmentIDs = flattenStringSet(certificate.EnvironmentIDs, model.EnvironmentIDs)
 	model.HasPrivateKey = types.BoolValue(certificate.HasPrivateKey)
 	model.IsExpired = types.BoolValue(certificate.IsExpired)
 	model.IssuerCommonName = types.StringValue(certificate.IssuerCommonName)

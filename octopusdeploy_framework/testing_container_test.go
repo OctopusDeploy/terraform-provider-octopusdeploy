@@ -35,6 +35,7 @@ func TestMain(m *testing.M) {
 		testFramework := test.OctopusContainerTest{
 			CustomEnvironment: map[string]string{
 				"OCTOPUS__FeatureToggles__DeploymentFreezeByTenantFeatureToggle": "true",
+				"OCTOPUS__FeatureToggles__ExternalOidcFeedsFeatureToggle":        "true",
 			},
 		}
 

@@ -1,12 +1,12 @@
-package octopusdeploy
+package octopusdeploy_framework
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccOctopusDeployCertificateBasic(t *testing.T) {
@@ -19,7 +19,7 @@ func TestAccOctopusDeployCertificateBasic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccCertificateCheckDestroy,
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -36,11 +36,56 @@ func TestAccOctopusDeployCertificateBasic(t *testing.T) {
 }
 
 func testCertificateBasic(localName string, name string, certificateData string, password string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_certificate" "%s" {
-		certificate_data = "%s"
-		name             = "%s"
-		password         = "%s"
-	}`, localName, certificateData, name, password)
+	return fmt.Sprintf(`
+locals {
+  environments = [
+    {
+      key        = "alpha"
+      name       = "TFA1"
+      sort_order = 1
+    },
+    {
+      key        = "development"
+      name       = "TFB1"
+      sort_order = 2
+    },
+    {
+      key        = "test"
+      name       = "TFC1"
+      sort_order = 3
+    },
+    {
+      key        = "prod"
+      name       = "TFD1"
+      sort_order = 4
+    }
+  ]
+  certificate_scopes = ["alpha", "development"]
+}
+
+resource "octopusdeploy_environment" "environment" {
+  count      = length(local.environments)
+  name       = local.environments[count.index].name
+  sort_order = local.environments[count.index].sort_order
+
+  lifecycle {
+    prevent_destroy       = false
+    create_before_destroy = true
+  }
+}
+
+resource "octopusdeploy_certificate" "%s" {
+  certificate_data = "%s"
+  name             = "%s"
+  password         = "%s"
+  environments     = [
+    for scope in local.certificate_scopes : 
+    octopusdeploy_environment.environment[
+      index(local.environments[*].key, scope)
+    ].id
+  ]
+}
+`, localName, certificateData, name, password)
 }
 
 func testCertificateExists(prefix string) resource.TestCheckFunc {
