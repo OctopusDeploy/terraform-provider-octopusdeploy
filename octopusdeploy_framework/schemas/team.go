@@ -40,19 +40,23 @@ func (t TeamSchema) GetResourceSchema() resourceSchema.Schema {
 				ElementType: types.StringType,
 			},
 			"can_be_deleted": resourceSchema.BoolAttribute{
-				Optional: true,
+				Optional: false,
+				Required: false,
 				Computed: true,
 			},
 			"can_be_renamed": resourceSchema.BoolAttribute{
-				Optional: true,
+				Optional: false,
+				Required: false,
 				Computed: true,
 			},
 			"can_change_members": resourceSchema.BoolAttribute{
-				Optional: true,
+				Optional: false,
+				Required: false,
 				Computed: true,
 			},
 			"can_change_roles": resourceSchema.BoolAttribute{
-				Optional: true,
+				Optional: false,
+				Required: false,
 				Computed: true,
 			},
 		},

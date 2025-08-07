@@ -153,12 +153,14 @@ func getTeamSchema() map[string]*schema.Schema {
 		},
 		"can_be_renamed": {
 			Computed: true,
-			Optional: true,
+			Optional: false,
+			Required: false,
 			Type:     schema.TypeBool,
 		},
 		"can_change_members": {
 			Computed: true,
-			Optional: true,
+			Optional: false,
+			Required: false,
 			Type:     schema.TypeBool,
 		},
 		"can_change_roles": {
