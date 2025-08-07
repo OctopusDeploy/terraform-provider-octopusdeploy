@@ -1,0 +1,69 @@
+---
+page_title: "Resource: octopusdeploy_kubernetes_monitor"
+description: |-
+  Manages a Kubernetes Monitor in Octopus Deploy.
+---
+
+# Resource: octopusdeploy_kubernetes_monitor
+
+Manages a Kubernetes Monitor in Octopus Deploy. The Kubernetes Monitor provides observability capabilities for Kubernetes deployments.
+
+~> **Note** This resource requires Octopus Server 2025.3 or later.
+
+~> **Important** The `machine_id` must reference a Kubernetes Agent deployment target. Regular deployment targets or workers are not supported.
+
+## Example Usage
+
+### Basic Kubernetes Monitor with Kubernetes Agent
+
+This example shows how to set up a Kubernetes Monitor along with the Kubernetes Agent using Helm:
+
+```hcl
+resource "octopusdeploy_space" "monitoring" {
+  name        = "Kubernetes Monitoring"
+  description = "Space for Kubernetes observability"
+}
+
+resource "octopusdeploy_environment" "prod" {
+  name        = "Production"
+  description = "Production Kubernetes clusters"
+  space_id    = octopusdeploy_space.monitoring.id
+}
+
+# Create the Kubernetes Agent deployment target
+resource "octopusdeploy_kubernetes_agent_deployment_target" "prod_k8s" {
+  name         = "Production Kubernetes Cluster"
+  space_id     = octopusdeploy_space.monitoring.id
+  environments = [octopusdeploy_environment.prod.id]
+  roles        = ["k8s-prod", "monitoring-enabled"]
+  
+  default_namespace = "octopus-system"
+  
+  kubernetes_agent_details {
+    agent_version        = "2025.3.0"
+    helm_release_name    = "octopus-agent"
+    agent_tentacle_image = "octopusdeploy/kubernetes-agent-tentacle:2025.3.0"
+  }
+}
+
+# Generate a unique installation ID for the monitor
+resource "random_uuid" "monitor_installation" {}
+
+# Create the Kubernetes Monitor
+resource "octopusdeploy_kubernetes_monitor" "prod" {
+  space_id        = octopusdeploy_space.monitoring.id
+  installation_id = random_uuid.monitor_installation.result
+  machine_id      = octopusdeploy_kubernetes_agent_deployment_target.prod_k8s.id
+}
+
+# Output the authentication token for use in Helm values
+output "monitor_auth_token" {
+  value     = octopusdeploy_kubernetes_monitor.prod.authentication_token
+  sensitive = true
+  description = "Authentication token for the Kubernetes Monitor - use this in your Helm values"
+}
+
+#
+
+```
+{{ .SchemaMarkdown | trimspace }}
