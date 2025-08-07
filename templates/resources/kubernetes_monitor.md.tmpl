@@ -63,7 +63,21 @@ output "monitor_auth_token" {
   description = "Authentication token for the Kubernetes Monitor - use this in your Helm values"
 }
 
-#
+# Install the Kubernetes Monitor via Helm
 
+# TODO: Add set values referring to monitor and agent
+resource "helm_release" "kubernetes_agent" {
+  name       = "octopus-agent-name"
+  namespace  = "octopus-agent-name"
+  repository = "oci://registry-1.docker.io/octopusdeploy"
+  chart      = "kubernetes-agent"
+  version    = "2.*.*"
+  set {
+    name  = "agent.acceptEula"
+    value = "Y"
+  }
+
+  depends_on = [octopusdeploy_kubernetes_monitor.prod]
+}
 ```
 {{ .SchemaMarkdown | trimspace }}
