@@ -3,7 +3,10 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/gitdependencies"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/resources"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -70,10 +73,48 @@ func (r *stepTemplateTypeResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	actionTemplate, err := actiontemplates.Add(r.Config.Client, newActionTemplate)
-	if err != nil {
-		resp.Diagnostics.AddError("unable to create step template", err.Error())
-		return
+	var actionTemplate *actiontemplates.ActionTemplate = nil
+
+	if newActionTemplate.CommunityActionTemplateID != "" {
+		communityActionTemplate, err := r.Config.Client.CommunityActionTemplates.Install(actions.CommunityActionTemplate{
+			Resource: resources.Resource{
+				ID: newActionTemplate.CommunityActionTemplateID,
+			},
+		})
+
+		if err != nil {
+			resp.Diagnostics.AddError("unable to create step template", err.Error())
+			return
+		}
+
+		actionTemplate = &actiontemplates.ActionTemplate{
+			ActionType:                communityActionTemplate.ActionType,
+			CommunityActionTemplateID: newActionTemplate.CommunityActionTemplateID,
+			Description:               communityActionTemplate.Description,
+			Name:                      communityActionTemplate.Name,
+			Packages:                  communityActionTemplate.Packages,
+			GitDependencies:           newActionTemplate.GitDependencies,
+			Parameters:                communityActionTemplate.Parameters,
+			Properties:                communityActionTemplate.Properties,
+			SpaceID:                   "",
+			Version:                   communityActionTemplate.Version,
+			Resource: resources.Resource{
+				ID:         communityActionTemplate.ID,
+				ModifiedBy: communityActionTemplate.ModifiedBy,
+				ModifiedOn: communityActionTemplate.ModifiedOn,
+				Links:      communityActionTemplate.Links,
+			},
+		}
+	} else {
+
+		addedActionTemplate, err := actiontemplates.Add(r.Config.Client, newActionTemplate)
+
+		if err != nil {
+			resp.Diagnostics.AddError("unable to create step template", err.Error())
+			return
+		}
+
+		actionTemplate = addedActionTemplate
 	}
 
 	resp.Diagnostics.Append(mapStepTemplateToResourceModel(ctx, &data, actionTemplate)...)
