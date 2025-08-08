@@ -70,10 +70,12 @@ func mapTeamResourceToState(ctx context.Context, team *teams.Team, model schemas
 		model.ExternalSecurityGroup = types.ListNull(objectType)
 	}
 
-	model.CanBeDeleted = types.BoolValue(team.CanBeDeleted)
-	model.CanBeRenamed = types.BoolValue(team.CanBeRenamed)
-	model.CanChangeMembers = types.BoolValue(team.CanChangeMembers)
-	model.CanChangeRoles = types.BoolValue(team.CanChangeRoles)
+	// Temporary workaround to avoid errors due to differences in validation behaviour between SDKv2 and TPF providers.
+	// TODO: mark as read-only after deprecation phase.
+	model.CanBeDeleted = model.CanBeDeleted
+	model.CanBeRenamed = model.CanBeRenamed
+	model.CanChangeMembers = model.CanChangeMembers
+	model.CanChangeRoles = model.CanChangeRoles
 
 	userRoles, err := client.Teams.GetScopedUserRoles(*team, core.SkipTakeQuery{})
 	if err == nil {

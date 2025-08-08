@@ -27,6 +27,10 @@ user roles.
 
 ### Optional
 
+- `can_be_deleted` (Boolean, Deprecated)
+- `can_be_renamed` (Boolean, Deprecated)
+- `can_change_members` (Boolean, Deprecated)
+- `can_change_roles` (Boolean, Deprecated)
 - `description` (String) The description of this team.
 - `external_security_group` (Block List) (see [below for nested schema](#nestedblock--external_security_group))
 - `space_id` (String) The space ID associated with this team.
@@ -35,10 +39,6 @@ user roles.
 
 ### Read-Only
 
-- `can_be_deleted` (Boolean)
-- `can_be_renamed` (Boolean)
-- `can_change_members` (Boolean)
-- `can_change_roles` (Boolean)
 - `id` (String) The unique ID for this resource.
 
 <a id="nestedblock--external_security_group"></a>
