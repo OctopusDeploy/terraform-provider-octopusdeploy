@@ -109,7 +109,7 @@ func teamConfigWithUserRole(name, description, userRoleName string) string {
 		name = "%s"
 	}
 
-	resource "octopusdeploy_team" "team2" {
+	resource "octopusdeploy_team" "team1" {
 		name = "%s"
 		description = "%s"
 
@@ -127,7 +127,7 @@ func updateTeamConfigWithUserRole(name, description, userRoleName string) string
 		name = "%s"
 	}
 
-	resource "octopusdeploy_team" "team2" {
+	resource "octopusdeploy_team" "team1" {
 		name = "%s"
 		description = "%s - updated"
 
