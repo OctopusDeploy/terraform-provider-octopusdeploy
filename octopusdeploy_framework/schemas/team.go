@@ -3,8 +3,6 @@ package schemas
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -45,33 +43,21 @@ func (t TeamSchema) GetResourceSchema() resourceSchema.Schema {
 				DeprecationMessage: "This field cannot be changed and will be marked read-only in a future release.",
 				Optional:           true,
 				Computed:           true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"can_be_renamed": resourceSchema.BoolAttribute{
 				DeprecationMessage: "This field cannot be changed and will be marked read-only in a future release.",
 				Optional:           true,
 				Computed:           true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"can_change_members": resourceSchema.BoolAttribute{
 				DeprecationMessage: "This field cannot be changed and will be marked read-only in a future release.",
 				Optional:           true,
 				Computed:           true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"can_change_roles": resourceSchema.BoolAttribute{
 				DeprecationMessage: "This field cannot be changed and will be marked read-only in a future release.",
 				Optional:           true,
 				Computed:           true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
 			},
 		},
 		Blocks: map[string]resourceSchema.Block{
