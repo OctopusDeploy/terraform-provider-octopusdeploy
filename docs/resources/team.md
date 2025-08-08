@@ -23,20 +23,23 @@ user roles.
 
 ### Required
 
-- `name` (String) The name of this team.
+- `name` (String) The name of this resource.
 
 ### Optional
 
-- `can_be_deleted` (Boolean)
-- `can_be_renamed` (Boolean)
-- `can_change_members` (Boolean)
-- `can_change_roles` (Boolean)
-- `description` (String) The user-friendly description of this team.
+- `can_be_deleted` (Boolean, Deprecated)
+- `can_be_renamed` (Boolean, Deprecated)
+- `can_change_members` (Boolean, Deprecated)
+- `can_change_roles` (Boolean, Deprecated)
+- `description` (String) The description of this team.
 - `external_security_group` (Block List) (see [below for nested schema](#nestedblock--external_security_group))
-- `id` (String) The unique ID for this resource.
-- `space_id` (String) The space associated with this team.
-- `user_role` (Block Set) (see [below for nested schema](#nestedblock--user_role))
+- `space_id` (String) The space ID associated with this team.
+- `user_role` (Block Set) User roles associated with this team. (see [below for nested schema](#nestedblock--user_role))
 - `users` (Set of String) A list of user IDs designated to be members of this team.
+
+### Read-Only
+
+- `id` (String) The unique ID for this resource.
 
 <a id="nestedblock--external_security_group"></a>
 ### Nested Schema for `external_security_group`
@@ -45,7 +48,7 @@ Optional:
 
 - `display_id_and_name` (Boolean)
 - `display_name` (String)
-- `id` (String) The unique ID for this resource.
+- `id` (String) The unique ID of this external security group.
 
 
 <a id="nestedblock--user_role"></a>
