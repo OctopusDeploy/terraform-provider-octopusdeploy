@@ -21,7 +21,7 @@ Migration will be required no earlier than 2026-08-08
 
 | Date       | What we'll do                                                            | What you need to do                                                      |
 |------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------|
-| 2026-02-08 | **Enactment**: Soft-delete the deprecated attribute (Major release)      | Migrate your Terraform config, or use the escape-hatch, before upgrading |
+| 2025-02-08 | **Enactment**: Soft-delete the deprecated attribute (Major release)      | Migrate your Terraform config, or use the escape-hatch, before upgrading |
 | 2026-08-08 | **Completion**: Remove the deprecated resources entirely (Patch release) | Migrate your Terraform config before upgrading                           |
 
 ### How to migrate
@@ -42,8 +42,8 @@ We expect customers to migrate their configs in the 6 months between Announcemen
 
 If you're caught out during this period and need a bit more time to migrate, you can use this escape hatch to revert the soft-deletion from the Enactment stage.
 
-| Environment Variable | Required Value                       |
-|----------------------|--------------------------------------|
-| `TF_OCTOPUS_DEPRECATION_REVERSALS` | `project-auto-create-release-v1.3.0` |
+| Environment Variable | Required Value                 |
+|----------------------|--------------------------------|
+| `TF_OCTOPUS_DEPRECATION_REVERSALS` | `project-auto-create_release_v1.3.0` |
 
 This escape hatch will be removed and migration will be required during the [Completion phase](#Timeline)
