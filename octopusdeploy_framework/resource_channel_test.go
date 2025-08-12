@@ -13,8 +13,8 @@ import (
 
 func TestAccChannelBasic(t *testing.T) {
 	options := test.NewChannelTestOptions()
-	
-	// Create test dependencies  
+
+	// Create test dependencies
 	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
