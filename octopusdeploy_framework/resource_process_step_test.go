@@ -2,11 +2,12 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"testing"
 )
 
 func TestAccOctopusDeployProcessStepRunScript(t *testing.T) {
@@ -69,6 +70,7 @@ func testCheckResourceProcessStepRunScriptAttributes(step string, script string)
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttrSet(qualifiedName, "id"),
 		resource.TestCheckResourceAttr(qualifiedName, "name", step),
+		resource.TestCheckResourceAttrSet(qualifiedName, "action_id"),
 		resource.TestCheckResourceAttr(qualifiedName, "type", "Octopus.Script"),
 		resource.TestCheckResourceAttr(qualifiedName, "properties.Octopus.Action.TargetRoles", "role-one"),
 		resource.TestCheckResourceAttr(qualifiedName, "execution_properties.Octopus.Action.RunOnServer", "True"),
