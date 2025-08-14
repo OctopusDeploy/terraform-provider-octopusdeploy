@@ -397,6 +397,7 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 			"Octopus.Action.Script.ScriptBody": types.StringValue("Write-Host \"Step 1, Action 1\""),
 		}),
 	}
+	expectedState.ActionID = types.StringValue(step.Actions[0].ID)
 	expectedState.ID = types.StringValue(step.ID)
 
 	assert.Equal(t, expectedState, state)
