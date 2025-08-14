@@ -55,12 +55,7 @@ func TestProjectVersioningStrategyWithUpdate(t *testing.T) {
 			{
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectCheckExists(),
-					resource.TestCheckResourceAttrWith(versioningStrategyPrefix, "donor_package_step_id", func(value string) error {
-						if value == "" {
-							return fmt.Errorf("donor_package_step_id should not be empty")
-						}
-						return nil
-					}),
+					resource.TestCheckResourceAttrSet(versioningStrategyPrefix, "donor_package_step_id"),
 				),
 				Config: testProjectVersioningStrategyFromStep(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, localName, name, description),
 			},
