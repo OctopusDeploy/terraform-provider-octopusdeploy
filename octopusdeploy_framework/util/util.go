@@ -299,3 +299,65 @@ func CalculateStateTime(ctx context.Context, stateValue timetypes.RFC3339, updat
 	newValue := timetypes.NewRFC3339TimeValue(updatedValueUTC.In(location))
 	return newValue, diags
 }
+
+// SliceTransform takes an input collection, applies the transform function to each row, and returns the output.
+// Known as 'map' in most other languages or 'Select' in C# Linq.
+func SliceTransform[T any, TResult any](slice []T, transform func(item T) TResult) []TResult {
+	var results []TResult = nil
+	for _, item := range slice {
+		results = append(results, transform(item))
+	}
+	return results
+}
+
+// SliceFilter takes an input collection and returns elements where `predicate` returns true
+// Known as 'filter' in most other languages or 'Select' in C# Linq.
+func SliceFilter[T any](slice []T, predicate func(item T) bool) []T {
+	var results []T = nil
+	for _, item := range slice {
+		if predicate(item) {
+			results = append(results, item)
+		}
+	}
+	return results
+}
+
+// SliceContains returns true if it finds an item in the slice that is equal to the target
+func SliceContains[T comparable](slice []T, target T) bool {
+	for _, item := range slice {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
+// SliceFind returns the first element from the slice where the predicate returns true, or nil if not found
+func SliceFind[T any](slice []T, predicate func(T) bool) *T {
+	for _, item := range slice {
+		if predicate(item) {
+			return &item
+		}
+	}
+	return nil
+}
+
+// StringSlicesEqual compares two string slices for equality (ignoring order)
+func StringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	aMap := make(map[string]bool)
+	for _, item := range a {
+		aMap[item] = true
+	}
+
+	for _, item := range b {
+		if !aMap[item] {
+			return false
+		}
+	}
+
+	return true
+}
