@@ -2,11 +2,12 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"log"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"log"
-	"net/http"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
@@ -212,7 +213,10 @@ func mapStateToProjectVersioningStrategy(ctx context.Context, state *schemas.Pro
 func mapProjectVersioningStrategyToState(versioningStrategy *projects.VersioningStrategy, state *schemas.ProjectVersioningStrategyModel) {
 	if versioningStrategy.DonorPackageStepID != nil {
 		state.DonorPackageStepID = types.StringValue(*versioningStrategy.DonorPackageStepID)
+	} else {
+		state.DonorPackageStepID = types.StringNull()
 	}
+
 	// Template and Donor Package are mutually exclusive options. We won't always have DonorPackage information.
 	state.Template = types.StringValue(versioningStrategy.Template)
 
@@ -224,5 +228,7 @@ func mapProjectVersioningStrategyToState(versioningStrategy *projects.Versioning
 				"package_reference": types.StringValue(versioningStrategy.DonorPackage.PackageReference),
 			},
 		)
+	} else {
+		state.DonorPackage = types.ObjectNull(schemas.ProjectVersioningStrategyDonorPackageAttributeTypes())
 	}
 }

@@ -3,6 +3,8 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/gitdependencies"
@@ -17,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"strings"
 )
 
 var _ resource.ResourceWithImportState = &processStepResource{}
@@ -505,6 +506,7 @@ func mapProcessStepToState(process processWrapper, step *deployments.DeploymentS
 }
 
 func mapProcessStepActionToState(action *deployments.DeploymentAction, state *schemas.ProcessStepResourceModel) diag.Diagnostics {
+	state.ActionID = types.StringValue(action.GetID())
 	state.Type = types.StringValue(action.ActionType)
 	state.Slug = types.StringValue(action.Slug)
 	state.IsRequired = types.BoolValue(action.IsRequired)

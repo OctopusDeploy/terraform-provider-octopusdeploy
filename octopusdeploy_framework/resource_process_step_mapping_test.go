@@ -2,6 +2,8 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/gitdependencies"
@@ -12,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
@@ -396,6 +397,7 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 			"Octopus.Action.Script.ScriptBody": types.StringValue("Write-Host \"Step 1, Action 1\""),
 		}),
 	}
+	expectedState.ActionID = types.StringValue(step.Actions[0].ID)
 	expectedState.ID = types.StringValue(step.ID)
 
 	assert.Equal(t, expectedState, state)
@@ -562,6 +564,7 @@ func TestAccMapProcessStepToStateWithAllAttributesForRunbook(t *testing.T) {
 		}),
 	}
 	expectedState.ID = types.StringValue(step.ID)
+	expectedState.ActionID = types.StringValue(step.Actions[0].ID)
 
 	assert.Equal(t, expectedState, state)
 }
