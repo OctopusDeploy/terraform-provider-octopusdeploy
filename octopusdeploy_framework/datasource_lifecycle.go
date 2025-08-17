@@ -125,6 +125,7 @@ func phaseObjectType() map[string]attr.Type {
 
 func retentionPolicyObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
+		"strategy":            types.StringType,
 		"quantity_to_keep":    types.Int64Type,
 		"should_keep_forever": types.BoolType,
 		"unit":                types.StringType,

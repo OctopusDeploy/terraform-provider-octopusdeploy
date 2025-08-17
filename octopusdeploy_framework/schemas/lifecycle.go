@@ -2,6 +2,8 @@ package schemas
 
 import (
 	"context"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"strings"
 
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -109,6 +111,10 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 		Description: "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
+				"strategy": util.ResourceString().
+					Optional().Computed().
+					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
+					Build(),
 				"quantity_to_keep": util.ResourceInt64().
 					Optional().Computed().
 					Default(int64default.StaticInt64(30)).
@@ -175,6 +181,7 @@ func getRetentionPolicyAttribute() datasourceSchema.ListNestedAttribute {
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
+				"strategy":            util.DataSourceString().Computed().Description("The retention policy strategy.").Build(),
 				"quantity_to_keep":    util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
 				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever.").Build(),
 				"unit":                util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
@@ -195,6 +202,7 @@ func (v retentionPolicyValidator) MarkdownDescription(ctx context.Context) strin
 
 func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
+		Strategy          types.String `tfsdk:"strategy"`
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
 		ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
 		Unit              types.String `tfsdk:"unit"`
@@ -204,6 +212,32 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if retentionPolicy.Strategy.ValueString() == core.RetentionStrategyDefault {
+		if !retentionPolicy.QuantityToKeep.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("quantity_to_keep"),
+				"Invalid retention policy configuration",
+				"quantity_to_keep should not be supplied when strategy is set to Default",
+			)
+		}
+
+		if !retentionPolicy.Unit.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("should_keep_forever"),
+				"Invalid retention policy configuration",
+				"unit should not be supplied when strategy is set to Default",
+			)
+		}
+
+		if !retentionPolicy.ShouldKeepForever.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"Invalid retention policy configuration",
+				"should_keep_forever should not be supplied when strategy is set to Default",
+			)
+		}
 	}
 
 	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
