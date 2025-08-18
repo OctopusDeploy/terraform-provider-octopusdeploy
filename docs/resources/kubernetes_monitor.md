@@ -64,17 +64,46 @@ output "monitor_auth_token" {
 }
 
 # Install the Kubernetes Monitor via Helm
-
-# TODO: Add set values referring to monitor and agent
 resource "helm_release" "kubernetes_agent" {
-  name       = "octopus-agent-name"
-  namespace  = "octopus-agent-name"
+  name       = "octopus-agent"
+  namespace  = "octopus-system"
   repository = "oci://registry-1.docker.io/octopusdeploy"
   chart      = "kubernetes-agent"
   version    = "2.*.*"
+  
   set {
     name  = "agent.acceptEula"
     value = "Y"
+  }
+  
+  set {
+    name  = "agent.serverUrl"
+    value = "https://your-octopus-server.com" # Replace with your actual Octopus Server URL
+  }
+  
+  set {
+    name  = "agent.space"
+    value = octopusdeploy_space.monitoring.name
+  }
+  
+  set {
+    name  = "agent.targetName"
+    value = octopusdeploy_kubernetes_agent_deployment_target.prod_k8s.name
+  }
+  
+  set {
+    name  = "agent.monitor.enabled"
+    value = "true"
+  }
+  
+  set_sensitive {
+    name  = "agent.monitor.authenticationToken"
+    value = octopusdeploy_kubernetes_monitor.prod.authentication_token
+  }
+  
+  set {
+    name  = "agent.monitor.installationId"
+    value = octopusdeploy_kubernetes_monitor.prod.installation_id
   }
 
   depends_on = [octopusdeploy_kubernetes_monitor.prod]
