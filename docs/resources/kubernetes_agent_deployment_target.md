@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_kubernetes_agent_deployment_target Resource - terraform-provider-octopusdeploy"
-subcategory: "Deployment Targets"
+subcategory: ""
 description: |-
   This resource manages Kubernetes agent deployment targets in Octopus Deploy.
 ---

@@ -30,23 +30,23 @@ resource "octopusdeploy_channel" "example" {
 ### Optional
 
 - `description` (String) The description of this channel.
-- `id` (String) The unique ID for this resource.
-- `is_default` (Boolean) Indicates if this is the default channel for the associated project.
+- `is_default` (Boolean) Indicates whether this is the default channel for the associated project.
 - `lifecycle_id` (String) The lifecycle ID associated with this channel.
 - `rule` (Block List) A list of rules associated with this channel. (see [below for nested schema](#nestedblock--rule))
-- `space_id` (String) The space ID associated with this resource.
-- `tenant_tags` (List of String) A list of tenant tags associated with this resource.
+- `space_id` (String) The space ID associated with this channel.
+- `tenant_tags` (Set of String) A set of tenant tags associated with this channel.
+
+### Read-Only
+
+- `id` (String) The unique ID for this resource.
 
 <a id="nestedblock--rule"></a>
 ### Nested Schema for `rule`
 
-Required:
-
-- `action_package` (Block List, Min: 1) (see [below for nested schema](#nestedblock--rule--action_package))
-
 Optional:
 
-- `id` (String) The unique ID for this resource.
+- `action_package` (Block List) (see [below for nested schema](#nestedblock--rule--action_package))
+- `id` (String) The ID associated with this channel rule.
 - `tag` (String)
 - `version_range` (String)
 
