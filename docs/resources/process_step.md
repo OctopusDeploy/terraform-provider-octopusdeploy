@@ -137,6 +137,7 @@ resource "octopusdeploy_process_step" "deploy_package" {
 
 ### Read-Only
 
+- `action_id` (String) The ID of the first action created in the step.
 - `id` (String) The unique ID for this resource.
 
 <a id="nestedatt--container"></a>
