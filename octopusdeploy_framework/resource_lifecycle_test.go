@@ -432,6 +432,45 @@ func TestAccLifecycleDefaultReleaseRetentionValidation(t *testing.T) {
 		},
 	})
 }
+
+func TestAccLifecycleDefaultTentacleRetentionValidation(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	shouldKeepForeverAttribute := "should_keep_forever = false"
+	quantityToKeepAttribute := "quantity_to_keep = 0"
+	unitAttribute := `unit = "Items"`
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccLifecycleCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			//should error when should_keep_forever is also supplied
+			{
+				Config:   createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName, name, quantityToKeepAttribute),
+				PlanOnly: true,
+				ExpectError: regexp.MustCompile(
+					`quantity_to_keep should not be supplied when strategy is set to Default`,
+				),
+			},
+			{
+				Config:   createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName, name, shouldKeepForeverAttribute),
+				PlanOnly: true,
+				ExpectError: regexp.MustCompile(
+					"should_keep_forever should not be supplied when strategy is set to Default",
+				),
+			},
+			{
+				Config:   createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName, name, unitAttribute),
+				PlanOnly: true,
+				ExpectError: regexp.MustCompile(
+					`unit should not be supplied when strategy is set to Default`,
+				),
+			},
+		},
+	})
+}
+
 func testAccLifecycle(localName string, name string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
