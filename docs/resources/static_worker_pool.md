@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_static_worker_pool Resource - terraform-provider-octopusdeploy"
-subcategory: "Worker Pools"
+subcategory: ""
 description: |-
   This resource manages static worker pools in Octopus Deploy.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_process Resource - terraform-provider-octopusdeploy"
-subcategory: "Runbook & Deployment Processes"
+subcategory: ""
 description: |-
   This resource manages Runbook and Deployment Processes in Octopus Deploy. It's used in collaboration with octopusdeploy_process_step and octopusdeploy_process_step_order.
 ---

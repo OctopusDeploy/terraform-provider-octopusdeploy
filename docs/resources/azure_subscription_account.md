@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_azure_subscription_account Resource - terraform-provider-octopusdeploy"
-subcategory: "Accounts"
+subcategory: ""
 description: |-
   This resource manages Azure subscription accounts in Octopus Deploy.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_azure_cloud_service_deployment_target Resource - terraform-provider-octopusdeploy"
-subcategory: "Deployment Targets"
+subcategory: ""
 description: |-
   This resource manages Azure cloud service deployment targets in Octopus Deploy.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_aws_elastic_container_registry Resource - terraform-provider-octopusdeploy"
-subcategory: "Feeds"
+subcategory: ""
 description: |-
   This resource manages an AWS Elastic Container Registry in Octopus Deploy.
 ---

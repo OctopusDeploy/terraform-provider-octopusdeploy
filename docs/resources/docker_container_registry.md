@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_docker_container_registry Resource - terraform-provider-octopusdeploy"
-subcategory: "Feeds"
+subcategory: ""
 description: |-
   This resource manages a Docker Container Registry in Octopus Deploy.
 ---

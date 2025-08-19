@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_external_feed_create_release_trigger Resource - terraform-provider-octopusdeploy"
-subcategory: "Triggers"
+subcategory: ""
 description: |-
   This resource manages External feed triggers (release creation type) in Octopus Deploy.
 ---

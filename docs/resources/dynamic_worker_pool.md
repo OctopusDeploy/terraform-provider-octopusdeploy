@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_dynamic_worker_pool Resource - terraform-provider-octopusdeploy"
-subcategory: "Worker Pools"
+subcategory: ""
 description: |-
   This resource manages dynamic worker pools in Octopus Deploy.
 ---
