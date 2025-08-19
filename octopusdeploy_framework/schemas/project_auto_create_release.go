@@ -14,7 +14,8 @@ var _ EntitySchema = ProjectAutoCreateReleaseSchema{}
 
 func (r ProjectAutoCreateReleaseSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
-		Description: "This resource manages automatic release creation for a project. When enabled, new releases will be automatically created when new versions of the specified packages are available. The referenced packages must use built-in package repository feeds.",
+		DeprecationMessage: "octopusdeploy_auto_create_release is deprecated and will be removed in a future version. Use octopusdeploy_built_in_trigger instead.",
+		Description:        "This resource manages automatic release creation for a project. When enabled, new releases will be automatically created when new versions of the specified packages are available. The referenced packages must use built-in package repository feeds.",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id": util.ResourceString().
 				Description("The unique identifier for this resource.").
