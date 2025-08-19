@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_azure_web_app_deployment_target Resource - terraform-provider-octopusdeploy"
-subcategory: "Deployment Targets"
+subcategory: ""
 description: |-
   This resource manages Azure web app deployment targets in Octopus Deploy.
 ---

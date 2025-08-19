@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_project_scheduled_trigger Resource - terraform-provider-octopusdeploy"
-subcategory: "Triggers"
+subcategory: ""
 description: |-
   This resource manages a scheduled trigger for a project or runbook in Octopus Deploy.
 ---

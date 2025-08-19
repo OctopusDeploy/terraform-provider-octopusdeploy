@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_maven_feed Resource - terraform-provider-octopusdeploy"
-subcategory: "Feeds"
+subcategory: ""
 description: |-
   This resource manages a Maven feed in Octopus Deploy.
 ---

@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_github_repository_feed Resource - terraform-provider-octopusdeploy"
-subcategory: "Feeds"
+subcategory: ""
 description: |-
   This resource manages a GitHub repository feed in Octopus Deploy.
 ---
