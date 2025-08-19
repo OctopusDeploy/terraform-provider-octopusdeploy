@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_azure_service_fabric_cluster_deployment_target Resource - terraform-provider-octopusdeploy"
-subcategory: "Deployment Targets"
+subcategory: ""
 description: |-
   This resource manages Azure service fabric cluster deployment targets in Octopus Deploy.
 ---

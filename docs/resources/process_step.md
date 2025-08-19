@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_process_step Resource - terraform-provider-octopusdeploy"
-subcategory: "Runbook & Deployment Processes"
+subcategory: ""
 description: |-
   This resource manages a single step of a Runbook or Deployment Process in Octopus Deploy.
 ---

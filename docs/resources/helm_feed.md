@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_helm_feed Resource - terraform-provider-octopusdeploy"
-subcategory: "Feeds"
+subcategory: ""
 description: |-
   This resource manages a Helm Feed in Octopus Deploy.
 ---

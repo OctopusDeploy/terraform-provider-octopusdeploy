@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_aws_account Resource - terraform-provider-octopusdeploy"
-subcategory: "Accounts"
+subcategory: ""
 description: |-
   This resource manages AWS accounts in Octopus Deploy.
 ---

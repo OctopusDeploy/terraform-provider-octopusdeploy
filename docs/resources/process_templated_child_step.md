@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_process_templated_child_step Resource - terraform-provider-octopusdeploy"
-subcategory: "Runbook & Deployment Processes"
+subcategory: ""
 description: |-
   This resource manages a child step of a Runbook or Deployment process which based on existing custom step template
 ---

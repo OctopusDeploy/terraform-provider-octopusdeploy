@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_feeds Data Source - terraform-provider-octopusdeploy"
-subcategory: "Feeds"
+subcategory: ""
 description: |-
   Provides information about existing feeds.
 ---

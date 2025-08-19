@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_accounts Data Source - terraform-provider-octopusdeploy"
-subcategory: "Accounts"
+subcategory: ""
 description: |-
   Provides information about existing accounts.
 ---

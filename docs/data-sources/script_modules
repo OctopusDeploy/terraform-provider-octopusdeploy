@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_script_modules Data Source - terraform-provider-octopusdeploy"
-subcategory: "Library"
+subcategory: ""
 description: |-
   Provides information about existing script modules.
 ---
