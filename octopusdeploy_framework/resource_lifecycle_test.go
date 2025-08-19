@@ -20,7 +20,7 @@ func TestExpandLifecycleWithNil(t *testing.T) {
 	require.Nil(t, lifecycle)
 }
 
-func TestExpandLifecycle(t *testing.T) {
+func TestExpandLifecycleWithCountAndForeverRetentionStrategies(t *testing.T) {
 	description := "test-description"
 	name := "test-name"
 	spaceID := "test-space-id"
@@ -38,6 +38,7 @@ func TestExpandLifecycle(t *testing.T) {
 				types.ObjectValueMust(
 					getRetentionPeriodAttrTypes(),
 					map[string]attr.Value{
+						"strategy":            types.StringValue(releaseRetention.Strategy),
 						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
 						"unit":                types.StringValue(releaseRetention.Unit),
@@ -51,6 +52,29 @@ func TestExpandLifecycle(t *testing.T) {
 				types.ObjectValueMust(
 					getRetentionPeriodAttrTypes(),
 					map[string]attr.Value{
+						"strategy":            types.StringValue(releaseRetention.Strategy),
+						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
+						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
+						"unit":                types.StringValue(tentacleRetention.Unit),
+					},
+				),
+			},
+		),
+	}
+	data.ID = types.StringValue(Id)
+
+	lifecycle := expandLifecycle(data)
+
+	require.Equal(t, description, lifecycle.Description)
+	require.NotEmpty(t, lifecycle.ID)
+	require.NotNil(t, lifecycle.Links)
+	require.Empty(t, lifecycle.Links)
+	require.Equal(t, name, lifecycle.Name)
+	require.Empty(t, lifecycle.Phases)
+	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
+	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
+	require.Equal(t, spaceID, lifecycle.SpaceID)
+}
 						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
 						"unit":                types.StringValue(tentacleRetention.Unit),
