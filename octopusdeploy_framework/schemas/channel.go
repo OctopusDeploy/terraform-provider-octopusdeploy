@@ -42,24 +42,18 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 				Description: "The project ID associated with this channel.",
 				Required:    true,
 			},
-			"rule": resourceSchema.ListNestedAttribute{
-				Description: "A list of rules associated with this channel.",
+			"space_id": GetSpaceIdResourceSchema(ChannelResourceDescription),
+			"tenant_tags": resourceSchema.ListAttribute{
+				Description: "A list of tenant tags associated with this channel.",
 				Optional:    true,
-				NestedObject: resourceSchema.NestedAttributeObject{
+				ElementType: types.StringType,
+			},
+		},
+		Blocks: map[string]resourceSchema.Block{
+			"rule": resourceSchema.ListNestedBlock{
+				Description: "A list of rules associated with this channel.",
+				NestedObject: resourceSchema.NestedBlockObject{
 					Attributes: map[string]resourceSchema.Attribute{
-						"action_package": resourceSchema.ListNestedAttribute{
-							Required: true,
-							NestedObject: resourceSchema.NestedAttributeObject{
-								Attributes: map[string]resourceSchema.Attribute{
-									"deployment_action": resourceSchema.StringAttribute{
-										Optional: true,
-									},
-									"package_reference": resourceSchema.StringAttribute{
-										Optional: true,
-									},
-								},
-							},
-						},
 						"id": resourceSchema.StringAttribute{
 							Description: "The ID associated with this channel rule.",
 							Computed:    true,
@@ -72,13 +66,21 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 							Optional: true,
 						},
 					},
+					Blocks: map[string]resourceSchema.Block{
+						"action_package": resourceSchema.ListNestedBlock{
+							NestedObject: resourceSchema.NestedBlockObject{
+								Attributes: map[string]resourceSchema.Attribute{
+									"deployment_action": resourceSchema.StringAttribute{
+										Optional: true,
+									},
+									"package_reference": resourceSchema.StringAttribute{
+										Optional: true,
+									},
+								},
+							},
+						},
+					},
 				},
-			},
-			"space_id": GetSpaceIdResourceSchema(ChannelResourceDescription),
-			"tenant_tags": resourceSchema.ListAttribute{
-				Description: "A list of tenant tags associated with this channel.",
-				Optional:    true,
-				ElementType: types.StringType,
 			},
 		},
 	}
