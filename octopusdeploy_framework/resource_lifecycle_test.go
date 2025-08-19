@@ -490,13 +490,15 @@ func testAccLifecycleWithRetentionPolicy(localName string, name string, descript
        name        = "%s"
        description = "%s"
 		release_retention_policy {
+			strategy = "Count"
 			unit             = "Days"
 			quantity_to_keep = 60
 			should_keep_forever = false
 		}
 
 		tentacle_retention_policy {
-			unit             = "Days"
+			strategy = "Forever"
+			unit             = "Items"
 			quantity_to_keep = 0
 			should_keep_forever = true
 		}
@@ -538,11 +540,13 @@ func testAccLifecycleComplex(localName string, name string) string {
 			description = "Funky Lifecycle description"
 
 			release_retention_policy {
+				strategy = "Count"
 				unit             = "Days"
 				quantity_to_keep = 2
 			}
 
 			tentacle_retention_policy {
+				strategy = "Count" 
 				unit             = "Days"
 				quantity_to_keep = 1
 			}
