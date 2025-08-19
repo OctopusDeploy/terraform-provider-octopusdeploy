@@ -595,6 +595,26 @@ func testAccLifecycleCheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("lifecycle (%s) still exists", rs.Primary.ID)
 		}
 	}
-
 	return nil
+}
+
+func createLifecycleWithDefaultReleaseRetentionAndUnwantedAttribute(localName string, name string, unwantedAttribute string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+		name = "%s"
+        description = ""
+    	release_retention_policy {
+    		strategy = "Default"      
+    		%s
+  		}
+	}`, localName, name, unwantedAttribute)
+}
+func createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName string, name string, unwantedAttribute string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+		name = "%s"
+        description = ""
+    	tentacle_retention_policy {
+    		strategy = "Default"      
+    		%s
+  		}
+	}`, localName, name, unwantedAttribute)
 }
