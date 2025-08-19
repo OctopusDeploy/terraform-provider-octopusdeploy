@@ -75,6 +75,40 @@ func TestExpandLifecycleWithCountAndForeverRetentionStrategies(t *testing.T) {
 	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
 	require.Equal(t, spaceID, lifecycle.SpaceID)
 }
+
+func TestExpandLifecycleWithDefaultRetentionStrategies(t *testing.T) {
+	description := "test-description"
+	name := "test-name"
+	spaceID := "test-space-id"
+	Id := "test-id"
+	releaseRetention := core.SpaceDefaultRetentionPeriod()
+	tentacleRetention := core.SpaceDefaultRetentionPeriod()
+
+	data := &lifecycleTypeResourceModel{
+		Description: types.StringValue(description),
+		Name:        types.StringValue(name),
+		SpaceID:     types.StringValue(spaceID),
+		ReleaseRetentionPolicy: types.ListValueMust(
+			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
+			[]attr.Value{
+				types.ObjectValueMust(
+					getRetentionPeriodAttrTypes(),
+					map[string]attr.Value{
+						"strategy":            types.StringValue(releaseRetention.Strategy),
+						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
+						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
+						"unit":                types.StringValue(releaseRetention.Unit),
+					},
+				),
+			},
+		),
+		TentacleRetentionPolicy: types.ListValueMust(
+			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
+			[]attr.Value{
+				types.ObjectValueMust(
+					getRetentionPeriodAttrTypes(),
+					map[string]attr.Value{
+						"strategy":            types.StringValue(releaseRetention.Strategy),
 						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
 						"unit":                types.StringValue(tentacleRetention.Unit),
