@@ -18,7 +18,7 @@ type ChannelModel struct {
 	ProjectId   types.String `tfsdk:"project_id"`
 	Rule        types.List   `tfsdk:"rule"`
 	SpaceId     types.String `tfsdk:"space_id"`
-	TenantTags  types.List   `tfsdk:"tenant_tags"`
+	TenantTags  types.Set    `tfsdk:"tenant_tags"`
 
 	ResourceModel
 }
@@ -43,8 +43,8 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 				Required:    true,
 			},
 			"space_id": GetSpaceIdResourceSchema(ChannelResourceDescription),
-			"tenant_tags": resourceSchema.ListAttribute{
-				Description: "A list of tenant tags associated with this channel.",
+			"tenant_tags": resourceSchema.SetAttribute{
+				Description: "A set of tenant tags associated with this channel.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},

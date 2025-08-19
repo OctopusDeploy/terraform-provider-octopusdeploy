@@ -34,7 +34,7 @@ resource "octopusdeploy_channel" "example" {
 - `lifecycle_id` (String) The lifecycle ID associated with this channel.
 - `rule` (Block List) A list of rules associated with this channel. (see [below for nested schema](#nestedblock--rule))
 - `space_id` (String) The space ID associated with this channel.
-- `tenant_tags` (List of String) A list of tenant tags associated with this channel.
+- `tenant_tags` (Set of String) A set of tenant tags associated with this channel.
 
 ### Read-Only
 

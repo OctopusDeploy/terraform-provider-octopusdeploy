@@ -140,38 +140,76 @@ func expandChannel(ctx context.Context, model schemas.ChannelModel) *channels.Ch
 	channel.LifecycleID = model.LifecycleId.ValueString()
 	channel.Rules = expandChannelRules(model.Rule)
 	channel.SpaceID = model.SpaceId.ValueString()
-	channel.TenantTags = expandStringList(model.TenantTags)
+	channel.TenantTags = util.ExpandStringSet(model.TenantTags)
 
 	return channel
 }
 
 func expandChannelRules(rules types.List) []channels.ChannelRule {
-	if rules.IsNull() || rules.IsUnknown() {
+	if rules.IsNull() || rules.IsUnknown() || len(rules.Elements()) == 0 {
 		return nil
 	}
 
-	var rulesMap []map[string]interface{}
-	rules.ElementsAs(context.Background(), &rulesMap, false)
+	result := make([]channels.ChannelRule, 0, len(rules.Elements()))
 
-	var channelRules []channels.ChannelRule
-	for _, ruleMap := range rulesMap {
-		channelRule := expandChannelRule(ruleMap)
-		channelRules = append(channelRules, channelRule)
+	for _, ruleElem := range rules.Elements() {
+		ruleObj := ruleElem.(types.Object)
+		ruleAttrs := ruleObj.Attributes()
+
+		channelRule := expandChannelRuleFromAttrs(ruleAttrs)
+		result = append(result, channelRule)
 	}
 
-	return channelRules
+	return result
 }
 
-func expandChannelRule(rule map[string]interface{}) channels.ChannelRule {
+func expandChannelRuleFromAttrs(attrs map[string]attr.Value) channels.ChannelRule {
 	var channelRule channels.ChannelRule
 
-	channelRule.ID = rule["id"].(string)
-	actionPackage := rule["action_package"].([]map[string]interface{})
-	channelRule.ActionPackages = expandChannelRuleDeploymentActionPackages(actionPackage)
-	channelRule.Tag = rule["tag"].(string)
-	channelRule.VersionRange = rule["version_range"].(string)
+	if v, ok := attrs["id"].(types.String); ok && !v.IsNull() {
+		channelRule.ID = v.ValueString()
+	}
+
+	if v, ok := attrs["tag"].(types.String); ok && !v.IsNull() {
+		channelRule.Tag = v.ValueString()
+	}
+
+	if v, ok := attrs["version_range"].(types.String); ok && !v.IsNull() {
+		channelRule.VersionRange = v.ValueString()
+	}
+
+	if v, ok := attrs["action_package"].(types.List); ok && !v.IsNull() {
+		channelRule.ActionPackages = expandChannelRuleDeploymentActionPackagesFromList(v)
+	}
 
 	return channelRule
+}
+
+func expandChannelRuleDeploymentActionPackagesFromList(actionPackages types.List) []packages.DeploymentActionPackage {
+	if actionPackages.IsNull() || actionPackages.IsUnknown() || len(actionPackages.Elements()) == 0 {
+		return nil
+	}
+
+	result := make([]packages.DeploymentActionPackage, 0, len(actionPackages.Elements()))
+
+	for _, packageElem := range actionPackages.Elements() {
+		packageObj := packageElem.(types.Object)
+		packageAttrs := packageObj.Attributes()
+
+		var actionPackage packages.DeploymentActionPackage
+
+		if v, ok := packageAttrs["deployment_action"].(types.String); ok && !v.IsNull() {
+			actionPackage.DeploymentAction = v.ValueString()
+		}
+
+		if v, ok := packageAttrs["package_reference"].(types.String); ok && !v.IsNull() {
+			actionPackage.PackageReference = v.ValueString()
+		}
+
+		result = append(result, actionPackage)
+	}
+
+	return result
 }
 
 func expandChannelRuleDeploymentActionPackages(actionPackages []map[string]interface{}) []packages.DeploymentActionPackage {
@@ -218,23 +256,20 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 		model.SpaceId = types.StringValue(channel.SpaceID)
 	}
 
-	model.TenantTags = flattenStringList(channel.TenantTags, model.TenantTags)
+	model.TenantTags = util.FlattenStringSet(channel.TenantTags, model.TenantTags)
 
 	return model
 }
 
 func flattenChannelRules(rules []channels.ChannelRule, currentRules types.List) types.List {
-	if len(rules) == 0 && currentRules.IsNull() {
-		return types.ListNull(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()})
-	}
-	if rules == nil {
+	if rules == nil || len(rules) == 0 {
 		return types.ListNull(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()})
 	}
 
-	var flattenedRules = make([]attr.Value, len(rules))
-	for i, rule := range rules {
+	flattenedRules := make([]attr.Value, 0, len(rules))
+	for _, rule := range rules {
 		obj := flattenChannelRule(&rule)
-		flattenedRules[i] = obj
+		flattenedRules = append(flattenedRules, obj)
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}, flattenedRules)
@@ -251,10 +286,14 @@ func flattenChannelRule(rule *channels.ChannelRule) types.Object {
 }
 
 func flattenChannelRuleDeploymentActionPackages(actionPackages []packages.DeploymentActionPackage) types.List {
-	var flattenedActionPackages = make([]attr.Value, len(actionPackages))
-	for i, actionPackage := range actionPackages {
+	if actionPackages == nil || len(actionPackages) == 0 {
+		return types.ListNull(types.ObjectType{AttrTypes: getChannelRuleDeploymentActionPackageAttrTypes()})
+	}
+
+	flattenedActionPackages := make([]attr.Value, 0, len(actionPackages))
+	for _, actionPackage := range actionPackages {
 		obj := flattenChannelRuleDeploymentActionPackage(&actionPackage)
-		flattenedActionPackages[i] = obj
+		flattenedActionPackages = append(flattenedActionPackages, obj)
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleDeploymentActionPackageAttrTypes()}, flattenedActionPackages)

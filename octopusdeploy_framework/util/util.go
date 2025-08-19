@@ -211,6 +211,32 @@ func BuildStringSetOrEmpty(values []string) types.Set {
 	}
 }
 
+func ExpandStringSet(set types.Set) []string {
+	if set.IsNull() || set.IsUnknown() {
+		return nil
+	}
+	var result []string
+	set.ElementsAs(context.Background(), &result, false)
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+func FlattenStringSet(slice []string, currentSet types.Set) types.Set {
+	if len(slice) == 0 && currentSet.IsNull() {
+		return types.SetNull(types.StringType)
+	}
+	if slice == nil {
+		return types.SetNull(types.StringType)
+	}
+	valueSlice := make([]attr.Value, len(slice))
+	for i, s := range slice {
+		valueSlice[i] = types.StringValue(s)
+	}
+	return types.SetValueMust(types.StringType, valueSlice)
+}
+
 func MergePropertyValues(ctx context.Context, properties map[string]core.PropertyValue, values types.Map) diag.Diagnostics {
 	newValues := make(map[string]types.String, len(values.Elements()))
 	diags := values.ElementsAs(ctx, &newValues, false)
