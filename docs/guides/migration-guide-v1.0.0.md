@@ -35,21 +35,19 @@ Please ensure you are working from a clean slate and have no pending changes to 
 
 1. Declare a new resource of type `octopusdeploy_process`
 1. Set the `project_id` to the existing Project's ID and if migrating a runbook process set the `runbook_id` to the existing Runbook's ID
-1. Declare a new resource of type `octopusdeploy_process_step` for regular steps or `octopusdeploy_process_templated_step` for steps based on step templates
+1. Declare a new resource of type `octopusdeploy_process_step`
 1. Set the `process_id` to the `id` of the new process resource
 1. Transpose the `name`
-1. For regular steps: Transpose the `type`, `type` is the type of embedded action which corresponds to `action_type` in the `action` block, for built-in action like `run_script_action` this is hidden.
-1. For templated steps: Set the `template_id` and `template_version` according to the step template being used, and transpose any template parameters from the `properties` to the `parameters` attribute.
+1. Transpose the `type`, `type` is the type of embedded action which corresponds to `action_type` in the `action` block, for built-in action like `run_script_action` this is hidden.
 1. Transpose the `properties` and `execution_properties` to the new resource from a `step` and `action` in the old deployment process, `properties` are those that are set on the step level and `execution_properties` are those historically set on the `action`. Note that the process step name of the embedded action is now always the same as the name of the step, this can introduce some changes during migration when the name of the first action of a step is different from its step name.
 1. Transpose `run_on_server` to the `execution_properties` using the key `Octopus.Action.RunOnServer`
 1. Transpose `window_size` to the `execution_properties` using the key `Octopus.Action.TargetRoles`
 1. Transpose `target_roles` to the `properties` using the key `Octopus.Action.TargetRoles`
 1. Transpose `primary_package` to the `packages` attribute with the key being an empty string `""`
 1. Repeat until all parent `steps` have been transposed
-1. For child steps create a new resource of type `octopusdeploy_process_child_step` (nested actions) for regular child steps or `octopusdeploy_process_templated_child_step` for templated child steps
+1. For child steps create a new resource of type `octopusdeploy_process_child_step` (nested actions)
 1. Set the `process_id` to the `id` of the new process resource
 1. Set the `parent_id` to the owning `octopusdeploy_process_step.id`
-1. For templated child steps: Set the `template_id` and `template_version` according to the step template being used, and transpose any template parameters from the `properties` to the `parameters` attribute.
 1. Repeat until all child `steps` (actions) have been transposed
 1. Declare a new `octopusdeploy_process_steps_order` resource
 1. Set the `process_id` to the `id` of the new process resource
@@ -62,9 +60,9 @@ Please ensure you are working from a clean slate and have no pending changes to 
 1. Run `terraform state rm [options] 'octopusdeploy_deployment_process.<name>'` to remove the old deployment process from state
 1. Remove the old deployment process from the terraform config
 1. Run `terraform import [options] octopusdeploy_process.<name> <process-id>` to load the new process into state
-1. Run `terraform import [options] octopusdeploy_process_step.<name> "<process-id>:<step-id>"` for each regular step or `terraform import [options] octopusdeploy_process_templated_step.<name> "<process-id>:<step-id>"` for each templated step to load them into state
+1. Run `terraform import [options] octopusdeploy_process_step.<name> "<process-id>:<step-id>"` for each step to load them into state
 1. Run `terraform import [options] octopusdeploy_process_steps_order.<name> <process-id>` to load the process step oder into state
-1. Run `terraform import [options] octopusdeploy_process_child_step.<name> "<process-id>:<parent-step-id>:<child-step-id>"` for each regular child step or `terraform import [options] octopusdeploy_process_templated_child_step.<name> "<process-id>:<parent-step-id>:<child-step-id>"` for each templated child step to load them into state
+1. Run `terraform import [options] octopusdeploy_process_child_step.<name> "<process-id>:<parent-step-id>:<child-step-id>"` for each child step to load them into order
 1. Run `terraform import [options] octopusdeploy_process_child_steps_order.<name> "<process-id>:<parent-step-id>"` for each child step group to load them into state
 1. Run `terraform plan` to see if anything is missing from state, fix accordingly
 1. When satisfied run `terraform apply` to complete the migration
