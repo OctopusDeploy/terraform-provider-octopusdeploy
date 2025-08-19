@@ -11,6 +11,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+var externalSecurityGroupObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"id":                  types.StringType,
+		"display_name":        types.StringType,
+		"display_id_and_name": types.BoolType,
+	},
+}
+
+var userRoleObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"id":                types.StringType,
+		"user_role_id":      types.StringType,
+		"space_id":          types.StringType,
+		"team_id":           types.StringType,
+		"environment_ids":   types.SetType{ElemType: types.StringType},
+		"project_group_ids": types.SetType{ElemType: types.StringType},
+		"project_ids":       types.SetType{ElemType: types.StringType},
+		"tenant_ids":        types.SetType{ElemType: types.StringType},
+	},
+}
+
 func mapTeamStateToResource(ctx context.Context, model schemas.TeamModel) *teams.Team {
 	name := model.Name.ValueString()
 	team := teams.NewTeam(name)
@@ -60,14 +81,7 @@ func mapTeamResourceToState(ctx context.Context, team *teams.Team, model schemas
 	if len(team.ExternalSecurityGroups) > 0 {
 		model.ExternalSecurityGroup = mapExternalSecurityGroupsResourceToState(ctx, team.ExternalSecurityGroups)
 	} else {
-		objectType := types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":                  types.StringType,
-				"display_name":        types.StringType,
-				"display_id_and_name": types.BoolType,
-			},
-		}
-		model.ExternalSecurityGroup = types.ListNull(objectType)
+		model.ExternalSecurityGroup = types.ListNull(externalSecurityGroupObjectType)
 	}
 
 	// Temporary workaround to avoid errors due to differences in validation behaviour between SDKv2 and TPF providers.
@@ -124,24 +138,13 @@ func mapExternalSecurityGroupsStateToResource(ctx context.Context, securityGroup
 
 func mapExternalSecurityGroupsResourceToState(ctx context.Context, groups []core.NamedReferenceItem) types.List {
 	if len(groups) == 0 {
-		objectType := types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":                  types.StringType,
-				"display_name":        types.StringType,
-				"display_id_and_name": types.BoolType,
-			},
-		}
-		return types.ListNull(objectType)
+		return types.ListNull(externalSecurityGroupObjectType)
 	}
 
 	groupList := make([]attr.Value, len(groups))
 	for i, group := range groups {
 		objectValue := types.ObjectValueMust(
-			map[string]attr.Type{
-				"id":                  types.StringType,
-				"display_name":        types.StringType,
-				"display_id_and_name": types.BoolType,
-			},
+			externalSecurityGroupObjectType.AttrTypes,
 			map[string]attr.Value{
 				"id":                  types.StringValue(group.ID),
 				"display_name":        types.StringValue(group.DisplayName),
@@ -151,14 +154,7 @@ func mapExternalSecurityGroupsResourceToState(ctx context.Context, groups []core
 		groupList[i] = objectValue
 	}
 
-	objectType := types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id":                  types.StringType,
-			"display_name":        types.StringType,
-			"display_id_and_name": types.BoolType,
-		},
-	}
-	return types.ListValueMust(objectType, groupList)
+	return types.ListValueMust(externalSecurityGroupObjectType, groupList)
 }
 
 func mapUserRoleSetStateToResource(ctx context.Context, team *teams.Team, userRoles types.Set) []*userroles.ScopedUserRole {
@@ -207,34 +203,13 @@ func mapUserRoleSetStateToResource(ctx context.Context, team *teams.Team, userRo
 
 func mapUserRoleSetResourceToState(ctx context.Context, userRoles []*userroles.ScopedUserRole, model types.Set) types.Set {
 	if len(userRoles) == 0 {
-		objectType := types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"id":                types.StringType,
-				"user_role_id":      types.StringType,
-				"space_id":          types.StringType,
-				"team_id":           types.StringType,
-				"environment_ids":   types.SetType{ElemType: types.StringType},
-				"project_group_ids": types.SetType{ElemType: types.StringType},
-				"project_ids":       types.SetType{ElemType: types.StringType},
-				"tenant_ids":        types.SetType{ElemType: types.StringType},
-			},
-		}
-		return types.SetNull(objectType)
+		return types.SetNull(userRoleObjectType)
 	}
 
 	roleList := make([]attr.Value, len(userRoles))
 	for i, role := range userRoles {
 		objectValue := types.ObjectValueMust(
-			map[string]attr.Type{
-				"id":                types.StringType,
-				"user_role_id":      types.StringType,
-				"space_id":          types.StringType,
-				"team_id":           types.StringType,
-				"environment_ids":   types.SetType{ElemType: types.StringType},
-				"project_group_ids": types.SetType{ElemType: types.StringType},
-				"project_ids":       types.SetType{ElemType: types.StringType},
-				"tenant_ids":        types.SetType{ElemType: types.StringType},
-			},
+			userRoleObjectType.AttrTypes,
 			map[string]attr.Value{
 				"id":                types.StringValue(role.ID),
 				"user_role_id":      types.StringValue(role.UserRoleID),
@@ -249,17 +224,5 @@ func mapUserRoleSetResourceToState(ctx context.Context, userRoles []*userroles.S
 		roleList[i] = objectValue
 	}
 
-	objectType := types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id":                types.StringType,
-			"user_role_id":      types.StringType,
-			"space_id":          types.StringType,
-			"team_id":           types.StringType,
-			"environment_ids":   types.SetType{ElemType: types.StringType},
-			"project_group_ids": types.SetType{ElemType: types.StringType},
-			"project_ids":       types.SetType{ElemType: types.StringType},
-			"tenant_ids":        types.SetType{ElemType: types.StringType},
-		},
-	}
-	return types.SetValueMust(objectType, roleList)
+	return types.SetValueMust(userRoleObjectType, roleList)
 }
