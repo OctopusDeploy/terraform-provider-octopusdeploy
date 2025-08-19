@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"context"
+	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"strings"
@@ -219,7 +220,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("quantity_to_keep"),
 				"Invalid retention policy configuration",
-				"quantity_to_keep should not be supplied when strategy is set to Default",
+				fmt.Sprintf(`quantity_to_keep should not be supplied when strategy is set to %s`, core.RetentionStrategyDefault),
 			)
 		}
 
@@ -227,7 +228,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("should_keep_forever"),
 				"Invalid retention policy configuration",
-				"unit should not be supplied when strategy is set to Default",
+				fmt.Sprintf(`unit should not be supplied when strategy is set to %s`, core.RetentionStrategyDefault),
 			)
 		}
 
@@ -235,7 +236,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
-				"should_keep_forever should not be supplied when strategy is set to Default",
+				fmt.Sprintf(`should_keep_forever should not be supplied when strategy is set to %s`, core.RetentionStrategyDefault),
 			)
 		}
 	}
