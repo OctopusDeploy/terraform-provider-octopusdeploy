@@ -627,6 +627,7 @@ func createLifecycleWithDefaultReleaseRetentionAndUnwantedAttribute(localName st
   		}
 	}`, localName, name, unwantedAttribute)
 }
+
 func createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName string, name string, unwantedAttribute string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
