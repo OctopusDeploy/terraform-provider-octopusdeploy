@@ -58,6 +58,11 @@ func (p ProcessStepSchema) GetResourceSchema() resourceSchema.Schema {
 				DefaultEmpty().
 				Build(),
 
+			"action_id": util.ResourceString().
+				Description("The ID of the first action created in the step.").
+				Computed().
+				PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+				Build(),
 			"type": util.ResourceString().
 				Description("Execution type of the step.").
 				Required().
@@ -150,6 +155,7 @@ type ProcessStepResourceModel struct {
 	Condition          types.String `tfsdk:"condition"`
 	Properties         types.Map    `tfsdk:"properties"`
 
+	ActionID             types.String                              `tfsdk:"action_id"`
 	Type                 types.String                              `tfsdk:"type"`
 	Slug                 types.String                              `tfsdk:"slug"`
 	IsDisabled           types.Bool                                `tfsdk:"is_disabled"`
