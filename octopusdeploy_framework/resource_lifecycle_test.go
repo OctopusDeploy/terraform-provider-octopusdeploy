@@ -503,6 +503,20 @@ func testAccLifecycleWithRetentionPolicy(localName string, name string, descript
     }`, localName, name, description)
 }
 
+func testAccLifecycleWithDefaultRetentionPolicies(localName string, name string, description string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+       name        = "%s"
+       description = "%s"
+		release_retention_policy {
+			strategy = "Default"
+		}
+
+		tentacle_retention_policy {
+			strategy = "Default"
+		}
+    }`, localName, name, description)
+}
+
 func testAccLifecycleComplex(localName string, name string) string {
 	environment1LocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environment1Name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
