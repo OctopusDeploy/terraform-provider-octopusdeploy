@@ -166,7 +166,7 @@ func testChannelUpdated(t *testing.T) resource.TestCheckFunc {
 		assert.Equal(t, "Updated test channel for migration", channel.Description, "Channel description did not match expected value")
 		assert.Equal(t, projectID, channel.ProjectID, "Project ID did not match expected value")
 		assert.Equal(t, lifecycleID, channel.LifecycleID, "Lifecycle ID did not match expected value")
-		assert.True(t, channel.IsDefault, "Channel should be default")
+		assert.False(t, channel.IsDefault, "Channel should not be default")
 
 		expectedTenantTags := []string{"test-tagset/tag1", "test-tagset/tag3"}
 		assert.ElementsMatch(t, expectedTenantTags, channel.TenantTags, "Tenant tags should match expected values")
