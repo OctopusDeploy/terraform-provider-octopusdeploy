@@ -1,0 +1,25 @@
+name: Require Tests for SDKv2 to TFP Resource Migrations
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  check-migration-tests:
+    name: Check Migration Tests Required
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Check for missing migration tests
+        run: |
+          chmod +x ci-scripts/helpers/check_migration_tests.sh
+          ci-scripts/helpers/check_migration_tests.sh origin/main
