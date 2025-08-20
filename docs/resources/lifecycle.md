@@ -112,35 +112,31 @@ Optional:
 <a id="nestedblock--release_retention_policy"></a>
 ### Nested Schema for `release_retention_policy`
 > When setting retention to never delete items, , it's recommended to use `strategy = "Forever"`.
-> It's no longer recommended to use `should_keep_forever` or `quantity_to_keep = "0"`.
+> Using `should_keep_forever` or `quantity_to_keep = "0"`is deprecated and will be removed in future versions.
 
 Optional:
-- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+-`should_keep_forever` (Boolean) A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
+-`strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
   - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
   - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
   - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Items.
-
-No longer recommended:
-- `should_keep_forever` (Boolean) An attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
 
 <a id="nestedblock--tentacle_retention_policy"></a>
 ### Nested Schema for `tentacle_retention_policy`
 
 > When setting retention to never delete items, , it's recommended to use `strategy = "Forever"`.
-> It's no longer recommended to use `should_keep_forever` or `quantity_to_keep = "0"`.
+> Using `should_keep_forever` or `quantity_to_keep = "0"`is deprecated and will be removed in future versions.
 
 Optional:
-- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+  -`should_keep_forever` (Boolean) A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
+  -`strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
   - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
   - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
   - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Items.
-
-No longer recommended:
-- `should_keep_forever` (Boolean) An attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
 
 ## Import
 
