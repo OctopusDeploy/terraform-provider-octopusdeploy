@@ -14,17 +14,17 @@ const (
 )
 
 type CommunityStepTemplateTypeDataSourceModel struct {
-	ID      types.String `tfsdk:"id"`
-	Website types.String `tfsdk:"website"`
-	Name    types.String `tfsdk:"name"`
-	Steps   types.List   `tfsdk:"steps"`
+	ID      types.String                             `tfsdk:"id"`
+	IDs     types.List                               `tfsdk:"ids"`
+	Website types.String                             `tfsdk:"website"`
+	Name    types.String                             `tfsdk:"name"`
+	Steps   []CommunityStepTemplateTypeResourceModel `tfsdk:"steps"`
 }
 
 // CommunityStepTemplateTypeResourceModel represents the resource model for a community step template.
 // It is a little different to most other resources because a community step template is read only and
 // installed rather than created.
 type CommunityStepTemplateTypeResourceModel struct {
-	SpaceID       types.String `tfsdk:"space_id"`
 	Type          types.String `tfsdk:"type"`
 	Author        types.String `tfsdk:"author"`
 	Name          types.String `tfsdk:"name"`
