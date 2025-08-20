@@ -1,4 +1,4 @@
-name: Require Tests for SDKv2 to TFP Resource Migrations
+name: Require Tests for SDKv2 to TPF Migrations
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   check-migration-tests:
-    name: Check Migration Tests Required
+    name: Require Tests for SDKv2 to TPF Migrations
     runs-on: ubuntu-latest
 
     steps:
