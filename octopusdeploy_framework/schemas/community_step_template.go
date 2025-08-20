@@ -1,9 +1,18 @@
 package schemas
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	ds "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	rs "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -65,30 +74,20 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 	return rs.Schema{
 		Description: util.GetResourceSchemaDescription(CommunityStepTemplateResourceDescription),
 		Attributes: map[string]rs.Attribute{
-			"space_id":    GetSpaceIdResourceSchema(CommunityStepTemplateResourceDescription),
-			"id":          GetIdResourceSchema(),
-			"name":        GetNameResourceSchema(true),
-			"description": GetDescriptionResourceSchema(CommunityStepTemplateResourceDescription),
-			"type": rs.StringAttribute{
-				Description: "The type of the community step template",
-				Computed:    true,
+			"id": GetIdResourceSchema(),
+			"name": rs.StringAttribute{
+				Description: "The name of the community step template.",
 				Optional:    false,
-			},
-			"author": rs.StringAttribute{
-				Description: "The author of the community step template",
 				Computed:    true,
-				Optional:    false,
+				Default:     stringdefault.StaticString(""),
 			},
-			"website": rs.StringAttribute{
-				Description: "The website link to the community step template",
+			"description": rs.StringAttribute{
+				Description: "The description of this " + CommunityStepTemplateResourceDescription + ".",
+				Optional:    false,
 				Computed:    true,
-				Optional:    false,
+				Default:     stringdefault.StaticString(""),
 			},
-			"history_url": rs.StringAttribute{
-				Description: "The website link to the history community step template",
-				Computed:    true,
-				Optional:    false,
-			},
+			"space_id": GetSpaceIdResourceSchema(CommunityStepTemplateResourceDescription),
 			"version": rs.Int32Attribute{
 				Description: "The version of the step template",
 				Optional:    false,
@@ -96,14 +95,149 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 			},
 			"step_package_id": rs.StringAttribute{
 				Description: "The ID of the step package",
-				Required:    true,
+				Optional:    false,
+				Computed:    true,
 			},
-			"packages":   GetStepTemplatePackageResourceSchema(CommunityStepTemplateResourceType),
-			"parameters": GetStepTemplateParameterResourceSchema(CommunityStepTemplateResourceType),
+			"action_type": rs.StringAttribute{
+				Description: "The action type of the step template",
+				Optional:    false,
+				Computed:    true,
+			},
+			"community_action_template_id": rs.StringAttribute{
+				Description: "The ID of the community action template",
+				Optional:    false,
+				Computed:    true,
+			},
+			"packages":   GetReadOnlyStepTemplatePackageResourceSchema(),
+			"parameters": GetReadOnlyStepTemplateParameters(),
 			"properties": rs.MapAttribute{
-				Description: "Properties for the community step template",
-				Required:    true,
+				Description: "Properties for the step template",
+				Required:    false,
+				Computed:    true,
 				ElementType: types.StringType,
+			},
+		},
+	}
+}
+
+func GetReadOnlyStepTemplateParameters() rs.ListNestedAttribute {
+	return rs.ListNestedAttribute{
+		Description: "List of parameters that can be used in the community step template.",
+		Required:    false,
+		Optional:    false,
+		Computed:    true,
+		NestedObject: rs.NestedAttributeObject{
+			Attributes: map[string]rs.Attribute{
+				"default_value": util.ResourceString().
+					Description("A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.").
+					Computed().
+					Default(stringdefault.StaticString("")).
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+					Build(),
+				"default_sensitive_value": util.ResourceString().
+					Description("Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'").
+					Optional().
+					Sensitive().
+					Build(),
+				"display_settings": rs.MapAttribute{
+					Description: "The display settings for the parameter.",
+					Optional:    true,
+					ElementType: types.StringType,
+				},
+				"help_text": rs.StringAttribute{
+					Description: "The help presented alongside the parameter input.",
+					Optional:    false,
+					Computed:    true,
+					Default:     stringdefault.StaticString(""),
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
+				},
+				"id": rs.StringAttribute{
+					Description: "The id for the property.",
+					Computed:    true,
+					Optional:    false,
+					Validators: []validator.String{
+						stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), fmt.Sprintf("must be a valid UUID, unique within this list. Here is one you could use: %s.\nExpect uuid", uuid.New())),
+					},
+				},
+				"label": rs.StringAttribute{
+					Description: "The label shown beside the parameter when presented in the deployment process. Example: `Server name`.",
+					Computed:    true,
+					Optional:    false,
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
+				},
+				"name": rs.StringAttribute{
+					Description: "The name of the variable set by the parameter. The name can contain letters, digits, dashes and periods. Example: `ServerName`",
+					Computed:    true,
+					Optional:    false,
+					Validators: []validator.String{
+						stringvalidator.LengthAtLeast(1),
+					},
+				},
+			},
+		},
+	}
+}
+
+func GetReadOnlyStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
+	return rs.ListNestedAttribute{
+		Description: "Package information for the community step template",
+		Optional:    false,
+		Computed:    true,
+		NestedObject: rs.NestedAttributeObject{
+			Attributes: map[string]rs.Attribute{
+				"acquisition_location": rs.StringAttribute{
+					Description: "Acquisition location for the package.",
+					Default:     stringdefault.StaticString("Server"),
+					Optional:    false,
+					Computed:    true,
+				},
+				"feed_id": util.ResourceString().
+					Description("ID of the feed.").
+					Computed().
+					Build(),
+				"id": GetIdResourceSchema(),
+				"name": util.ResourceString().
+					Description("Package name.").
+					Computed().
+					Build(),
+				"package_id": util.ResourceString().
+					Description("The ID of the package to use.").
+					Computed().
+					Build(),
+				"properties": rs.SingleNestedAttribute{
+					Description: "Properties for the package.",
+					Optional:    false,
+					Computed:    true,
+					Attributes: map[string]rs.Attribute{
+						"extract": rs.StringAttribute{
+							Description: "If the package should extract.",
+							Default:     stringdefault.StaticString("True"),
+							Optional:    false,
+							Computed:    true,
+						},
+						"package_parameter_name": rs.StringAttribute{
+							Description: "The name of the package parameter",
+							Default:     stringdefault.StaticString(""),
+							Optional:    false,
+							Computed:    true,
+						},
+						"purpose": rs.StringAttribute{
+							Description: "The purpose of this property.",
+							Default:     stringdefault.StaticString(""),
+							Optional:    false,
+							Computed:    true,
+						},
+						"selection_mode": rs.StringAttribute{
+							Description: "The selection mode.",
+							Optional:    false,
+							Computed:    true,
+						},
+					},
+				},
 			},
 		},
 	}
