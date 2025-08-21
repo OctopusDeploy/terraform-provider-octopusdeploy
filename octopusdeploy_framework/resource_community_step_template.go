@@ -5,8 +5,7 @@ import (
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/resources"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -61,20 +60,18 @@ func (r *communityStepTemplateTypeResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	newActionTemplate, dg := mapCommunityStepTemplateResourceModelToActionTemplate(ctx, data)
-	resp.Diagnostics.Append(dg...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// The end users work with action templates, not community step templates.
 	// The difference with a community step template is that it is installed rather than created.
 	// But the end result of an installed community step template is a regular (if read only) action template in the current space.
-	communityStepTemplate := actions.NewCommunityActionTemplate(newActionTemplate.Name, newActionTemplate.ActionType)
-	communityStepTemplate.ID = newActionTemplate.CommunityActionTemplateID
-
+	newCommunityStepTemplate := actions.CommunityActionTemplate{
+		ActionType: "placeholder",
+		Name:       "placeholder",
+		Resource: resources.Resource{
+			ID: data.CommunityActionTemplateId.ValueString(),
+		},
+	}
 	// Installing a community step template essentially creates a read only step template in the current space.
-	communityStepTemplate, err := r.Config.Client.CommunityActionTemplates.Install(*communityStepTemplate)
+	communityStepTemplate, err := r.Config.Client.CommunityActionTemplates.Install(newCommunityStepTemplate)
 
 	if err != nil {
 		resp.Diagnostics.AddError("unable to install community step template", err.Error())
@@ -162,68 +159,4 @@ func mapCommunityStepTemplateToResourceModel(ctx context.Context, data *schemas.
 	data.Packages = pkgs
 
 	return resp
-}
-
-func mapCommunityStepTemplateResourceModelToActionTemplate(ctx context.Context, data schemas.StepTemplateFromCommunityStepTemplateTypeResourceModel) (*actiontemplates.ActionTemplate, diag.Diagnostics) {
-	resp := diag.Diagnostics{}
-	at := actiontemplates.NewActionTemplate(data.Name.ValueString(), data.ActionType.ValueString())
-
-	at.SpaceID = data.SpaceID.ValueString()
-	at.Description = data.Description.ValueString()
-	if !data.CommunityActionTemplateId.IsNull() {
-		at.CommunityActionTemplateID = data.CommunityActionTemplateId.ValueString()
-	}
-
-	pkgs := make([]schemas.StepTemplatePackageType, 0, len(data.Packages.Elements()))
-	resp.Append(data.Packages.ElementsAs(ctx, &pkgs, false)...)
-	if resp.HasError() {
-		return at, resp
-	}
-
-	props := make(map[string]types.String, len(data.Properties.Elements()))
-	resp.Append(data.Properties.ElementsAs(ctx, &props, false)...)
-	if resp.HasError() {
-		return at, resp
-	}
-
-	params := make([]schemas.StepTemplateParameterType, 0, len(data.Parameters.Elements()))
-	resp.Append(data.Parameters.ElementsAs(ctx, &params, false)...)
-	if resp.HasError() {
-		return at, resp
-	}
-
-	if len(props) > 0 {
-		templateProps := make(map[string]core.PropertyValue, len(props))
-		for key, val := range props {
-			templateProps[key] = core.NewPropertyValue(val.ValueString(), false)
-		}
-		at.Properties = templateProps
-	} else {
-		at.Properties = make(map[string]core.PropertyValue)
-	}
-
-	at.Packages = make([]packages.PackageReference, len(pkgs))
-	if len(pkgs) > 0 {
-		for i, val := range pkgs {
-			pkgProps := convertAttributeStepTemplatePackageProperty(val.Properties.Attributes())
-			pkgRef := packages.PackageReference{
-				AcquisitionLocation: val.AcquisitionLocation.ValueString(),
-				FeedID:              val.FeedID.ValueString(),
-				Properties:          pkgProps,
-				Name:                val.Name.ValueString(),
-				PackageID:           val.PackageID.ValueString(),
-			}
-			pkgRef.ID = val.ID.ValueString()
-			at.Packages[i] = pkgRef
-		}
-	}
-
-	parameters, parameterDiags := mapStepTemplateParametersFromState(params)
-	resp.Append(parameterDiags...)
-	at.Parameters = parameters
-
-	if resp.HasError() {
-		return at, resp
-	}
-	return at, resp
 }
