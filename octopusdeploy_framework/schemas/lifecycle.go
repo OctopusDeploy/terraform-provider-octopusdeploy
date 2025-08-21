@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"strings"
-
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -21,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strings"
 )
 
 var _ EntitySchema = LifecycleSchema{}
@@ -107,25 +106,30 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 	}
 }
 
+var strategyDescription = "How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted.\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept."
+
 func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
-				"strategy": util.ResourceString().
-					Optional().Computed().
-					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
-					Build(),
 				"quantity_to_keep": util.ResourceInt64().
 					Optional().Computed().
 					Default(int64default.StaticInt64(30)).
 					Validators(int64validator.AtLeast(0)).
-					Description("The number of days/releases to keep. The default value is 30. If 0 then all are kept.").
+					Description("The number of days/releases to keep. This number should be larger than 0.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
+					Deprecated("Use strategy instead.").
 					Optional().Computed().
 					Default(booldefault.StaticBool(false)).
-					Description("Indicates if items should never be deleted. The default value is false.").
+					Description("A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = \"Forever\"` instead.").
+					Build(),
+				"strategy": util.ResourceString().
+					Optional().Computed().
+					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
+					Default(stringdefault.StaticString(core.RetentionStrategyDefault)).
+					Description(strategyDescription).
 					Build(),
 				"unit": util.ResourceString().
 					Optional().Computed().
