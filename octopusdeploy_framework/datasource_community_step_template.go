@@ -77,7 +77,9 @@ func (d *communityStepTemplateDataSource) Read(ctx context.Context, req datasour
 	util.DatasourceResultCount(ctx, "community_step_templates", len(matchingCommunityStepTemplates))
 
 	data.ID = types.StringValue("CommunityActionTemplates " + time.Now().UTC().String())
-	data.Steps, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: schemas.CommunityStepTemplateTypeObjectType()}, matchingCommunityStepTemplates)
+	steps, stepsDiag := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: schemas.CommunityStepTemplateTypeObjectType()}, matchingCommunityStepTemplates)
+	resp.Diagnostics.Append(stepsDiag...)
+	data.Steps = steps
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
