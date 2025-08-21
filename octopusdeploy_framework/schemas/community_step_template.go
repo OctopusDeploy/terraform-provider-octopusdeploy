@@ -9,6 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	ds "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	rs "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -93,27 +96,42 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 				Description: "The name of the community step template.",
 				Optional:    false,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"description": rs.StringAttribute{
 				Description: "The description of this " + CommunityStepTemplateResourceDescription + ".",
 				Optional:    false,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"space_id": GetSpaceIdResourceSchema(CommunityStepTemplateResourceDescription),
 			"version": rs.Int32Attribute{
 				Description: "The version of the step template",
 				Optional:    false,
 				Computed:    true,
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.UseStateForUnknown(),
+				},
 			},
 			"action_type": rs.StringAttribute{
 				Description: "The action type of the step template",
 				Optional:    false,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"community_action_template_id": rs.StringAttribute{
 				Description: "The ID of the community action template",
 				Optional:    false,
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"packages":   GetReadOnlyStepTemplatePackageResourceSchema(),
 			"parameters": GetReadOnlyStepTemplateParameters(),
@@ -122,6 +140,9 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 				Required:    false,
 				Computed:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -133,6 +154,9 @@ func GetReadOnlyStepTemplateParameters() rs.ListNestedAttribute {
 		Required:    false,
 		Optional:    false,
 		Computed:    true,
+		PlanModifiers: []planmodifier.List{
+			listplanmodifier.UseStateForUnknown(),
+		},
 		NestedObject: rs.NestedAttributeObject{
 			Attributes: map[string]rs.Attribute{
 				"default_value": util.ResourceString().
@@ -194,6 +218,9 @@ func GetReadOnlyStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 		Description: "Package information for the community step template",
 		Optional:    false,
 		Computed:    true,
+		PlanModifiers: []planmodifier.List{
+			listplanmodifier.UseStateForUnknown(),
+		},
 		NestedObject: rs.NestedAttributeObject{
 			Attributes: map[string]rs.Attribute{
 				"acquisition_location": rs.StringAttribute{
@@ -201,19 +228,25 @@ func GetReadOnlyStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 					Default:     stringdefault.StaticString("Server"),
 					Optional:    false,
 					Computed:    true,
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
 				},
 				"feed_id": util.ResourceString().
 					Description("ID of the feed.").
 					Computed().
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 				"id": GetIdResourceSchema(),
 				"name": util.ResourceString().
 					Description("Package name.").
 					Computed().
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 				"package_id": util.ResourceString().
 					Description("The ID of the package to use.").
 					Computed().
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 				"properties": rs.SingleNestedAttribute{
 					Description: "Properties for the package.",
@@ -225,23 +258,35 @@ func GetReadOnlyStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 							Default:     stringdefault.StaticString("True"),
 							Optional:    false,
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"package_parameter_name": rs.StringAttribute{
 							Description: "The name of the package parameter",
 							Default:     stringdefault.StaticString(""),
 							Optional:    false,
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"purpose": rs.StringAttribute{
 							Description: "The purpose of this property.",
 							Default:     stringdefault.StaticString(""),
 							Optional:    false,
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"selection_mode": rs.StringAttribute{
 							Description: "The selection mode.",
 							Optional:    false,
 							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 					},
 				},
