@@ -40,6 +40,7 @@ func CommunityStepTemplateTypeObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":              types.StringType,
 		"author":          types.StringType,
+		"action_type":     types.StringType,
 		"name":            types.StringType,
 		"description":     types.StringType,
 		"website":         types.StringType,
