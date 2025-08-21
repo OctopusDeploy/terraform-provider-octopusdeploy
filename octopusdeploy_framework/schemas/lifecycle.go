@@ -2,10 +2,11 @@ package schemas
 
 import (
 	"context"
-	"strings"
-
+	"fmt"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -18,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strings"
 )
 
 var _ EntitySchema = LifecycleSchema{}
@@ -104,6 +106,8 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 	}
 }
 
+var strategyDescription = "How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted.\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept."
+
 func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines the retention policy for releases or tentacles.",
@@ -113,12 +117,18 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 					Optional().Computed().
 					Default(int64default.StaticInt64(30)).
 					Validators(int64validator.AtLeast(0)).
-					Description("The number of days/releases to keep. The default value is 30. If 0 then all are kept.").
+					Description("The number of days/releases to keep. This number should be larger than 0.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
+					Deprecated("Use strategy instead.").
 					Optional().Computed().
 					Default(booldefault.StaticBool(false)).
-					Description("Indicates if items should never be deleted. The default value is false.").
+					Description("A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = \"Forever\"` instead.").
+					Build(),
+				"strategy": util.ResourceString().
+					Optional().Computed().
+					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
+					Description(strategyDescription).
 					Build(),
 				"unit": util.ResourceString().
 					Optional().Computed().
@@ -175,6 +185,7 @@ func getRetentionPolicyAttribute() datasourceSchema.ListNestedAttribute {
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
+				"strategy":            util.DataSourceString().Computed().Description("The retention policy strategy.").Build(),
 				"quantity_to_keep":    util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
 				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever.").Build(),
 				"unit":                util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
@@ -195,6 +206,7 @@ func (v retentionPolicyValidator) MarkdownDescription(ctx context.Context) strin
 
 func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
+		Strategy          types.String `tfsdk:"strategy"`
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
 		ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
 		Unit              types.String `tfsdk:"unit"`
@@ -206,25 +218,64 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		return
 	}
 
-	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
-		quantityToKeep := retentionPolicy.QuantityToKeep.ValueInt64()
-		shouldKeepForever := retentionPolicy.ShouldKeepForever.ValueBool()
-
-		if quantityToKeep == 0 && !shouldKeepForever {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("should_keep_forever"),
-				"Invalid retention policy configuration",
-				"should_keep_forever must be true when quantity_to_keep is 0",
-			)
-		} else if quantityToKeep != 0 && shouldKeepForever {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("should_keep_forever"),
-				"Invalid retention policy configuration",
-				"should_keep_forever must be false when quantity_to_keep is not 0",
-			)
+	rejectAttribute := func(attributeToReject string, strategy string) {
+		resp.Diagnostics.AddAttributeError(
+			req.Path.AtName(attributeToReject),
+			"Invalid retention policy configuration",
+			fmt.Sprintf("%s should not be supplied when strategy is set to %s", attributeToReject, strategy),
+		)
+	}
+	// If a strategy is present, it overrides all other retention behaviour. Other unrelated attributes are rejected.
+	if retentionPolicy.Strategy.ValueString() == core.RetentionStrategyDefault {
+		if !retentionPolicy.QuantityToKeep.IsNull() {
+			rejectAttribute("quantity_to_keep", core.RetentionStrategyDefault)
+		}
+		if !retentionPolicy.Unit.IsNull() {
+			rejectAttribute("unit", core.RetentionStrategyDefault)
+		}
+		if !retentionPolicy.ShouldKeepForever.IsNull() {
+			rejectAttribute("should_keep_forever", core.RetentionStrategyDefault)
 		}
 	}
 
+	if retentionPolicy.Strategy.ValueString() == core.RetentionStrategyForever {
+		if !retentionPolicy.QuantityToKeep.IsNull() {
+			rejectAttribute("quantity_to_keep", core.RetentionStrategyForever)
+		}
+		if !retentionPolicy.Unit.IsNull() {
+			rejectAttribute("unit", core.RetentionStrategyForever)
+		}
+		if !retentionPolicy.ShouldKeepForever.IsNull() {
+			rejectAttribute("should_keep_forever", core.RetentionStrategyForever)
+		}
+	}
+
+	if retentionPolicy.Strategy.ValueString() == core.RetentionStrategyCount {
+		if !retentionPolicy.ShouldKeepForever.IsNull() {
+			rejectAttribute("should_keep_forever", core.RetentionStrategyCount)
+		}
+	}
+
+	if retentionPolicy.Strategy.IsNull() || retentionPolicy.Strategy.IsUnknown() {
+		if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
+			quantityToKeep := retentionPolicy.QuantityToKeep.ValueInt64()
+			shouldKeepForever := retentionPolicy.ShouldKeepForever.ValueBool()
+
+			if quantityToKeep == 0 && !shouldKeepForever {
+				resp.Diagnostics.AddAttributeError(
+					req.Path.AtName("should_keep_forever"),
+					"Invalid retention policy configuration",
+					"should_keep_forever must be true when quantity_to_keep is 0",
+				)
+			} else if quantityToKeep != 0 && shouldKeepForever {
+				resp.Diagnostics.AddAttributeError(
+					req.Path.AtName("should_keep_forever"),
+					"Invalid retention policy configuration",
+					"should_keep_forever must be false when quantity_to_keep is not 0",
+				)
+			}
+		}
+	}
 	if !retentionPolicy.Unit.IsNull() && !retentionPolicy.Unit.IsUnknown() {
 		unit := retentionPolicy.Unit.ValueString()
 		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {

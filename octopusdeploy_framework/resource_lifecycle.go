@@ -229,16 +229,27 @@ func flattenRetentionPeriod(retentionPeriod *core.RetentionPeriod) types.List {
 	if retentionPeriod == nil {
 		return types.ListNull(types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()})
 	}
+	attrs := map[string]attr.Value{
+		"strategy": types.StringValue(retentionPeriod.Strategy),
+	}
+
+	if retentionPeriod.Strategy != core.RetentionStrategyDefault {
+		attrs["quantity_to_keep"] = types.Int64Value(int64(retentionPeriod.QuantityToKeep))
+		attrs["should_keep_forever"] = types.BoolValue(retentionPeriod.ShouldKeepForever)
+		attrs["unit"] = types.StringValue(retentionPeriod.Unit)
+	} else {
+		defaultRetentionPolicy := core.SpaceDefaultRetentionPeriod()
+		attrs["quantity_to_keep"] = types.Int64Value(int64(defaultRetentionPolicy.QuantityToKeep))
+		attrs["should_keep_forever"] = types.BoolValue(defaultRetentionPolicy.ShouldKeepForever)
+		attrs["unit"] = types.StringValue(defaultRetentionPolicy.Unit)
+	}
+
 	return types.ListValueMust(
 		types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
 		[]attr.Value{
 			types.ObjectValueMust(
 				getRetentionPeriodAttrTypes(),
-				map[string]attr.Value{
-					"quantity_to_keep":    types.Int64Value(int64(retentionPeriod.QuantityToKeep)),
-					"should_keep_forever": types.BoolValue(retentionPeriod.ShouldKeepForever),
-					"unit":                types.StringValue(retentionPeriod.Unit),
-				},
+				attrs,
 			),
 		},
 	)
@@ -326,6 +337,15 @@ func expandRetentionPeriod(v types.List) *core.RetentionPeriod {
 	obj := v.Elements()[0].(types.Object)
 	attrs := obj.Attributes()
 
+	var strategy string
+	if stgy, ok := attrs["strategy"].(types.String); ok && !stgy.IsNull() {
+		strategy = stgy.ValueString()
+	}
+
+	if strategy == core.RetentionStrategyDefault {
+		return core.SpaceDefaultRetentionPeriod()
+	}
+
 	var quantityToKeep int32
 	if qty, ok := attrs["quantity_to_keep"].(types.Int64); ok && !qty.IsNull() {
 		quantityToKeep = int32(qty.ValueInt64())
@@ -346,6 +366,7 @@ func expandRetentionPeriod(v types.List) *core.RetentionPeriod {
 
 func getRetentionPeriodAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
+		"strategy":            types.StringType,
 		"quantity_to_keep":    types.Int64Type,
 		"should_keep_forever": types.BoolType,
 		"unit":                types.StringType,

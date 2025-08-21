@@ -17,20 +17,18 @@ resource "octopusdeploy_lifecycle" "example" {
   name        = "Test Lifecycle (OK to Delete)"
 
   release_retention_policy {
-    quantity_to_keep    = 0
-    should_keep_forever = true // true only if quantity_to_keep = 0
-    unit                = "Days"
+    strategy = "Forever"
   }
 
   tentacle_retention_policy {
-    quantity_to_keep    = 30
-    should_keep_forever = false
-    unit                = "Items"
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Items"
   }
 
   phase {
     automatic_deployment_targets = ["Environments-321"]
-    name                         = "foo"
+    name = "foo"
 
     release_retention_policy {
       quantity_to_keep    = 1
@@ -46,8 +44,8 @@ resource "octopusdeploy_lifecycle" "example" {
   }
 
   phase {
-    is_optional_phase           = true
-    name                        = "bar"
+    is_optional_phase = true
+    name              = "bar"
     optional_deployment_targets = ["Environments-321"]
   }
 }
@@ -95,8 +93,12 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean, Deprecated) A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
 
 
@@ -105,8 +107,12 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean, Deprecated) A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
 
 
@@ -116,8 +122,12 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean, Deprecated) A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
 
 
@@ -126,8 +136,12 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean, Deprecated) A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = "Forever"` instead.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
 
 ## Import
