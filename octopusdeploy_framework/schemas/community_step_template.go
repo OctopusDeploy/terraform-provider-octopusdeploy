@@ -7,6 +7,7 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	ds "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	rs "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
@@ -25,33 +26,70 @@ const (
 	CommunityStepTemplateDatasourceDescription = "community_step_template"
 )
 
+// CommunityStepTemplateTypeDataSourceModel represents the data source defined in the Terraform configuration.
 type CommunityStepTemplateTypeDataSourceModel struct {
-	ID      types.String                             `tfsdk:"id"`
-	IDs     types.List                               `tfsdk:"ids"`
-	Website types.String                             `tfsdk:"website"`
-	Name    types.String                             `tfsdk:"name"`
-	Steps   []CommunityStepTemplateTypeResourceModel `tfsdk:"steps"`
+	ID      types.String `tfsdk:"id"`
+	SpaceID types.String `tfsdk:"space_id"`
+	Website types.String `tfsdk:"website"`
+	Name    types.String `tfsdk:"name"`
+	Steps   types.List   `tfsdk:"steps"`
 }
 
-// CommunityStepTemplateTypeResourceModel represents the resource model for a community step template.
-// It is a little different to most other resources because a community step template is read only and
-// installed rather than created.
-type CommunityStepTemplateTypeResourceModel struct {
-	Type          types.String `tfsdk:"type"`
-	Author        types.String `tfsdk:"author"`
-	Name          types.String `tfsdk:"name"`
-	Description   types.String `tfsdk:"description"`
-	Packages      types.List   `tfsdk:"packages"`
-	Website       types.String `tfsdk:"website"`
-	HistoryUrl    types.String `tfsdk:"history_url"`
-	Parameters    types.List   `tfsdk:"parameters"`
-	Properties    types.Map    `tfsdk:"properties"`
-	StepPackageId types.String `tfsdk:"step_package_id"`
-	Version       types.Int32  `tfsdk:"version"`
-
-	ResourceModel
+// CommunityStepTemplateTypeObjectType returns the type mapping used to define the Steps attribute in the CommunityStepTemplateTypeDataSourceModel.
+func CommunityStepTemplateTypeObjectType() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":              types.StringType,
+		"author":          types.StringType,
+		"name":            types.StringType,
+		"description":     types.StringType,
+		"website":         types.StringType,
+		"history_url":     types.StringType,
+		"version":         types.Int32Type,
+		"step_package_id": types.StringType,
+		"parameters": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: ParametersObjectType()},
+		},
+		"properties": types.MapType{ElemType: types.StringType},
+		"packages": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: PackagesObjectType()},
+		},
+	}
 }
 
+// ParametersObjectType returns the type mapping used to define the parameters attribute in the CommunityStepTemplateTypeObjectType function
+func ParametersObjectType() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":                      types.StringType,
+		"default_value":           types.StringType,
+		"display_settings":        types.MapType{ElemType: types.StringType},
+		"default_sensitive_value": types.StringType,
+		"help_text":               types.StringType,
+		"label":                   types.StringType,
+		"name":                    types.StringType,
+	}
+}
+
+// PackagesObjectType returns the type mapping used to define the packages attribute in the CommunityStepTemplateTypeObjectType function
+func PackagesObjectType() map[string]attr.Type {
+	return map[string]attr.Type{
+		"acquisition_location": types.StringType,
+		"feed_id":              types.StringType,
+		"id":                   types.StringType,
+		"name":                 types.StringType,
+		"package_id":           types.StringType,
+		"properties": types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"extract":                types.StringType,
+				"package_parameter_name": types.StringType,
+				"purpose":                types.StringType,
+				"selection_mode":         types.StringType,
+			},
+		},
+	}
+}
+
+// StepTemplateFromCommunityStepTemplateTypeResourceModel represents a step template generated from a community step template.
+// Notably, it does not include the git dependencies, as these are not exposed on community step templates.
 type StepTemplateFromCommunityStepTemplateTypeResourceModel struct {
 	ActionType                types.String `tfsdk:"action_type"`
 	SpaceID                   types.String `tfsdk:"space_id"`
@@ -76,13 +114,63 @@ func (s CommunityStepTemplateSchema) GetDatasourceSchema() ds.Schema {
 		Attributes: map[string]ds.Attribute{
 			"id": ds.StringAttribute{
 				Description: "Unique identifier of the community step template",
-				Required:    true,
+				Optional:    true,
 			},
 			"space_id": ds.StringAttribute{
 				Description: "SpaceID of the Community Step Template",
 				Optional:    true,
 				Computed:    true,
 			},
+			"name": ds.StringAttribute{
+				Description: "Name of the Community Step Template",
+				Optional:    true,
+			},
+			"website": ds.StringAttribute{
+				Description: "Website of the Community Step Template",
+				Optional:    true,
+			},
+			"steps": ds.ListNestedAttribute{
+				Computed: true,
+				Optional: false,
+				NestedObject: ds.NestedAttributeObject{
+					Attributes: s.GetDataSourceStepsAttributes(),
+				},
+			},
+		},
+	}
+}
+
+func (s CommunityStepTemplateSchema) GetDataSourceStepsAttributes() map[string]ds.Attribute {
+	return map[string]ds.Attribute{
+		"id":          GetIdDatasourceSchema(true),
+		"name":        GetReadonlyNameDatasourceSchema(),
+		"description": GetReadonlyDescriptionDatasourceSchema(CommunityStepTemplateResourceDescription),
+		"author": ds.StringAttribute{
+			Description: "The author of this " + CommunityStepTemplateResourceDescription + ".",
+			Computed:    true,
+		},
+		"website": ds.StringAttribute{
+			Description: "The website of this " + CommunityStepTemplateResourceDescription + ".",
+			Computed:    true,
+		},
+		"history_url": ds.StringAttribute{
+			Description: "The history url of this " + CommunityStepTemplateResourceDescription + ".",
+			Computed:    true,
+		},
+		"step_package_id": ds.StringAttribute{
+			Description: "The step package ID url of this " + CommunityStepTemplateResourceDescription + ".",
+			Computed:    true,
+		},
+		"version": ds.Int32Attribute{
+			Description: "The version ID url of this " + CommunityStepTemplateResourceDescription + ".",
+			Computed:    true,
+		},
+		"packages":   GetStepTemplatePackageResourceSchema(CommunityStepTemplateResourceDescription),
+		"parameters": GetStepTemplateParameterResourceSchema(CommunityStepTemplateResourceDescription),
+		"properties": rs.MapAttribute{
+			Description: "Properties for the community step template",
+			Computed:    true,
+			ElementType: types.StringType,
 		},
 	}
 }
@@ -248,47 +336,10 @@ func GetReadOnlyStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 					Computed().
 					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
-				"properties": rs.SingleNestedAttribute{
-					Description: "Properties for the package.",
-					Optional:    false,
-					Computed:    true,
-					Attributes: map[string]rs.Attribute{
-						"extract": rs.StringAttribute{
-							Description: "If the package should extract.",
-							Default:     stringdefault.StaticString("True"),
-							Optional:    false,
-							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"package_parameter_name": rs.StringAttribute{
-							Description: "The name of the package parameter",
-							Default:     stringdefault.StaticString(""),
-							Optional:    false,
-							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"purpose": rs.StringAttribute{
-							Description: "The purpose of this property.",
-							Default:     stringdefault.StaticString(""),
-							Optional:    false,
-							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-						"selection_mode": rs.StringAttribute{
-							Description: "The selection mode.",
-							Optional:    false,
-							Computed:    true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
-							},
-						},
-					},
+				"properties": rs.MapAttribute{
+					Description: "The display settings for the parameter.",
+					Optional:    true,
+					ElementType: types.StringType,
 				},
 			},
 		},
