@@ -150,6 +150,10 @@ func (s CommunityStepTemplateSchema) GetDataSourceStepsAttributes() map[string]d
 			Description: "The author of this " + CommunityStepTemplateResourceDescription + ".",
 			Computed:    true,
 		},
+		"action_type": ds.StringAttribute{
+			Description: "The action type of this " + CommunityStepTemplateResourceDescription + ".",
+			Computed:    true,
+		},
 		"website": ds.StringAttribute{
 			Description: "The website of this " + CommunityStepTemplateResourceDescription + ".",
 			Computed:    true,
