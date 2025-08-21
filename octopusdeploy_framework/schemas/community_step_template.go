@@ -58,7 +58,6 @@ type StepTemplateFromCommunityStepTemplateTypeResourceModel struct {
 	Packages                  types.List   `tfsdk:"packages"`
 	Parameters                types.List   `tfsdk:"parameters"`
 	Properties                types.Map    `tfsdk:"properties"`
-	StepPackageId             types.String `tfsdk:"step_package_id"`
 	Version                   types.Int32  `tfsdk:"version"`
 
 	ResourceModel
@@ -94,22 +93,15 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 				Description: "The name of the community step template.",
 				Optional:    false,
 				Computed:    true,
-				Default:     stringdefault.StaticString(""),
 			},
 			"description": rs.StringAttribute{
 				Description: "The description of this " + CommunityStepTemplateResourceDescription + ".",
 				Optional:    false,
 				Computed:    true,
-				Default:     stringdefault.StaticString(""),
 			},
 			"space_id": GetSpaceIdResourceSchema(CommunityStepTemplateResourceDescription),
 			"version": rs.Int32Attribute{
 				Description: "The version of the step template",
-				Optional:    false,
-				Computed:    true,
-			},
-			"step_package_id": rs.StringAttribute{
-				Description: "The ID of the step package",
 				Optional:    false,
 				Computed:    true,
 			},
