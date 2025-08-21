@@ -49,6 +49,21 @@ type CommunityStepTemplateTypeResourceModel struct {
 	ResourceModel
 }
 
+type StepTemplateFromCommunityStepTemplateTypeResourceModel struct {
+	ActionType                types.String `tfsdk:"action_type"`
+	SpaceID                   types.String `tfsdk:"space_id"`
+	CommunityActionTemplateId types.String `tfsdk:"community_action_template_id"`
+	Name                      types.String `tfsdk:"name"`
+	Description               types.String `tfsdk:"description"`
+	Packages                  types.List   `tfsdk:"packages"`
+	Parameters                types.List   `tfsdk:"parameters"`
+	Properties                types.Map    `tfsdk:"properties"`
+	StepPackageId             types.String `tfsdk:"step_package_id"`
+	Version                   types.Int32  `tfsdk:"version"`
+
+	ResourceModel
+}
+
 type CommunityStepTemplateSchema struct{}
 
 var _ EntitySchema = CommunityStepTemplateSchema{}
@@ -106,7 +121,7 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 			"community_action_template_id": rs.StringAttribute{
 				Description: "The ID of the community action template",
 				Optional:    false,
-				Computed:    true,
+				Required:    true,
 			},
 			"packages":   GetReadOnlyStepTemplatePackageResourceSchema(),
 			"parameters": GetReadOnlyStepTemplateParameters(),
