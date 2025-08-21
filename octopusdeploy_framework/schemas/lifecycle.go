@@ -128,7 +128,6 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 				"strategy": util.ResourceString().
 					Optional().Computed().
 					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
-					Default(stringdefault.StaticString(core.RetentionStrategyDefault)).
 					Description(strategyDescription).
 					Build(),
 				"unit": util.ResourceString().
@@ -219,51 +218,64 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		return
 	}
 
+	rejectAttribute := func(attributeToReject string, strategy string) {
+		resp.Diagnostics.AddAttributeError(
+			req.Path.AtName(attributeToReject),
+			"Invalid retention policy configuration",
+			fmt.Sprintf("%s should not be supplied when strategy is set to %s", attributeToReject, strategy),
+		)
+	}
+	// If a strategy is present, it overrides all other retention behaviour. Other unrelated attributes are rejected.
 	if retentionPolicy.Strategy.ValueString() == core.RetentionStrategyDefault {
 		if !retentionPolicy.QuantityToKeep.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("quantity_to_keep"),
-				"Invalid retention policy configuration",
-				fmt.Sprintf(`quantity_to_keep should not be supplied when strategy is set to %s`, core.RetentionStrategyDefault),
-			)
+			rejectAttribute("quantity_to_keep", core.RetentionStrategyDefault)
 		}
-
 		if !retentionPolicy.Unit.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("should_keep_forever"),
-				"Invalid retention policy configuration",
-				fmt.Sprintf(`unit should not be supplied when strategy is set to %s`, core.RetentionStrategyDefault),
-			)
+			rejectAttribute("unit", core.RetentionStrategyDefault)
 		}
-
 		if !retentionPolicy.ShouldKeepForever.IsNull() {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("unit"),
-				"Invalid retention policy configuration",
-				fmt.Sprintf(`should_keep_forever should not be supplied when strategy is set to %s`, core.RetentionStrategyDefault),
-			)
+			rejectAttribute("should_keep_forever", core.RetentionStrategyDefault)
 		}
 	}
 
-	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
-		quantityToKeep := retentionPolicy.QuantityToKeep.ValueInt64()
-		shouldKeepForever := retentionPolicy.ShouldKeepForever.ValueBool()
-
-		if quantityToKeep == 0 && !shouldKeepForever {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("should_keep_forever"),
-				"Invalid retention policy configuration",
-				"should_keep_forever must be true when quantity_to_keep is 0",
-			)
-		} else if quantityToKeep != 0 && shouldKeepForever {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("should_keep_forever"),
-				"Invalid retention policy configuration",
-				"should_keep_forever must be false when quantity_to_keep is not 0",
-			)
+	if retentionPolicy.Strategy.ValueString() == core.RetentionStrategyForever {
+		if !retentionPolicy.QuantityToKeep.IsNull() {
+			rejectAttribute("quantity_to_keep", core.RetentionStrategyForever)
+		}
+		if !retentionPolicy.Unit.IsNull() {
+			rejectAttribute("unit", core.RetentionStrategyForever)
+		}
+		if !retentionPolicy.ShouldKeepForever.IsNull() {
+			rejectAttribute("should_keep_forever", core.RetentionStrategyForever)
 		}
 	}
 
+	if retentionPolicy.Strategy.ValueString() == core.RetentionStrategyCount {
+		if !retentionPolicy.ShouldKeepForever.IsNull() {
+			rejectAttribute("should_keep_forever", core.RetentionStrategyCount)
+		}
+	}
+
+	if retentionPolicy.Strategy.IsNull() || retentionPolicy.Strategy.IsUnknown() {
+		if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
+			quantityToKeep := retentionPolicy.QuantityToKeep.ValueInt64()
+			shouldKeepForever := retentionPolicy.ShouldKeepForever.ValueBool()
+
+			if quantityToKeep == 0 && !shouldKeepForever {
+				resp.Diagnostics.AddAttributeError(
+					req.Path.AtName("should_keep_forever"),
+					"Invalid retention policy configuration",
+					"should_keep_forever must be true when quantity_to_keep is 0",
+				)
+			} else if quantityToKeep != 0 && shouldKeepForever {
+				resp.Diagnostics.AddAttributeError(
+					req.Path.AtName("should_keep_forever"),
+					"Invalid retention policy configuration",
+					"should_keep_forever must be false when quantity_to_keep is not 0",
+				)
+			}
+		}
+	}
 	if !retentionPolicy.Unit.IsNull() && !retentionPolicy.Unit.IsUnknown() {
 		unit := retentionPolicy.Unit.ValueString()
 		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
