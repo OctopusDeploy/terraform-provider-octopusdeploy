@@ -160,3 +160,37 @@ func mapCommunityStepTemplateToResourceModel(ctx context.Context, data *schemas.
 
 	return resp
 }
+
+func mapCommunityStepTemplateToCommunityResourceModel(ctx context.Context, data *schemas.CommunityStepTemplateTypeResourceModel, at *actions.CommunityActionTemplate) diag.Diagnostics {
+	resp := diag.Diagnostics{}
+
+	data.ID = types.StringValue(at.ID)
+	data.Name = types.StringValue(at.Name)
+	data.Version = types.Int32Value(at.Version)
+	data.Description = types.StringValue(at.Description)
+	data.Website = types.StringValue(at.Website)
+	data.HistoryUrl = types.StringValue(at.HistoryURL)
+	data.Type = types.StringValue(at.ActionType)
+	data.Author = types.StringValue(at.Author)
+
+	// Parameters
+	sParams, dg := convertStepTemplateToParameterAttributes(ctx, at.Parameters, data.Parameters)
+	resp.Append(dg...)
+	data.Parameters = sParams
+
+	// Properties
+	stringProps := make(map[string]attr.Value, len(at.Properties))
+	for keys, value := range at.Properties {
+		stringProps[keys] = types.StringValue(value.Value)
+	}
+	props, dg := types.MapValue(types.StringType, stringProps)
+	resp.Append(dg...)
+	data.Properties = props
+
+	// Packages
+	pkgs, dg := convertStepTemplateToPackageAttributes(at.Packages)
+	resp.Append(dg...)
+	data.Packages = pkgs
+
+	return resp
+}

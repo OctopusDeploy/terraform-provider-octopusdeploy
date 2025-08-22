@@ -29,7 +29,6 @@ const (
 // CommunityStepTemplateTypeDataSourceModel represents the data source defined in the Terraform configuration.
 type CommunityStepTemplateTypeDataSourceModel struct {
 	ID      types.String `tfsdk:"id"`
-	SpaceID types.String `tfsdk:"space_id"`
 	Website types.String `tfsdk:"website"`
 	Name    types.String `tfsdk:"name"`
 	Steps   types.List   `tfsdk:"steps"`
@@ -38,15 +37,14 @@ type CommunityStepTemplateTypeDataSourceModel struct {
 // CommunityStepTemplateTypeObjectType returns the type mapping used to define the Steps attribute in the CommunityStepTemplateTypeDataSourceModel.
 func CommunityStepTemplateTypeObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":              types.StringType,
-		"author":          types.StringType,
-		"action_type":     types.StringType,
-		"name":            types.StringType,
-		"description":     types.StringType,
-		"website":         types.StringType,
-		"history_url":     types.StringType,
-		"version":         types.Int32Type,
-		"step_package_id": types.StringType,
+		"id":          types.StringType,
+		"author":      types.StringType,
+		"type":        types.StringType,
+		"name":        types.StringType,
+		"description": types.StringType,
+		"website":     types.StringType,
+		"history_url": types.StringType,
+		"version":     types.Int32Type,
 		"parameters": types.ListType{
 			ElemType: types.ObjectType{AttrTypes: ParametersObjectType()},
 		},
@@ -55,6 +53,21 @@ func CommunityStepTemplateTypeObjectType() map[string]attr.Type {
 			ElemType: types.ObjectType{AttrTypes: PackagesObjectType()},
 		},
 	}
+}
+
+type CommunityStepTemplateTypeResourceModel struct {
+	Type        types.String `tfsdk:"type"`
+	Name        types.String `tfsdk:"name"`
+	Author      types.String `tfsdk:"author"`
+	Description types.String `tfsdk:"description"`
+	Website     types.String `tfsdk:"website"`
+	HistoryUrl  types.String `tfsdk:"history_url"`
+	Version     types.Int32  `tfsdk:"version"`
+	Packages    types.List   `tfsdk:"packages"`
+	Parameters  types.List   `tfsdk:"parameters"`
+	Properties  types.Map    `tfsdk:"properties"`
+
+	ResourceModel
 }
 
 // ParametersObjectType returns the type mapping used to define the parameters attribute in the CommunityStepTemplateTypeObjectType function
@@ -117,11 +130,6 @@ func (s CommunityStepTemplateSchema) GetDatasourceSchema() ds.Schema {
 				Description: "Unique identifier of the community step template",
 				Optional:    true,
 			},
-			"space_id": ds.StringAttribute{
-				Description: "SpaceID of the Community Step Template",
-				Optional:    true,
-				Computed:    true,
-			},
 			"name": ds.StringAttribute{
 				Description: "Name of the Community Step Template",
 				Optional:    true,
@@ -150,8 +158,8 @@ func (s CommunityStepTemplateSchema) GetDataSourceStepsAttributes() map[string]d
 			Description: "The author of this " + CommunityStepTemplateResourceDescription + ".",
 			Computed:    true,
 		},
-		"action_type": ds.StringAttribute{
-			Description: "The action type of this " + CommunityStepTemplateResourceDescription + ".",
+		"type": ds.StringAttribute{
+			Description: "The type of this " + CommunityStepTemplateResourceDescription + ".",
 			Computed:    true,
 		},
 		"website": ds.StringAttribute{
@@ -160,10 +168,6 @@ func (s CommunityStepTemplateSchema) GetDataSourceStepsAttributes() map[string]d
 		},
 		"history_url": ds.StringAttribute{
 			Description: "The history url of this " + CommunityStepTemplateResourceDescription + ".",
-			Computed:    true,
-		},
-		"step_package_id": ds.StringAttribute{
-			Description: "The step package ID url of this " + CommunityStepTemplateResourceDescription + ".",
 			Computed:    true,
 		},
 		"version": ds.Int32Attribute{

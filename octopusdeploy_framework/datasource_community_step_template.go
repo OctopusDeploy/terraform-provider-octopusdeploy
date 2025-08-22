@@ -6,12 +6,10 @@ import (
 	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 type communityStepTemplateDataSource struct {
@@ -78,6 +76,14 @@ func (d *communityStepTemplateDataSource) Read(ctx context.Context, req datasour
 
 	util.DatasourceResultCount(ctx, "community_step_templates", len(matchingCommunityStepTemplates))
 
+	communityStepTemplateResourceModels := []schemas.CommunityStepTemplateTypeResourceModel{}
+	for _, communityStepTemplate := range matchingCommunityStepTemplates {
+		stepTemplate := schemas.CommunityStepTemplateTypeResourceModel{}
+		stepTemplateDiag := mapCommunityStepTemplateToCommunityResourceModel(ctx, &stepTemplate, communityStepTemplate)
+		resp.Diagnostics.Append(stepTemplateDiag...)
+		communityStepTemplateResourceModels = append(communityStepTemplateResourceModels, stepTemplate)
+	}
+
 	data.ID = types.StringValue("CommunityActionTemplates " + time.Now().UTC().String())
 	steps, stepsDiag := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: schemas.CommunityStepTemplateTypeObjectType()}, matchingCommunityStepTemplates)
 	resp.Diagnostics.Append(stepsDiag...)
@@ -101,15 +107,4 @@ func (d *communityStepTemplateDataSource) getCommunityStepTemplate(id string) ([
 
 	// Otherwise we have to filter client side.
 	return d.Config.Client.CommunityActionTemplates.GetAll()
-}
-
-func mapCommunityStepTemplateToDatasourceModel(data *schemas.CommunityStepTemplateTypeDataSourceModel, at *actions.CommunityActionTemplate) diag.Diagnostics {
-	resp := diag.Diagnostics{}
-
-	data.ID = types.StringValue(at.ID)
-	data.SpaceID = types.StringValue(at.SpaceID)
-	stepTemplate, dg := convertStepTemplateAttributes(at)
-	resp.Append(dg...)
-	data.StepTemplate = stepTemplate
-	return resp
 }
