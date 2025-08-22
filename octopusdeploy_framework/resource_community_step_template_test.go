@@ -11,15 +11,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccOctopusCommunityStepTemplateBasic(t *testing.T) {
+func TestAccOctopusCommunityStepTemplate(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_community_step_template." + localName
 	website := "https://library.octopus.com/step-templates/04a74a00-967d-496a-a966-1acd17fededf"
 	website2 := "https://library.octopus.com/step-templates/6042d737-5902-0729-ae57-8b6650a299da"
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             func(s *terraform.State) error { return testCommunityStepTemplateDestroy(s) },
-		PreCheck:                 func() { TestAccPreCheck(t) },
+		CheckDestroy: func(s *terraform.State) error { return testCommunityStepTemplateDestroy(s) },
+		PreCheck: func() {
+			TestAccPreCheck(t)
+			forceCommunityStepTemplateRefresh()
+		},
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -59,6 +62,25 @@ func testCommunityStepTemplate(website string, name string) string {
 	)
 }
 
+func forceCommunityStepTemplateRefresh() {
+	if octoClient == nil {
+		return
+	}
+
+	_, err := octoClient.
+		Sling().
+		Post("/api/tasks").
+		BodyJSON(task{
+			Name:        "SyncCommunityActionTemplates",
+			Description: "Synchronize Community Step Templates",
+		}).
+		Request()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error forcing community step template refresh")
+	}
+}
+
 func testCommunityStepTemplateDestroy(s *terraform.State) error {
 	if octoClient == nil {
 		return fmt.Errorf("octoClient is nil")
@@ -86,4 +108,9 @@ func testCommunityStepTemplateDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+type task struct {
+	Name        string `json:"Name"`
+	Description string `json:"Description"`
 }
