@@ -6,7 +6,7 @@ description: |-
 
 # Resource: octopusdeploy_kubernetes_monitor
 
-Manages a Kubernetes Monitor in Octopus Deploy. The Kubernetes Monitor provides observability capabilities for Kubernetes deployments.
+Manages a Kubernetes monitor in Octopus Deploy. The Kubernetes monitor provides observability capabilities for Kubernetes deployments.
 
 ~> **Note** This resource requires Octopus Server 2025.3 or later.
 
@@ -16,97 +16,154 @@ Manages a Kubernetes Monitor in Octopus Deploy. The Kubernetes Monitor provides 
 
 ### Basic Kubernetes Monitor with Kubernetes Agent
 
-This example shows how to set up a Kubernetes Monitor along with the Kubernetes Agent using Helm:
+This example shows how to set up a Kubernetes monitor along with the Kubernetes Agent using Helm:
 
 ```hcl
-resource "octopusdeploy_space" "monitoring" {
-  name        = "Kubernetes Monitoring"
-  description = "Space for Kubernetes observability"
+locals {
+  octopus_api_key         = "API-XXXXXXXXXXXXXXXX"
+  octopus_address         = "https://myinstance.octopus.app"
+  octopus_grpc_address    = "grpc://myinstance.octopus.app:8443"
+  octopus_polling_address = "https://polling.myinstance.octopus.app/"
 }
 
-resource "octopusdeploy_environment" "prod" {
-  name        = "Production"
-  description = "Production Kubernetes clusters"
+data "octopusdeploy_teams" "everyone" {
+  partial_name = "Everyone"
+  skip         = 0
+  take         = 1
+}
+
+resource "octopusdeploy_space" "monitoring" {
+  name                 = "Kubernetes Monitoring"
+  description          = "Space for Kubernetes observability"
+  space_managers_teams = [data.octopusdeploy_teams.everyone.teams[0].id]
+}
+
+resource "octopusdeploy_environment" "example" {
+  name        = "Example"
+  description = "Example Kubernetes clusters"
   space_id    = octopusdeploy_space.monitoring.id
 }
 
-# Create the Kubernetes Agent deployment target
-resource "octopusdeploy_kubernetes_agent_deployment_target" "prod_k8s" {
-  name         = "Production Kubernetes Cluster"
+resource "octopusdeploy_polling_subscription_id" "agent_subscription_id" {}
+resource "octopusdeploy_tentacle_certificate" "agent_cert" {}
+
+# Create the Kubernetes agent deployment target
+resource "octopusdeploy_kubernetes_agent_deployment_target" "example" {
+  name         = "Example Kubernetes Cluster"
   space_id     = octopusdeploy_space.monitoring.id
-  environments = [octopusdeploy_environment.prod.id]
-  roles        = ["k8s-prod", "monitoring-enabled"]
-  
+  environments = [octopusdeploy_environment.example.id]
+  roles        = ["k8s-example", "monitoring-enabled"]
+
+  thumbprint = octopusdeploy_tentacle_certificate.agent_cert.thumbprint
+  uri        = octopusdeploy_polling_subscription_id.agent_subscription_id.polling_uri
+
   default_namespace = "octopus-system"
-  
-  kubernetes_agent_details {
-    agent_version        = "2025.3.0"
-    helm_release_name    = "octopus-agent"
-    agent_tentacle_image = "octopusdeploy/kubernetes-agent-tentacle:2025.3.0"
-  }
 }
 
 # Generate a unique installation ID for the monitor
 resource "random_uuid" "monitor_installation" {}
 
-# Create the Kubernetes Monitor
-resource "octopusdeploy_kubernetes_monitor" "prod" {
+# Create the Kubernetes monitor
+resource "octopusdeploy_kubernetes_monitor" "example" {
   space_id        = octopusdeploy_space.monitoring.id
   installation_id = random_uuid.monitor_installation.result
-  machine_id      = octopusdeploy_kubernetes_agent_deployment_target.prod_k8s.id
+  machine_id      = octopusdeploy_kubernetes_agent_deployment_target.example.id
 }
 
-# Output the authentication token for use in Helm values
-output "monitor_auth_token" {
-  value     = octopusdeploy_kubernetes_monitor.prod.authentication_token
-  sensitive = true
-  description = "Authentication token for the Kubernetes Monitor - use this in your Helm values"
-}
+# Install the Kubernetes and monitor via Helm
+resource "helm_release" "kubernetes_agent1" {
+  name             = "octopus-agent-release"
+  repository       = "oci://registry-1.docker.io"
+  chart            = "octopusdeploy/kubernetes-agent"
+  version          = "2.*.*"
+  atomic           = true
+  create_namespace = true
+  namespace        = "octopus-agent-target1"
 
-# Install the Kubernetes Monitor via Helm
-resource "helm_release" "kubernetes_agent" {
-  name       = "octopus-agent"
-  namespace  = "octopus-system"
-  repository = "oci://registry-1.docker.io/octopusdeploy"
-  chart      = "kubernetes-agent"
-  version    = "2.*.*"
-  
   set {
     name  = "agent.acceptEula"
     value = "Y"
   }
-  
+
+  set {
+    name  = "agent.name"
+    value = octopusdeploy_kubernetes_agent_deployment_target.example.name
+  }
+
+  set_sensitive {
+    name  = "agent.serverApiKey"
+    value = local.octopus_api_key
+  }
+
   set {
     name  = "agent.serverUrl"
-    value = "https://your-octopus-server.com" # Replace with your actual Octopus Server URL
+    value = local.octopus_address
   }
-  
+
+  set {
+    name  = "agent.serverCommsAddress"
+    value = local.octopus_polling_address
+  }
+
+  set {
+    name  = "agent.serverSubscriptionId"
+    value = octopusdeploy_polling_subscription_id.agent_subscription_id.polling_uri
+  }
+
+  set_sensitive {
+    name  = "agent.certificate"
+    value = octopusdeploy_tentacle_certificate.agent_cert.base64
+  }
+
   set {
     name  = "agent.space"
     value = octopusdeploy_space.monitoring.name
   }
-  
+
   set {
-    name  = "agent.targetName"
-    value = octopusdeploy_kubernetes_agent_deployment_target.prod_k8s.name
-  }
-  
-  set {
-    name  = "agent.monitor.enabled"
+    name  = "agent.deploymentTarget.enabled"
     value = "true"
   }
-  
-  set_sensitive {
-    name  = "agent.monitor.authenticationToken"
-    value = octopusdeploy_kubernetes_monitor.prod.authentication_token
-  }
-  
-  set {
-    name  = "agent.monitor.installationId"
-    value = octopusdeploy_kubernetes_monitor.prod.installation_id
+
+  set_list {
+    name  = "agent.deploymentTarget.initial.environments"
+    value = octopusdeploy_kubernetes_agent_deployment_target.example.environments
   }
 
-  depends_on = [octopusdeploy_kubernetes_monitor.prod]
+  set_list {
+    name  = "agent.deploymentTarget.initial.tags"
+    value = octopusdeploy_kubernetes_agent_deployment_target.example.roles
+  }
+
+  set {
+    name  = "agent.targetName"
+    value = octopusdeploy_kubernetes_agent_deployment_target.example.name
+  }
+
+  set {
+    name  = "kubernetesMonitor.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "kubernetesMonitor.registration.register"
+    value = "false"
+  }
+
+  set {
+    name  = "kubernetesMonitor.monitor.serverGrpcUrl"
+    value = local.octopus_grpc_address
+  }
+
+  set_sensitive {
+    name  = "kubernetesMonitor.monitor.authenticationToken"
+    value = octopusdeploy_kubernetes_monitor.example.authentication_token
+  }
+
+  set {
+    name  = "kubernetesMonitor.monitor.installationId"
+    value = octopusdeploy_kubernetes_monitor.example.installation_id
+  }
 }
 ```
 {{ .SchemaMarkdown | trimspace }}
