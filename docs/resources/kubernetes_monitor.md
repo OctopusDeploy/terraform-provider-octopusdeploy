@@ -70,7 +70,7 @@ resource "octopusdeploy_kubernetes_monitor" "example" {
   machine_id      = octopusdeploy_kubernetes_agent_deployment_target.example.id
 }
 
-# Install the Kubernetes and monitor via Helm
+# Install the Kubernetes agent and monitor via Helm
 resource "helm_release" "kubernetes_agent1" {
   name             = "octopus-agent-release"
   repository       = "oci://registry-1.docker.io"
