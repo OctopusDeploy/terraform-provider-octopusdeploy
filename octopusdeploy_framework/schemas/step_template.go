@@ -115,9 +115,8 @@ func (s StepTemplateSchema) GetResourceSchema() rs.Schema {
 			},
 			"community_action_template_id": rs.StringAttribute{
 				Description: "The ID of the community action template",
-				Optional:    true,
+				Optional:    false,
 				Computed:    true,
-				Default:     stringdefault.StaticString(""),
 			},
 			"packages":         GetStepTemplatePackageResourceSchema(StepTemplateResourceType),
 			"git_dependencies": GetStepTemplateGitDependencySchema(),
