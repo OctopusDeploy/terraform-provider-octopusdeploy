@@ -10,10 +10,10 @@ import (
 )
 
 type awsEcrFeedTestData struct {
-	name       string
-	region     string
-	accessKey  string
-	secretKey  string
+	name      string
+	region    string
+	accessKey string
+	secretKey string
 }
 
 func TestAccOctopusDeployAwsEcrFeed(t *testing.T) {
@@ -144,4 +144,4 @@ resource "octopusdeploy_aws_elastic_container_registry" "%s" {
 			},
 		},
 	})
-} 
+}
