@@ -114,6 +114,7 @@ func (r *communityStepTemplateTypeResource) Update(ctx context.Context, req reso
 	// Step templates based on community step templates are read only.
 }
 
+// Delete is used to uninstall the community step template by deleting the action template that was created when the community step template was installed.
 func (r *communityStepTemplateTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data schemas.StepTemplateFromCommunityStepTemplateTypeResourceModel
 
@@ -128,6 +129,8 @@ func (r *communityStepTemplateTypeResource) Delete(ctx context.Context, req reso
 	}
 }
 
+// The act of creating a community step template is actually installing a step template into the space.
+// The thing we return to the user is a regular action template, which is what they will use in their deployments.
 func mapCommunityStepTemplateToResourceModel(ctx context.Context, data *schemas.StepTemplateFromCommunityStepTemplateTypeResourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
 	resp := diag.Diagnostics{}
 

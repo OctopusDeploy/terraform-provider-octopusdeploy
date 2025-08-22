@@ -31,7 +31,7 @@ type CommunityStepTemplateTypeDataSourceModel struct {
 	ID      types.String `tfsdk:"id"`
 	Website types.String `tfsdk:"website"`
 	Name    types.String `tfsdk:"name"`
-	Steps   types.List   `tfsdk:"steps"`
+	Steps   types.List   `tfsdk:"steps"` // Steps used the type CommunityStepTemplateTypeObjectType()
 }
 
 // CommunityStepTemplateTypeObjectType returns the type mapping used to define the Steps attribute in the CommunityStepTemplateTypeDataSourceModel.
@@ -53,21 +53,6 @@ func CommunityStepTemplateTypeObjectType() map[string]attr.Type {
 			ElemType: types.ObjectType{AttrTypes: PackagesObjectType()},
 		},
 	}
-}
-
-type CommunityStepTemplateTypeResourceModel struct {
-	Type        types.String `tfsdk:"type"`
-	Name        types.String `tfsdk:"name"`
-	Author      types.String `tfsdk:"author"`
-	Description types.String `tfsdk:"description"`
-	Website     types.String `tfsdk:"website"`
-	HistoryUrl  types.String `tfsdk:"history_url"`
-	Version     types.Int32  `tfsdk:"version"`
-	Packages    types.List   `tfsdk:"packages"`
-	Parameters  types.List   `tfsdk:"parameters"`
-	Properties  types.Map    `tfsdk:"properties"`
-
-	ResourceModel
 }
 
 // ParametersObjectType returns the type mapping used to define the parameters attribute in the CommunityStepTemplateTypeObjectType function
@@ -100,6 +85,23 @@ func PackagesObjectType() map[string]attr.Type {
 			},
 		},
 	}
+}
+
+// CommunityStepTemplateTypeResourceModel is the resource model for the community step template type. This only returned
+// by the data source.
+type CommunityStepTemplateTypeResourceModel struct {
+	Type        types.String `tfsdk:"type"`
+	Name        types.String `tfsdk:"name"`
+	Author      types.String `tfsdk:"author"`
+	Description types.String `tfsdk:"description"`
+	Website     types.String `tfsdk:"website"`
+	HistoryUrl  types.String `tfsdk:"history_url"`
+	Version     types.Int32  `tfsdk:"version"`
+	Packages    types.List   `tfsdk:"packages"`
+	Parameters  types.List   `tfsdk:"parameters"`
+	Properties  types.Map    `tfsdk:"properties"`
+
+	ResourceModel
 }
 
 // StepTemplateFromCommunityStepTemplateTypeResourceModel represents a step template generated from a community step template.
