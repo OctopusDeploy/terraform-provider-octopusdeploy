@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
@@ -266,43 +267,128 @@ func flattenChannelRules(rules []channels.ChannelRule, currentRules types.List) 
 		return types.ListNull(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()})
 	}
 
+	currentRulesMap := make(map[string]types.Object)
+	if !currentRules.IsNull() && !currentRules.IsUnknown() {
+		for _, elem := range currentRules.Elements() {
+			ruleObj := elem.(types.Object)
+			attrs := ruleObj.Attributes()
+			if idAttr, ok := attrs["id"].(types.String); ok && !idAttr.IsNull() && !idAttr.IsUnknown() {
+				currentRulesMap[idAttr.ValueString()] = ruleObj
+			}
+		}
+	}
+
 	flattenedRules := make([]attr.Value, 0, len(rules))
 	for _, rule := range rules {
-		obj := flattenChannelRule(&rule)
+		currentRule := currentRulesMap[rule.ID]
+		obj := flattenChannelRule(&rule, currentRule)
 		flattenedRules = append(flattenedRules, obj)
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}, flattenedRules)
 }
 
-func flattenChannelRule(rule *channels.ChannelRule) types.Object {
+func flattenChannelRule(rule *channels.ChannelRule, currentRule types.Object) types.Object {
+	var currentTag, currentVersionRange types.String
+	var currentActionPackages types.List
+	if !currentRule.IsNull() && !currentRule.IsUnknown() {
+		attrs := currentRule.Attributes()
+		if v, ok := attrs["tag"]; ok {
+			currentTag = v.(types.String)
+		}
+		if v, ok := attrs["version_range"]; ok {
+			currentVersionRange = v.(types.String)
+		}
+		if v, ok := attrs["action_package"]; ok {
+			currentActionPackages = v.(types.List)
+		}
+	}
+
+	var tagValue, versionRangeValue types.String
+	if rule.Tag == "" && currentTag.IsNull() {
+		tagValue = types.StringNull()
+	} else {
+		tagValue = types.StringValue(rule.Tag)
+	}
+
+	if rule.VersionRange == "" && currentVersionRange.IsNull() {
+		versionRangeValue = types.StringNull()
+	} else {
+		versionRangeValue = types.StringValue(rule.VersionRange)
+	}
+
 	return types.ObjectValueMust(getChannelRuleAttrTypes(), map[string]attr.Value{
-		"action_package": flattenChannelRuleDeploymentActionPackages(rule.ActionPackages),
+		"action_package": flattenChannelRuleDeploymentActionPackages(rule.ActionPackages, currentActionPackages),
 		"id":             types.StringValue(rule.ID),
-		"tag":            types.StringValue(rule.Tag),
-		"version_range":  types.StringValue(rule.VersionRange),
+		"tag":            tagValue,
+		"version_range":  versionRangeValue,
 	})
 
 }
 
-func flattenChannelRuleDeploymentActionPackages(actionPackages []packages.DeploymentActionPackage) types.List {
+func flattenChannelRuleDeploymentActionPackages(actionPackages []packages.DeploymentActionPackage, currentActionPackages types.List) types.List {
 	if actionPackages == nil || len(actionPackages) == 0 {
 		return types.ListNull(types.ObjectType{AttrTypes: getChannelRuleDeploymentActionPackageAttrTypes()})
 	}
 
+	currentActionPackagesMap := make(map[string]types.Object)
+	if !currentActionPackages.IsNull() && !currentActionPackages.IsUnknown() {
+		for _, elem := range currentActionPackages.Elements() {
+			packageObj := elem.(types.Object)
+			attrs := packageObj.Attributes()
+
+			var deploymentAction, packageReference string
+			if deploymentActionAttr, ok := attrs["deployment_action"].(types.String); ok && !deploymentActionAttr.IsNull() {
+				deploymentAction = deploymentActionAttr.ValueString()
+			}
+			if packageReferenceAttr, ok := attrs["package_reference"].(types.String); ok && !packageReferenceAttr.IsNull() {
+				packageReference = packageReferenceAttr.ValueString()
+			}
+
+			key := deploymentAction + "|" + packageReference
+			currentActionPackagesMap[key] = packageObj
+		}
+	}
+
 	flattenedActionPackages := make([]attr.Value, 0, len(actionPackages))
 	for _, actionPackage := range actionPackages {
-		obj := flattenChannelRuleDeploymentActionPackage(&actionPackage)
+		key := actionPackage.DeploymentAction + "|" + actionPackage.PackageReference
+		currentActionPackage := currentActionPackagesMap[key]
+		obj := flattenChannelRuleDeploymentActionPackage(&actionPackage, currentActionPackage)
 		flattenedActionPackages = append(flattenedActionPackages, obj)
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleDeploymentActionPackageAttrTypes()}, flattenedActionPackages)
 }
 
-func flattenChannelRuleDeploymentActionPackage(actionPackage *packages.DeploymentActionPackage) types.Object {
+func flattenChannelRuleDeploymentActionPackage(actionPackage *packages.DeploymentActionPackage, currentActionPackage types.Object) types.Object {
+	var currentDeploymentAction, currentPackageReference types.String
+	if !currentActionPackage.IsNull() && !currentActionPackage.IsUnknown() {
+		attrs := currentActionPackage.Attributes()
+		if v, ok := attrs["deployment_action"]; ok {
+			currentDeploymentAction = v.(types.String)
+		}
+		if v, ok := attrs["package_reference"]; ok {
+			currentPackageReference = v.(types.String)
+		}
+	}
+
+	var deploymentActionValue, packageReferenceValue types.String
+	if actionPackage.DeploymentAction == "" && currentDeploymentAction.IsNull() {
+		deploymentActionValue = types.StringNull()
+	} else {
+		deploymentActionValue = types.StringValue(actionPackage.DeploymentAction)
+	}
+
+	if actionPackage.PackageReference == "" && currentPackageReference.IsNull() {
+		packageReferenceValue = types.StringNull()
+	} else {
+		packageReferenceValue = types.StringValue(actionPackage.PackageReference)
+	}
+
 	return types.ObjectValueMust(getChannelRuleDeploymentActionPackageAttrTypes(), map[string]attr.Value{
-		"deployment_action": types.StringValue(actionPackage.DeploymentAction),
-		"package_reference": types.StringValue(actionPackage.PackageReference),
+		"deployment_action": deploymentActionValue,
+		"package_reference": packageReferenceValue,
 	})
 }
 
