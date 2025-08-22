@@ -77,13 +77,13 @@ resource "octopusdeploy_step_template" "example" {
 
 ### Optional
 
-- `community_action_template_id` (String) The ID of the community action template
 - `description` (String) The description of this step_template.
 - `git_dependencies` (Attributes List) List of Git dependencies for the step template. (see [below for nested schema](#nestedatt--git_dependencies))
 - `space_id` (String) The space ID associated with this step_template.
 
 ### Read-Only
 
+- `community_action_template_id` (String) The ID of the community action template
 - `id` (String) The unique ID for this resource.
 - `version` (Number) The version of the step template
 
