@@ -71,7 +71,7 @@ resource "octopusdeploy_step_template" "example" {
 - `action_type` (String) The action type of the step template
 - `name` (String) The name of this resource.
 - `packages` (Attributes List) Package information for the step template (see [below for nested schema](#nestedatt--packages))
-- `parameters` (Attributes List) List of parameters that can be used in Step Template. (see [below for nested schema](#nestedatt--parameters))
+- `parameters` (Attributes List) List of parameters that can be used in step template (see [below for nested schema](#nestedatt--parameters))
 - `properties` (Map of String) Properties for the step template
 - `step_package_id` (String) The ID of the step package
 
