@@ -148,6 +148,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewProcessTemplatedChildStepResource,
 		NewProjectDeploymentFreezeResource,
 		NewProjectAutoCreateReleaseResource,
+		NewKubernetesMonitorResource,
 		NewTeamResource,
 	}
 }
