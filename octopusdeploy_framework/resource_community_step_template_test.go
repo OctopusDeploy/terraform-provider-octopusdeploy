@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
@@ -17,7 +18,7 @@ func TestAccOctopusCommunityStepTemplateBasic(t *testing.T) {
 	website2 := "https://library.octopus.com/step-templates/6042d737-5902-0729-ae57-8b6650a299da"
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             func(s *terraform.State) error { return testCommunityStepTemplateDestroy(s, localName) },
+		CheckDestroy:             func(s *terraform.State) error { return testCommunityStepTemplateDestroy(s) },
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -26,6 +27,10 @@ func TestAccOctopusCommunityStepTemplateBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 					resource.TestCheckResourceAttrSet(prefix, "community_action_template_id"),
+					resource.TestCheckResourceAttrWith(prefix, "community_action_template_id", func(value string) error {
+						fmt.Fprintf(os.Stderr, "Community Action Template ID: %s\n", value)
+						return nil
+					}),
 				),
 			},
 			{
@@ -54,7 +59,7 @@ func testCommunityStepTemplate(website string, name string) string {
 	)
 }
 
-func testCommunityStepTemplateDestroy(s *terraform.State, localName string) error {
+func testCommunityStepTemplateDestroy(s *terraform.State) error {
 	if octoClient == nil {
 		return fmt.Errorf("octoClient is nil")
 	}

@@ -230,6 +230,7 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"packages":   GetReadOnlyStepTemplatePackageResourceSchema(),
