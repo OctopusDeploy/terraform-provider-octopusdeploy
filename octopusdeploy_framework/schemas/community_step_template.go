@@ -159,7 +159,7 @@ func (s CommunityStepTemplateSchema) GetDataSourceStepsAttributes() map[string]d
 			Computed:    true,
 		},
 		"type": ds.StringAttribute{
-			Description: "The type of this " + CommunityStepTemplateResourceDescription + ".",
+			Description: "The action type of this " + CommunityStepTemplateResourceDescription + ".",
 			Computed:    true,
 		},
 		"website": ds.StringAttribute{
@@ -345,10 +345,37 @@ func GetReadOnlyStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 					Computed().
 					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
-				"properties": rs.MapAttribute{
-					Description: "The display settings for the parameter.",
-					Optional:    true,
-					ElementType: types.StringType,
+				"properties": rs.SingleNestedAttribute{
+					Description: "Properties for the package.",
+					Required:    true,
+					Attributes: map[string]rs.Attribute{
+						"extract": rs.StringAttribute{
+							Description: "If the package should extract.",
+							Default:     stringdefault.StaticString("True"),
+							Optional:    true,
+							Computed:    true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile("^(True|False)$"), "Extract must be True or False"),
+							},
+						},
+						"package_parameter_name": rs.StringAttribute{
+							Description: "The name of the package parameter",
+							Default:     stringdefault.StaticString(""),
+							Optional:    true,
+							Computed:    true,
+						},
+						"purpose": rs.StringAttribute{
+							Description: "The purpose of this property.",
+							Default:     stringdefault.StaticString(""),
+							Optional:    true,
+							Required:    false,
+							Computed:    true,
+						},
+						"selection_mode": rs.StringAttribute{
+							Description: "The selection mode.",
+							Required:    true,
+						},
+					},
 				},
 			},
 		},
