@@ -2,106 +2,67 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"testing"
 )
 
-func TestAccOctopusStepTemplateBasic(t *testing.T) {
+func TestAccOctopusCommunityStepTemplateBasic(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	prefix := "octopusdeploy_step_template." + localName
-	data := stepTemplateTestData{
-		localName:     localName,
-		prefix:        prefix,
-		actionType:    "Octopus.Script",
-		name:          acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-		description:   acctest.RandStringFromCharSet(20, acctest.CharSetAlpha),
-		stepPackageID: "Octopus.Script",
-		packages: []stepTemplatePackageTestData{
-			{
-				packageID:          "force",
-				acquisitonLocation: "Server",
-				feedID:             "feeds-builtin",
-				name:               "mypackage",
-				properties: stepTemplatePackagePropsTestData{
-					extract:       "True",
-					purpose:       "",
-					selectionMode: "immediate",
-				},
-			},
-		},
-		parameters: []stepTemplateParamTestData{
-			{
-				defaultValue: "Hello World",
-				displaySettings: map[string]string{
-					"Octopus.ControlType": "SingleLineText",
-				},
-				helpText: acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-				label:    acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-				name:     acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-				id:       "621e1584-cdf3-4b67-9204-fc82430c908c",
-			},
-			{
-				defaultValue: "Hello Earth",
-				displaySettings: map[string]string{
-					"Octopus.ControlType": "SingleLineText",
-				},
-				helpText: acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-				label:    acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-				name:     acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
-				id:       "cd731d21-669a-42e1-81af-048681fd5c69",
-			},
-		},
-		properties: map[string]string{
-			"Octopus.Action.Script.ScriptBody":   "echo 'Hello World'",
-			"Octopus.Action.Script.ScriptSource": "Inline",
-			"Octopus.Action.Script.Syntax":       "Bash",
-		},
-	}
+	prefix := "octopusdeploy_community_step_template." + localName
+	website := "https://library.octopus.com/step-templates/04a74a00-967d-496a-a966-1acd17fededf"
+	website2 := "https://library.octopus.com/step-templates/6042d737-5902-0729-ae57-8b6650a299da"
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             func(s *terraform.State) error { return testStepTemplateDestroy(s, localName) },
+		CheckDestroy:             func(s *terraform.State) error { return testCommunityStepTemplateDestroy(s, localName) },
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testStepTemplateRunScriptBasic(data),
+				Config: testCommunityStepTemplate(website, localName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(prefix, "name", data.name),
+					resource.TestCheckResourceAttrSet(prefix, "id"),
+					resource.TestCheckResourceAttrSet(prefix, "community_action_template_id"),
 				),
 			},
 			{
-				Config: testStepTemplateRunScriptUpdate(data),
+				Config: testCommunityStepTemplate(website2, localName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(prefix, "name", data.name+"-updated"),
+					resource.TestCheckResourceAttrSet(prefix, "id"),
+					resource.TestCheckResourceAttrSet(prefix, "community_action_template_id"),
 				),
 			},
 		},
 	})
 }
 
-func testStepTemplateRunScriptBasic(data stepTemplateTestData) string {
+func testCommunityStepTemplate(website string, name string) string {
 	return fmt.Sprintf(`
-		resource "octopusdeploy_community_step_template" "template" {
-			community_action_template_id="CommunityActionTemplates-11"
+		data "octopusdeploy_community_step_template" "community_step_template" {
+			website = "%s"
+		}	
+		
+		resource "octopusdeploy_community_step_template" "%s" {
+			community_action_template_id=data.octopusdeploy_community_step_template.community_step_template.steps[0].id
 		}
 `,
+		website,
+		name,
 	)
 }
 
-func testStepTemplateRunScriptUpdate(data stepTemplateTestData) string {
-	data.name = data.name + "-updated"
+func testCommunityStepTemplateDestroy(s *terraform.State, localName string) error {
+	if octoClient == nil {
+		return fmt.Errorf("octoClient is nil")
+	}
 
-	return testStepTemplateRunScriptBasic(data)
-}
-
-func testStepTemplateDestroy(s *terraform.State, localName string) error {
 	var actionTemplateID string
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "octopusdeploy_step_template" {
+		if rs.Type != "octopusdeploy_community_step_template" {
 			continue
 		}
 
@@ -109,7 +70,7 @@ func testStepTemplateDestroy(s *terraform.State, localName string) error {
 		break
 	}
 	if actionTemplateID == "" {
-		return fmt.Errorf("no octopusdeploy_step_template resource found")
+		return fmt.Errorf("no octopusdeploy_community_step_template resource found")
 	}
 
 	actionTemplate, err := actiontemplates.GetByID(octoClient, octoClient.GetSpaceID(), actionTemplateID)
