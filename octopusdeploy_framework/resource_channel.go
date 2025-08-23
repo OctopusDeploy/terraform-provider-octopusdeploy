@@ -280,7 +280,7 @@ func flattenChannelRule(rule *channels.ChannelRule) types.Object {
 		"action_package": flattenChannelRuleDeploymentActionPackages(rule.ActionPackages),
 		"id":             types.StringValue(rule.ID),
 		"tag":            types.StringValue(rule.Tag),
-		"version_range":  types.StringValue(rule.VersionRange),
+		"version_range":  util.StringOrNull(rule.VersionRange),
 	})
 
 }
@@ -302,7 +302,7 @@ func flattenChannelRuleDeploymentActionPackages(actionPackages []packages.Deploy
 func flattenChannelRuleDeploymentActionPackage(actionPackage *packages.DeploymentActionPackage) types.Object {
 	return types.ObjectValueMust(getChannelRuleDeploymentActionPackageAttrTypes(), map[string]attr.Value{
 		"deployment_action": types.StringValue(actionPackage.DeploymentAction),
-		"package_reference": types.StringValue(actionPackage.PackageReference),
+		"package_reference": util.StringOrNull(actionPackage.PackageReference),
 	})
 }
 
