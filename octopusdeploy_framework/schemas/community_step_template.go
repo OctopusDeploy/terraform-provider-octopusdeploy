@@ -240,6 +240,7 @@ func GetReadOnlyStepTemplateParameters() rs.ListNestedAttribute {
 				"display_settings": util.ResourceMap(types.StringType).
 					Description("The display settings for the parameter.").
 					Computed().
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 				"help_text": util.ResourceString().
 					Description("The help presented alongside the parameter input.").
