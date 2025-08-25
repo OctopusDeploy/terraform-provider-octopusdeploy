@@ -71,19 +71,19 @@ resource "octopusdeploy_step_template" "example" {
 - `action_type` (String) The action type of the step template
 - `name` (String) The name of this resource.
 - `packages` (Attributes List) Package information for the step template (see [below for nested schema](#nestedatt--packages))
-- `parameters` (Attributes List) List of parameters that can be used in Step Template. (see [below for nested schema](#nestedatt--parameters))
+- `parameters` (Attributes List) List of parameters that can be used in step template (see [below for nested schema](#nestedatt--parameters))
 - `properties` (Map of String) Properties for the step template
 - `step_package_id` (String) The ID of the step package
 
 ### Optional
 
-- `community_action_template_id` (String) The ID of the community action template
 - `description` (String) The description of this step_template.
 - `git_dependencies` (Attributes List) List of Git dependencies for the step template. (see [below for nested schema](#nestedatt--git_dependencies))
 - `space_id` (String) The space ID associated with this step_template.
 
 ### Read-Only
 
+- `community_action_template_id` (String) The ID of the community action template
 - `id` (String) The unique ID for this resource.
 - `version` (Number) The version of the step template
 
