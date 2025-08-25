@@ -1,9 +1,7 @@
 package octopusdeploy_framework
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"testing"
 	"time"
@@ -84,28 +82,14 @@ func forceCommunityStepTemplateRefresh() {
 		fmt.Fprintf(os.Stderr, "Error forcing community step template refresh")
 	}
 
-	resp, err := octoClient.Sling().Do(req, nil, nil)
+	task := tasks.Task{}
+	_, err = octoClient.Sling().Do(req, &task, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error executing community step template refresh: %v\n", err)
 		return
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading response body: %v\n", err)
-		return
-	}
-
-	fmt.Fprintf(os.Stderr, "Community step template refresh response: %s\n", string(body))
-
-	task := tasks.Task{}
-	if err := json.Unmarshal(body, &task); err != nil {
-		fmt.Fprintf(os.Stderr, "Error unmarshaling response body: %v\n", err)
-		return
-	}
-
-	fmt.Println(task.ID)
+	fmt.Fprintf(os.Stderr, "Create new task: %s", task.ID)
 
 	// Poll the task status until it is completed
 	for i := 0; i < 24; i++ {
@@ -116,7 +100,7 @@ func forceCommunityStepTemplateRefresh() {
 		}
 
 		if newTask.Task.State == "Success" || newTask.Task.State == "Failed" || newTask.Task.State == "Canceled" {
-			fmt.Fprintf(os.Stderr, "Community step template refresh completed\n")
+			fmt.Fprintf(os.Stderr, "Community step template refresh completed with:%s\n", newTask.Task.State)
 			return
 		}
 
