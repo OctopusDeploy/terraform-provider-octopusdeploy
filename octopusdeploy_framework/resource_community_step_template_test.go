@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tasks"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -67,7 +69,7 @@ func forceCommunityStepTemplateRefresh() {
 		return
 	}
 
-	_, err := octoClient.
+	req, err := octoClient.
 		Sling().
 		Post("/api/tasks").
 		BodyJSON(task{
@@ -78,6 +80,31 @@ func forceCommunityStepTemplateRefresh() {
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error forcing community step template refresh")
+	}
+
+	task := tasks.Task{}
+	_, err = octoClient.Sling().Do(req, &task, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error executing community step template refresh: %v\n", err)
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "Create new task: %s", task.ID)
+
+	// Poll the task status until it is completed
+	for i := 0; i < 24; i++ {
+		newTask, err := tasks.GetDetails(octoClient, octoClient.GetSpaceID(), task.ID)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting task details: %v\n", err)
+			return
+		}
+
+		if newTask.Task.State == "Success" || newTask.Task.State == "Failed" || newTask.Task.State == "Canceled" {
+			fmt.Fprintf(os.Stderr, "Community step template refresh completed with:%s\n", newTask.Task.State)
+			return
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 }
 

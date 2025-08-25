@@ -37,10 +37,6 @@ This resource manages community_step_templates in Octopus Deploy.
 <a id="nestedatt--packages"></a>
 ### Nested Schema for `packages`
 
-Required:
-
-- `properties` (Attributes) Properties for the package. (see [below for nested schema](#nestedatt--packages--properties))
-
 Read-Only:
 
 - `acquisition_location` (String) Acquisition location for the package.
@@ -48,33 +44,28 @@ Read-Only:
 - `id` (String) The unique ID for this resource.
 - `name` (String) Package name.
 - `package_id` (String) The ID of the package to use.
+- `properties` (Attributes) Properties for the package. (see [below for nested schema](#nestedatt--packages--properties))
 
 <a id="nestedatt--packages--properties"></a>
 ### Nested Schema for `packages.properties`
 
-Required:
-
-- `selection_mode` (String) The selection mode.
-
-Optional:
+Read-Only:
 
 - `extract` (String) If the package should extract.
 - `package_parameter_name` (String) The name of the package parameter
 - `purpose` (String) The purpose of this property.
+- `selection_mode` (String) The selection mode.
 
 
 
 <a id="nestedatt--parameters"></a>
 ### Nested Schema for `parameters`
 
-Optional:
-
-- `default_sensitive_value` (String, Sensitive) Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'
-- `display_settings` (Map of String) The display settings for the parameter.
-
 Read-Only:
 
+- `default_sensitive_value` (String, Sensitive) Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'
 - `default_value` (String) A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.
+- `display_settings` (Map of String) The display settings for the parameter.
 - `help_text` (String) The help presented alongside the parameter input.
 - `id` (String) The id for the property.
 - `label` (String) The label shown beside the parameter when presented in the deployment process. Example: `Server name`.
