@@ -204,7 +204,7 @@ func (s CommunityStepTemplateSchema) GetResourceSchema() rs.Schema {
 				Build(),
 			"community_action_template_id": util.ResourceString().
 				Description("The ID of the community action template").
-				Computed().
+				Required().
 				PlanModifiers(stringplanmodifier.UseStateForUnknown(), stringplanmodifier.RequiresReplace()).
 				Build(),
 			"packages":   GetReadOnlyStepTemplatePackageResourceSchema(),
