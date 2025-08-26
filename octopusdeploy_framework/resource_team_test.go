@@ -145,6 +145,7 @@ func testAccTeamBasic(localName string, name string, description string) string 
 	return fmt.Sprintf(`resource "octopusdeploy_team" "%s" {
 		name        = "%s"
 		description = "%s"
+		space_id    = "Spaces-1"
 	}`, localName, name, description)
 }
 
