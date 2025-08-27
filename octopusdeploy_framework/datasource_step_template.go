@@ -58,17 +58,7 @@ func (d *stepTemplateDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	if len(actionTemplates.Items) == 0 {
-		resp.Diagnostics.AddError("Step Template Not Found", "No step template was found with the specified criteria.")
-		return
-	}
-
 	actionTemplateMatch := findActionTemplateByName(actionTemplates.Items, data.Name.ValueString())
-
-	if actionTemplateMatch == nil {
-		resp.Diagnostics.AddError("Step Template Not Found", "No step template was found with the specified criteria.")
-		return
-	}
 
 	resp.Diagnostics.Append(mapStepTemplateToDatasourceModel(&data, actionTemplateMatch)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -93,11 +83,12 @@ func findActionTemplateByName(actionTemplates []*actiontemplates.ActionTemplate,
 func mapStepTemplateToDatasourceModel(data *schemas.StepTemplateTypeDataSourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
 	resp := diag.Diagnostics{}
 
-	data.ID = types.StringValue(at.ID)
-	data.SpaceID = types.StringValue(at.SpaceID)
-	stepTemplate, dg := convertStepTemplateAttributes(at)
-	resp.Append(dg...)
-	data.StepTemplate = stepTemplate
+	if at != nil {
+		stepTemplate, dg := convertStepTemplateAttributes(at)
+		resp.Append(dg...)
+		data.StepTemplate = stepTemplate
+	}
+
 	return resp
 }
 
