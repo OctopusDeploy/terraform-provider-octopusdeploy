@@ -19,6 +19,7 @@ const (
 type StepTemplateTypeDataSourceModel struct {
 	ID           types.String `tfsdk:"id"`
 	SpaceID      types.String `tfsdk:"space_id"`
+	Name         types.String `tfsdk:"name"`
 	StepTemplate types.Object `tfsdk:"step_template"`
 }
 
@@ -74,20 +75,22 @@ func (s StepTemplateSchema) GetDatasourceSchema() ds.Schema {
 	return ds.Schema{
 		Description: util.GetDataSourceDescription(StepTemplateDatasourceDescription),
 		Attributes: map[string]ds.Attribute{
-			"id": ds.StringAttribute{
-				Description: "Unique identifier of the step template",
-				Required:    true,
-			},
-			"space_id": ds.StringAttribute{
-				Description: "SpaceID of the Step Template",
-				Optional:    true,
-				Computed:    true,
-			},
-			"step_template": ds.ObjectAttribute{
-				Computed:       true,
-				Optional:       false,
-				AttributeTypes: GetStepTemplateAttributes(),
-			},
+			"id": util.ResourceString().
+				Description("Unique identifier of the community step template").
+				Optional().
+				Build(),
+			"name": util.ResourceString().
+				Description("Name of the Step Template").
+				Optional().
+				Build(),
+			"space_id": util.ResourceString().
+				Description("SpaceID of the Step Template").
+				Optional().
+				Computed().
+				Build(),
+			"step_template": util.ResourceObject(GetStepTemplateAttributes()).
+				Computed().
+				Build(),
 		},
 	}
 }

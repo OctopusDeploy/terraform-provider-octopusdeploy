@@ -40,21 +40,54 @@ func (d *stepTemplateDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	query := struct {
-		ID      string
-		SpaceID string
-	}{data.ID.ValueString(), data.SpaceID.ValueString()}
+	search := actiontemplates.ActionTemplateSearch{
+		ID:   data.ID.ValueString(),
+		Name: data.Name.ValueString(),
+	}
 
-	util.DatasourceReading(ctx, "step_template", query)
+	if (data.ID.IsNull() || data.ID.IsUnknown() || data.ID.ValueString() == "") && (data.Name.IsNull() || data.Name.IsUnknown() || data.Name.ValueString() == "") {
+		resp.Diagnostics.AddError("Invalid Step Template", "Either the 'id' or 'name' attribute must be specified.")
+		return
+	}
 
-	actionTemplate, err := actiontemplates.GetByID(d.Config.Client, query.SpaceID, query.ID)
+	util.DatasourceReading(ctx, "step_template", search)
+
+	actionTemplates, err := actiontemplates.Get(d.Config.Client, data.SpaceID.ValueString(), search)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to load step template", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(mapStepTemplateToDatasourceModel(&data, actionTemplate)...)
+	if len(actionTemplates.Items) == 0 {
+		resp.Diagnostics.AddError("Step Template Not Found", "No step template was found with the specified criteria.")
+		return
+	}
+
+	actionTemplateMatch := findActionTemplateByName(actionTemplates.Items, data.Name.ValueString())
+
+	if actionTemplateMatch == nil {
+		resp.Diagnostics.AddError("Step Template Not Found", "No step template was found with the specified criteria.")
+		return
+	}
+
+	resp.Diagnostics.Append(mapStepTemplateToDatasourceModel(&data, actionTemplateMatch)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func findActionTemplateByName(actionTemplates []*actiontemplates.ActionTemplate, name string) *actiontemplates.ActionTemplate {
+	// If there was no name specified, the ID must have been specified, so return the first match
+	if name == "" {
+		return actionTemplates[0]
+	}
+
+	// Otherwise, find the first match by name
+	for _, at := range actionTemplates {
+		if at.Name == name {
+			return at
+		}
+	}
+
+	return nil
 }
 
 func mapStepTemplateToDatasourceModel(data *schemas.StepTemplateTypeDataSourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
