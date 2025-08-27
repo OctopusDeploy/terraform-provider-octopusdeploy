@@ -127,85 +127,40 @@ func TestAccOctopusDeploySpaceImport(t *testing.T) {
 }
 
 func testSpaceBasic(localName string, name string, slug string) string {
-	userLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userDisplayName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userEmailAddress := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha) + "." + acctest.RandStringFromCharSet(20, acctest.CharSetAlpha) + "@example.com"
-	userPassword := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userUsername := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-
-	return fmt.Sprintf(testUserBasic(userLocalName, userDisplayName, true, false, userPassword, userUsername, userEmailAddress)+"\n"+
-		`resource "octopusdeploy_space" "%s" {
-			name = "%s"
-			slug = "%s"
-			space_managers_teams = ["teams-managers"]
-			lifecycle {
-				ignore_changes = [space_managers_teams]
-			}
-		}`, localName, name, slug)
+	return fmt.Sprintf(`resource "octopusdeploy_space" "%s" {
+		name = "%s"
+		slug = "%s"
+		space_managers_teams = ["teams-managers"]
+		lifecycle {
+			ignore_changes = [space_managers_teams]
+		}
+	}`, localName, name, slug)
 }
 
 func testSpaceWithDescription(localName string, name string, slug string, description string) string {
-	userLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userDisplayName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userEmailAddress := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha) + "." + acctest.RandStringFromCharSet(20, acctest.CharSetAlpha) + "@example.com"
-	userPassword := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userUsername := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-
-	return fmt.Sprintf(testUserBasic(userLocalName, userDisplayName, true, false, userPassword, userUsername, userEmailAddress)+"\n"+
-		`resource "octopusdeploy_space" "%s" {
-			name = "%s"
-			slug = "%s"
-			description = "%s"
-			space_managers_teams = ["teams-managers"]
-			lifecycle {
-				ignore_changes = [space_managers_teams]
-			}
-		}`, localName, name, slug, description)
+	return fmt.Sprintf(`resource "octopusdeploy_space" "%s" {
+		name = "%s"
+		slug = "%s"
+		description = "%s"
+		space_managers_teams = ["teams-managers"]
+		lifecycle {
+			ignore_changes = [space_managers_teams]
+		}
+	}`, localName, name, slug, description)
 }
 
 func testSpaceWithTaskQueueStopped(localName string, name string, slug string) string {
-	userLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userDisplayName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userEmailAddress := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha) + "." + acctest.RandStringFromCharSet(20, acctest.CharSetAlpha) + "@example.com"
-	userPassword := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	userUsername := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-
-	return fmt.Sprintf(testUserBasic(userLocalName, userDisplayName, true, false, userPassword, userUsername, userEmailAddress)+"\n"+
-		`resource "octopusdeploy_space" "%s" {
-			name = "%s"
-			slug = "%s"
-			is_task_queue_stopped = true
-			space_managers_teams = ["teams-managers"]
-			lifecycle {
-				ignore_changes = [space_managers_teams]
-			}
-		}`, localName, name, slug)
-}
-
-func testUserBasic(localName string, displayName string, isActive bool, isService bool, password string, username string, emailAddress string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_user" "%s" {
-		display_name  = "%s"
-		email_address = "%s"
-		is_active     = %v
-		is_service    = %v
-		password      = "%s"
-		username      = "%s"
-
-		identity {
-			provider = "Octopus ID"
-			claim {
-				name = "email"
-				is_identifying_claim = true
-				value = "%s"
-			}
-			claim {
-				name = "dn"
-				is_identifying_claim = false
-				value = "%s"
-			}
+	return fmt.Sprintf(`resource "octopusdeploy_space" "%s" {
+		name = "%s"
+		slug = "%s"
+		is_task_queue_stopped = true
+		space_managers_teams = ["teams-managers"]
+		lifecycle {
+			ignore_changes = [space_managers_teams]
 		}
-	}`, localName, displayName, emailAddress, isActive, isService, password, username, emailAddress, displayName)
+	}`, localName, name, slug)
 }
+
 
 func testSpaceExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -230,10 +185,12 @@ func testSpaceCheckDestroy(s *terraform.State) error {
 
 		spaceID := rs.Primary.ID
 		space, err := spaces.GetByID(octoClient, spaceID)
-		if err == nil {
-			if space != nil {
-				return fmt.Errorf("space (%s) still exists", rs.Primary.ID)
-			}
+		if err != nil {
+			// If we get an error (like 404), the space is likely deleted, which is what we want
+			continue
+		}
+		if space != nil {
+			return fmt.Errorf("space (%s) still exists", rs.Primary.ID)
 		}
 	}
 
