@@ -24,7 +24,7 @@ func TestAccOctopusDeployProjectGroupBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testProjectGroupExists(prefix),
+					testOctopusDeployProjectGroupExists(prefix),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", description),
@@ -53,7 +53,7 @@ func TestAccOctopusDeployProjectGroupUpdate(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testProjectGroupExists(prefix),
+					testOctopusDeployProjectGroupExists(prefix),
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", description),
 				),
@@ -61,7 +61,7 @@ func TestAccOctopusDeployProjectGroupUpdate(t *testing.T) {
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testProjectGroupExists(prefix),
+					testOctopusDeployProjectGroupExists(prefix),
 					resource.TestCheckResourceAttr(prefix, "name", newName),
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 				),
@@ -84,7 +84,7 @@ func TestAccOctopusDeployProjectGroupMinimal(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testProjectGroupExists(prefix),
+					testOctopusDeployProjectGroupExists(prefix),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", ""),
@@ -136,7 +136,7 @@ func testProjectGroupMinimal(localName string, name string) string {
 	}`, localName, name)
 }
 
-func testProjectGroupExists(resourceName string) resource.TestCheckFunc {
+func testOctopusDeployProjectGroupExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
