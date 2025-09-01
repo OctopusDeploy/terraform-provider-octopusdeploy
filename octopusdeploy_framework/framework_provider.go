@@ -2,13 +2,14 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"os"
+
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"os"
 )
 
 type octopusDeployFrameworkProvider struct {
@@ -74,6 +75,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 		NewLifecyclesDataSource,
 		NewEnvironmentsDataSource,
 		NewStepTemplateDataSource,
+		NewCommunityStepTemplateDataSource,
 		NewGitCredentialsDataSource,
 		NewFeedsDataSource,
 		NewLibraryVariableSetDataSource,
@@ -107,6 +109,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewLifecycleResource,
 		NewEnvironmentResource,
 		NewStepTemplateResource,
+		NewCommunityStepTemplateResource,
 		NewGitCredentialResource,
 		NewHelmFeedResource,
 		NewArtifactoryGenericFeedResource,
@@ -148,6 +151,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewProcessTemplatedChildStepResource,
 		NewProjectDeploymentFreezeResource,
 		NewProjectAutoCreateReleaseResource,
+		NewKubernetesMonitorResource,
 		NewTeamResource,
 	}
 }

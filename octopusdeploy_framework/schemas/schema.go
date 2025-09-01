@@ -2,12 +2,15 @@ package schemas
 
 import (
 	"fmt"
+	"regexp"
+
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -474,5 +477,127 @@ func getEnvironmentsResourceSchema() resourceSchema.Attribute {
 		Computed:    true,
 		Optional:    true,
 		ElementType: types.StringType,
+	}
+}
+
+func GetStepTemplatePackageResourceSchema(resourceType string) resourceSchema.ListNestedAttribute {
+	return resourceSchema.ListNestedAttribute{
+		Description: "Package information for the " + resourceType,
+		Required:    true,
+		NestedObject: resourceSchema.NestedAttributeObject{
+			Attributes: map[string]resourceSchema.Attribute{
+				"acquisition_location": resourceSchema.StringAttribute{
+					Description: "Acquisition location for the package.",
+					Default:     stringdefault.StaticString("Server"),
+					Optional:    true,
+					Computed:    true,
+				},
+				"feed_id": util.ResourceString().
+					Description("ID of the feed.").
+					Required().
+					Build(),
+				"id": GetIdResourceSchema(),
+				"name": util.ResourceString().
+					Description("Package name.").
+					Required().
+					Build(),
+				"package_id": util.ResourceString().
+					Description("The ID of the package to use.").
+					Optional().
+					Computed().
+					Build(),
+				"properties": resourceSchema.SingleNestedAttribute{
+					Description: "Properties for the package.",
+					Required:    true,
+					Attributes: map[string]resourceSchema.Attribute{
+						"extract": resourceSchema.StringAttribute{
+							Description: "If the package should extract.",
+							Default:     stringdefault.StaticString("True"),
+							Optional:    true,
+							Computed:    true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile("^(True|False)$"), "Extract must be True or False"),
+							},
+						},
+						"package_parameter_name": resourceSchema.StringAttribute{
+							Description: "The name of the package parameter",
+							Default:     stringdefault.StaticString(""),
+							Optional:    true,
+							Computed:    true,
+						},
+						"purpose": resourceSchema.StringAttribute{
+							Description: "The purpose of this property.",
+							Default:     stringdefault.StaticString(""),
+							Optional:    true,
+							Required:    false,
+							Computed:    true,
+						},
+						"selection_mode": resourceSchema.StringAttribute{
+							Description: "The selection mode.",
+							Required:    true,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func GetStepTemplateParameterResourceSchema(resourceType string) resourceSchema.ListNestedAttribute {
+	return resourceSchema.ListNestedAttribute{
+		Description: "List of parameters that can be used in " + resourceType,
+		Required:    true,
+		NestedObject: resourceSchema.NestedAttributeObject{
+			Attributes: map[string]resourceSchema.Attribute{
+				"default_value": util.ResourceString().
+					Description("A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.").
+					Optional().
+					Computed().
+					Default(stringdefault.StaticString("")).
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+					Build(),
+				"default_sensitive_value": util.ResourceString().
+					Description("Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'").
+					Optional().
+					Sensitive().
+					Build(),
+				"display_settings": resourceSchema.MapAttribute{
+					Description: "The display settings for the parameter.",
+					Optional:    true,
+					ElementType: types.StringType,
+				},
+				"help_text": resourceSchema.StringAttribute{
+					Description: "The help presented alongside the parameter input.",
+					Optional:    true,
+					Computed:    true,
+					Default:     stringdefault.StaticString(""),
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
+				},
+				"id": resourceSchema.StringAttribute{
+					Description: "The id for the property.",
+					Required:    true,
+					Validators: []validator.String{
+						stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), fmt.Sprintf("must be a valid UUID, unique within this list. Here is one you could use: %s.\nExpect uuid", uuid.New())),
+					},
+				},
+				"label": resourceSchema.StringAttribute{
+					Description: "The label shown beside the parameter when presented in the deployment process. Example: `Server name`.",
+					Optional:    true,
+					Computed:    true,
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
+				},
+				"name": resourceSchema.StringAttribute{
+					Description: "The name of the variable set by the parameter. The name can contain letters, digits, dashes and periods. Example: `ServerName`",
+					Required:    true,
+					Validators: []validator.String{
+						stringvalidator.LengthAtLeast(1),
+					},
+				},
+			},
+		},
 	}
 }

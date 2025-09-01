@@ -21,7 +21,7 @@ func TestExpandLifecycleWithNil(t *testing.T) {
 	require.Nil(t, lifecycle)
 }
 
-func TestExpandLifecycleWithCountAndForeverRetentionStrategies(t *testing.T) {
+func TestExpandLifecycle(t *testing.T) {
 	description := "test-description"
 	name := "test-name"
 	spaceID := "test-space-id"
