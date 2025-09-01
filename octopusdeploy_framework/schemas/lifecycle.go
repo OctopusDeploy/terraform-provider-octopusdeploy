@@ -123,7 +123,7 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 					Deprecated("Use strategy instead.").
 					Optional().Computed().
 					Default(booldefault.StaticBool(false)).
-					Description("A depreciated attribute indicating if items should never be deleted. The default value is false. Octopus recommends using `strategy = \"Forever\"` instead.").
+					Description("A depreciated attribute indicating if items should never be deleted. Octopus recommends using `strategy = \"Forever\"` instead.").
 					Build(),
 				"strategy": util.ResourceString().
 					Optional().Computed().
@@ -133,7 +133,7 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 				"unit": util.ResourceString().
 					Optional().Computed().
 					Default(stringdefault.StaticString("Days")).
-					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
+					Description("The unit of quantity to keep. Valid units are Days or Items.").
 					Build(),
 			},
 			Validators: []validator.Object{
