@@ -241,7 +241,7 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 		resp.Diagnostics.AddAttributeError(
 			req.Path.AtName("should_keep_forever"),
 			"Invalid retention policy configuration",
-			"Incorrect use of quantity_to_keep (depicated) and should_keep_forever. Please use the “strategy” attribute for best practice.",
+			"Incorrect use of quantity_to_keep (deprecated) and should_keep_forever. Please use the “strategy” attribute for best practice.",
 		)
 	}
 
@@ -253,7 +253,7 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("should_keep_forever"),
 				"Invalid retention policy configuration",
-				"Incorrect use of quantity_to_keep (depicated) and should_keep_forever. Please use the “strategy” attribute for best practice.",
+				"Incorrect use of quantity_to_keep (deprecated) and should_keep_forever. Please use the “strategy” attribute for best practice.",
 			)
 		}
 	}
