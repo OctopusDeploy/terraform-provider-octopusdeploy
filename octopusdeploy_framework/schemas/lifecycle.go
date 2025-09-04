@@ -248,7 +248,7 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 	shouldKeepForeverIsTrue := shouldKeepForeverPresent && shouldKeepForever.ValueBool() == true
 	quantityToKeepIsMoreThanZero := quantityToKeepPresent && quantityToKeep.ValueInt64() > 0
 
-	// count strategy validations.
+	// count strategy validations
 	if quantityToKeepIsMoreThanZero {
 		if shouldKeepForeverIsTrue {
 			resp.Diagnostics.AddAttributeError(
@@ -257,7 +257,7 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 				"should_keep_forever must be false when quantity_to_keep is greater than 0",
 			)
 		}
-		if !shouldKeepForeverIsTrue && unitPresent {
+		if !unitPresent {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
@@ -268,7 +268,6 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 
 	// keep forever strategy validation (now set as space default)
 	if !quantityToKeepIsMoreThanZero && !shouldKeepForeverIsTrue {
-
 		resp.Diagnostics.AddAttributeError(
 			req.Path.AtName("should_keep_forever"),
 			"Invalid retention policy configuration",
