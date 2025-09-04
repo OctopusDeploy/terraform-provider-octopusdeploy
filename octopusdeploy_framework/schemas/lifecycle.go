@@ -132,6 +132,7 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 				"unit": util.ResourceString().
 					Optional().Computed().
 					Description("The unit of quantity to keep. Valid units are Days or Items.").
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
 			Validators: []validator.Object{
@@ -267,7 +268,7 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 	}
 
 	// keep forever strategy validation (now set as space default)
-	if !quantityToKeepIsMoreThanZero && !shouldKeepForeverIsTrue {
+	if !quantityToKeepIsMoreThanZero && shouldKeepForeverPresent && shouldKeepForever.ValueBool() == false {
 		resp.Diagnostics.AddAttributeError(
 			req.Path.AtName("should_keep_forever"),
 			"Invalid retention policy configuration",
