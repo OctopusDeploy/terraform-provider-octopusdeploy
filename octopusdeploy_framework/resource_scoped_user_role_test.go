@@ -266,8 +266,14 @@ func testAccScopedUserRoleExists(prefix string) resource.TestCheckFunc {
 }
 
 func testAccScopedUserRoleCheckDestroy(s *terraform.State) error {
-	// Note: SDK doesn't have a direct API to check scoped user role existence
-	// So we just return nil for now
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "octopusdeploy_scoped_user_role" {
+			continue
+		}
+		if scopedUserRole, err := octoClient.ScopedUserRoles.GetByID(rs.Primary.ID); err == nil {
+			return fmt.Errorf("scoped user role (%s) still exists", scopedUserRole.GetID())
+		}
+	}
 	return nil
 }
 
