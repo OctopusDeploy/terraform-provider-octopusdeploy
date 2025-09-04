@@ -23,14 +23,17 @@ user roles.
 
 ### Required
 
-- `space_id` (String)
-- `team_id` (String)
-- `user_role_id` (String)
+- `team_id` (String) The team ID that this scoped user role belongs to.
+- `user_role_id` (String) The user role ID that defines the permissions for this scoped user role.
 
 ### Optional
 
-- `environment_ids` (Set of String)
+- `environment_ids` (Set of String) A list of environment IDs that scope the user role. If not provided, the user role applies to all environments.
+- `project_group_ids` (Set of String) A list of project group IDs that scope the user role. If not provided, the user role applies to all project groups.
+- `project_ids` (Set of String) A list of project IDs that scope the user role. If not provided, the user role applies to all projects.
+- `space_id` (String) The space ID associated with this scoped user role. If not provided, the scoped user role will be created at the system level.
+- `tenant_ids` (Set of String) A list of tenant IDs that scope the user role. If not provided, the user role applies to all tenants.
+
+### Read-Only
+
 - `id` (String) The unique ID for this resource.
-- `project_group_ids` (Set of String)
-- `project_ids` (Set of String)
-- `tenant_ids` (Set of String)
