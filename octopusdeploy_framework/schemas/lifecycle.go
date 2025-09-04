@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -132,7 +131,6 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 				"unit": util.ResourceString().
 					Optional().Computed().
-					Default(stringdefault.StaticString("Days")).
 					Description("The unit of quantity to keep. Valid units are Days or Items.").
 					Build(),
 			},
@@ -228,51 +226,53 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		// If a strategy is present, it overrides all other retention behaviour. Other unrelated attributes are rejected.
 		v.ValidateRetentionObjectWithStrategy(req, resp, strategy, quantityToKeep, shouldKeepForever, unit)
 	}
+
+	// validate units supplied
+	if !unit.IsNull() && !unit.IsUnknown() {
+		unit := unit.ValueString()
+		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"Invalid retention policy unit",
+				"Unit must be either 'Days' or 'Items' (case insensitive)",
+			)
+		}
+	}
 }
 
 // TODO: have a different process for when someone is using phases - maybe the old one?
 func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req validator.ObjectRequest, resp *validator.ObjectResponse, quantityToKeep types.Int64, shouldKeepForever types.Bool, unit types.String) {
-	unitsPresent := !unit.IsNull() && !unit.IsUnknown()
+	unitPresent := !unit.IsNull() && !unit.IsUnknown()
 	quantityToKeepPresent := !quantityToKeep.IsNull() && !quantityToKeep.IsUnknown()
 	shouldKeepForeverPresent := !shouldKeepForever.IsNull() && !shouldKeepForever.IsUnknown()
+	shouldKeepForeverIsTrue := shouldKeepForeverPresent && shouldKeepForever.ValueBool() == true
+	quantityToKeepIsMoreThanZero := quantityToKeepPresent && quantityToKeep.ValueInt64() > 0
 
-	if quantityToKeepPresent && quantityToKeep.ValueInt64() > 0 &&
-		shouldKeepForeverPresent && shouldKeepForever.ValueBool() == true {
-		resp.Diagnostics.AddAttributeError(
-			req.Path.AtName("should_keep_forever"),
-			"Invalid retention policy configuration",
-			"Incorrect use of quantity_to_keep (deprecated) and should_keep_forever. Please use the “strategy” attribute for best practice.",
-		)
-	}
-
-	if shouldKeepForeverPresent && shouldKeepForever.ValueBool() == false {
-		if quantityToKeepPresent && unitsPresent && quantityToKeep.ValueInt64() > 0 {
-			// this is a valid limited retention strategy configuration
-			return
-		} else {
+	// count strategy validations.
+	if quantityToKeepIsMoreThanZero {
+		if shouldKeepForeverIsTrue {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("should_keep_forever"),
 				"Invalid retention policy configuration",
-				"Incorrect use of quantity_to_keep (deprecated) and should_keep_forever. Please use the “strategy” attribute for best practice.",
+				"should_keep_forever must be false when quantity_to_keep is greater than 0",
+			)
+		}
+		if !shouldKeepForeverIsTrue && unitPresent {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"Invalid retention policy configuration",
+				"unit is required when quantity_to_keep is greater than 0",
 			)
 		}
 	}
 
-	if !shouldKeepForeverPresent &&
-		quantityToKeepPresent && quantityToKeep.ValueInt64() > 0 &&
-		!unitsPresent {
-		resp.Diagnostics.AddAttributeError(
-			req.Path.AtName("quantity_to_keep"),
-			"Invalid retention policy configuration",
-			"Incorrect use of units and quantity_to_keep. Please use the “strategy” attribute for best practice. ",
-		)
-	}
+	// keep forever strategy validation (now set as space default)
+	if !quantityToKeepIsMoreThanZero && !shouldKeepForeverIsTrue {
 
-	if !shouldKeepForeverPresent && quantityToKeepPresent && !unitsPresent {
 		resp.Diagnostics.AddAttributeError(
-			req.Path.AtName("quantity_to_keep"),
+			req.Path.AtName("should_keep_forever"),
 			"Invalid retention policy configuration",
-			"Incorrect use of units and quantity_to_keep. Please use the “strategy” attribute for best practice. ",
+			"should_keep_forever must be true when quantity_to_keep is zero or missing",
 		)
 	}
 }
