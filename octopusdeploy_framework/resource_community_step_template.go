@@ -71,7 +71,7 @@ func (r *communityStepTemplateTypeResource) Create(ctx context.Context, req reso
 		},
 	}
 	// Installing a community step template essentially creates a read only step template in the current space.
-	communityStepTemplate, err := r.Config.Client.CommunityActionTemplates.Install(newCommunityStepTemplate)
+	communityStepTemplate, err := r.Config.Client.CommunityActionTemplates.InstallToSpace(newCommunityStepTemplate, data.SpaceID.ValueString())
 
 	if err != nil {
 		resp.Diagnostics.AddError("unable to install community step template", err.Error())
