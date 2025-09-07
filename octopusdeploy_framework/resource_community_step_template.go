@@ -70,8 +70,14 @@ func (r *communityStepTemplateTypeResource) Create(ctx context.Context, req reso
 			ID: data.CommunityActionTemplateId.ValueString(),
 		},
 	}
+
+	spaceId := data.SpaceID.ValueString()
+	if spaceId == "" {
+		spaceId = r.Config.Client.GetSpaceID()
+	}
+
 	// Installing a community step template essentially creates a read only step template in the current space.
-	communityStepTemplate, err := r.Config.Client.CommunityActionTemplates.InstallToSpace(newCommunityStepTemplate, data.SpaceID.ValueString())
+	communityStepTemplate, err := r.Config.Client.CommunityActionTemplates.InstallToSpace(newCommunityStepTemplate, spaceId)
 
 	if err != nil {
 		resp.Diagnostics.AddError("unable to install community step template", err.Error())
@@ -79,7 +85,7 @@ func (r *communityStepTemplateTypeResource) Create(ctx context.Context, req reso
 	}
 
 	// read the details of the newly installed step template
-	actionTemplate, err := actiontemplates.GetByID(r.Config.Client, data.SpaceID.ValueString(), communityStepTemplate.ID)
+	actionTemplate, err := actiontemplates.GetByID(r.Config.Client, spaceId, communityStepTemplate.ID)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to read the installed community step template", err.Error())
 		return
