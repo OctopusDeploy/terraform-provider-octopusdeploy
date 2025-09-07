@@ -279,8 +279,9 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 	//prevent users from inputting units when not using count
 	if unitPresent && !quantityToKeepIsMoreThanZero {
 		if strings.EqualFold(unit.ValueString(), "Items") {
-			// do not throw an error for backwards compatability. When not using count, "unit" does nothing. count = "Items" is hard coded return for default and forever so will not cause errors.
+			// do not throw an error for backwards compatability.
 		} else {
+			// without this, there is a confusing error around changing units.
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
