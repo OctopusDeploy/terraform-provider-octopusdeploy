@@ -275,6 +275,19 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 			"should_keep_forever must be true when quantity_to_keep is zero or missing",
 		)
 	}
+
+	//prevent users from inputting units when not using count
+	if unitPresent && !quantityToKeepIsMoreThanZero {
+		if strings.EqualFold(unit.ValueString(), "Items") {
+			// do not throw an error for backwards compatability. When not using count, "unit" does nothing. count = "Items" is hard coded return for default and forever so will not cause errors.
+		} else {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"Invalid retention policy configuration",
+				"unit is only used when quantity_to_keep is greater than 0",
+			)
+		}
+	}
 }
 
 func (v retentionPolicyValidator) ValidateRetentionObjectWithStrategy(req validator.ObjectRequest, resp *validator.ObjectResponse, strategy types.String, quantityToKeep types.Int64, shouldKeepForever types.Bool, unit types.String) {
