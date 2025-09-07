@@ -227,18 +227,6 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		// If a strategy is present, it overrides all other retention behaviour. Other unrelated attributes are rejected.
 		v.ValidateRetentionObjectWithStrategy(req, resp, strategy, quantityToKeep, shouldKeepForever, unit)
 	}
-
-	// validate units supplied
-	if !unit.IsNull() && !unit.IsUnknown() {
-		unit := unit.ValueString()
-		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("unit"),
-				"Invalid retention policy unit",
-				"Unit must be either 'Days' or 'Items' (case insensitive)",
-			)
-		}
-	}
 }
 
 // TODO: have a different process for when someone is using phases - maybe the old one?
@@ -286,6 +274,27 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
 				"unit is only used when quantity_to_keep is greater than 0",
+			)
+		}
+	}
+
+	//error when the strategy block exists but is empty. The case where the strategy block does not even exist is handled in the resource. This error prevents there from being different behaviours for different ways of not setting a retention strategy.
+	if !unitPresent && !quantityToKeepPresent && !shouldKeepForeverPresent {
+		resp.Diagnostics.AddAttributeError(
+			req.Path.AtName("strategy"),
+			"Invalid retention policy configuration",
+			"please add retention policy attributes",
+		)
+	}
+
+	// validate units supplied
+	if !unit.IsNull() && !unit.IsUnknown() {
+		unit := unit.ValueString()
+		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"Invalid retention policy unit",
+				"Unit must be either 'Days' or 'Items'",
 			)
 		}
 	}
