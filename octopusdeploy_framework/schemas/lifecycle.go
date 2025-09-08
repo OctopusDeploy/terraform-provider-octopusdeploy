@@ -216,6 +216,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 	if resp.Diagnostics.HasError() {
 		return
 	} // add error if there's an error to point
+
 	var strategy = retentionPolicy.Strategy
 	var quantityToKeep = retentionPolicy.QuantityToKeep
 	var shouldKeepForever = retentionPolicy.ShouldKeepForever
@@ -236,6 +237,14 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 	shouldKeepForeverPresent := !shouldKeepForever.IsNull() && !shouldKeepForever.IsUnknown()
 	shouldKeepForeverIsTrue := shouldKeepForeverPresent && shouldKeepForever.ValueBool() == true
 	quantityToKeepIsMoreThanZero := quantityToKeepPresent && quantityToKeep.ValueInt64() > 0
+
+	if !unitPresent && !quantityToKeepPresent && !shouldKeepForeverPresent {
+		resp.Diagnostics.AddAttributeError(
+			req.Path.AtName("strategy"),
+			"Invalid retention policy configuration",
+			"please either add retention policy attributes or remove the entire block",
+		)
+	}
 
 	// count strategy validations
 	if quantityToKeepIsMoreThanZero {
@@ -276,15 +285,6 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 				"unit is only used when quantity_to_keep is greater than 0",
 			)
 		}
-	}
-
-	//error when the strategy block exists but is empty. The case where the strategy block does not even exist is handled in the resource. This error prevents there from being different behaviours for different ways of not setting a retention strategy.
-	if !unitPresent && !quantityToKeepPresent && !shouldKeepForeverPresent {
-		resp.Diagnostics.AddAttributeError(
-			req.Path.AtName("strategy"),
-			"Invalid retention policy configuration",
-			"please add retention policy attributes",
-		)
 	}
 
 	// validate units supplied
