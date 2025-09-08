@@ -26,8 +26,8 @@ func TestExpandLifecycle(t *testing.T) {
 	name := "test-name"
 	spaceID := "test-space-id"
 	Id := "test-id"
-	releaseRetention := core.NewRetentionPeriod(0, "Days", true)
-	tentacleRetention := core.NewRetentionPeriod(2, "Items", false)
+	releaseRetention := core.KeepForeverRetentionPeriod()
+	tentacleRetention := core.CountBasedRetentionPeriod(2, "Items")
 
 	data := &lifecycleTypeResourceModel{
 		Description: types.StringValue(description),
@@ -53,7 +53,7 @@ func TestExpandLifecycle(t *testing.T) {
 				types.ObjectValueMust(
 					getRetentionPeriodAttrTypes(),
 					map[string]attr.Value{
-						"strategy":            types.StringValue(releaseRetention.Strategy),
+						"strategy":            types.StringValue(tentacleRetention.Strategy),
 						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
 						"unit":                types.StringValue(tentacleRetention.Unit),
@@ -109,7 +109,7 @@ func TestExpandLifecycleWithDefaultRetentionStrategies(t *testing.T) {
 				types.ObjectValueMust(
 					getRetentionPeriodAttrTypes(),
 					map[string]attr.Value{
-						"strategy":            types.StringValue(releaseRetention.Strategy),
+						"strategy":            types.StringValue(tentacleRetention.Strategy),
 						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
 						"unit":                types.StringValue(tentacleRetention.Unit),
@@ -494,14 +494,10 @@ func testAccLifecycleWithRetentionPolicy(localName string, name string, descript
 			strategy = "Count"
 			unit             = "Days"
 			quantity_to_keep = 60
-			should_keep_forever = false
 		}
 
 		tentacle_retention_policy {
 			strategy = "Forever"
-			unit             = "Items"
-			quantity_to_keep = 0
-			should_keep_forever = true
 		}
     }`, localName, name, description)
 }
