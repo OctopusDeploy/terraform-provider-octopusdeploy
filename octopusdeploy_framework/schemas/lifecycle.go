@@ -114,14 +114,12 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 			Attributes: map[string]resourceSchema.Attribute{
 				"quantity_to_keep": util.ResourceInt64().
 					Optional().Computed().
-					Default(int64default.StaticInt64(30)).
 					Validators(int64validator.AtLeast(0)).
 					Description("The number of days/releases to keep. This number should be larger than 0.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
 					Deprecated("Use strategy instead.").
 					Optional().Computed().
-					Default(booldefault.StaticBool(false)).
 					Description("A depreciated attribute indicating if items should never be deleted. Octopus recommends using `strategy = \"Forever\"` instead.").
 					Build(),
 				"strategy": util.ResourceString().
@@ -132,7 +130,6 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 				"unit": util.ResourceString().
 					Optional().Computed().
 					Description("The unit of quantity to keep. Valid units are Days or Items.").
-					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
 			Validators: []validator.Object{
