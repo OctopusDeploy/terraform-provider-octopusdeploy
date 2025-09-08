@@ -74,7 +74,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	handleUnitCasing(ctx, lifecycle, newLifecycle)
+	handleUnitCasing(lifecycle, newLifecycle)
 
 	data = flattenLifecycleResource(lifecycle)
 
@@ -100,7 +100,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	handleUnitCasing(ctx, lifecycle, expandLifecycle(data))
+	handleUnitCasing(lifecycle, expandLifecycle(data))
 
 	data = flattenLifecycleResource(lifecycle)
 
@@ -131,7 +131,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	handleUnitCasing(ctx, updatedLifecycle, lifecycle)
+	handleUnitCasing(updatedLifecycle, lifecycle)
 
 	data = flattenLifecycleResource(updatedLifecycle)
 
@@ -140,7 +140,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func handleUnitCasing(ctx context.Context, resource *lifecycles.Lifecycle, data *lifecycles.Lifecycle) {
+func handleUnitCasing(resource *lifecycles.Lifecycle, data *lifecycles.Lifecycle) {
 	// Set state to the casing provided in the desired state, as the Api will always return capitalised units
 	resource.ReleaseRetentionPolicy = updateRetentionPeriodUnit(resource.ReleaseRetentionPolicy, data.ReleaseRetentionPolicy.Unit)
 	resource.TentacleRetentionPolicy = updateRetentionPeriodUnit(resource.TentacleRetentionPolicy, data.TentacleRetentionPolicy.Unit)
