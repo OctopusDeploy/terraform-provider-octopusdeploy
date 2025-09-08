@@ -222,12 +222,10 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 	if strategy.IsNull() || strategy.IsUnknown() {
 		v.ValidateRetentionObjectWithoutStrategy(req, resp, quantityToKeep, shouldKeepForever, unit)
 	} else {
-		// If a strategy is present, it overrides all other retention behaviour. Other unrelated attributes are rejected.
 		v.ValidateRetentionObjectWithStrategy(req, resp, strategy, quantityToKeep, shouldKeepForever, unit)
 	}
 }
 
-// TODO: have a different process for when someone is using phases - maybe the old one?
 func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req validator.ObjectRequest, resp *validator.ObjectResponse, quantityToKeep types.Int64, shouldKeepForever types.Bool, unit types.String) {
 	unitPresent := !unit.IsNull() && !unit.IsUnknown()
 	quantityToKeepPresent := !quantityToKeep.IsNull() && !quantityToKeep.IsUnknown()
@@ -249,14 +247,16 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("should_keep_forever"),
 				"Invalid retention policy configuration",
-				"should_keep_forever must be false when quantity_to_keep is greater than 0",
+				"Conflicting use of retention policy attributes. For best practice, use the strategy attribute.",
+				//"should_keep_forever must be false when quantity_to_keep is greater than 0",
 			)
 		}
 		if !unitPresent {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
-				"unit is required when quantity_to_keep is greater than 0",
+				"Conflicting use of retention policy attributes. For best practice, use the strategy attribute.",
+				//"unit is required when quantity_to_keep is greater than 0",
 			)
 		}
 	}
@@ -266,7 +266,8 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 		resp.Diagnostics.AddAttributeError(
 			req.Path.AtName("should_keep_forever"),
 			"Invalid retention policy configuration",
-			"should_keep_forever must be true when quantity_to_keep is zero or missing",
+			"Conflicting use of retention policy attributes. For best practice, use the strategy attribute.",
+			//"should_keep_forever must be true when quantity_to_keep is zero or missing",
 		)
 	}
 
@@ -279,12 +280,12 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
-				"unit is only used when quantity_to_keep is greater than 0",
+				"Conflicting use of retention policy attributes. For best practice, use the strategy attribute.",
+				//"unit is only used when quantity_to_keep is greater than 0",
 			)
 		}
 	}
 
-	// validate units supplied
 	if !unit.IsNull() && !unit.IsUnknown() {
 		unit := unit.ValueString()
 		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
@@ -298,7 +299,6 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 }
 
 func (v retentionPolicyValidator) ValidateRetentionObjectWithStrategy(req validator.ObjectRequest, resp *validator.ObjectResponse, strategy types.String, quantityToKeep types.Int64, shouldKeepForever types.Bool, unit types.String) {
-	// If a strategy is present, it overrides all other retention behaviour. Other unrelated attributes are rejected.
 	if strategy.ValueString() == core.RetentionStrategyDefault {
 		if !quantityToKeep.IsNull() {
 			rejectAttribute("quantity_to_keep", core.RetentionStrategyDefault, resp, req)
