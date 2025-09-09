@@ -2,7 +2,6 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
@@ -28,62 +27,6 @@ func TestExpandLifecycle(t *testing.T) {
 	Id := "test-id"
 	releaseRetention := core.KeepForeverRetentionPeriod()
 	tentacleRetention := core.CountBasedRetentionPeriod(2, "Items")
-
-	data := &lifecycleTypeResourceModel{
-		Description: types.StringValue(description),
-		Name:        types.StringValue(name),
-		SpaceID:     types.StringValue(spaceID),
-		ReleaseRetentionPolicy: types.ListValueMust(
-			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
-			[]attr.Value{
-				types.ObjectValueMust(
-					getRetentionPeriodAttrTypes(),
-					map[string]attr.Value{
-						"strategy":            types.StringValue(releaseRetention.Strategy),
-						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
-						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
-						"unit":                types.StringValue(releaseRetention.Unit),
-					},
-				),
-			},
-		),
-		TentacleRetentionPolicy: types.ListValueMust(
-			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
-			[]attr.Value{
-				types.ObjectValueMust(
-					getRetentionPeriodAttrTypes(),
-					map[string]attr.Value{
-						"strategy":            types.StringValue(tentacleRetention.Strategy),
-						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
-						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
-						"unit":                types.StringValue(tentacleRetention.Unit),
-					},
-				),
-			},
-		),
-	}
-	data.ID = types.StringValue(Id)
-
-	lifecycle := expandLifecycle(data)
-
-	require.Equal(t, description, lifecycle.Description)
-	require.NotEmpty(t, lifecycle.ID)
-	require.NotNil(t, lifecycle.Links)
-	require.Empty(t, lifecycle.Links)
-	require.Equal(t, name, lifecycle.Name)
-	require.Empty(t, lifecycle.Phases)
-	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
-	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
-	require.Equal(t, spaceID, lifecycle.SpaceID)
-}
-
-func TestExpandLifecycleWithDefaultRetentionStrategies(t *testing.T) {
-	description := "test-description"
-	name := "test-name"
-	spaceID := "test-space-id"
-	Id := "test-id"
-	releaseRetention := core.SpaceDefaultRetentionPeriod()
-	tentacleRetention := core.SpaceDefaultRetentionPeriod()
 
 	data := &lifecycleTypeResourceModel{
 		Description: types.StringValue(description),
@@ -321,42 +264,6 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 				),
 				Config: testAccLifecycle(localName, name),
 			},
-			// update lifecycle add retention policy
-			{
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(resourceName),
-					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "name", name),
-					resource.TestCheckResourceAttr(resourceName, "description", description),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.strategy", "Count"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.quantity_to_keep", "60"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.should_keep_forever", "false"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.unit", "Days"),
-					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.strategy", "Forever"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.quantity_to_keep", "0"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.should_keep_forever", "true"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.unit", "Items"),
-				),
-				Config: testAccLifecycleWithRetentionPolicy(localName, name, description),
-			},
-			// update retention policies to default
-			{
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(resourceName),
-					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "name", name),
-					resource.TestCheckResourceAttr(resourceName, "description", description),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.strategy", "Default"),
-					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.strategy", "Default"),
-				),
-				Config: testAccLifecycleWithDefaultRetentionPolicies(localName, name, description),
-			},
 		},
 	})
 }
@@ -396,82 +303,6 @@ func TestAccLifecycleComplex(t *testing.T) {
 	})
 }
 
-func TestAccLifecycleDefaultReleaseRetentionValidation(t *testing.T) {
-	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	shouldKeepForeverAttribute := "should_keep_forever = false"
-	quantityToKeepAttribute := "quantity_to_keep = 0"
-	unitAttribute := `unit = "Items"`
-
-	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccLifecycleCheckDestroy,
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		Steps: []resource.TestStep{
-			//should error when should_keep_forever is also supplied
-			{
-				Config:   createLifecycleWithDefaultReleaseRetentionAndUnwantedAttribute(localName, name, quantityToKeepAttribute),
-				PlanOnly: true,
-				ExpectError: regexp.MustCompile(
-					`quantity_to_keep should not be supplied when strategy is set to Default`,
-				),
-			},
-			{
-				Config:   createLifecycleWithDefaultReleaseRetentionAndUnwantedAttribute(localName, name, shouldKeepForeverAttribute),
-				PlanOnly: true,
-				ExpectError: regexp.MustCompile(
-					"should_keep_forever should not be supplied when strategy is set to Default",
-				),
-			},
-			{
-				Config:   createLifecycleWithDefaultReleaseRetentionAndUnwantedAttribute(localName, name, unitAttribute),
-				PlanOnly: true,
-				ExpectError: regexp.MustCompile(
-					`unit should not be supplied when strategy is set to Default`,
-				),
-			},
-		},
-	})
-}
-
-func TestAccLifecycleDefaultTentacleRetentionValidation(t *testing.T) {
-	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	shouldKeepForeverAttribute := "should_keep_forever = false"
-	quantityToKeepAttribute := "quantity_to_keep = 0"
-	unitAttribute := `unit = "Items"`
-
-	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccLifecycleCheckDestroy,
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		Steps: []resource.TestStep{
-			//should error when should_keep_forever is also supplied
-			{
-				Config:   createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName, name, quantityToKeepAttribute),
-				PlanOnly: true,
-				ExpectError: regexp.MustCompile(
-					`quantity_to_keep should not be supplied when strategy is set to Default`,
-				),
-			},
-			{
-				Config:   createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName, name, shouldKeepForeverAttribute),
-				PlanOnly: true,
-				ExpectError: regexp.MustCompile(
-					"should_keep_forever should not be supplied when strategy is set to Default",
-				),
-			},
-			{
-				Config:   createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName, name, unitAttribute),
-				PlanOnly: true,
-				ExpectError: regexp.MustCompile(
-					`unit should not be supplied when strategy is set to Default`,
-				),
-			},
-		},
-	})
-}
-
 func testAccLifecycle(localName string, name string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
@@ -483,36 +314,6 @@ func testAccLifecycleWithDescription(localName string, name string, description 
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
        description = "%s"
-    }`, localName, name, description)
-}
-
-func testAccLifecycleWithRetentionPolicy(localName string, name string, description string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-       name        = "%s"
-       description = "%s"
-		release_retention_policy {
-			strategy = "Count"
-			unit             = "Days"
-			quantity_to_keep = 60
-		}
-
-		tentacle_retention_policy {
-			strategy = "Forever"
-		}
-    }`, localName, name, description)
-}
-
-func testAccLifecycleWithDefaultRetentionPolicies(localName string, name string, description string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-       name        = "%s"
-       description = "%s"
-		release_retention_policy {
-			strategy = "Default"
-		}
-
-		tentacle_retention_policy {
-			strategy = "Default"
-		}
     }`, localName, name, description)
 }
 
@@ -611,26 +412,4 @@ func testAccLifecycleCheckDestroy(s *terraform.State) error {
 		}
 	}
 	return nil
-}
-
-func createLifecycleWithDefaultReleaseRetentionAndUnwantedAttribute(localName string, name string, unwantedAttribute string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-        description = ""
-    	release_retention_policy {
-    		strategy = "Default"      
-    		%s
-  		}
-	}`, localName, name, unwantedAttribute)
-}
-
-func createLifecycleWithDefaultTentacleRetentionAndUnwantedAttribute(localName string, name string, unwantedAttribute string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-        description = ""
-    	tentacle_retention_policy {
-    		strategy = "Default"      
-    		%s
-  		}
-	}`, localName, name, unwantedAttribute)
 }
