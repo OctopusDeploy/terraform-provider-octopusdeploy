@@ -206,8 +206,8 @@ func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs
 	phase.AutomaticDeploymentTargets = autoTargets
 	phase.IsOptionalPhase = isOptional
 	phase.MinimumEnvironmentsBeforePromotion = minEnvs
-	phase.ReleaseRetentionPolicy = core.NewRetentionPeriod(15, "Items", false)
-	phase.TentacleRetentionPolicy = core.NewRetentionPeriod(0, "Days", true)
+	phase.ReleaseRetentionPolicy = core.CountBasedRetentionPeriod(15, "Items")
+	phase.TentacleRetentionPolicy = core.KeepForeverRetentionPeriod()
 	phase.ID = name + "-Id"
 	return phase
 }
