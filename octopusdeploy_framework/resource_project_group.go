@@ -8,6 +8,7 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -21,19 +22,27 @@ func NewProjectGroupResource() resource.Resource {
 	return &projectGroupTypeResource{}
 }
 
-func (r *projectGroupTypeResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *projectGroupTypeResource) Metadata(
+	ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+) {
 	resp.TypeName = util.GetTypeName("project_group")
 }
 
-func (r *projectGroupTypeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *projectGroupTypeResource) Schema(
+	ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
 	resp.Schema = schemas.ProjectGroupSchema{}.GetResourceSchema()
 }
 
-func (r *projectGroupTypeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *projectGroupTypeResource) Configure(
+	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
+) {
 	r.Config = ResourceConfiguration(req, resp)
 }
 
-func (r *projectGroupTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *projectGroupTypeResource) Create(
+	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
+) {
 	var data schemas.ProjectGroupTypeResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -75,7 +84,9 @@ func (r *projectGroupTypeResource) Read(ctx context.Context, req resource.ReadRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *projectGroupTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *projectGroupTypeResource) Update(
+	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
+) {
 	var data, state schemas.ProjectGroupTypeResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -95,6 +106,7 @@ func (r *projectGroupTypeResource) Update(ctx context.Context, req resource.Upda
 	group.Name = data.Name.ValueString()
 	group.Description = data.Description.ValueString()
 	group.SpaceID = data.SpaceID.ValueString()
+	group.Slug = data.Slug.ValueString()
 
 	updatedProjectGroup, err := projectgroups.Update(r.Config.Client, *group)
 	if err != nil {
@@ -106,7 +118,9 @@ func (r *projectGroupTypeResource) Update(ctx context.Context, req resource.Upda
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *projectGroupTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *projectGroupTypeResource) Delete(
+	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
+) {
 	var data schemas.ProjectGroupTypeResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -125,4 +139,11 @@ func updateProjectGroup(data *schemas.ProjectGroupTypeResourceModel, group *proj
 	data.Name = types.StringValue(group.Name)
 	data.SpaceID = types.StringValue(group.SpaceID)
 	data.Description = types.StringValue(group.Description)
+	data.Slug = types.StringValue(group.Slug)
+}
+
+func (r *projectGroupTypeResource) ImportState(
+	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
+) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

@@ -1,23 +1,19 @@
 # 🐙 Terraform Provider for Octopus Deploy
 
-## :warning: Warning
-
-The Terraform Provider for Octopus Deploy is under active development and undergoing migration from Terraform SDK to Terraform Plugin Framework. Its functionality can and will change; it is a v0.\* product until its robustness can be assured. Please be aware that types like resources can and will be modified over time. It is strongly recommended to `validate` and `plan` configuration prior to committing changes via `apply`.
-
 ## About
 
-This repository contains the source code for the Terraform Provider for [Octopus Deploy](https://octopus.com). It supports provisioning/configuring of Octopus Deploy instances via [Terraform](https://www.terraform.io/). Documentation and guides for using this provider are located on the Terraform Registry: [Documentation](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy/latest/docs).
+This repository contains the source code for the Terraform Provider for [Octopus Deploy](https://octopus.com). It supports provisioning/configuring of Octopus Deploy instances via [Terraform](https://www.terraform.io/). Documentation and guides for using this provider are located on the Terraform Registry: [Documentation](https://registry.terraform.io/providers/OctopusDeploy/octopusdeploy/latest/docs).
 
 ## 🪄 Installation and Configuration
 
-The Terraform Provider for Octopus Deploy is available via the Terraform Registry: [OctopusDeployLabs/octopusdeploy](https://registry.terraform.io/providers/OctopusDeployLabs/octopusdeploy). To install this provider, copy and paste this code into your Terraform configuration:
+The Terraform Provider for Octopus Deploy is available via the Terraform Registry: [OctopusDeploy/octopusdeploy](https://registry.terraform.io/providers/OctopusDeploy/octopusdeploy). To install this provider, copy and paste this code into your Terraform configuration:
 
 ```hcl
 terraform {
   required_providers {
     octopusdeploy = {
-      source = "OctopusDeployLabs/octopusdeploy"
-      version = "version-number" # example: 0.21.1
+      source = "OctopusDeploy/octopusdeploy"
+      version = "version-number" # example: 1.0.0
     }
   }
 }
@@ -44,13 +40,13 @@ Run `terraform init` to initialize this provider and enable resource management.
 
 ## 🛠 Build Instructions
 
-A build of this Terraform Provider can be created using the [Makefile](https://github.com/OctopusDeployLabs/terraform-provider-octopusdeploy/blob/master/Makefile) provided in the source:
+A build of this Terraform Provider can be created using the [Makefile](https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/blob/main/Makefile) provided in the source:
 
 ```shell
 $ make
 ```
 
-This will generate a binary that will be installed to the local plugins folder. Once installed, the provider may be used through the following configuration:
+This will generate a binary that will be installed to the local plugins' folder. Once installed, the provider may be used through the following configuration:
 
 ```hcl
 terraform {
@@ -85,12 +81,44 @@ Terraform will scan the local plugins folder directory structure (first) to qual
 > We're currently migrating all resources and data sources from Terraform SDK to Terraform Plugin Framework.
 > 
 > All new resources should be created using Framework, in the `octopusdeploy-framework` directory. [A GitHub action](.github/workflows/prevent-new-sdk-additions.yml) will detect and prevent any new additions to the old `octopusdeploy` SDK directory.
-> 
-> When modifying an existing SDK resource, we strongly recommend migrating it to Framework first - but this might not always be feasible. We'll judge it on a case-by-case basis.
 
+### Acceptance tests
 All new resources need an acceptance test that will ensure the lifecycle of the resource works correctly this includes Create, Read, Update and Delete.
 
-Please avoid using [blocks](https://developer.hashicorp.com/terraform/plugin/framework/handling-data/blocks): these are mainly used for backwards compatability of resources migrated from SDK. Use [nested attributes](https://developer.hashicorp.com/terraform/plugin/framework/handling-data/attributes#nested-attribute-types) instead.
+### Blocks
+> [!WARNING]
+> Please avoid using [blocks](https://developer.hashicorp.com/terraform/plugin/framework/handling-data/blocks): these are mainly used for backwards compatability of resources migrated from SDK. Use [nested attributes](https://developer.hashicorp.com/terraform/plugin/framework/handling-data/attributes#nested-attribute-types) instead.
+
+### Compatibility with Server
+If a resource is not compatible with older versions of the Octopus Deploy server or requires specific feature flags to be enabled, ensure that these requirements are clearly enforced with appropriate validation and descriptive error messaging.
+
+For example to prevent resource usage in versions earlier than 2025.1:
+```go
+func (f *deploymentFreezeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+  f.Config = ResourceConfiguration(req, resp)
+
+  if f.Config != nil {
+    diags := f.Config.EnsureResourceCompatibilityByVersion(deploymentFreezeResourceName, "2025.1")
+	resp.Diagnostics.Append(diags...)
+  }
+}
+```
+
+To prevent resource usage based on a feature flag 
+```go
+func (f *deploymentFreezeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+  f.Config = ResourceConfiguration(req, resp)
+	
+  if f.Config != nil {
+	diags := f.Config.EnsureResourceCompatibilityByFeature(deploymentFreezeResourceName, "ProjectDeploymentFreezesFeatureToggle")
+	resp.Diagnostics.Append(diags...)
+  }
+}
+```
+
+## Existing Resource
+When modifying an existing SDK resource, we strongly recommend migrating it to Framework first - but this might not always be feasible. We'll judge it on a case-by-case basis.  
+The reason to not migrate is sometimes the resource is not compatible with framework without breaking changes. In this case a new resources needs to be created to replace the old one and the old one should become deprecated
 
 ## Debugging 
 If you want to debug the provider follow these steps!
@@ -143,6 +171,16 @@ or
 ```shell
 go generate main.go
 ```
+
+## Releases
+
+The release process is automated through GitHub Actions. To create a new release:
+
+1. Pull down the latest `main` branch with all merged changes
+2. Tag it with the appropriate version (v1.x.x), we use SemVer
+3. Push the tag and GitHub Actions will handle the rest
+
+The repository uses [conventional commits](https://www.conventionalcommits.org/) for automated changelog generation. The generated changelogs provide a good starting point, but you can view and edit them directly on the [GitHub release page](https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/releases) once published.
 
 ## 🤝 Contributions
 

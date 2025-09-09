@@ -1,0 +1,167 @@
+﻿module "standard" {
+  source       = "../modules/standardised-space-and-project"
+
+  space = {
+    name        = "Testing"
+    description = "Testing infrastructure"
+  }
+  
+  project = {
+    name        = "Test Project"
+    description = "Testing resources" 
+  }
+}
+
+resource "octopusdeploy_process" "test" {
+  space_id = module.standard.space
+  project_id = module.standard.project
+}
+
+# Manual Intervention Step (Production only)
+resource "octopusdeploy_process_step" "approve" {
+  space_id = module.standard.space
+  process_id = octopusdeploy_process.test.id
+  name = "Approve"
+  type = "Octopus.Manual"
+  is_required = true
+  environments = [
+    module.standard.environments.production
+  ]
+  execution_properties = {
+    "Octopus.Action.RunOnServer" = "True"
+    "Octopus.Action.Manual.Instructions" = "Please review and approve the deployment to production."
+    "Octopus.Action.Manual.ResponsibleTeamIds" = octopusdeploy_team.approvers.id
+  }
+}
+
+# Run Azure Script Step
+resource "octopusdeploy_process_step" "azure" {
+  space_id = module.standard.space
+  process_id = octopusdeploy_process.test.id
+  name = "Run Azure Script"
+  type = "Octopus.AzurePowerShell"
+  is_required = true
+  environments = [
+    module.standard.environments.development,
+    module.standard.environments.staging,
+    module.standard.environments.production
+  ]
+  execution_properties = {
+    "Octopus.Action.RunOnServer" = "True"
+    "Octopus.Action.Azure.AccountId" = octopusdeploy_azure_service_principal.azure_account.id
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.Syntax" = "PowerShell"
+    "Octopus.Action.Script.ScriptBody" = <<-EOT
+      # Your Azure PowerShell script here
+      Write-Output "Running Azure Script"
+    EOT
+    "OctopusUseBundledTooling" = "False"
+  }
+  container = {
+    feed_id = module.standard.docker_registry
+    image   = "your-private-registry/your-execution-container:latest"
+  }
+}
+
+# Deploy Kubernetes YAML Step
+resource "octopusdeploy_process_step" "kubernetes" {
+  space_id = module.standard.space
+  process_id = octopusdeploy_process.test.id
+  name = "Deploy Kubernetes YAML"
+  properties = {
+    "Octopus.Action.TargetRoles" = "k8s_cluster"
+  }
+  type = "Octopus.KubernetesDeployRawYaml"
+  is_required = true
+  environments = [
+    module.standard.environments.development,
+    module.standard.environments.staging,
+    module.standard.environments.production
+  ]
+  worker_pool_id = octopusdeploy_static_worker_pool.default.id
+  execution_properties = {
+    "Octopus.Action.RunOnServer" = "true"
+    "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName" = "deployment.yaml"
+    "Octopus.Action.KubernetesContainers.Namespace" = "#{Octopus.Environment.Name | ToLower}"
+    "Octopus.Action.Script.ScriptSource" = "GitRepository"
+    "Octopus.Action.Git.Url" = "https://github.com/your-org/your-repo.git"
+    "Octopus.Action.Git.Branch" = "main"
+    "OctopusUseBundledTooling" = "False"
+  }
+  container = {
+    feed_id = module.standard.docker_registry
+    image   = "octopusdeploy/worker-tools:latest"
+  }
+  git_dependencies = {
+    "": {
+      git_credential_id = octopusdeploy_git_credential.git_credential.id
+      git_credential_type = "Library"
+      repository_uri = "https://github.com/your-org/your-repo.git"
+      default_branch = "main"
+    }
+  }
+}
+
+resource "octopusdeploy_process_steps_order" "test" {
+  space_id = module.standard.space
+  process_id  = octopusdeploy_process.test.id
+  steps = [
+    octopusdeploy_process_step.approve.id,
+    octopusdeploy_process_step.azure.id,
+    octopusdeploy_process_step.kubernetes.id,
+  ]
+}
+
+resource "octopusdeploy_team" "approvers" {
+  space_id = module.standard.space
+  name        = "Deployment Approvers"
+  description = "Team responsible for approving production deployments"
+}
+
+resource "octopusdeploy_azure_service_principal" "azure_account" {
+  space_id = module.standard.space
+  name             = "Example Azure Service Principal"
+  description      = "Azure service principal account for deployments"
+  subscription_id  = "00000000-0000-0000-0000-000000000001"
+  tenant_id        = "00000000-0000-0000-0000-000000000002"
+  application_id   = "00000000-0000-0000-0000-000000000003"
+  password         = "TopSecretPassword01!"
+  environments     = [
+    module.standard.environments.development,
+    module.standard.environments.staging,
+    module.standard.environments.production,
+  ]
+}
+
+resource "octopusdeploy_static_worker_pool" "default" {
+    space_id = module.standard.space
+    name = "Worker Pool 1"
+    is_default = true
+}
+
+resource "octopusdeploy_git_credential" "git_credential" {
+  space_id = module.standard.space
+  name = "TerraformGitCred"
+  username = "TFP"
+  password = "password01!"
+}
+
+resource "octopusdeploy_kubernetes_cluster_deployment_target" "k8s_cluster_1" {
+  space_id = module.standard.space
+  name                              = "Example Kubernetes Cluster"
+  cluster_url                       = "https://your-cluster-url.com"
+  skip_tls_verification             = false
+  default_worker_pool_id            = octopusdeploy_static_worker_pool.default.id
+  namespace                         = "default"
+  environments = [
+    module.standard.environments.development,
+    module.standard.environments.staging,
+    module.standard.environments.production
+  ]
+  roles = ["k8s-cluster"]
+  azure_service_principal_authentication {
+    account_id = octopusdeploy_azure_service_principal.azure_account.id
+    cluster_name = "Cluster"
+    cluster_resource_group = "cluster-rg"
+  }
+}

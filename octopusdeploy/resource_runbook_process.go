@@ -16,12 +16,13 @@ import (
 
 func resourceRunbookProcess() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceRunbookProcessCreate,
-		DeleteContext: resourceRunbookProcessDelete,
-		Description:   "This resource manages runbook processes in Octopus Deploy.",
-		ReadContext:   resourceRunbookProcessRead,
-		Schema:        getRunbookProcessSchema(),
-		UpdateContext: resourceRunbookProcessUpdate,
+		DeprecationMessage: "The 'octopusdeploy_runbook_process' resource is deprecated and will be removed in a future version. Please use the octopusdeploy_process resource instead.",
+		CreateContext:      resourceRunbookProcessCreate,
+		DeleteContext:      resourceRunbookProcessDelete,
+		Description:        "This resource manages runbook processes in Octopus Deploy.",
+		ReadContext:        resourceRunbookProcessRead,
+		Schema:             getRunbookProcessSchema(),
+		UpdateContext:      resourceRunbookProcessUpdate,
 	}
 }
 

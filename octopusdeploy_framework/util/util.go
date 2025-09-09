@@ -3,10 +3,14 @@ package util
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strings"
 )
 
 func GetProviderName() string {
@@ -143,6 +147,16 @@ func GetNumber(val types.Int64) int {
 	return v
 }
 
+func ConvertMapToStringMap(ctx context.Context, values types.Map) (map[string]types.String, diag.Diagnostics) {
+	stringValues := make(map[string]types.String, len(values.Elements()))
+	diags := values.ElementsAs(ctx, &stringValues, false)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	return stringValues, diag.Diagnostics{}
+}
+
 func ConvertMapStringToMapAttrValue(m map[string]string) map[string]attr.Value {
 	result := make(map[string]attr.Value, len(m))
 	for k, v := range m {
@@ -165,11 +179,211 @@ func ConvertMapStringArrayToMapAttrValue(ctx context.Context, m map[string][]str
 	return result, diags
 }
 
+func ConvertPropertiesToAttributeValuesMap(properties map[string]core.PropertyValue) (types.Map, diag.Diagnostics) {
+	attributeValues := make(map[string]attr.Value, len(properties))
+	for key, value := range properties {
+		attributeValues[key] = types.StringValue(value.Value)
+	}
+
+	valuesMap, diags := types.MapValue(types.StringType, attributeValues)
+	if diags.HasError() {
+		return types.MapNull(types.StringType), diags
+	}
+
+	return valuesMap, diags
+}
+
 const sep = ":"
 
 func BuildCompositeId(keys ...string) string {
 	return strings.Join(keys, sep)
 }
+
 func SplitCompositeId(id string) []string {
 	return strings.Split(id, sep)
+}
+
+func BuildStringSetOrEmpty(values []string) types.Set {
+	if values == nil {
+		return types.SetValueMust(types.StringType, []attr.Value{})
+	} else {
+		return types.SetValueMust(types.StringType, ToValueSlice(values))
+	}
+}
+
+func ExpandStringSet(set types.Set) []string {
+	if set.IsNull() || set.IsUnknown() {
+		return nil
+	}
+	var result []string
+	set.ElementsAs(context.Background(), &result, false)
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+func FlattenStringSet(slice []string, currentSet types.Set) types.Set {
+	if len(slice) == 0 && currentSet.IsNull() {
+		return types.SetNull(types.StringType)
+	}
+	if slice == nil {
+		return types.SetNull(types.StringType)
+	}
+	valueSlice := make([]attr.Value, len(slice))
+	for i, s := range slice {
+		valueSlice[i] = types.StringValue(s)
+	}
+	return types.SetValueMust(types.StringType, valueSlice)
+}
+
+func MergePropertyValues(ctx context.Context, properties map[string]core.PropertyValue, values types.Map) diag.Diagnostics {
+	newValues := make(map[string]types.String, len(values.Elements()))
+	diags := values.ElementsAs(ctx, &newValues, false)
+	if diags.HasError() {
+		return diags
+	}
+
+	for key, value := range newValues {
+		if value.IsNull() {
+			properties[key] = core.NewPropertyValue("", false)
+		} else {
+			properties[key] = core.NewPropertyValue(value.ValueString(), false)
+		}
+	}
+
+	return diag.Diagnostics{}
+}
+
+func ConvertToPropertyValue(value types.String, sensitive bool) core.PropertyValue {
+	if value.IsNull() {
+		return core.NewPropertyValue("", sensitive)
+	} else {
+		return core.NewPropertyValue(value.ValueString(), sensitive)
+	}
+}
+
+func GetStringPointer(s types.String) *string {
+	if s.IsNull() {
+		return nil
+	}
+	value := s.ValueString()
+	return &value
+}
+
+func GetOptionalStringPointer(value types.String) *string {
+	if value.IsNull() {
+		return nil
+	}
+	str := value.ValueString()
+	return &str
+}
+func MapOptionalStringValue(value string) types.String {
+	if value == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(value)
+}
+func GetOptionalIntValue(value types.Int64) int {
+	if value.IsNull() {
+		return 0
+	}
+	return int(value.ValueInt64())
+}
+
+func MapOptionalIntValue(value int) types.Int64 {
+	if value == 0 {
+		return types.Int64Null()
+	}
+	return types.Int64Value(int64(value))
+}
+
+func GetOptionalString(value types.String) string {
+	if value.IsNull() {
+		return ""
+	}
+	return value.ValueString()
+}
+
+func CalculateStateTime(ctx context.Context, stateValue timetypes.RFC3339, updatedValue time.Time) (timetypes.RFC3339, diag.Diagnostics) {
+	stateTime, diags := stateValue.ValueRFC3339Time()
+	if diags.HasError() {
+		return timetypes.RFC3339{}, diags
+	}
+	stateTimeUTC := timetypes.NewRFC3339TimeValue(stateTime.UTC())
+	updatedValueUTC := updatedValue.UTC()
+	valuesAreEqual, diags := stateTimeUTC.StringSemanticEquals(ctx, timetypes.NewRFC3339TimeValue(updatedValueUTC))
+	if diags.HasError() {
+		return timetypes.NewRFC3339Null(), diags
+	}
+
+	if valuesAreEqual {
+		return stateValue, diags
+	}
+
+	location := stateTime.Location()
+	newValue := timetypes.NewRFC3339TimeValue(updatedValueUTC.In(location))
+	return newValue, diags
+}
+
+// SliceTransform takes an input collection, applies the transform function to each row, and returns the output.
+// Known as 'map' in most other languages or 'Select' in C# Linq.
+func SliceTransform[T any, TResult any](slice []T, transform func(item T) TResult) []TResult {
+	var results []TResult = nil
+	for _, item := range slice {
+		results = append(results, transform(item))
+	}
+	return results
+}
+
+// SliceFilter takes an input collection and returns elements where `predicate` returns true
+// Known as 'filter' in most other languages or 'Select' in C# Linq.
+func SliceFilter[T any](slice []T, predicate func(item T) bool) []T {
+	var results []T = nil
+	for _, item := range slice {
+		if predicate(item) {
+			results = append(results, item)
+		}
+	}
+	return results
+}
+
+// SliceContains returns true if it finds an item in the slice that is equal to the target
+func SliceContains[T comparable](slice []T, target T) bool {
+	for _, item := range slice {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}
+
+// SliceFind returns the first element from the slice where the predicate returns true, or nil if not found
+func SliceFind[T any](slice []T, predicate func(T) bool) *T {
+	for _, item := range slice {
+		if predicate(item) {
+			return &item
+		}
+	}
+	return nil
+}
+
+// StringSlicesEqual compares two string slices for equality (ignoring order)
+func StringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	aMap := make(map[string]bool)
+	for _, item := range a {
+		aMap[item] = true
+	}
+
+	for _, item := range b {
+		if !aMap[item] {
+			return false
+		}
+	}
+
+	return true
 }

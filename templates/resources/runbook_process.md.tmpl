@@ -9,6 +9,8 @@ description: |-
 
 {{ .Description | trimspace }}
 
+~> **WARNING This resource is deprecated and will be removed in a future version. Please use the `octopusdeploy_process` resource instead.
+
 ~> **NOTE Runbooks and Runbooks Processes which are stored in CaC cannot be managed via Terraform. If a project is converted to a CaC project, the Runbooks and Runbook Processes will cause warnings in your plan, and will not be updated when applying changes.
 
 {{ .SchemaMarkdown | trimspace }}

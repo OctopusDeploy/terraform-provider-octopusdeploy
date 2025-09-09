@@ -58,8 +58,9 @@ func (p *octopusDeployFrameworkProvider) Configure(ctx context.Context, req prov
 		config.Address = os.Getenv("OCTOPUS_URL")
 	}
 	config.SpaceID = providerData.SpaceID.ValueString()
-	if err := config.GetClient(ctx); err != nil {
-		resp.Diagnostics.AddError("failed to load client", err.Error())
+
+	if diags := config.SetOctopus(ctx); diags.HasError() {
+		resp.Diagnostics.Append(diags...)
 	}
 
 	resp.DataSourceData = &config
@@ -74,6 +75,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 		NewLifecyclesDataSource,
 		NewEnvironmentsDataSource,
 		NewStepTemplateDataSource,
+		NewCommunityStepTemplateDataSource,
 		NewGitCredentialsDataSource,
 		NewFeedsDataSource,
 		NewLibraryVariableSetDataSource,
@@ -94,6 +96,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCertificateResource,
+		NewChannelResource,
 		NewSpaceResource,
 		NewProjectGroupResource,
 		NewMavenFeedResource,
@@ -101,9 +104,12 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewS3FeedResource,
 		NewGoogleContainerRegistryFeedResource,
 		NewAzureContainerRegistryFeedResource,
+		NewAmazonWebServicesAccountResource,
+		NewAzureSubscriptionAccountResource,
 		NewLifecycleResource,
 		NewEnvironmentResource,
 		NewStepTemplateResource,
+		NewCommunityStepTemplateResource,
 		NewGitCredentialResource,
 		NewHelmFeedResource,
 		NewArtifactoryGenericFeedResource,
@@ -136,6 +142,17 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewDeploymentFreezeTenantResource,
 		NewGitTriggerResource,
 		NewBuiltInTriggerResource,
+		NewProcessResource,
+		NewProcessStepResource,
+		NewProcessStepsOrderResource,
+		NewProcessChildStepResource,
+		NewProcessChildStepsOrderResource,
+		NewProcessTemplatedStepResource,
+		NewProcessTemplatedChildStepResource,
+		NewProjectDeploymentFreezeResource,
+		NewProjectAutoCreateReleaseResource,
+		NewKubernetesMonitorResource,
+		NewTeamResource,
 	}
 }
 

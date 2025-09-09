@@ -2,6 +2,8 @@ package octopusdeploy_framework
 
 import (
 	"context"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -38,31 +40,55 @@ func (d *stepTemplateDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	query := struct {
-		ID      string
-		SpaceID string
-	}{data.ID.ValueString(), data.SpaceID.ValueString()}
+	search := actiontemplates.ActionTemplateSearch{
+		ID:   data.ID.ValueString(),
+		Name: data.Name.ValueString(),
+	}
 
-	util.DatasourceReading(ctx, "step_template", query)
+	if (data.ID.IsNull() || data.ID.IsUnknown() || data.ID.ValueString() == "") && (data.Name.IsNull() || data.Name.IsUnknown() || data.Name.ValueString() == "") {
+		resp.Diagnostics.AddError("Invalid Step Template", "Either the 'id' or 'name' attribute must be specified.")
+		return
+	}
 
-	actionTemplate, err := actiontemplates.GetByID(d.Config.Client, query.SpaceID, query.ID)
+	util.DatasourceReading(ctx, "step_template", search)
+
+	actionTemplates, err := actiontemplates.Get(d.Config.Client, data.SpaceID.ValueString(), search)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to load step template", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(mapStepTemplateToDatasourceModel(&data, actionTemplate)...)
+	actionTemplateMatch := findActionTemplateByName(actionTemplates.Items, data.Name.ValueString())
+
+	resp.Diagnostics.Append(mapStepTemplateToDatasourceModel(&data, actionTemplateMatch)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func findActionTemplateByName(actionTemplates []*actiontemplates.ActionTemplate, name string) *actiontemplates.ActionTemplate {
+	// If there was no name specified, the ID must have been specified, so return the first match
+	if name == "" {
+		return actionTemplates[0]
+	}
+
+	// Otherwise, find the first match by name
+	for _, at := range actionTemplates {
+		if at.Name == name {
+			return at
+		}
+	}
+
+	return nil
 }
 
 func mapStepTemplateToDatasourceModel(data *schemas.StepTemplateTypeDataSourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
 	resp := diag.Diagnostics{}
 
-	data.ID = types.StringValue(at.ID)
-	data.SpaceID = types.StringValue(at.SpaceID)
-	stepTemplate, dg := convertStepTemplateAttributes(at)
-	resp.Append(dg...)
-	data.StepTemplate = stepTemplate
+	if at != nil {
+		stepTemplate, dg := convertStepTemplateAttributes(at)
+		resp.Append(dg...)
+		data.StepTemplate = stepTemplate
+	}
+
 	return resp
 }
 
@@ -71,7 +97,7 @@ func convertStepTemplateAttributes(at *actiontemplates.ActionTemplate) (types.Ob
 
 	params := make([]attr.Value, len(at.Parameters))
 	for i, param := range at.Parameters {
-		p, dg := convertStepTemplateParameterAttribute(param)
+		p, dg := convertStepTemplateParameterAttribute(param, nil)
 		diags.Append(dg...)
 		params[i] = p
 	}
@@ -123,4 +149,38 @@ func convertStepTemplateAttributes(at *actiontemplates.ActionTemplate) (types.Ob
 	})
 	diags.Append(dg...)
 	return stepTemplate, diags
+}
+
+func mapCommunityStepTemplateToCommunityResourceModel(ctx context.Context, data *schemas.CommunityStepTemplateTypeResourceModel, at *actions.CommunityActionTemplate) diag.Diagnostics {
+	resp := diag.Diagnostics{}
+
+	data.ID = types.StringValue(at.ID)
+	data.Name = types.StringValue(at.Name)
+	data.Version = types.Int32Value(at.Version)
+	data.Description = types.StringValue(at.Description)
+	data.Website = types.StringValue(at.Website)
+	data.HistoryUrl = types.StringValue(at.HistoryURL)
+	data.Type = types.StringValue(at.ActionType)
+	data.Author = types.StringValue(at.Author)
+
+	// Parameters
+	sParams, dg := convertStepTemplateToParameterAttributes(ctx, at.Parameters, data.Parameters)
+	resp.Append(dg...)
+	data.Parameters = sParams
+
+	// Properties
+	stringProps := make(map[string]attr.Value, len(at.Properties))
+	for keys, value := range at.Properties {
+		stringProps[keys] = types.StringValue(value.Value)
+	}
+	props, dg := types.MapValue(types.StringType, stringProps)
+	resp.Append(dg...)
+	data.Properties = props
+
+	// Packages
+	pkgs, dg := convertStepTemplateToPackageAttributes(at.Packages)
+	resp.Append(dg...)
+	data.Packages = pkgs
+
+	return resp
 }
