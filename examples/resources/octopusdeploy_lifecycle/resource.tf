@@ -3,20 +3,18 @@ resource "octopusdeploy_lifecycle" "example" {
   name        = "Test Lifecycle (OK to Delete)"
 
   release_retention_policy {
-    quantity_to_keep    = 0
-    should_keep_forever = true // true only if quantity_to_keep = 0
-    unit                = "Days"
+    strategy = "Forever"
   }
 
   tentacle_retention_policy {
-    quantity_to_keep    = 30
-    should_keep_forever = false
-    unit                = "Items"
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Items"
   }
 
   phase {
     automatic_deployment_targets = ["Environments-321"]
-    name                         = "foo"
+    name = "Test Phase 1"
 
     release_retention_policy {
       quantity_to_keep    = 1
@@ -25,15 +23,13 @@ resource "octopusdeploy_lifecycle" "example" {
     }
 
     tentacle_retention_policy {
-      quantity_to_keep    = 30
-      should_keep_forever = false
-      unit                = "Items"
+      strategy = "Default"
     }
   }
 
   phase {
-    is_optional_phase           = true
-    name                        = "bar"
+    is_optional_phase = true
+    name              = "Test Phase 1"
     optional_deployment_targets = ["Environments-321"]
   }
 }
