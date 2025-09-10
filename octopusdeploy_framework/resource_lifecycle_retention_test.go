@@ -1,6 +1,4 @@
 package octopusdeploy_framework
-<<<<<<< HEAD
-=======
 
 import (
 	"fmt"
@@ -260,4 +258,3 @@ func lifecycleBasic(lifecycleName string) string {
 		name = "%s"
 }`, lifecycleName, lifecycleName)
 }
->>>>>>> fnm/add-testing-to-lifecycle-retention-policies
