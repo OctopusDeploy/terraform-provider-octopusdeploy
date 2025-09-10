@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -203,32 +202,68 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		return
 	}
 
-	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
-		quantityToKeep := retentionPolicy.QuantityToKeep.ValueInt64()
-		shouldKeepForever := retentionPolicy.ShouldKeepForever.ValueBool()
+	unitPresent := !retentionPolicy.Unit.IsNull() && !retentionPolicy.Unit.IsUnknown()
+	quantityToKeepPresent := !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown()
+	shouldKeepForeverPresent := !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown()
+	shouldKeepForeverIsTrue := shouldKeepForeverPresent && retentionPolicy.ShouldKeepForever.ValueBool() == true
+	shouldKeepForeverIsFalse := shouldKeepForeverPresent && retentionPolicy.ShouldKeepForever.ValueBool() == false
+	quantityToKeepIsMoreThanZero := quantityToKeepPresent && retentionPolicy.QuantityToKeep.ValueInt64() > 0
 
-		if quantityToKeep == 0 && !shouldKeepForever {
+	if !unitPresent && !quantityToKeepPresent && !shouldKeepForeverPresent {
+		resp.Diagnostics.AddAttributeError(
+			req.Path.AtName("strategy"),
+			"Invalid retention policy configuration",
+			"please either add retention policy attributes or remove the entire block",
+		)
+	}
+
+	// count strategy validations
+	if quantityToKeepIsMoreThanZero {
+		if shouldKeepForeverIsTrue {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("should_keep_forever"),
 				"Invalid retention policy configuration",
-				"should_keep_forever must be true when quantity_to_keep is 0",
+				"should_keep_forever must be false when quantity_to_keep is greater than 0",
 			)
-		} else if quantityToKeep != 0 && shouldKeepForever {
+		}
+		if !unitPresent {
 			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("should_keep_forever"),
+				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
-				"should_keep_forever must be false when quantity_to_keep is not 0",
+				"unit is required when quantity_to_keep is greater than 0",
 			)
 		}
 	}
 
-	if !retentionPolicy.Unit.IsNull() && !retentionPolicy.Unit.IsUnknown() {
+	// keep forever strategy validation
+	if !quantityToKeepIsMoreThanZero && shouldKeepForeverIsFalse {
+		resp.Diagnostics.AddAttributeError(
+			req.Path.AtName("should_keep_forever"),
+			"Invalid retention policy configuration",
+			"should_keep_forever must be true when quantity_to_keep is zero or missing",
+		)
+	}
+
+	//prevent users from inputting units when not using count
+	if unitPresent && !quantityToKeepIsMoreThanZero {
+		if strings.EqualFold(retentionPolicy.Unit.ValueString(), "Items") {
+			// do not throw an error for backwards compatability.
+		} else {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"Invalid retention policy configuration",
+				"unit is only used when quantity_to_keep is greater than 0",
+			)
+		}
+	}
+
+	if unitPresent {
 		unit := retentionPolicy.Unit.ValueString()
 		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"Invalid retention policy unit",
-				"Unit must be either 'Days' or 'Items' (case insensitive)",
+				"Unit must be either 'Days' or 'Items'",
 			)
 		}
 	}
