@@ -119,7 +119,10 @@ func expandUserRoles(team *teams.Team, userRoles []interface{}) []*userroles.Sco
 		userRole := rawUserRole.(map[string]interface{})
 		scopedUserRole := userroles.NewScopedUserRole(userRole["user_role_id"].(string))
 		scopedUserRole.TeamID = team.ID
-		scopedUserRole.SpaceID = userRole["space_id"].(string)
+
+		if spaceID, ok := userRole["space_id"]; ok && spaceID.(string) != "" {
+			scopedUserRole.SpaceID = spaceID.(string)
+		}
 
 		if v, ok := userRole["id"]; ok {
 			scopedUserRole.ID = v.(string)
@@ -228,4 +231,39 @@ func resourceTeamUserRoleSetHash(v interface{}) int {
 	}
 
 	return stringHashCode(buf.String())
+}
+
+func flattenScopedUserRoles(scopedUserRoles []*userroles.ScopedUserRole) []interface{} {
+	if scopedUserRoles == nil {
+		return nil
+	}
+	var flattenedScopedUserRoles = make([]interface{}, len(scopedUserRoles))
+	for key, scopedUserRole := range scopedUserRoles {
+		flattenedScopedUserRoles[key] = flattenScopedUserRole(scopedUserRole)
+	}
+
+	return flattenedScopedUserRoles
+}
+
+func flattenScopedUserRole(scopedUserRole *userroles.ScopedUserRole) map[string]interface{} {
+	if scopedUserRole == nil {
+		return nil
+	}
+
+	result := map[string]interface{}{
+		"environment_ids":   schema.NewSet(schema.HashString, flattenArray(scopedUserRole.EnvironmentIDs)),
+		"id":                scopedUserRole.ID,
+		"project_group_ids": schema.NewSet(schema.HashString, flattenArray(scopedUserRole.ProjectGroupIDs)),
+		"project_ids":       schema.NewSet(schema.HashString, flattenArray(scopedUserRole.ProjectIDs)),
+		"team_id":           scopedUserRole.TeamID,
+		"tenant_ids":        schema.NewSet(schema.HashString, flattenArray(scopedUserRole.TenantIDs)),
+		"user_role_id":      scopedUserRole.UserRoleID,
+	}
+
+	// Only include space_id if it's not empty
+	if scopedUserRole.SpaceID != "" {
+		result["space_id"] = scopedUserRole.SpaceID
+	}
+
+	return result
 }

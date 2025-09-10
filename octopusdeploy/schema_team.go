@@ -123,7 +123,7 @@ func getTeamUserRoleSchema() map[string]*schema.Schema {
 		},
 		"space_id": {
 			Type:     schema.TypeString,
-			Required: true,
+			Optional: true,
 		},
 		"team_id": {
 			Computed: true,
