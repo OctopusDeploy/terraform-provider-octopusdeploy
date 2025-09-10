@@ -111,7 +111,7 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 				"quantity_to_keep": util.ResourceInt64().
 					Optional().Computed().
 					Validators(int64validator.AtLeast(0)).
-					Description("The number of days/releases to keep. This number should be larger than 0.").
+					Description("The number of days/releases to keep. If 0 then all are kept.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
 					Optional().Computed().

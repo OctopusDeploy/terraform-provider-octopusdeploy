@@ -95,7 +95,7 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
 - `should_keep_forever` (Boolean) Indicates if items should never be deleted.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
@@ -105,7 +105,7 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
 - `should_keep_forever` (Boolean) Indicates if items should never be deleted.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
@@ -116,7 +116,7 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
 - `should_keep_forever` (Boolean) Indicates if items should never be deleted.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
@@ -126,7 +126,7 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
 - `should_keep_forever` (Boolean) Indicates if items should never be deleted.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
