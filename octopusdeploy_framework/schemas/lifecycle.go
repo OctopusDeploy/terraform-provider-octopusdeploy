@@ -120,7 +120,7 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 				"should_keep_forever": util.ResourceBool().
 					Deprecated("Use strategy instead.").
 					Optional().Computed().
-					Description("A depreciated attribute indicating if items should never be deleted. Octopus recommends using `strategy = \"Forever\"` instead.").
+					Description("Indicates if items should never be deleted. Octopus recommends using `strategy = \"Forever\"` instead.").
 					Build(),
 				"strategy": util.ResourceString().
 					Optional().Computed().
