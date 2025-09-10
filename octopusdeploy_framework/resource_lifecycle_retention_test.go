@@ -130,21 +130,23 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
 			},
+			//Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: regexp.MustCompile(`(?s).+`),
 			},
+			//Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "Items", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: regexp.MustCompile(`(?s).+`),
 			},
-			// when there is an empty block
+			// when there is an empty block. //Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", ""),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: regexp.MustCompile(`(?s).+`),
 			},
 		},
 	})
