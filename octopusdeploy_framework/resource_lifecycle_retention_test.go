@@ -140,6 +140,12 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
 			},
+			// when there is an empty block
+			{
+				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", ""),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+			},
 		},
 	})
 }
