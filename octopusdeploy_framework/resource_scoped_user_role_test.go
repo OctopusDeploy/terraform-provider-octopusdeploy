@@ -10,12 +10,9 @@ import (
 )
 
 func TestAccOctopusDeployScopedUserRoleBasic(t *testing.T) {
-	t.Skip("Skipping scoped user role test due to complex permission requirements")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_scoped_user_role." + localName
 
-	teamLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
@@ -31,19 +28,16 @@ func TestAccOctopusDeployScopedUserRoleBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(prefix, "user_role_id"),
 					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
 				),
-				Config: testAccScopedUserRoleBasic(localName, teamLocalName, teamName, userRoleLocalName, userRoleName),
+				Config: testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName),
 			},
 		},
 	})
 }
 
 func TestAccOctopusDeployScopedUserRoleWithScopes(t *testing.T) {
-	t.Skip("Skipping scoped user role test due to complex permission requirements")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_scoped_user_role." + localName
 
-	teamLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -64,19 +58,16 @@ func TestAccOctopusDeployScopedUserRoleWithScopes(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "environment_ids.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "project_group_ids.#", "1"),
 				),
-				Config: testAccScopedUserRoleWithScopes(localName, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName),
+				Config: testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName),
 			},
 		},
 	})
 }
 
 func TestAccOctopusDeployScopedUserRoleUpdate(t *testing.T) {
-	t.Skip("Skipping scoped user role test due to complex permission requirements")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_scoped_user_role." + localName
 
-	teamLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -94,26 +85,23 @@ func TestAccOctopusDeployScopedUserRoleUpdate(t *testing.T) {
 					testAccScopedUserRoleExists(prefix),
 					resource.TestCheckResourceAttr(prefix, "environment_ids.#", "1"),
 				),
-				Config: testAccScopedUserRoleUpdate1(localName, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName),
+				Config: testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
 					testAccScopedUserRoleExists(prefix),
 					resource.TestCheckResourceAttr(prefix, "environment_ids.#", "2"),
 				),
-				Config: testAccScopedUserRoleUpdate2(localName, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name),
+				Config: testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name),
 			},
 		},
 	})
 }
 
-func TestAccOctopusDeployScopedUserRoleImport(t *testing.T) {
-	t.Skip("Skipping scoped user role test due to complex permission requirements")
+func TestAccOctopusDeployScopedUserRoleSystemLevel(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	resourceName := "octopusdeploy_scoped_user_role." + localName
+	prefix := "octopusdeploy_scoped_user_role." + localName
 
-	teamLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
@@ -123,7 +111,32 @@ func TestAccOctopusDeployScopedUserRoleImport(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccScopedUserRoleBasic(localName, teamLocalName, teamName, userRoleLocalName, userRoleName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccScopedUserRoleExists(prefix),
+					resource.TestCheckResourceAttrSet(prefix, "team_id"),
+					resource.TestCheckResourceAttrSet(prefix, "user_role_id"),
+					resource.TestCheckNoResourceAttr(prefix, "space_id"),
+				),
+				Config: testAccScopedUserRoleSystemLevel(localName, userRoleLocalName, userRoleName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployScopedUserRoleImport(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := "octopusdeploy_scoped_user_role." + localName
+
+	userRoleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccScopedUserRoleCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName),
 			},
 			{
 				ResourceName:      resourceName,
@@ -135,12 +148,8 @@ func TestAccOctopusDeployScopedUserRoleImport(t *testing.T) {
 	})
 }
 
-func testAccScopedUserRoleBasic(localName, teamLocalName, teamName, userRoleLocalName, userRoleName string) string {
+func testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName string) string {
 	return fmt.Sprintf(`
-	resource "octopusdeploy_team" "%s" {
-		name = "%s"
-	}
-
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -149,17 +158,13 @@ func testAccScopedUserRoleBasic(localName, teamLocalName, teamName, userRoleLoca
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
 		space_id     = "Spaces-1"
-		team_id      = octopusdeploy_team.%s.id
+		team_id      = "teams-everyone"
 		user_role_id = octopusdeploy_user_role.%s.id
-	}`, teamLocalName, teamName, userRoleLocalName, userRoleName, localName, teamLocalName, userRoleLocalName)
+	}`, userRoleLocalName, userRoleName, localName, userRoleLocalName)
 }
 
-func testAccScopedUserRoleWithScopes(localName, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName string) string {
+func testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName string) string {
 	return fmt.Sprintf(`
-	resource "octopusdeploy_team" "%s" {
-		name = "%s"
-	}
-
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -176,19 +181,15 @@ func testAccScopedUserRoleWithScopes(localName, teamLocalName, teamName, userRol
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
 		space_id          = "Spaces-1"
-		team_id           = octopusdeploy_team.%s.id
+		team_id           = "teams-everyone"
 		user_role_id      = octopusdeploy_user_role.%s.id
 		environment_ids   = [octopusdeploy_environment.%s.id]
 		project_group_ids = [octopusdeploy_project_group.%s.id]
-	}`, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName, localName, teamLocalName, userRoleLocalName, environmentLocalName, projectGroupLocalName)
+	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName, localName, userRoleLocalName, environmentLocalName, projectGroupLocalName)
 }
 
-func testAccScopedUserRoleUpdate1(localName, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName string) string {
+func testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName string) string {
 	return fmt.Sprintf(`
-	resource "octopusdeploy_team" "%s" {
-		name = "%s"
-	}
-
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -201,18 +202,14 @@ func testAccScopedUserRoleUpdate1(localName, teamLocalName, teamName, userRoleLo
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
 		space_id        = "Spaces-1"
-		team_id         = octopusdeploy_team.%s.id
+		team_id         = "teams-everyone"
 		user_role_id    = octopusdeploy_user_role.%s.id
 		environment_ids = [octopusdeploy_environment.%s.id]
-	}`, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, localName, teamLocalName, userRoleLocalName, environmentLocalName)
+	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, localName, userRoleLocalName, environmentLocalName)
 }
 
-func testAccScopedUserRoleUpdate2(localName, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name string) string {
+func testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name string) string {
 	return fmt.Sprintf(`
-	resource "octopusdeploy_team" "%s" {
-		name = "%s"
-	}
-
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -229,20 +226,34 @@ func testAccScopedUserRoleUpdate2(localName, teamLocalName, teamName, userRoleLo
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
 		space_id        = "Spaces-1"
-		team_id         = octopusdeploy_team.%s.id
+		team_id         = "teams-everyone"
 		user_role_id    = octopusdeploy_user_role.%s.id
 		environment_ids = [
 			octopusdeploy_environment.%s.id,
 			octopusdeploy_environment.%s.id
 		]
-	}`, teamLocalName, teamName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name, localName, teamLocalName, userRoleLocalName, environmentLocalName, environment2LocalName)
+	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name, localName, userRoleLocalName, environmentLocalName, environment2LocalName)
+}
+
+func testAccScopedUserRoleSystemLevel(localName, userRoleLocalName, userRoleName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_user_role" "%s" {
+		name = "%s"
+		description = "Test user role with system permissions"
+		granted_system_permissions = ["SpaceView"]
+	}
+
+	resource "octopusdeploy_scoped_user_role" "%s" {
+		team_id      = "teams-everyone"
+		user_role_id = octopusdeploy_user_role.%s.id
+	}`, userRoleLocalName, userRoleName, localName, userRoleLocalName)
 }
 
 func testAccScopedUserRoleExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[prefix]
 		if !ok {
-			return fmt.Errorf("Not found: %s", prefix)
+			return fmt.Errorf("not found: %s", prefix)
 		}
 
 		// Simply check if we have an ID set
@@ -255,8 +266,14 @@ func testAccScopedUserRoleExists(prefix string) resource.TestCheckFunc {
 }
 
 func testAccScopedUserRoleCheckDestroy(s *terraform.State) error {
-	// Note: SDK doesn't have a direct API to check scoped user role existence
-	// So we just return nil for now
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "octopusdeploy_scoped_user_role" {
+			continue
+		}
+		if scopedUserRole, err := octoClient.ScopedUserRoles.GetByID(rs.Primary.ID); err == nil {
+			return fmt.Errorf("scoped user role (%s) still exists", scopedUserRole.GetID())
+		}
+	}
 	return nil
 }
 
@@ -264,7 +281,7 @@ func testAccScopedUserRoleImportStateIdFunc(resourceName string) resource.Import
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return "", fmt.Errorf("Not found: %s", resourceName)
+			return "", fmt.Errorf("not found: %s", resourceName)
 		}
 
 		return rs.Primary.ID, nil
