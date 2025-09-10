@@ -150,10 +150,10 @@ func handleUnitCasing(resource *lifecycles.Lifecycle, data *lifecycles.Lifecycle
 	}
 
 	for i, phase := range resource.Phases {
-		if phase.ReleaseRetentionPolicy != nil && len(phase.ReleaseRetentionPolicy.Unit) != 0 {
+		if phase.ReleaseRetentionPolicy != nil && phase.ReleaseRetentionPolicy.Unit != "" {
 			phase.ReleaseRetentionPolicy = updateRetentionPeriodUnit(phase.ReleaseRetentionPolicy, data.Phases[i].ReleaseRetentionPolicy.Unit)
 		}
-		if phase.TentacleRetentionPolicy != nil && len(phase.TentacleRetentionPolicy.Unit) != 0 {
+		if phase.TentacleRetentionPolicy != nil && phase.TentacleRetentionPolicy.Unit != "" {
 			phase.TentacleRetentionPolicy = updateRetentionPeriodUnit(phase.TentacleRetentionPolicy, data.Phases[i].TentacleRetentionPolicy.Unit)
 		}
 	}
