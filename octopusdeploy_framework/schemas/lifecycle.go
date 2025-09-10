@@ -2,6 +2,8 @@ package schemas
 
 import (
 	"context"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"strings"
 
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -104,22 +106,28 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 }
 
 func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
+	var strategyDescription = "How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted.\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept."
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
+				"strategy": util.ResourceString().
+					Optional().Computed().
+					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
+					Description(strategyDescription).
+					Build(),
 				"quantity_to_keep": util.ResourceInt64().
 					Optional().Computed().
 					Validators(int64validator.AtLeast(0)).
 					Description("The number of days/releases to keep. This number should be larger than 0.").
 					Build(),
-				"should_keep_forever": util.ResourceBool().
-					Optional().Computed().
-					Description("Indicates if items should never be deleted.").
-					Build(),
 				"unit": util.ResourceString().
 					Optional().Computed().
 					Description("The unit of quantity to keep. Valid units are Days or Items.").
+					Build(),
+				"should_keep_forever": util.ResourceBool().
+					Optional().Computed().
+					Description("Indicates if items should never be deleted.").
 					Build(),
 			},
 			Validators: []validator.Object{
@@ -191,6 +199,7 @@ func (v retentionPolicyValidator) MarkdownDescription(ctx context.Context) strin
 
 func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
+		Strategy          types.String `tfsdk:"strategy"`
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
 		ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
 		Unit              types.String `tfsdk:"unit"`
