@@ -54,7 +54,6 @@ func Provider() *schema.Provider {
 			"octopusdeploy_external_feed_create_release_trigger":           resourceExternalFeedCreateReleaseTrigger(),
 			"octopusdeploy_project_scheduled_trigger":                      resourceProjectScheduledTrigger(),
 			"octopusdeploy_runbook_process":                                resourceRunbookProcess(),
-			"octopusdeploy_scoped_user_role":                               resourceScopedUserRole(),
 			"octopusdeploy_ssh_connection_deployment_target":               resourceSSHConnectionDeploymentTarget(),
 			"octopusdeploy_ssh_key_account":                                resourceSSHKeyAccount(),
 			"octopusdeploy_static_worker_pool":                             resourceStaticWorkerPool(),

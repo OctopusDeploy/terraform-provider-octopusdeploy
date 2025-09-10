@@ -3,13 +3,14 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tagsets"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"time"
 )
 
 var _ datasource.DataSource = &tagSetsDataSource{}
@@ -74,12 +75,27 @@ func flattenTagSets(ctx context.Context, tagSets []*tagsets.TagSet) types.List {
 
 	tfList := make([]attr.Value, len(tagSets))
 	for i, tagSet := range tagSets {
+
+		tags := make([]attr.Value, len(tagSet.Tags))
+
+		for j, tag := range tagSet.Tags {
+			tags[j] = types.ObjectValueMust(schemas.GetTagAttrTypes(), map[string]attr.Value{
+				"id":                 types.StringValue(tag.ID),
+				"canonical_tag_name": types.StringValue(tag.CanonicalTagName),
+				"name":               types.StringValue(tag.Name),
+				"description":        types.StringValue(tag.Description),
+				"color":              types.StringValue(tag.Color),
+				"sort_order":         types.Int64Value(int64(tag.SortOrder)),
+			})
+		}
+
 		tfList[i] = types.ObjectValueMust(schemas.GetTagSetAttrTypes(), map[string]attr.Value{
 			"id":          types.StringValue(tagSet.ID),
 			"name":        types.StringValue(tagSet.Name),
 			"description": types.StringValue(tagSet.Description),
 			"sort_order":  types.Int64Value(int64(tagSet.SortOrder)),
 			"space_id":    types.StringValue(tagSet.SpaceID),
+			"tags":        types.ListValueMust(types.ObjectType{AttrTypes: schemas.GetTagAttrTypes()}, tags),
 		})
 	}
 
