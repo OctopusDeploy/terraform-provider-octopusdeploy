@@ -127,6 +127,7 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 					Description("The unit of quantity to keep. Valid units are Days or Items.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
+					Deprecated("Use strategy instead.").
 					Optional().Computed().
 					Description("Indicates if items should never be deleted.").
 					Build(),
