@@ -2,74 +2,13 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"regexp"
-	"testing"
-
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/require"
+	"regexp"
+	"testing"
 )
 
-func TestExpandLifecycleWithDefaultRetentionStrategies(t *testing.T) {
-	description := "test-description"
-	name := "test-name"
-	spaceID := "test-space-id"
-	Id := "test-id"
-	releaseRetention := core.SpaceDefaultRetentionPeriod()
-	tentacleRetention := core.SpaceDefaultRetentionPeriod()
-
-	data := &lifecycleTypeResourceModel{
-		Description: types.StringValue(description),
-		Name:        types.StringValue(name),
-		SpaceID:     types.StringValue(spaceID),
-		ReleaseRetentionPolicy: types.ListValueMust(
-			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
-			[]attr.Value{
-				types.ObjectValueMust(
-					getRetentionPeriodAttrTypes(),
-					map[string]attr.Value{
-						"strategy":            types.StringValue(releaseRetention.Strategy),
-						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
-						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
-						"unit":                types.StringValue(releaseRetention.Unit),
-					},
-				),
-			},
-		),
-		TentacleRetentionPolicy: types.ListValueMust(
-			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
-			[]attr.Value{
-				types.ObjectValueMust(
-					getRetentionPeriodAttrTypes(),
-					map[string]attr.Value{
-						"strategy":            types.StringValue(tentacleRetention.Strategy),
-						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
-						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
-						"unit":                types.StringValue(tentacleRetention.Unit),
-					},
-				),
-			},
-		),
-	}
-	data.ID = types.StringValue(Id)
-
-	lifecycle := expandLifecycle(data)
-
-	require.Equal(t, description, lifecycle.Description)
-	require.NotEmpty(t, lifecycle.ID)
-	require.NotNil(t, lifecycle.Links)
-	require.Empty(t, lifecycle.Links)
-	require.Equal(t, name, lifecycle.Name)
-	require.Empty(t, lifecycle.Phases)
-	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
-	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
-	require.Equal(t, spaceID, lifecycle.SpaceID)
-}
-
-func TestDefaultRetentionValidation_withStrategyAttribute(t *testing.T) {
+func TestAccRetentionAttributeValidation_withStrategyAttribute(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	shouldKeepForeverAttribute := "should_keep_forever = false"
 	quantityToKeepAttribute := "quantity_to_keep = 0"
@@ -80,93 +19,53 @@ func TestDefaultRetentionValidation_withStrategyAttribute(t *testing.T) {
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
+			// Default strategy validation
 			{
-				Config:      lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, quantityToKeepAttribute),
+				Config:      lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName, "Default", quantityToKeepAttribute),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep should not be supplied when strategy is set to Default.*quantity_to_keep should not be supplied when strategy is set to Default`),
 			},
 			{
-				Config:      lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, shouldKeepForeverAttribute),
+				Config:      lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName, "Default", shouldKeepForeverAttribute),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`(?s)should_keep_forever should not be supplied when strategy is set to Default.*should_keep_forever should not be supplied when strategy is set to Default`),
 			},
 			{
-				Config:   lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, unitAttribute),
+				Config:   lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName, "Default", unitAttribute),
 				PlanOnly: true,
 				ExpectError: regexp.MustCompile(
 					`(?s)unit should not be supplied when strategy is set to Default.*unit should not be supplied when strategy is set to Default`,
 				),
 			},
+			//Forever Strategy Validation
+			{
+				Config:      lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName, "Forever", quantityToKeepAttribute),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep should not be supplied when strategy is set to Forever.*quantity_to_keep should not be supplied when strategy is set to Forever`),
+			},
+			{
+				Config:      lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName, "Forever", shouldKeepForeverAttribute),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)should_keep_forever should not be supplied when strategy is set to Forever.*should_keep_forever should not be supplied when strategy is set to Forever`),
+			},
+			{
+				Config:   lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName, "Forever", unitAttribute),
+				PlanOnly: true,
+				ExpectError: regexp.MustCompile(
+					`(?s)unit should not be supplied when strategy is set to Forever.*unit should not be supplied when strategy is set to Forever`,
+				),
+			},
+			//Count Strategy Validation
+			{
+				Config:      lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName, "Count", shouldKeepForeverAttribute),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?s)should_keep_forever should not be supplied when strategy is set to Count.*should_keep_forever should not be supplied when strategy is set to Count`),
+			},
 		},
 	})
 }
 
-//func TestCountRetentionValidation_withStrategyAttribute(t *testing.T) {
-//	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	shouldKeepForeverAttribute := "should_keep_forever = false"
-//	quantityToKeepAttribute := "quantity_to_keep = 0"
-//	unitAttribute := `unit = "Items"`
-//
-//	resource.Test(t, resource.TestCase{
-//		CheckDestroy:             testAccLifecycleCheckDestroy,
-//		PreCheck:                 func() { TestAccPreCheck(t) },
-//		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-//		Steps: []resource.TestStep{
-//			//should error when should_keep_forever is also supplied
-//			{
-//				Config:      lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, quantityToKeepAttribute),
-//				PlanOnly:    true,
-//				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep should not be supplied when strategy is set to Default.*quantity_to_keep should not be supplied when strategy is set to Default`),
-//			},
-//			{
-//				Config:      lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, shouldKeepForeverAttribute),
-//				PlanOnly:    true,
-//				ExpectError: regexp.MustCompile(`(?s)should_keep_forever should not be supplied when strategy is set to Default.*should_keep_forever should not be supplied when strategy is set to Default`),
-//			},
-//			{
-//				Config:   lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, unitAttribute),
-//				PlanOnly: true,
-//				ExpectError: regexp.MustCompile(
-//					`(?s)unit should not be supplied when strategy is set to Default.*unit should not be supplied when strategy is set to Default`,
-//				),
-//			},
-//		},
-//	})
-//}
-//func TestForeverRetentionValidation_withStrategyAttribute(t *testing.T) {
-//	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	shouldKeepForeverAttribute := "should_keep_forever = false"
-//	quantityToKeepAttribute := "quantity_to_keep = 0"
-//	unitAttribute := `unit = "Items"`
-//
-//	resource.Test(t, resource.TestCase{
-//		CheckDestroy:             testAccLifecycleCheckDestroy,
-//		PreCheck:                 func() { TestAccPreCheck(t) },
-//		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-//		Steps: []resource.TestStep{
-//			//should error when should_keep_forever is also supplied
-//			{
-//				Config:      lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, quantityToKeepAttribute),
-//				PlanOnly:    true,
-//				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep should not be supplied when strategy is set to Default.*quantity_to_keep should not be supplied when strategy is set to Default`),
-//			},
-//			{
-//				Config:      lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, shouldKeepForeverAttribute),
-//				PlanOnly:    true,
-//				ExpectError: regexp.MustCompile(`(?s)should_keep_forever should not be supplied when strategy is set to Default.*should_keep_forever should not be supplied when strategy is set to Default`),
-//			},
-//			{
-//				Config:   lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName, unitAttribute),
-//				PlanOnly: true,
-//				ExpectError: regexp.MustCompile(
-//					`(?s)unit should not be supplied when strategy is set to Default.*unit should not be supplied when strategy is set to Default`,
-//				),
-//			},
-//		},
-//	})
-//}
-
-func TestLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
+func TestAccLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
 
@@ -177,7 +76,7 @@ func TestLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
 		Steps: []resource.TestStep{
 			// 1 create lifecycle without a retention policy
 			{
-				Config: lifecycleWithoutRetentionPolicies(lifecycleName),
+				Config: lifecycleRetentionPolicyByStrategy(lifecycleName, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -189,7 +88,7 @@ func TestLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
 			},
 			// 2 update with default retention policies
 			{
-				Config: lifecycle_withDefaultRetention_usingStrategy(lifecycleName),
+				Config: lifecycleRetentionPolicyByStrategy(lifecycleName, "Default"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -209,7 +108,7 @@ func TestLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
 			},
 			// 3 update with Count retention policies
 			{
-				Config: lifecycle_withCountRetention_usingStrategy(lifecycleName),
+				Config: lifecycleRetentionPolicyByStrategy(lifecycleName, "Count"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -229,7 +128,7 @@ func TestLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
 			},
 			// 4 update with forever retention policies
 			{
-				Config: lifecycle_withForeverRetention_usingStrategy(lifecycleName),
+				Config: lifecycleRetentionPolicyByStrategy(lifecycleName, "Forever"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -248,7 +147,7 @@ func TestLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
 				),
 			},
 			// 5 remove policies to return to default behaviour
-			{Config: lifecycleWithoutRetentionPolicies(lifecycleName),
+			{Config: lifecycleRetentionPolicyByStrategy(lifecycleName, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -261,7 +160,8 @@ func TestLifecycleRetentionPolicyUpdates_withStrategyAttribute(t *testing.T) {
 		},
 	})
 }
-func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) {
+
+func TestAccLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
 
@@ -272,7 +172,7 @@ func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) 
 		Steps: []resource.TestStep{
 			// 1 create lifecycle without a retention policy
 			{
-				Config: lifecycleWithoutRetentionPolicies(lifecycleName),
+				Config: lifecycleRetentionPolicyByStrategy(lifecycleName, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -284,7 +184,7 @@ func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) 
 			},
 			// 2 update with default retention policies
 			{
-				Config: lifecycle_withDefaultRetention_withoutStrategyAttribute_usingQuantityToKeep(lifecycleName),
+				Config: defaultRetentionLifecycle_withoutStrategyAttribute_usingQuantityToKeep(lifecycleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -304,7 +204,7 @@ func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) 
 			},
 			// 3 update with Count retention policies
 			{
-				Config: lifecycle_withCountRetention_withoutStrategyAttribute_usingDays(lifecycleName),
+				Config: countRetentionLifecycle_withoutStrategyAttribute(lifecycleName, "Days"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -324,7 +224,7 @@ func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) 
 			},
 			// 3 update with Count retention policies
 			{
-				Config: lifecycle_withCountRetention_withoutStrategyAttribute_usingItems(lifecycleName),
+				Config: countRetentionLifecycle_withoutStrategyAttribute(lifecycleName, "Items"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -344,7 +244,7 @@ func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) 
 			},
 			// 4 update with Default retention policies
 			{
-				Config: lifecycle_withDefaultRetention_withoutStrategyAttribute_notUsingQuantityToKeep(lifecycleName),
+				Config: defaultRetentionLifecycle_withoutStrategyAttribute_notUsingQuantityToKeep(lifecycleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -363,7 +263,7 @@ func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) 
 				),
 			},
 			// 5 remove policies to return to default behaviour
-			{Config: lifecycleWithoutRetentionPolicies(lifecycleName),
+			{Config: lifecycleRetentionPolicyByStrategy(lifecycleName, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -377,7 +277,36 @@ func TestLifecycleRetentionPolicyUpdates_withoutStrategyAttribute(t *testing.T) 
 	})
 }
 
-func TestLifecycle_WithBasicPhase(t *testing.T) {
+func TestAccRetentionAttributeValidation_withoutStrategyAttribute(t *testing.T) {
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccLifecycleCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			// when quantity_to_keep is > 0 should_keep_forever shouldn't be true
+			{
+				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "Items", "true"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+			},
+			{
+				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "", "true"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+			},
+			// when quantity_to_keep is 0, should_keep_forever shouldn't be false
+			{
+				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "0", "", "false"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+			},
+		},
+	})
+}
+
+func TestAccLifecycle_WithPhase_InheritingRetentionPolicies(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	phaseName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
@@ -398,110 +327,85 @@ func TestLifecycle_WithBasicPhase(t *testing.T) {
 					resource.TestCheckResourceAttr(lifecycleResource, "phase.0.tentacle_retention_policy.#", "0"),
 				),
 
-				Config: testAccLifecycle_withBasicPhase(lifecycleName, phaseName),
+				Config: lifecycle_withBasicPhase(lifecycleName, phaseName),
 			},
 		},
 	})
 }
 
-//do a few cases for old attribute type errors
-//make sure an empty retention is recorded as "nill" in the state
-
 // create lifecycles for testing
-func lifecycleWithoutRetentionPolicies(lifecycleName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-	}`, lifecycleName, lifecycleName)
-}
-
-func lifecycle_withDefaultRetention_usingStrategy(lifecycleName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+func lifecycleRetentionPolicyByStrategy(lifecycleName string, strategy string) string {
+	if strategy == "Default" || strategy == "Forever" {
+		return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
 		release_retention_policy {
-			strategy = "Default"
+			strategy = "%s"
 		}
 
 		tentacle_retention_policy {
-			strategy = "Default"
+			strategy = "%s"
 		}
-    }`, lifecycleName, lifecycleName)
-}
-
-func lifecycle_withForeverRetention_usingStrategy(lifecycleName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+    }`, lifecycleName, lifecycleName, strategy, strategy)
+	}
+	if strategy == "Count" {
+		return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
 		release_retention_policy {
-			strategy = "Forever"
-		}
-
-		tentacle_retention_policy {
-			strategy = "Forever"
-		}
-    }`, lifecycleName, lifecycleName)
-}
-
-func lifecycle_withCountRetention_usingStrategy(lifecycleName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-       name        = "%s"
-		release_retention_policy {
-			strategy = "Count"
+			strategy = "%s"
 			unit = "Days"
 			quantity_to_keep = 10
 		}
 		tentacle_retention_policy {
-			strategy = "Count"
+			strategy = "%s"
 			unit = "Items"
 			quantity_to_keep = 10
 		}
-    }`, lifecycleName, lifecycleName)
-}
-
-func lifecycle_withDefaultRetention_usingStrategy_andUnwantedAttribute(lifecycleName string, unwantedAttribute string) string {
+    }`, lifecycleName, lifecycleName, strategy, strategy)
+	}
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
-        description = ""
+	}`, lifecycleName, lifecycleName)
+
+}
+
+func lifecycleRetentionPolicyByStrategy_withUnwantedAttribute(lifecycleName string, strategy string, unwantedAttribute string) string {
+	var countAttributes string
+	if strategy == "Count" {
+		countAttributes = `quantity_to_keep = "1"
+							unit = "Items"`
+	}
+
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+		name = "%s"
     	release_retention_policy {
-    		strategy = "Default"      
+    		strategy = "%s"      
     		%s
+			%s
   		}
  		tentacle_retention_policy {
-    		strategy = "Default"      
+    		strategy = "%s"      
     		%s
+			%s
   		}
-	}`, lifecycleName, lifecycleName, unwantedAttribute, unwantedAttribute)
+	}`, lifecycleName, lifecycleName, strategy, unwantedAttribute, countAttributes, strategy, unwantedAttribute, countAttributes)
 }
 
-func lifecycle_withCountRetention_withoutStrategyAttribute_usingDays(lifecycleName string) string {
+func countRetentionLifecycle_withoutStrategyAttribute(lifecycleName string, unit string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
 		release_retention_policy {
 			should_keep_forever = "false"
 			quantity_to_keep    = "1"
-			unit                = "Days"
+			unit                = "%s"
 		}
 		tentacle_retention_policy {
 			quantity_to_keep = "1"
-			unit             = "Days"
+			unit             = "%s"
 		}
-    }`, lifecycleName, lifecycleName)
+    }`, lifecycleName, lifecycleName, unit, unit)
 }
 
-func lifecycle_withCountRetention_withoutStrategyAttribute_usingItems(lifecycleName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-       name        = "%s"
-		release_retention_policy {
-			should_keep_forever = "false"
-			quantity_to_keep    = "1"
-			unit                = "Items"
-		}
-		tentacle_retention_policy {
-			quantity_to_keep = "1"
-			unit             = "Items"
-		}
-    }`, lifecycleName, lifecycleName)
-}
-
-func lifecycle_withDefaultRetention_withoutStrategyAttribute_usingQuantityToKeep(lifecycleName string) string {
+func defaultRetentionLifecycle_withoutStrategyAttribute_usingQuantityToKeep(lifecycleName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
 		release_retention_policy {
@@ -514,7 +418,7 @@ func lifecycle_withDefaultRetention_withoutStrategyAttribute_usingQuantityToKeep
     }`, lifecycleName, lifecycleName)
 }
 
-func lifecycle_withDefaultRetention_withoutStrategyAttribute_notUsingQuantityToKeep(lifecycleName string) string {
+func defaultRetentionLifecycle_withoutStrategyAttribute_notUsingQuantityToKeep(lifecycleName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
 		release_retention_policy {
@@ -527,7 +431,37 @@ func lifecycle_withDefaultRetention_withoutStrategyAttribute_notUsingQuantityToK
     }`, lifecycleName, lifecycleName)
 }
 
-func testAccLifecycle_withBasicPhase(lifecycleName string, phaseName string) string {
+func lifecycleGivenRetentionAttributes(lifecycleName string, quantityToKeep string, unit string, shouldKeepForever string) string {
+	var quantityToKeepAttribute string
+	if quantityToKeep != "" {
+		quantityToKeepAttribute = fmt.Sprintf(`quantity_to_keep = "%s"`, quantityToKeep)
+	}
+	var shouldKeepForeverAttribute string
+	if shouldKeepForever != "" {
+		shouldKeepForeverAttribute = fmt.Sprintf(`should_keep_forever = "%s"`, shouldKeepForever)
+	}
+	var unitAttribute string
+	if unit != "" {
+		unitAttribute = fmt.Sprintf(`unit = "%s"`, unit)
+	}
+
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+		name = "%s"
+    	release_retention_policy {
+			%s
+    		%s
+			%s
+  		}
+		tentacle_retention_policy {
+			%s
+    		%s
+			%s
+  		}
+	}`, lifecycleName, lifecycleName, quantityToKeepAttribute, shouldKeepForeverAttribute, unitAttribute, quantityToKeepAttribute, shouldKeepForeverAttribute, unitAttribute)
+
+}
+
+func lifecycle_withBasicPhase(lifecycleName string, phaseName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
   		phase {
