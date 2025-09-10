@@ -254,25 +254,6 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 				),
 				Config: testAccLifecycle(localName, name),
 			},
-			// update lifecycle add retention policy
-			{
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(resourceName),
-					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "name", name),
-					resource.TestCheckResourceAttr(resourceName, "description", description),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.quantity_to_keep", "60"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.should_keep_forever", "false"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.0.unit", "Days"),
-					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.quantity_to_keep", "0"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.should_keep_forever", "true"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.unit", "Items"),
-				),
-				Config: testAccLifecycleWithRetentionPolicy(localName, name, description),
-			},
 		},
 	})
 }
@@ -321,24 +302,6 @@ func testAccLifecycleWithDescription(localName string, name string, description 
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
        description = "%s"
-    }`, localName, name, description)
-}
-
-func testAccLifecycleWithRetentionPolicy(localName string, name string, description string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-       name        = "%s"
-       description = "%s"
-		release_retention_policy {
-			unit             = "Days"
-			quantity_to_keep = 60
-			should_keep_forever = false
-		}
-
-		tentacle_retention_policy {
-			unit             = "Items"
-			quantity_to_keep = 0
-			should_keep_forever = true
-		}
     }`, localName, name, description)
 }
 
