@@ -95,9 +95,9 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 
 <a id="nestedblock--phase--tentacle_retention_policy"></a>
@@ -105,9 +105,9 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 
 
@@ -116,9 +116,9 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 
 <a id="nestedblock--tentacle_retention_policy"></a>
@@ -126,9 +126,9 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
+- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
+- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 ## Import
 
