@@ -244,12 +244,12 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		)
 	}
 
-	//prevent users from inputting units when not using count
 	if unitPresent && !quantityToKeepIsMoreThanZero {
 		if strings.EqualFold(retentionPolicy.Unit.ValueString(), "Items") {
 			// do not throw an error for backwards compatability.
 		} else {
 			resp.Diagnostics.AddAttributeError(
+				// replaces a confusing state change to "unit = Items" error at the api
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
 				"unit is only used when quantity_to_keep is greater than 0",
