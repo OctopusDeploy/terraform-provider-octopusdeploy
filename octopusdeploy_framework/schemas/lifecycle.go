@@ -111,19 +111,16 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 			Attributes: map[string]resourceSchema.Attribute{
 				"quantity_to_keep": util.ResourceInt64().
 					Optional().Computed().
-					Default(int64default.StaticInt64(30)).
 					Validators(int64validator.AtLeast(0)).
-					Description("The number of days/releases to keep. The default value is 30. If 0 then all are kept.").
+					Description("The number of days/releases to keep. This number should be larger than 0.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
 					Optional().Computed().
-					Default(booldefault.StaticBool(false)).
-					Description("Indicates if items should never be deleted. The default value is false.").
+					Description("Indicates if items should never be deleted.").
 					Build(),
 				"unit": util.ResourceString().
 					Optional().Computed().
-					Default(stringdefault.StaticString("Days")).
-					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
+					Description("The unit of quantity to keep. Valid units are Days or Items.").
 					Build(),
 			},
 			Validators: []validator.Object{
