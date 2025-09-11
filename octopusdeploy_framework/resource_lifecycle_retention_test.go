@@ -117,36 +117,33 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "Items", "true"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is not 0`),
 			},
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "", "true"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is not 0`),
 			},
 			// when quantity_to_keep is 0, should_keep_forever shouldn't be false
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "0", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is 0`),
 			},
-			//Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s).+`),
+				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
-			//Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "Items", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s).+`),
+				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
-			// when there is an empty block. //Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", ""),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s).+`),
+				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
 		},
 	})
