@@ -147,7 +147,7 @@ func setDefaultRetentionPolicy(data *lifecycleTypeResourceModel) (bool, bool, ty
 	tentacleRetentionPolicySet := !data.TentacleRetentionPolicy.IsNull() && len(data.TentacleRetentionPolicy.Elements()) > 0
 
 	// Set default policies only if they're not in the plan
-	defaultPolicy := flattenRetentionPeriod(core.NewRetentionPeriod(30, "Days", false))
+	defaultPolicy := flattenRetentionPeriod(core.CountBasedRetentionPeriod(30, "Days"))
 	if !releaseRetentionPolicySet {
 		data.ReleaseRetentionPolicy = defaultPolicy
 	}
