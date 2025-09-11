@@ -17,20 +17,18 @@ resource "octopusdeploy_lifecycle" "example" {
   name        = "Test Lifecycle (OK to Delete)"
 
   release_retention_policy {
-    quantity_to_keep    = 0
-    should_keep_forever = true // true only if quantity_to_keep = 0
-    unit                = "Days"
+    strategy = "Forever"
   }
 
   tentacle_retention_policy {
-    quantity_to_keep    = 30
-    should_keep_forever = false
-    unit                = "Items"
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Items"
   }
 
   phase {
     automatic_deployment_targets = ["Environments-321"]
-    name                         = "foo"
+    name = "Test Phase 1"
 
     release_retention_policy {
       quantity_to_keep    = 1
@@ -39,15 +37,13 @@ resource "octopusdeploy_lifecycle" "example" {
     }
 
     tentacle_retention_policy {
-      quantity_to_keep    = 30
-      should_keep_forever = false
-      unit                = "Items"
+      strategy = "Default"
     }
   }
 
   phase {
-    is_optional_phase           = true
-    name                        = "bar"
+    is_optional_phase = true
+    name              = "Test Phase 1"
     optional_deployment_targets = ["Environments-321"]
   }
 }
@@ -64,9 +60,11 @@ resource "octopusdeploy_lifecycle" "example" {
 
 - `description` (String) The description of this lifecycle.
 - `phase` (Block List) Defines a phase in the lifecycle. (see [below for nested schema](#nestedblock--phase))
-- `release_retention_policy` (Block List) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--release_retention_policy))
+- `release_retention_policy` (Block List) Defines the retention policy for releases or tentacles. 
+ If this block is not set, the strategy will default `Count` with `30` `Days` of saved releases. (see [below for nested schema](#nestedblock--release_retention_policy))
 - `space_id` (String) The space ID associated with this resource.
-- `tentacle_retention_policy` (Block List) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--tentacle_retention_policy))
+- `tentacle_retention_policy` (Block List) Defines the retention policy for releases or tentacles. 
+ If this block is not set, the strategy will default `Count` with `30` `Days` of saved releases. (see [below for nested schema](#nestedblock--tentacle_retention_policy))
 
 ### Read-Only
 
@@ -87,16 +85,20 @@ Optional:
 - `is_priority_phase` (Boolean) Deployments will be prioritized in this phase
 - `minimum_environments_before_promotion` (Number) The number of units required before a release can enter the next phase. If 0, all environments are required.
 - `optional_deployment_targets` (List of String) Environment IDs in this phase that a release can be deployed to, but is not automatically deployed to
-- `release_retention_policy` (Block List) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--phase--release_retention_policy))
-- `tentacle_retention_policy` (Block List) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--phase--tentacle_retention_policy))
+- `release_retention_policy` (Block List) Defines the retention policy for releases or tentacles within the phase. \n If this block is not set, the retention policy will be inherited from the lifecycle. (see [below for nested schema](#nestedblock--phase--release_retention_policy))
+- `tentacle_retention_policy` (Block List) Defines the retention policy for releases or tentacles within the phase. \n If this block is not set, the retention policy will be inherited from the lifecycle. (see [below for nested schema](#nestedblock--phase--tentacle_retention_policy))
 
 <a id="nestedblock--phase--release_retention_policy"></a>
 ### Nested Schema for `phase.release_retention_policy`
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
+- `should_keep_forever` (Boolean, Deprecated) Indicates if items should never be deleted.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 
@@ -105,8 +107,12 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
+- `should_keep_forever` (Boolean, Deprecated) Indicates if items should never be deleted.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 
@@ -116,8 +122,12 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
+- `should_keep_forever` (Boolean, Deprecated) Indicates if items should never be deleted.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 
@@ -126,8 +136,12 @@ Optional:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of days/releases to keep. This number should be larger than 0.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted.
+- `quantity_to_keep` (Number) The number of days/releases to keep. If 0 then all are kept.
+- `should_keep_forever` (Boolean, Deprecated) Indicates if items should never be deleted.
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.
+  - `strategy = "Default"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.
+  - `strategy = "Forever"`, is used if items within this lifecycle should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
 
 ## Import
