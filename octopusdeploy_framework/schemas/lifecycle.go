@@ -37,8 +37,8 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 		},
 		Blocks: map[string]resourceSchema.Block{
 			"phase":                     getResourcePhaseBlockSchema(),
-			"release_retention_policy":  getResourceRetentionPolicyBlockSchema(),
-			"tentacle_retention_policy": getResourceRetentionPolicyBlockSchema(),
+			"release_retention_policy":  getResourceRetentionPolicyBlockSchema(false),
+			"tentacle_retention_policy": getResourceRetentionPolicyBlockSchema(false),
 		},
 	}
 }
@@ -99,17 +99,25 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 			},
 			Blocks: map[string]resourceSchema.Block{
-				"release_retention_policy":  getResourceRetentionPolicyBlockSchema(),
-				"tentacle_retention_policy": getResourceRetentionPolicyBlockSchema(),
+				"release_retention_policy":  getResourceRetentionPolicyBlockSchema(true),
+				"tentacle_retention_policy": getResourceRetentionPolicyBlockSchema(true),
 			},
 		},
 	}
 }
 
-func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
+func getResourceRetentionPolicyBlockDescription(isPhase bool) string {
+	if isPhase {
+		return "Defines the retention policy for releases or tentacles within the phase. \\n If this block is not set, the retention policy will be inherited from the lifecycle."
+	}
+	return "Defines the retention policy for releases or tentacles. \n If this block is not set, the strategy will default `Count` with `30` `Days` of saved releases."
+}
+
+func getResourceRetentionPolicyBlockSchema(isPhase bool) resourceSchema.ListNestedBlock {
 	var strategyDescription = "How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted.\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept."
+
 	return resourceSchema.ListNestedBlock{
-		Description: "Defines the retention policy for releases or tentacles.",
+		Description: getResourceRetentionPolicyBlockDescription(isPhase),
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"strategy": util.ResourceString().
