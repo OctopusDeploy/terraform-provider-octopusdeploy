@@ -43,7 +43,7 @@ resource "octopusdeploy_lifecycle" "example" {
 
   phase {
     is_optional_phase = true
-    name              = "Test Phase 1"
+    name              = "Test Phase 2"
     optional_deployment_targets = ["Environments-321"]
   }
 }
