@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_gcp_account Resource - terraform-provider-octopusdeploy"
-subcategory: "Accounts"
+subcategory: ""
 description: |-
   This resource manages GCP accounts in Octopus Deploy.
 ---

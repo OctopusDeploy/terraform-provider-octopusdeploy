@@ -100,4 +100,4 @@ func testAwsEcrFeedUpdated(t *testing.T) resource.TestCheckFunc {
 
 		return nil
 	}
-} 
+}

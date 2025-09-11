@@ -269,7 +269,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.quantity_to_keep", "0"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.should_keep_forever", "true"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.unit", "Days"),
+					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.unit", "Items"),
 				),
 				Config: testAccLifecycleWithRetentionPolicy(localName, name, description),
 			},
@@ -335,7 +335,7 @@ func testAccLifecycleWithRetentionPolicy(localName string, name string, descript
 		}
 
 		tentacle_retention_policy {
-			unit             = "Days"
+			unit             = "Items"
 			quantity_to_keep = 0
 			should_keep_forever = true
 		}

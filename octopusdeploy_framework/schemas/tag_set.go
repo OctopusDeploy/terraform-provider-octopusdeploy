@@ -99,6 +99,38 @@ func (t TagSetSchema) GetDatasourceSchema() datasourceSchema.Schema {
 							Computed().
 							Description("The space ID associated with this resource.").
 							Build(),
+						"tags": datasourceSchema.ListNestedAttribute{
+							Computed:    true,
+							Description: "The tags associated with this tag set.",
+							NestedObject: datasourceSchema.NestedAttributeObject{
+								Attributes: map[string]datasourceSchema.Attribute{
+									"id": util.DataSourceString().
+										Computed().
+										Description("The unique ID for this tag.").
+										Build(),
+									"canonical_tag_name": util.DataSourceString().
+										Computed().
+										Description("The canonical name of this tag.").
+										Build(),
+									"name": util.DataSourceString().
+										Computed().
+										Description("The name of this tag.").
+										Build(),
+									"description": util.DataSourceString().
+										Computed().
+										Description("The description of this tag.").
+										Build(),
+									"color": util.DataSourceString().
+										Computed().
+										Description("The color associated with this tag.").
+										Build(),
+									"sort_order": util.DataSourceInt64().
+										Computed().
+										Description("The sort order associated with this tag.").
+										Build(),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -113,6 +145,18 @@ func GetTagSetAttrTypes() map[string]attr.Type {
 		"name":        types.StringType,
 		"description": types.StringType,
 		"sort_order":  types.Int64Type,
+		"tags":        types.ListType{ElemType: types.ObjectType{AttrTypes: GetTagAttrTypes()}},
+	}
+}
+
+func GetTagAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":                 types.StringType,
+		"canonical_tag_name": types.StringType,
+		"name":               types.StringType,
+		"description":        types.StringType,
+		"color":              types.StringType,
+		"sort_order":         types.Int64Type,
 	}
 }
 

@@ -1,6 +1,6 @@
 ---
 page_title: "octopusdeploy_kubernetes_cluster_deployment_target Resource - terraform-provider-octopusdeploy"
-subcategory: "Deployment Targets"
+subcategory: ""
 description: |-
   This resource manages Kubernetes cluster deployment targets in Octopus Deploy.
 ---
