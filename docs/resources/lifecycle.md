@@ -61,10 +61,10 @@ resource "octopusdeploy_lifecycle" "example" {
 - `description` (String) The description of this lifecycle.
 - `phase` (Block List) Defines a phase in the lifecycle. (see [below for nested schema](#nestedblock--phase))
 - `release_retention_policy` (Block List) Defines the retention policy for releases or tentacles. 
- If this block is not set, the strategy will default `Count` with `30` `Days` of saved releases. (see [below for nested schema](#nestedblock--release_retention_policy))
+ If this block is not set, the strategy will be` strategy = "Count"` with `30` `Days` of saved releases. (see [below for nested schema](#nestedblock--release_retention_policy))
 - `space_id` (String) The space ID associated with this resource.
 - `tentacle_retention_policy` (Block List) Defines the retention policy for releases or tentacles. 
- If this block is not set, the strategy will default `Count` with `30` `Days` of saved releases. (see [below for nested schema](#nestedblock--tentacle_retention_policy))
+ If this block is not set, the strategy will be` strategy = "Count"` with `30` `Days` of saved releases. (see [below for nested schema](#nestedblock--tentacle_retention_policy))
 
 ### Read-Only
 
@@ -85,8 +85,10 @@ Optional:
 - `is_priority_phase` (Boolean) Deployments will be prioritized in this phase
 - `minimum_environments_before_promotion` (Number) The number of units required before a release can enter the next phase. If 0, all environments are required.
 - `optional_deployment_targets` (List of String) Environment IDs in this phase that a release can be deployed to, but is not automatically deployed to
-- `release_retention_policy` (Block List) Defines the retention policy for releases or tentacles within the phase. \n If this block is not set, the retention policy will be inherited from the lifecycle. (see [below for nested schema](#nestedblock--phase--release_retention_policy))
-- `tentacle_retention_policy` (Block List) Defines the retention policy for releases or tentacles within the phase. \n If this block is not set, the retention policy will be inherited from the lifecycle. (see [below for nested schema](#nestedblock--phase--tentacle_retention_policy))
+- `release_retention_policy` (Block List) Defines the retention policy for releases or tentacles within the phase. 
+ If this block is not set, the retention policy will be inherited from the lifecycle. (see [below for nested schema](#nestedblock--phase--release_retention_policy))
+- `tentacle_retention_policy` (Block List) Defines the retention policy for releases or tentacles within the phase. 
+ If this block is not set, the retention policy will be inherited from the lifecycle. (see [below for nested schema](#nestedblock--phase--tentacle_retention_policy))
 
 <a id="nestedblock--phase--release_retention_policy"></a>
 ### Nested Schema for `phase.release_retention_policy`

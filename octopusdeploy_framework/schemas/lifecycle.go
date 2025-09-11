@@ -108,9 +108,9 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 
 func getResourceRetentionPolicyBlockDescription(isPhase bool) string {
 	if isPhase {
-		return "Defines the retention policy for releases or tentacles within the phase. \\n If this block is not set, the retention policy will be inherited from the lifecycle."
+		return "Defines the retention policy for releases or tentacles within the phase. \n If this block is not set, the retention policy will be inherited from the lifecycle."
 	}
-	return "Defines the retention policy for releases or tentacles. \n If this block is not set, the strategy will default `Count` with `30` `Days` of saved releases."
+	return "Defines the retention policy for releases or tentacles. \n If this block is not set, the strategy will be` strategy = \"Count\"` with `30` `Days` of saved releases."
 }
 
 func getResourceRetentionPolicyBlockSchema(isPhase bool) resourceSchema.ListNestedBlock {
