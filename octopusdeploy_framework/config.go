@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
@@ -54,12 +55,44 @@ func getHttpClient(ctx context.Context, octopusUrl *url.URL) (*http.Client, *url
 	return nil, octopusUrl, nil
 }
 
+func getRedirectionBypass() []string {
+	hostnames := []string{}
+	hostnamesJson := os.Getenv("REDIRECTION_BYPASS")
+	if hostnamesJson == "" {
+		return []string{} // Default to empty slice if not set
+	}
+
+	err := json.Unmarshal([]byte(hostnamesJson), &hostnames)
+	if err != nil {
+		return []string{}
+	}
+
+	return hostnames
+}
+
+func getRedirectionForce() bool {
+	redirectionForce := os.Getenv("REDIRECTION_FORCE")
+	return strings.ToLower(redirectionForce) == "true"
+}
+
 // isDirectlyAccessibleOctopusInstance determines if the host should be contacted directly
 func isDirectlyAccessibleOctopusInstance(octopusUrl *url.URL) bool {
 	serviceEnabled, found := os.LookupEnv("REDIRECTION_SERVICE_ENABLED")
 
 	if !found || serviceEnabled != "true" {
 		return true
+	}
+
+	bypassList := getRedirectionBypass()
+
+	// Allow bypassing specific domains via environment variable
+	if slices.Contains(bypassList, octopusUrl.Hostname()) {
+		return true
+	}
+
+	// Allow forcing all traffic through the redirection service
+	if getRedirectionForce() {
+		return false
 	}
 
 	return strings.HasSuffix(octopusUrl.Hostname(), ".octopus.app") ||
