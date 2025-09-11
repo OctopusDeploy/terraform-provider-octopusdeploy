@@ -130,23 +130,20 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is 0`),
 			},
-			//Error message must be empty as it occurs at the api
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(``),
+				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
-			//Error message must be empty as it occurs at the api
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "Items", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(``),
+				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
-			// when there is an empty block. //Error message must be empty as it occurs at the api
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", ""),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(``),
+				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
 		},
 	})
