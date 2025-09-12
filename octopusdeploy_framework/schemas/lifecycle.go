@@ -118,7 +118,7 @@ func getResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 					Description("Indicates if items should never be deleted.").
 					Build(),
 				"unit": util.ResourceString().
-					Optional().Computed().
+					Optional().Computed().Validators(stringvalidator.OneOfCaseInsensitive("Days", "Items")).
 					Description("The unit of quantity to keep. Valid units are Days or Items.").
 					Build(),
 			},

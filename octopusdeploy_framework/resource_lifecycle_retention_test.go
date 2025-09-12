@@ -140,6 +140,13 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is zero or missing`),
 			},
+			//should thow error when something other than days or items is submitted for units
+			{
+				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "4", "Months", "false"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+			},
+			//should throw error when empty block is given
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", ""),
 				PlanOnly:    true,
