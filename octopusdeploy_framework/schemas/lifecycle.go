@@ -205,8 +205,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 	unitPresent := !retentionPolicy.Unit.IsNull() && !retentionPolicy.Unit.IsUnknown()
 	quantityToKeepPresent := !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown()
 	shouldKeepForeverPresent := !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown()
-	shouldKeepForeverIsTrue := shouldKeepForeverPresent && retentionPolicy.ShouldKeepForever.ValueBool() == true
-	shouldKeepForeverIsFalse := shouldKeepForeverPresent && retentionPolicy.ShouldKeepForever.ValueBool() == false
+	shouldKeepForever := shouldKeepForeverPresent && retentionPolicy.ShouldKeepForever.ValueBool()
 	quantityToKeepIsMoreThanZero := quantityToKeepPresent && retentionPolicy.QuantityToKeep.ValueInt64() > 0
 
 	if !unitPresent && !quantityToKeepPresent && !shouldKeepForeverPresent {
@@ -219,7 +218,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 
 	// count strategy validations
 	if quantityToKeepIsMoreThanZero {
-		if shouldKeepForeverIsTrue {
+		if shouldKeepForever {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("should_keep_forever"),
 				"Invalid retention policy configuration",
@@ -236,7 +235,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 	}
 
 	// keep forever strategy validation
-	if !quantityToKeepIsMoreThanZero && shouldKeepForeverIsFalse {
+	if !quantityToKeepIsMoreThanZero && !shouldKeepForever {
 		resp.Diagnostics.AddAttributeError(
 			req.Path.AtName("should_keep_forever"),
 			"Invalid retention policy configuration",
