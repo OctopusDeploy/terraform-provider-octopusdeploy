@@ -117,33 +117,33 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "Items", "true"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is not 0`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is greater than 0`),
 			},
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "", "true"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is not 0`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is greater than 0`),
 			},
 			// when quantity_to_keep is 0, should_keep_forever shouldn't be false
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "0", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is 0`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is zero or missing`),
 			},
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is zero or missing`),
 			},
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "Items", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
+				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is zero or missing`),
 			},
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", ""),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
+				ExpectError: regexp.MustCompile(`please either add retention policy attributes or remove the entire block`),
 			},
 		},
 	})
