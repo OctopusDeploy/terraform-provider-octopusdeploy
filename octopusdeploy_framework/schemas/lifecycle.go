@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"strings"
 
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -252,17 +253,6 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
 				"unit is only used when quantity_to_keep is greater than 0",
-			)
-		}
-	}
-
-	if unitPresent {
-		unit := retentionPolicy.Unit.ValueString()
-		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("unit"),
-				"Invalid retention policy unit",
-				"Unit must be either 'Days' or 'Items'",
 			)
 		}
 	}
