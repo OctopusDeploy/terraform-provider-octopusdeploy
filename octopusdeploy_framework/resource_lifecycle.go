@@ -75,6 +75,9 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 		resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
 		return
 	}
+
+	handleUnitCasing(lifecycle, newLifecycle)
+
 	data = flattenLifecycleResource(lifecycle)
 
 	removeDefaultRetentionPolicy(releaseRetentionPolicySet, data, defaultPolicy, tentacleRetentionPolicySet)
@@ -98,6 +101,9 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 		}
 		return
 	}
+
+	handleUnitCasing(lifecycle, expandLifecycle(data))
+
 	data = flattenLifecycleResource(lifecycle)
 
 	removeDefaultRetentionPolicy(releaseRetentionPolicySet, data, defaultPolicy, tentacleRetentionPolicySet)
@@ -128,11 +134,47 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
+	handleUnitCasing(updatedLifecycle, lifecycle)
+
 	data = flattenLifecycleResource(updatedLifecycle)
 
 	removeDefaultRetentionPolicy(releaseRetentionPolicySet, data, defaultPolicy, tentacleRetentionPolicySet)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func handleUnitCasing(resource *lifecycles.Lifecycle, data *lifecycles.Lifecycle) {
+	// Set state to the casing provided in the desired state, as the Api will always return capitalised units
+	resource.ReleaseRetentionPolicy = updateRetentionPeriodUnit(resource.ReleaseRetentionPolicy, data.ReleaseRetentionPolicy.Unit)
+	resource.TentacleRetentionPolicy = updateRetentionPeriodUnit(resource.TentacleRetentionPolicy, data.TentacleRetentionPolicy.Unit)
+
+	if len(data.Phases) == 0 {
+		return
+	}
+
+	for i, phase := range resource.Phases {
+		if phase.ReleaseRetentionPolicy != nil && phase.ReleaseRetentionPolicy.Unit != "" {
+			phase.ReleaseRetentionPolicy = updateRetentionPeriodUnit(phase.ReleaseRetentionPolicy, data.Phases[i].ReleaseRetentionPolicy.Unit)
+		}
+		if phase.TentacleRetentionPolicy != nil && phase.TentacleRetentionPolicy.Unit != "" {
+			phase.TentacleRetentionPolicy = updateRetentionPeriodUnit(phase.TentacleRetentionPolicy, data.Phases[i].TentacleRetentionPolicy.Unit)
+		}
+	}
+}
+
+func updateRetentionPeriodUnit(retentionPeriodResource *core.RetentionPeriod, dataUnit string) *core.RetentionPeriod {
+	if strings.EqualFold(retentionPeriodResource.Unit, dataUnit) {
+		period := core.RetentionPeriod{
+			QuantityToKeep:    retentionPeriodResource.QuantityToKeep,
+			ShouldKeepForever: retentionPeriodResource.ShouldKeepForever,
+			Unit:              dataUnit,
+			Strategy:          retentionPeriodResource.Strategy,
+		}
+
+		return &period
+	}
+
+	return retentionPeriodResource
 }
 
 func removeDefaultRetentionPolicy(releaseRetentionPolicySet bool, data *lifecycleTypeResourceModel, defaultPolicy types.List, tentacleRetentionPolicySet bool) {

@@ -2,16 +2,20 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"testing"
 )
 
 func TestAccDataSourceTagSets(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	localTagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagSetResourceName := fmt.Sprintf("octopusdeploy_tag_set.%s", localName)
+	tagResourceName := fmt.Sprintf("octopusdeploy_tag.%s", localTagName)
 	dataSourceName := fmt.Sprintf("data.octopusdeploy_tag_sets.%s", localName)
 
 	resource.Test(t, resource.TestCase{
@@ -20,7 +24,7 @@ func TestAccDataSourceTagSets(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create a tag set
 			{
-				Config: testAccTagSetConfig(localName, tagSetName),
+				Config: testAccTagSetConfig(localName, tagSetName, localTagName, tagName),
 				Check: resource.ComposeTestCheckFunc(
 					testTagSetExists(tagSetResourceName),
 					resource.TestCheckResourceAttr(tagSetResourceName, "name", tagSetName),
@@ -28,11 +32,14 @@ func TestAccDataSourceTagSets(t *testing.T) {
 			},
 			// Query the created tag set using the data source
 			{
-				Config: testAccTagSetConfig(localName, tagSetName) + testAccDataSourceTagSetsConfig(localName, tagSetName),
+				Config: testAccTagSetConfig(localName, tagSetName, localTagName, tagName) + testAccDataSourceTagSetsConfig(localName, tagSetName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagSetsDataSourceID(dataSourceName),
 					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.id", tagSetResourceName, "id"),
 					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.name", tagSetResourceName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.tags.0.name", tagResourceName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.tags.0.color", tagResourceName, "color"),
+					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.tags.0.description", tagResourceName, "description"),
 				),
 			},
 		},
@@ -53,13 +60,21 @@ func testAccCheckTagSetsDataSourceID(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccTagSetConfig(localName, tagSetName string) string {
+func testAccTagSetConfig(localName, tagSetName, localTagName, tagName string) string {
 	return fmt.Sprintf(`
 resource "octopusdeploy_tag_set" "%s" {
     name        = "%s"
     description = "Test tag set"
 }
-`, localName, tagSetName)
+
+resource "octopusdeploy_tag" "%s" {
+  name        = "%s"
+  tag_set_id  = octopusdeploy_tag_set.%s.id
+  color       = "#333333"
+  description = "a description"
+}
+
+`, localName, tagSetName, localTagName, tagName, localName)
 }
 
 func testAccDataSourceTagSetsConfig(localName, tagSetName string) string {

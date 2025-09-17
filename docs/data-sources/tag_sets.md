@@ -38,5 +38,18 @@ Read-Only:
 - `name` (String) The name of this resource.
 - `sort_order` (Number) The sort order associated with this resource.
 - `space_id` (String) The space ID associated with this resource.
+- `tags` (Attributes List) The tags associated with this tag set. (see [below for nested schema](#nestedatt--tag_sets--tags))
+
+<a id="nestedatt--tag_sets--tags"></a>
+### Nested Schema for `tag_sets.tags`
+
+Read-Only:
+
+- `canonical_tag_name` (String) The canonical name of this tag.
+- `color` (String) The color associated with this tag.
+- `description` (String) The description of this tag.
+- `id` (String) The unique ID for this tag.
+- `name` (String) The name of this tag.
+- `sort_order` (Number) The sort order associated with this tag.
 
 
