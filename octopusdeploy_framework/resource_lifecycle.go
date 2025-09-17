@@ -59,8 +59,6 @@ func (r *lifecycleTypeResource) Configure(_ context.Context, req resource.Config
 }
 
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var serverHasSpaceDefaultRetention = r.Config.IsVersionSameOrGreaterThan("2025.3")
-
 	var data *lifecycleTypeResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -69,6 +67,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 
 	releaseRetentionPolicySet, tentacleRetentionPolicySet, defaultPolicy := setDefaultRetentionPolicy(data)
 
+	var serverHasSpaceDefaultRetention = r.Config.IsVersionSameOrGreaterThan("2025.3")
 	newLifecycle := expandLifecycle(data, serverHasSpaceDefaultRetention)
 	lifecycle, err := lifecycles.Add(r.Config.Client, newLifecycle)
 	if err != nil {
@@ -101,8 +100,8 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 		}
 		return
 	}
-
-	handleUnitCasing(lifecycle, expandLifecycle(data))
+	var serverHasSpaceDefaultRetention = r.Config.IsVersionSameOrGreaterThan("2025.3")
+	handleUnitCasing(lifecycle, expandLifecycle(data, serverHasSpaceDefaultRetention))
 
 	data = flattenLifecycleResource(lifecycle)
 
@@ -113,7 +112,6 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 
 func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data, state *lifecycleTypeResourceModel
-	var serverHasSpaceDefaultRetention = r.Config.IsVersionSameOrGreaterThan("2025.3")
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -125,6 +123,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 
 	tflog.Debug(ctx, fmt.Sprintf("updating lifecycle '%s'", data.ID.ValueString()))
 
+	var serverHasSpaceDefaultRetention = r.Config.IsVersionSameOrGreaterThan("2025.3")
 	lifecycle := expandLifecycle(data, serverHasSpaceDefaultRetention)
 	lifecycle.ID = state.ID.ValueString()
 
