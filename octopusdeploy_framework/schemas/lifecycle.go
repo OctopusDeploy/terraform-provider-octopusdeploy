@@ -135,9 +135,8 @@ func getResourceRetentionPolicyBlockSchema(isPhase bool) resourceSchema.ListNest
 					Description("The unit of quantity to keep. Valid units are Days or Items.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
-					Deprecated("Use strategy instead.").
 					Optional().Computed().
-					Description("Indicates if items should never be deleted.").
+					Description("Indicates if items should never be deleted. For best practice, use strategy=\"forever\" instead").
 					Build(),
 			},
 			Validators: []validator.Object{
@@ -191,7 +190,7 @@ func getRetentionPolicyAttribute() datasourceSchema.ListNestedAttribute {
 			Attributes: map[string]datasourceSchema.Attribute{
 				"strategy":            util.DataSourceString().Computed().Description("The retention policy strategy. Can be \"Default\", \"Forever\", and \"Count\". \n  - \"Default\" indicates retention is set by the Space Default retention policy for lifecycles \n  - \"Forever\" indicates releases are never deleted \n  - \"Count\" indicates releases are kept according to `unit` and `quantity_to_keep`").Build(),
 				"quantity_to_keep":    util.DataSourceInt64().Computed().Description("The number of units to keep. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
-				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever.").Deprecated("Refer to `strategy` instead.").Build(),
+				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever. Dismiss when `strategy` is \"Forever\".").Build(),
 				"unit":                util.DataSourceString().Computed().Description("The unit for `quantity_to_keep`. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
 			},
 		},
