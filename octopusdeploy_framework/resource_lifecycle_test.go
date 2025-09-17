@@ -16,7 +16,7 @@ import (
 )
 
 func TestExpandLifecycleWithNil(t *testing.T) {
-	lifecycle := expandLifecycle(nil)
+	lifecycle := expandLifecycle(nil, true)
 	require.Nil(t, lifecycle)
 }
 
@@ -63,7 +63,7 @@ func TestExpandLifecycle(t *testing.T) {
 	}
 	data.ID = types.StringValue(Id)
 
-	lifecycle := expandLifecycle(data)
+	lifecycle := expandLifecycle(data, true)
 
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
@@ -78,19 +78,19 @@ func TestExpandLifecycle(t *testing.T) {
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
 	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getPhaseAttrTypes()}, []attr.Value{})
-	phases := expandPhases(emptyList)
+	phases := expandPhases(emptyList, true)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithNullInput(t *testing.T) {
 	nullList := types.ListNull(types.ObjectType{AttrTypes: getPhaseAttrTypes()})
-	phases := expandPhases(nullList)
+	phases := expandPhases(nullList, true)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
 	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getPhaseAttrTypes()})
-	phases := expandPhases(unknownList)
+	phases := expandPhases(unknownList, true)
 	require.Nil(t, phases)
 }
 
@@ -101,7 +101,7 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhases(flattenedPhases)
+	expandedPhases := expandPhases(flattenedPhases, true)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 1)
 
@@ -123,7 +123,7 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults(t *testing.T) {
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhases(flattenedPhases)
+	expandedPhases := expandPhases(flattenedPhases, true)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 2)
 
