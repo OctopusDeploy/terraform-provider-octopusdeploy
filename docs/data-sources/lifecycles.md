@@ -71,7 +71,7 @@ Read-Only:
 Read-Only:
 
 - `quantity_to_keep` (Number) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
-- `should_keep_forever` (Boolean, Deprecated) Whether releases should be kept forever.
+- `should_keep_forever` (Boolean) Whether releases should be kept forever. Dismiss when `strategy` is "Forever".
 - `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
   - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
   - "Forever" indicates releases are never deleted 
@@ -85,7 +85,7 @@ Read-Only:
 Read-Only:
 
 - `quantity_to_keep` (Number) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
-- `should_keep_forever` (Boolean, Deprecated) Whether releases should be kept forever.
+- `should_keep_forever` (Boolean) Whether releases should be kept forever. Dismiss when `strategy` is "Forever".
 - `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
   - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
   - "Forever" indicates releases are never deleted 
@@ -100,7 +100,7 @@ Read-Only:
 Read-Only:
 
 - `quantity_to_keep` (Number) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
-- `should_keep_forever` (Boolean, Deprecated) Whether releases should be kept forever.
+- `should_keep_forever` (Boolean) Whether releases should be kept forever. Dismiss when `strategy` is "Forever".
 - `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
   - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
   - "Forever" indicates releases are never deleted 
@@ -114,7 +114,7 @@ Read-Only:
 Read-Only:
 
 - `quantity_to_keep` (Number) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
-- `should_keep_forever` (Boolean, Deprecated) Whether releases should be kept forever.
+- `should_keep_forever` (Boolean) Whether releases should be kept forever. Dismiss when `strategy` is "Forever".
 - `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
   - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
   - "Forever" indicates releases are never deleted 
