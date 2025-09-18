@@ -130,13 +130,14 @@ func getResourceRetentionPolicyBlockSchema(isPhase bool) resourceSchema.ListNest
 					Validators(int64validator.AtLeast(0)).
 					Description("The number of days/releases to keep. If 0 then all are kept.").
 					Build(),
-				"unit": util.ResourceString().
-					Optional().Computed().
-					Description("The unit of quantity to keep. Valid units are Days or Items.").
-					Build(),
 				"should_keep_forever": util.ResourceBool().
 					Optional().Computed().
 					Description("Indicates if items should never be deleted. For best practice, use strategy=\"forever\" instead").
+					Build(),
+				"unit": util.ResourceString().
+					Optional().Computed().
+					Description("The unit of quantity to keep. Valid units are Days or Items.").
+					Validators(stringvalidator.OneOfCaseInsensitive("Days", "Items")).
 					Build(),
 			},
 			Validators: []validator.Object{
@@ -241,6 +242,7 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 	shouldKeepForeverIsTrue := shouldKeepForeverPresent && shouldKeepForever.ValueBool() == true
 	shouldKeepForeverIsFalse := shouldKeepForeverPresent && shouldKeepForever.ValueBool() == false
 	quantityToKeepIsMoreThanZero := quantityToKeepPresent && quantityToKeep.ValueInt64() > 0
+	errorGuidingToStrategy := "Incorrect use of retention attributes.\nFor best practice use strategy attribute."
 
 	if !unitPresent && !quantityToKeepPresent && !shouldKeepForeverPresent {
 		resp.Diagnostics.AddAttributeError(
@@ -256,14 +258,16 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("should_keep_forever"),
 				"Invalid retention policy configuration",
-				"should_keep_forever must be false when quantity_to_keep is greater than 0",
+				errorGuidingToStrategy,
+				//should_keep_forever must be false when quantity_to_keep is greater than 0
 			)
 		}
 		if !unitPresent {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
-				"unit is required when quantity_to_keep is greater than 0",
+				errorGuidingToStrategy,
+				//unit is required when quantity_to_keep is greater than 0
 			)
 		}
 	}
@@ -273,7 +277,8 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 		resp.Diagnostics.AddAttributeError(
 			req.Path.AtName("should_keep_forever"),
 			"Invalid retention policy configuration",
-			"should_keep_forever must be true when quantity_to_keep is zero or missing",
+			errorGuidingToStrategy,
+			//should_keep_forever must be true when quantity_to_keep is zero or missing
 		)
 	}
 
@@ -285,18 +290,8 @@ func (v retentionPolicyValidator) ValidateRetentionObjectWithoutStrategy(req val
 				// replaces a confusing state change to "unit = Items" error at the api
 				req.Path.AtName("unit"),
 				"Invalid retention policy configuration",
-				"unit is only used when quantity_to_keep is greater than 0",
-			)
-		}
-	}
-
-	if unitPresent {
-		unit := unit.ValueString()
-		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("unit"),
-				"Invalid retention policy unit",
-				"Unit must be either 'Days' or 'Items'",
+				errorGuidingToStrategy,
+				//"unit is only used when quantity_to_keep is greater than 0"
 			)
 		}
 	}

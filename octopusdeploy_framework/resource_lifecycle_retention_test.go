@@ -268,6 +268,7 @@ func TestAccOldPracticeLifecycleRetentionPolicyUpdates(t *testing.T) {
 
 func TestAccOldPracticeRetentionAttributeValidation(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	commonError := regexp.MustCompile(`Incorrect use of retention attributes\.\nFor best practice use strategy attribute\.`)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccLifecycleCheckDestroy,
@@ -278,36 +279,36 @@ func TestAccOldPracticeRetentionAttributeValidation(t *testing.T) {
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "Items", "true"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: commonError,
 			},
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "1", "", "true"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: commonError,
 			},
 			// when quantity_to_keep is 0, should_keep_forever shouldn't be false
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "0", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`Error running (non-refresh )?plan: exit status 1`),
+				ExpectError: commonError,
 			},
 			//Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s).+`),
+				ExpectError: commonError,
 			},
 			//Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "Items", "false"),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s).+`),
+				ExpectError: commonError,
 			},
 			// when there is an empty block. //Error message intentionally vague as it occurs at api.
 			{
 				Config:      lifecycleGivenRetentionAttributes(lifecycleName, "", "", ""),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s).+`),
+				ExpectError: regexp.MustCompile("please either add retention policy attributes or remove the entire block"),
 			},
 		},
 	})
