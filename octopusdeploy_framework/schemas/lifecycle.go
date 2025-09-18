@@ -114,7 +114,11 @@ func getResourceRetentionPolicyBlockDescription(isPhase bool) string {
 }
 
 func getResourceRetentionPolicyBlockSchema(isPhase bool) resourceSchema.ListNestedBlock {
-	var strategyDescription = "How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`.\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle.\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted.\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept."
+	var strategyDescription = "How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`." +
+		"\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. " +
+		"When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle." +
+		"\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted." +
+		"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept."
 
 	return resourceSchema.ListNestedBlock{
 		Description: getResourceRetentionPolicyBlockDescription(isPhase),
@@ -131,8 +135,8 @@ func getResourceRetentionPolicyBlockSchema(isPhase bool) resourceSchema.ListNest
 					Description("The number of days/releases to keep. If 0 then all are kept.").
 					Build(),
 				"should_keep_forever": util.ResourceBool().
-					Optional().Computed().
-					Description("Indicates if items should never be deleted. For best practice, use strategy=\"forever\" instead").
+					Optional().Computed().Deprecated("Use strategy attribute instead").
+					Description("Indicates if items should never be deleted).").
 					Build(),
 				"unit": util.ResourceString().
 					Optional().Computed().
@@ -191,7 +195,7 @@ func getRetentionPolicyAttribute() datasourceSchema.ListNestedAttribute {
 			Attributes: map[string]datasourceSchema.Attribute{
 				"strategy":            util.DataSourceString().Computed().Description("The retention policy strategy. Can be \"Default\", \"Forever\", and \"Count\". \n  - \"Default\" indicates retention is set by the Space Default retention policy for lifecycles \n  - \"Forever\" indicates releases are never deleted \n  - \"Count\" indicates releases are kept according to `unit` and `quantity_to_keep`").Build(),
 				"quantity_to_keep":    util.DataSourceInt64().Computed().Description("The number of units to keep. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
-				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever. Dismiss when `strategy` is \"Forever\".").Build(),
+				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever. Dismiss when `strategy` is \"Forever\".").Deprecated("Use Strategy Attribute instead").Build(),
 				"unit":                util.DataSourceString().Computed().Description("The unit for `quantity_to_keep`. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
 			},
 		},
