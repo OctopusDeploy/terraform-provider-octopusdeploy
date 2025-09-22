@@ -101,8 +101,8 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 			},
 			Blocks: map[string]resourceSchema.Block{
 				"release_retention_policy":    GetResourceRetentionPolicyBlockSchema(),
-				"release_retention_strategy":  getResourceRetentionStrategyBlockSchema(),
 				"tentacle_retention_policy":   GetResourceRetentionPolicyBlockSchema(),
+				"release_retention_strategy":  getResourceRetentionStrategyBlockSchema(),
 				"tentacle_retention_strategy": getResourceRetentionStrategyBlockSchema(),
 			},
 		},

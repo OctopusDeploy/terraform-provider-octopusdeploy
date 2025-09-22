@@ -84,13 +84,15 @@ func flattenLifecycles(items []*lifecycles.Lifecycle) types.List {
 	lifecyclesList := make([]attr.Value, 0, len(items))
 	for _, lifecycle := range items {
 		lifecycleMap := map[string]attr.Value{
-			"id":                        types.StringValue(lifecycle.ID),
-			"space_id":                  types.StringValue(lifecycle.SpaceID),
-			"name":                      types.StringValue(lifecycle.Name),
-			"description":               types.StringValue(lifecycle.Description),
-			"phase":                     flattenPhases(lifecycle.Phases),
-			"release_retention_policy":  flattenRetentionPeriod(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_policy": flattenRetentionPeriod(lifecycle.TentacleRetentionPolicy),
+			"id":                          types.StringValue(lifecycle.ID),
+			"space_id":                    types.StringValue(lifecycle.SpaceID),
+			"name":                        types.StringValue(lifecycle.Name),
+			"description":                 types.StringValue(lifecycle.Description),
+			"phase":                       flattenPhases(lifecycle.Phases),
+			"release_retention_policy":    flattenRetentionPeriod(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_policy":   flattenRetentionPeriod(lifecycle.TentacleRetentionPolicy),
+			"release_retention_strategy":  flattenRetentionStrategy(lifecycle.ReleaseRetentionStrategy),
+			"tentacle_retention_strategy": flattenRetentionStrategy(lifecycle.TentacleRetentionStrategy),
 		}
 		lifecyclesList = append(lifecyclesList, types.ObjectValueMust(lifecycleObjectType(), lifecycleMap))
 	}
@@ -99,13 +101,15 @@ func flattenLifecycles(items []*lifecycles.Lifecycle) types.List {
 
 func lifecycleObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":                        types.StringType,
-		"space_id":                  types.StringType,
-		"name":                      types.StringType,
-		"description":               types.StringType,
-		"phase":                     types.ListType{ElemType: types.ObjectType{AttrTypes: phaseObjectType()}},
-		"release_retention_policy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
-		"tentacle_retention_policy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
+		"id":                          types.StringType,
+		"space_id":                    types.StringType,
+		"name":                        types.StringType,
+		"description":                 types.StringType,
+		"phase":                       types.ListType{ElemType: types.ObjectType{AttrTypes: phaseObjectType()}},
+		"release_retention_policy":    types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
+		"tentacle_retention_policy":   types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
+		"release_retention_strategy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
+		"tentacle_retention_strategy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
 	}
 }
 
@@ -120,6 +124,8 @@ func phaseObjectType() map[string]attr.Type {
 		"is_priority_phase":                     types.BoolType,
 		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
 		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
+		"release_retention_strategy":            types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
+		"tentacle_retention_strategy":           types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
 	}
 }
 
@@ -128,5 +134,13 @@ func retentionPolicyObjectType() map[string]attr.Type {
 		"quantity_to_keep":    types.Int64Type,
 		"should_keep_forever": types.BoolType,
 		"unit":                types.StringType,
+	}
+}
+
+func retentionStrategyObjectType() map[string]attr.Type {
+	return map[string]attr.Type{
+		"strategy":         types.StringType,
+		"quantity_to_keep": types.Int64Type,
+		"unit":             types.StringType,
 	}
 }
