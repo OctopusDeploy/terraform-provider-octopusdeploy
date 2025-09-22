@@ -394,6 +394,14 @@ func getRetentionPeriodAttrTypes() map[string]attr.Type {
 	}
 }
 
+func getRetentionStrategyAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"strategy":         types.StringType,
+		"quantity_to_keep": types.Int64Type,
+		"unit":             types.StringType,
+	}
+}
+
 func getPhaseAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":                                    types.StringType,
@@ -405,5 +413,7 @@ func getPhaseAttrTypes() map[string]attr.Type {
 		"is_priority_phase":                     types.BoolType,
 		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()}},
 		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()}},
+		"release_retention_strategy":            types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionStrategyAttrTypes()}},
+		"tentacle_retention_strategy":           types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionStrategyAttrTypes()}},
 	}
 }
