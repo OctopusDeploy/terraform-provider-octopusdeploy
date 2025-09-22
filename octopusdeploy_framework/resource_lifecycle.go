@@ -323,19 +323,19 @@ func flattenRetentionPeriod(retentionPeriod *core.RetentionPeriod) types.List {
 	)
 }
 
-func flattenRetentionStrategy(retentionPeriod *core.RetentionStrategy) types.List {
-	if retentionPeriod == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()})
+func flattenRetentionStrategy(retentionStrategy *core.RetentionStrategy) types.List {
+	if retentionStrategy == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: getRetentionStrategyAttrTypes()})
 	}
 	return types.ListValueMust(
-		types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
+		types.ObjectType{AttrTypes: getRetentionStrategyAttrTypes()},
 		[]attr.Value{
 			types.ObjectValueMust(
-				getRetentionPeriodAttrTypes(),
+				getRetentionStrategyAttrTypes(),
 				map[string]attr.Value{
-					"strategy":         types.StringValue(retentionPeriod.Strategy),
-					"quantity_to_keep": types.Int64Value(int64(retentionPeriod.QuantityToKeep)),
-					"unit":             types.StringValue(retentionPeriod.Unit),
+					"strategy":         types.StringValue(retentionStrategy.Strategy),
+					"quantity_to_keep": types.Int64Value(int64(retentionStrategy.QuantityToKeep)),
+					"unit":             types.StringValue(retentionStrategy.Unit),
 				},
 			),
 		},
