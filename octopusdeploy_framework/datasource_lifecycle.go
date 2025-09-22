@@ -91,8 +91,8 @@ func flattenLifecycles(items []*lifecycles.Lifecycle) types.List {
 			"phase":                       flattenPhases(lifecycle.Phases),
 			"release_retention_policy":    flattenRetentionPeriod(lifecycle.ReleaseRetentionPolicy),
 			"tentacle_retention_policy":   flattenRetentionPeriod(lifecycle.TentacleRetentionPolicy),
-			"release_retention_strategy":  flattenRetentionStrategy(lifecycle.ReleaseRetentionStrategy),
-			"tentacle_retention_strategy": flattenRetentionStrategy(lifecycle.TentacleRetentionStrategy),
+			"release_retention_strategy":  flattenRetentionStrategy(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_strategy": flattenRetentionStrategy(lifecycle.TentacleRetentionPolicy),
 		}
 		lifecyclesList = append(lifecyclesList, types.ObjectValueMust(lifecycleObjectType(), lifecycleMap))
 	}

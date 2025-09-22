@@ -250,9 +250,11 @@ func (v retentionStrategyValidator) ValidateObject(ctx context.Context, req vali
 		}
 	}
 }
+
 func GetResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		Description: "Defines the retention policy for releases or tentacles.",
+		DeprecationMessage: "This block has been deprecated. Please use the `release_retention_strategy` and `tentacle_retention_strategy` blocks instead.",
+		Description:        "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"quantity_to_keep": util.ResourceInt64().
