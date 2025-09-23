@@ -32,11 +32,11 @@ func TestExpandLifecycle(t *testing.T) {
 		Description: types.StringValue(description),
 		Name:        types.StringValue(name),
 		SpaceID:     types.StringValue(spaceID),
-		ReleaseRetentionPolicy: types.ListValueMust(
-			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
+		ReleaseRetention: types.ListValueMust(
+			types.ObjectType{AttrTypes: getRetentionAttrTypes()},
 			[]attr.Value{
 				types.ObjectValueMust(
-					getRetentionPeriodAttrTypes(),
+					getRetentionAttrTypes(),
 					map[string]attr.Value{
 						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
@@ -45,11 +45,11 @@ func TestExpandLifecycle(t *testing.T) {
 				),
 			},
 		),
-		TentacleRetentionPolicy: types.ListValueMust(
-			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
+		TentacleRetention: types.ListValueMust(
+			types.ObjectType{AttrTypes: getRetentionAttrTypes()},
 			[]attr.Value{
 				types.ObjectValueMust(
-					getRetentionPeriodAttrTypes(),
+					getRetentionAttrTypes(),
 					map[string]attr.Value{
 						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
