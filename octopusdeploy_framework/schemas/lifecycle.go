@@ -35,11 +35,11 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
 		Blocks: map[string]resourceSchema.Block{
-			"phase":                       getResourcePhaseBlockSchema(),
-			"release_retention_policy":    GetResourceRetentionBlockSchema(),
-			"tentacle_retention_policy":   GetResourceRetentionBlockSchema(),
-			"release_retention_strategy":  getResourceRetentionWithStrategyBlockSchema(),
-			"tentacle_retention_strategy": getResourceRetentionWithStrategyBlockSchema(),
+			"phase":                            getResourcePhaseBlockSchema(),
+			"release_retention_policy":         GetResourceRetentionBlockSchema(),
+			"tentacle_retention_policy":        GetResourceRetentionBlockSchema(),
+			"release_retention_with_strategy":  getResourceRetentionWithStrategyBlockSchema(),
+			"tentacle_retention_with_strategy": getResourceRetentionWithStrategyBlockSchema(),
 		},
 	}
 }
@@ -100,10 +100,10 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 			},
 			Blocks: map[string]resourceSchema.Block{
-				"release_retention_policy":    GetResourceRetentionBlockSchema(),
-				"tentacle_retention_policy":   GetResourceRetentionBlockSchema(),
-				"release_retention_strategy":  getResourceRetentionWithStrategyBlockSchema(),
-				"tentacle_retention_strategy": getResourceRetentionWithStrategyBlockSchema(),
+				"release_retention_policy":         GetResourceRetentionBlockSchema(),
+				"tentacle_retention_policy":        GetResourceRetentionBlockSchema(),
+				"release_retention_with_strategy":  getResourceRetentionWithStrategyBlockSchema(),
+				"tentacle_retention_with_strategy": getResourceRetentionWithStrategyBlockSchema(),
 			},
 		},
 	}
@@ -147,15 +147,15 @@ func getLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
 		Optional: false,
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
-				"id":                          util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
-				"space_id":                    util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
-				"name":                        util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
-				"description":                 util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
-				"phase":                       getPhasesAttribute(),
-				"release_retention_policy":    GetRetentionAttribute(),
-				"tentacle_retention_policy":   GetRetentionAttribute(),
-				"release_retention_strategy":  getRetentionWithStrategyAttribute(),
-				"tentacle_retention_strategy": getRetentionWithStrategyAttribute(),
+				"id":                               util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
+				"space_id":                         util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
+				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
+				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
+				"phase":                            getPhasesAttribute(),
+				"release_retention_policy":         GetRetentionAttribute(),
+				"tentacle_retention_policy":        GetRetentionAttribute(),
+				"release_retention_with_strategy":  getRetentionWithStrategyAttribute(),
+				"tentacle_retention_with_strategy": getRetentionWithStrategyAttribute(),
 			},
 		},
 	}
@@ -188,8 +188,8 @@ func getPhasesAttribute() datasourceSchema.ListNestedAttribute {
 				"is_priority_phase":                     util.DataSourceBool().Computed().Description("Deployments will be prioritized in this phase").Build(),
 				"release_retention_policy":              GetRetentionAttribute(),
 				"tentacle_retention_policy":             GetRetentionAttribute(),
-				"release_retention_strategy":            getRetentionWithStrategyAttribute(),
-				"tentacle_retention_strategy":           getRetentionWithStrategyAttribute(),
+				"release_retention_with_strategy":       getRetentionWithStrategyAttribute(),
+				"tentacle_retention_with_strategy":      getRetentionWithStrategyAttribute(),
 			},
 		},
 	}
@@ -253,7 +253,7 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 
 func GetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		DeprecationMessage: "This block has been deprecated. Please use the `release_retention_strategy` and `tentacle_retention_strategy` blocks instead.",
+		DeprecationMessage: "This block has been deprecated. Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{

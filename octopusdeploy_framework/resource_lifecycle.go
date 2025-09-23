@@ -377,13 +377,13 @@ func expandPhases(phases types.List) []*lifecycles.Phase {
 		if v, ok := phaseAttrs["release_retention_policy"].(types.List); ok && !v.IsNull() {
 			phase.ReleaseRetentionPolicy = expandRetention(v)
 		}
-		if v, ok := phaseAttrs["release_retention_strategy"].(types.List); ok && !v.IsNull() {
+		if v, ok := phaseAttrs["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
 			phase.ReleaseRetentionPolicy = expandRetentionWithStrategy(v)
 		}
 		if v, ok := phaseAttrs["tentacle_retention_policy"].(types.List); ok && !v.IsNull() {
 			phase.TentacleRetentionPolicy = expandRetention(v)
 		}
-		if v, ok := phaseAttrs["tentacle_retention_strategy"].(types.List); ok && !v.IsNull() {
+		if v, ok := phaseAttrs["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
 			phase.TentacleRetentionPolicy = expandRetentionWithStrategy(v)
 		}
 		result = append(result, phase)
@@ -489,7 +489,7 @@ func getPhaseAttrTypes() map[string]attr.Type {
 		"is_priority_phase":                     types.BoolType,
 		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionAttrTypes()}},
 		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionAttrTypes()}},
-		"release_retention_strategy":            types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
-		"tentacle_retention_strategy":           types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
+		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
+		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
 	}
 }

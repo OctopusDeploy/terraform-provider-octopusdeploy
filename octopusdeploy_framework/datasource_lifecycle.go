@@ -84,15 +84,15 @@ func flattenLifecycles(items []*lifecycles.Lifecycle) types.List {
 	lifecyclesList := make([]attr.Value, 0, len(items))
 	for _, lifecycle := range items {
 		lifecycleMap := map[string]attr.Value{
-			"id":                          types.StringValue(lifecycle.ID),
-			"space_id":                    types.StringValue(lifecycle.SpaceID),
-			"name":                        types.StringValue(lifecycle.Name),
-			"description":                 types.StringValue(lifecycle.Description),
-			"phase":                       flattenPhases(lifecycle.Phases),
-			"release_retention_policy":    flattenRetention(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_policy":   flattenRetention(lifecycle.TentacleRetentionPolicy),
-			"release_retention_strategy":  flattenRetentionWithStrategy(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_strategy": flattenRetentionWithStrategy(lifecycle.TentacleRetentionPolicy),
+			"id":                               types.StringValue(lifecycle.ID),
+			"space_id":                         types.StringValue(lifecycle.SpaceID),
+			"name":                             types.StringValue(lifecycle.Name),
+			"description":                      types.StringValue(lifecycle.Description),
+			"phase":                            flattenPhases(lifecycle.Phases),
+			"release_retention_policy":         flattenRetention(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_policy":        flattenRetention(lifecycle.TentacleRetentionPolicy),
+			"release_retention_with_strategy":  flattenRetentionWithStrategy(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_with_strategy": flattenRetentionWithStrategy(lifecycle.TentacleRetentionPolicy),
 		}
 		lifecyclesList = append(lifecyclesList, types.ObjectValueMust(lifecycleObjectType(), lifecycleMap))
 	}
@@ -101,15 +101,15 @@ func flattenLifecycles(items []*lifecycles.Lifecycle) types.List {
 
 func lifecycleObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
-		"id":                          types.StringType,
-		"space_id":                    types.StringType,
-		"name":                        types.StringType,
-		"description":                 types.StringType,
-		"phase":                       types.ListType{ElemType: types.ObjectType{AttrTypes: phaseObjectType()}},
-		"release_retention_policy":    types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
-		"tentacle_retention_policy":   types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
-		"release_retention_strategy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
-		"tentacle_retention_strategy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
+		"id":                               types.StringType,
+		"space_id":                         types.StringType,
+		"name":                             types.StringType,
+		"description":                      types.StringType,
+		"phase":                            types.ListType{ElemType: types.ObjectType{AttrTypes: phaseObjectType()}},
+		"release_retention_policy":         types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
+		"tentacle_retention_policy":        types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
+		"release_retention_with_strategy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
+		"tentacle_retention_with_strategy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
 	}
 }
 
@@ -122,14 +122,14 @@ func phaseObjectType() map[string]attr.Type {
 		"minimum_environments_before_promotion": types.Int64Type,
 		"is_optional_phase":                     types.BoolType,
 		"is_priority_phase":                     types.BoolType,
-		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
-		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: retentionPolicyObjectType()}},
-		"release_retention_strategy":            types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
-		"tentacle_retention_strategy":           types.ListType{ElemType: types.ObjectType{AttrTypes: retentionStrategyObjectType()}},
+		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
+		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
+		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
+		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
 	}
 }
 
-func retentionPolicyObjectType() map[string]attr.Type {
+func retentionObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"quantity_to_keep":    types.Int64Type,
 		"should_keep_forever": types.BoolType,
@@ -137,7 +137,7 @@ func retentionPolicyObjectType() map[string]attr.Type {
 	}
 }
 
-func retentionStrategyObjectType() map[string]attr.Type {
+func retentionWithStrategyObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"strategy":         types.StringType,
 		"quantity_to_keep": types.Int64Type,
