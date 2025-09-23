@@ -29,8 +29,8 @@ type lifecycleTypeResourceModel struct {
 	Name                          types.String `tfsdk:"name"`
 	Description                   types.String `tfsdk:"description"`
 	Phase                         types.List   `tfsdk:"phase"`
-	ReleaseRetention              types.List   `tfsdk:"release_retention"`
-	TentacleRetention             types.List   `tfsdk:"tentacle_retention"`
+	ReleaseRetention              types.List   `tfsdk:"release_retention_policy"`
+	TentacleRetention             types.List   `tfsdk:"tentacle_retention_policy"`
 	ReleaseRetentionWithStrategy  types.List   `tfsdk:"release_retention_with_strategy"`
 	TentacleRetentionWithStrategy types.List   `tfsdk:"tentacle_retention_with_strategy"`
 
