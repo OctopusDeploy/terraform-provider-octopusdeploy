@@ -32,7 +32,7 @@ func TestExpandLifecycle(t *testing.T) {
 		Description: types.StringValue(description),
 		Name:        types.StringValue(name),
 		SpaceID:     types.StringValue(spaceID),
-		ReleaseRetentionPolicy: types.ListValueMust(
+		ReleaseRetention: types.ListValueMust(
 			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
 			[]attr.Value{
 				types.ObjectValueMust(
@@ -45,7 +45,7 @@ func TestExpandLifecycle(t *testing.T) {
 				),
 			},
 		),
-		TentacleRetentionPolicy: types.ListValueMust(
+		TentacleRetention: types.ListValueMust(
 			types.ObjectType{AttrTypes: getRetentionPeriodAttrTypes()},
 			[]attr.Value{
 				types.ObjectValueMust(

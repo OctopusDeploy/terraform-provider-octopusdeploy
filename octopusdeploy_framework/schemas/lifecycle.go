@@ -36,10 +36,10 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 		},
 		Blocks: map[string]resourceSchema.Block{
 			"phase":                       getResourcePhaseBlockSchema(),
-			"release_retention_policy":    GetResourceRetentionPolicyBlockSchema(),
-			"tentacle_retention_policy":   GetResourceRetentionPolicyBlockSchema(),
-			"release_retention_strategy":  getResourceRetentionStrategyBlockSchema(),
-			"tentacle_retention_strategy": getResourceRetentionStrategyBlockSchema(),
+			"release_retention_policy":    GetResourceRetentionBlockSchema(),
+			"tentacle_retention_policy":   GetResourceRetentionBlockSchema(),
+			"release_retention_strategy":  getResourceRetentionWithStrategyBlockSchema(),
+			"tentacle_retention_strategy": getResourceRetentionWithStrategyBlockSchema(),
 		},
 	}
 }
@@ -100,16 +100,16 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 			},
 			Blocks: map[string]resourceSchema.Block{
-				"release_retention_policy":    GetResourceRetentionPolicyBlockSchema(),
-				"tentacle_retention_policy":   GetResourceRetentionPolicyBlockSchema(),
-				"release_retention_strategy":  getResourceRetentionStrategyBlockSchema(),
-				"tentacle_retention_strategy": getResourceRetentionStrategyBlockSchema(),
+				"release_retention_policy":    GetResourceRetentionBlockSchema(),
+				"tentacle_retention_policy":   GetResourceRetentionBlockSchema(),
+				"release_retention_strategy":  getResourceRetentionWithStrategyBlockSchema(),
+				"tentacle_retention_strategy": getResourceRetentionWithStrategyBlockSchema(),
 			},
 		},
 	}
 }
 
-func getResourceRetentionStrategyBlockSchema() resourceSchema.ListNestedBlock {
+func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -135,7 +135,7 @@ func getResourceRetentionStrategyBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 			},
 			Validators: []validator.Object{
-				retentionStrategyValidator{},
+				retentionWithStrategyValidator{},
 			},
 		},
 	}
@@ -152,16 +152,16 @@ func getLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
 				"name":                        util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
 				"description":                 util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
 				"phase":                       getPhasesAttribute(),
-				"release_retention_policy":    GetRetentionPolicyAttribute(),
-				"tentacle_retention_policy":   GetRetentionPolicyAttribute(),
-				"release_retention_strategy":  getRetentionStrategyAttribute(),
-				"tentacle_retention_strategy": getRetentionStrategyAttribute(),
+				"release_retention_policy":    GetRetentionAttribute(),
+				"tentacle_retention_policy":   GetRetentionAttribute(),
+				"release_retention_strategy":  getRetentionWithStrategyAttribute(),
+				"tentacle_retention_strategy": getRetentionWithStrategyAttribute(),
 			},
 		},
 	}
 }
 
-func getRetentionStrategyAttribute() datasourceSchema.Attribute {
+func getRetentionWithStrategyAttribute() datasourceSchema.Attribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
@@ -186,24 +186,24 @@ func getPhasesAttribute() datasourceSchema.ListNestedAttribute {
 				"minimum_environments_before_promotion": util.DataSourceInt64().Computed().Description("The minimum number of environments before promotion.").Build(),
 				"is_optional_phase":                     util.DataSourceBool().Computed().Description("Whether this phase is optional.").Build(),
 				"is_priority_phase":                     util.DataSourceBool().Computed().Description("Deployments will be prioritized in this phase").Build(),
-				"release_retention_policy":              GetRetentionPolicyAttribute(),
-				"tentacle_retention_policy":             GetRetentionPolicyAttribute(),
-				"release_retention_strategy":            getRetentionStrategyAttribute(),
-				"tentacle_retention_strategy":           getRetentionStrategyAttribute(),
+				"release_retention_policy":              GetRetentionAttribute(),
+				"tentacle_retention_policy":             GetRetentionAttribute(),
+				"release_retention_strategy":            getRetentionWithStrategyAttribute(),
+				"tentacle_retention_strategy":           getRetentionWithStrategyAttribute(),
 			},
 		},
 	}
 }
 
-type retentionStrategyValidator struct{}
+type retentionWithStrategyValidator struct{}
 
-func (v retentionStrategyValidator) Description(ctx context.Context) string {
+func (v retentionWithStrategyValidator) Description(ctx context.Context) string {
 	return "ensures only a count strategy has a quantity_to_keep and unit"
 }
-func (v retentionStrategyValidator) MarkdownDescription(ctx context.Context) string {
+func (v retentionWithStrategyValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
-func (v retentionStrategyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionStrategy struct {
 		Strategy       types.String `tfsdk:"strategy"`
 		QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
@@ -251,7 +251,7 @@ func (v retentionStrategyValidator) ValidateObject(ctx context.Context, req vali
 	}
 }
 
-func GetResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
+func GetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		DeprecationMessage: "This block has been deprecated. Please use the `release_retention_strategy` and `tentacle_retention_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
@@ -275,21 +275,21 @@ func GetResourceRetentionPolicyBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 			},
 			Validators: []validator.Object{
-				retentionPolicyValidator{},
+				retentionValidator{},
 			},
 		},
 	}
 }
 
-type retentionPolicyValidator struct{}
+type retentionValidator struct{}
 
-func (v retentionPolicyValidator) Description(ctx context.Context) string {
+func (v retentionValidator) Description(ctx context.Context) string {
 	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
 }
-func (v retentionPolicyValidator) MarkdownDescription(ctx context.Context) string {
+func (v retentionValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
-func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v retentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
 		ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
@@ -332,7 +332,7 @@ func (v retentionPolicyValidator) ValidateObject(ctx context.Context, req valida
 		}
 	}
 }
-func GetRetentionPolicyAttribute() datasourceSchema.ListNestedAttribute {
+func GetRetentionAttribute() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
