@@ -5,6 +5,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -115,38 +116,6 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 	}
 }
 
-func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBlock {
-	return resourceSchema.ListNestedBlock{
-		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
-		NestedObject: resourceSchema.NestedBlockObject{
-			Attributes: map[string]resourceSchema.Attribute{
-				"strategy": util.ResourceString().
-					Required().
-					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
-					Description("How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`." +
-						"\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. " +
-						"When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle." +
-						"\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted." +
-						"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept.").
-					Build(),
-				"quantity_to_keep": util.ResourceInt64().
-					Optional().Computed().
-					Validators(int64validator.AtLeast(1)).
-					Description("The number of days/releases to keep. The default value is 30. If 0 then all are kept.").
-					Build(),
-				"unit": util.ResourceString().
-					Optional().Computed().
-					Validators(stringvalidator.OneOf(core.RetentionUnitDays, core.RetentionUnitItems)).
-					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
-					Build(),
-			},
-			Validators: []validator.Object{
-				retentionWithStrategyValidator{},
-			},
-		},
-	}
-}
-
 func getLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
@@ -197,6 +166,41 @@ func getPhasesAttribute() datasourceSchema.ListNestedAttribute {
 				"release_retention_with_strategy":       getRetentionWithStrategyAttribute(),
 				"tentacle_retention_with_strategy":      getRetentionWithStrategyAttribute(),
 			},
+		},
+	}
+}
+
+func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBlock {
+	return resourceSchema.ListNestedBlock{
+		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
+		NestedObject: resourceSchema.NestedBlockObject{
+			Attributes: map[string]resourceSchema.Attribute{
+				"strategy": util.ResourceString().
+					Required().
+					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
+					Description("How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`." +
+						"\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. " +
+						"When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle." +
+						"\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted." +
+						"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept.").
+					Build(),
+				"quantity_to_keep": util.ResourceInt64().
+					Optional().Computed().
+					Validators(int64validator.AtLeast(1)).
+					Description("The number of days/releases to keep. The default value is 30. If 0 then all are kept.").
+					Build(),
+				"unit": util.ResourceString().
+					Optional().Computed().
+					Validators(stringvalidator.OneOf(core.RetentionUnitDays, core.RetentionUnitItems)).
+					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
+					Build(),
+			},
+			Validators: []validator.Object{
+				retentionWithStrategyValidator{},
+			},
+		},
+		Validators: []validator.List{
+			listvalidator.SizeAtMost(1),
 		},
 	}
 }
@@ -283,6 +287,9 @@ func GetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 			Validators: []validator.Object{
 				retentionValidator{},
 			},
+		},
+		Validators: []validator.List{
+			listvalidator.SizeAtMost(1),
 		},
 	}
 }
