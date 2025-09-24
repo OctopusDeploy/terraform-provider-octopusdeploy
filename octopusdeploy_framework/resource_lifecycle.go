@@ -114,7 +114,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 
 	handleUnitCasing(lifecycle, expandLifecycle(data))
 
-	data = flattenLifecycleResource(lifecycle)
+	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsed)
 
 	removeDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
@@ -148,7 +148,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 
 	handleUnitCasing(updatedLifecycle, lifecycle)
 
-	data = flattenLifecycleResource(updatedLifecycle)
+	data = flattenLifecycleResource(updatedLifecycle, isRetentionWithStrategyUsed)
 
 	removeDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
