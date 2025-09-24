@@ -27,7 +27,13 @@ type LifecycleSchema struct{}
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
-		Description: "This resource manages lifecycles in Octopus Deploy.",
+		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy." +
+			"\n\nLifecycle retention is set using either the `retention_policy` and `retention_with_strategy` blocks." +
+			"\n- When using an octopus version prior to `2025.3`" +
+			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks are used" +
+			"\n- when using an octopus version `2025.3` or later" +
+			"\n	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks may be used",
+
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":          GetIdResourceSchema(),
 			"space_id":    util.ResourceString().Optional().Computed().Description("The space ID associated with this resource.").PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
@@ -111,7 +117,7 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 
 func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		Description: "Defines the retention policy for releases or tentacles.",
+		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"strategy": util.ResourceString().
@@ -253,7 +259,7 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 
 func GetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		DeprecationMessage: "This block has been deprecated. Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
+		DeprecationMessage: "This block will depreciate when octopus 2025.3 is no longer supported. Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
