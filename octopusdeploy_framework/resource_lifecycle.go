@@ -85,7 +85,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 
 	handleUnitCasing(lifecycle, newLifecycle)
 
-	data = flattenLifecycleResource(lifecycle)
+	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsed)
 	//if retentionWithStrategy is used then remove all of the old ones and reset the retentionWithStrategy to the default
 	removeDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
@@ -202,10 +202,10 @@ func removeDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, has
 func removeDefaultRetentionWithStrategyFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetentionWithStrategy bool, hasUserDefinedTentacleRetentionWithStrategy bool) {
 	// Remove default policies from data before setting state, but only if we added them
 	if !hasUserDefinedReleaseRetentionWithStrategy {
-		data.ReleaseRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})
+		data.ReleaseRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
 	}
 	if !hasUserDefinedTentacleRetentionWithStrategy {
-		data.TentacleRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})
+		data.TentacleRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
 	}
 }
 
@@ -238,9 +238,8 @@ func setDefaultRetentionWithStrategy(data *lifecycleTypeResourceModel, isRetenti
 	if !isRetentionWithStrategyUsed {
 		initialRetentionSetting = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
 	} else {
-		initialRetentionSetting = flattenRetention(core.SpaceDefaultRetentionPeriod())
+		initialRetentionSetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
 	}
-	//initialRetentionSetting = flattenRetention(core.NewRetentionPeriod(30, "Days", false))
 
 	if !hasUserDefinedReleaseRetentionWithStrategy {
 		data.ReleaseRetentionWithStrategy = initialRetentionSetting
@@ -324,19 +323,30 @@ func resourceConfiguration(req resource.ConfigureRequest, resp *resource.Configu
 	return p
 }
 
-func flattenLifecycleResource(lifecycle *lifecycles.Lifecycle) *lifecycleTypeResourceModel {
+func flattenLifecycleResource(lifecycle *lifecycles.Lifecycle, isRetentionWithStrategyUsed bool) *lifecycleTypeResourceModel {
 	//TODO: add an if to only change the retention attributes that are being altered in the plan
 	//TODO: get access to the plan here
-	flattenedLifecycle := &lifecycleTypeResourceModel{
-		SpaceID:                       types.StringValue(lifecycle.SpaceID),
-		Name:                          types.StringValue(lifecycle.Name),
-		Description:                   types.StringValue(lifecycle.Description),
-		Phase:                         flattenPhases(lifecycle.Phases),
-		ReleaseRetention:              flattenRetention(lifecycle.ReleaseRetentionPolicy),
-		TentacleRetention:             flattenRetention(lifecycle.TentacleRetentionPolicy),
-		ReleaseRetentionWithStrategy:  flattenRetentionWithStrategy(lifecycle.ReleaseRetentionPolicy),
-		TentacleRetentionWithStrategy: flattenRetentionWithStrategy(lifecycle.TentacleRetentionPolicy),
+	var flattenedLifecycle *lifecycleTypeResourceModel
+	if isRetentionWithStrategyUsed {
+		flattenedLifecycle = &lifecycleTypeResourceModel{
+			SpaceID:                       types.StringValue(lifecycle.SpaceID),
+			Name:                          types.StringValue(lifecycle.Name),
+			Description:                   types.StringValue(lifecycle.Description),
+			Phase:                         flattenPhases(lifecycle.Phases),
+			ReleaseRetentionWithStrategy:  flattenRetentionWithStrategy(lifecycle.ReleaseRetentionPolicy),
+			TentacleRetentionWithStrategy: flattenRetentionWithStrategy(lifecycle.TentacleRetentionPolicy),
+		}
+	} else {
+		flattenedLifecycle = &lifecycleTypeResourceModel{
+			SpaceID:           types.StringValue(lifecycle.SpaceID),
+			Name:              types.StringValue(lifecycle.Name),
+			Description:       types.StringValue(lifecycle.Description),
+			Phase:             flattenPhases(lifecycle.Phases),
+			ReleaseRetention:  flattenRetention(lifecycle.ReleaseRetentionPolicy),
+			TentacleRetention: flattenRetention(lifecycle.TentacleRetentionPolicy),
+		}
 	}
+
 	flattenedLifecycle.ID = types.StringValue(lifecycle.GetID())
 
 	return flattenedLifecycle
@@ -368,14 +378,15 @@ func flattenPhases(phases []*lifecycles.Phase) types.List {
 }
 
 func flattenRetention(retention *core.RetentionPeriod) types.List {
+	var attributeTypes = getRetentionAttrTypes()
 	if retention == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})
+		return types.ListNull(types.ObjectType{AttrTypes: attributeTypes})
 	}
 	return types.ListValueMust(
-		types.ObjectType{AttrTypes: getRetentionAttrTypes()},
+		types.ObjectType{AttrTypes: attributeTypes},
 		[]attr.Value{
 			types.ObjectValueMust(
-				getRetentionAttrTypes(),
+				attributeTypes,
 				map[string]attr.Value{
 					"quantity_to_keep":    types.Int64Value(int64(retention.QuantityToKeep)),
 					"should_keep_forever": types.BoolValue(retention.ShouldKeepForever),
@@ -387,14 +398,15 @@ func flattenRetention(retention *core.RetentionPeriod) types.List {
 }
 
 func flattenRetentionWithStrategy(retentionWithStrategy *core.RetentionPeriod) types.List {
+	var attributeTypes = getRetentionWithStrategyAttrTypes()
 	if retentionWithStrategy == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+		return types.ListNull(types.ObjectType{AttrTypes: attributeTypes})
 	}
 	return types.ListValueMust(
-		types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()},
+		types.ObjectType{AttrTypes: attributeTypes},
 		[]attr.Value{
 			types.ObjectValueMust(
-				getRetentionWithStrategyAttrTypes(),
+				attributeTypes,
 				map[string]attr.Value{
 					"strategy":         types.StringValue(retentionWithStrategy.Strategy),
 					"unit":             types.StringValue(retentionWithStrategy.Unit),
