@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -53,7 +54,7 @@ func (r *lifecycleTypeResource) Metadata(_ context.Context, req resource.Metadat
 	resp.TypeName = util.GetTypeName("lifecycle")
 }
 
-func (r *lifecycleTypeResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schemas.LifecycleSchema{}.GetResourceSchema()
 }
 
@@ -68,18 +69,15 @@ func (r *lifecycleTypeResource) Configure(_ context.Context, req resource.Config
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data *lifecycleTypeResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	isRetentionWithStrategyUsed := determineIfRetentionWithStrategyIsUsed(data, r.serverSupportsRetentionWithStrategy)
+	validateRetentionBlocksUsed(data, &resp.Diagnostics, r.serverSupportsRetentionWithStrategy)
+	isRetentionWithStrategyUsedExclusively := retentionWithStrategyWillBeUsedExclusively(data, r.serverSupportsRetentionWithStrategy)
 
-	if isRetentionWithStrategyUsed && !r.serverSupportsRetentionWithStrategy {
-		resp.Diagnostics.AddError("retention with strategy is not supported on this Octopus Server version", "")
-		return
-	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsed)
-	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, isRetentionWithStrategyUsed)
+	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsedExclusively)
+	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, isRetentionWithStrategyUsedExclusively)
 
 	newLifecycle := expandLifecycle(data)
 	lifecycle, err := lifecycles.Add(r.Config.Client, newLifecycle)
@@ -90,7 +88,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 
 	handleUnitCasing(lifecycle, newLifecycle)
 
-	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsed)
+	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsedExclusively)
 	removeDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
 
@@ -103,10 +101,9 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	isRetentionWithStrategyUsed := determineIfRetentionWithStrategyIsUsed(data, r.serverSupportsRetentionWithStrategy)
-	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsed)
-	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, isRetentionWithStrategyUsed)
+	isRetentionWithStrategyUsedExclusively := retentionWithStrategyWillBeUsedExclusively(data, r.serverSupportsRetentionWithStrategy)
+	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsedExclusively)
+	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, isRetentionWithStrategyUsedExclusively)
 
 	lifecycle, err := lifecycles.GetByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString())
 	if err != nil {
@@ -118,7 +115,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 
 	handleUnitCasing(lifecycle, expandLifecycle(data))
 
-	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsed)
+	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsedExclusively)
 
 	removeDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
@@ -134,10 +131,10 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	isRetentionWithStrategyUsed := determineIfRetentionWithStrategyIsUsed(data, r.serverSupportsRetentionWithStrategy)
-	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsed)
-	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, isRetentionWithStrategyUsed)
+	validateRetentionBlocksUsed(data, &resp.Diagnostics, r.serverSupportsRetentionWithStrategy)
+	isRetentionWithStrategyUsedExclusively := retentionWithStrategyWillBeUsedExclusively(data, r.serverSupportsRetentionWithStrategy)
+	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsedExclusively)
+	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, isRetentionWithStrategyUsedExclusively)
 
 	tflog.Debug(ctx, fmt.Sprintf("updating lifecycle '%s'", data.ID.ValueString()))
 
@@ -152,12 +149,26 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 
 	handleUnitCasing(updatedLifecycle, lifecycle)
 
-	data = flattenLifecycleResource(updatedLifecycle, isRetentionWithStrategyUsed)
+	data = flattenLifecycleResource(updatedLifecycle, isRetentionWithStrategyUsedExclusively)
 
 	removeDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data lifecycleTypeResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := lifecycles.DeleteByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString()); err != nil {
+		resp.Diagnostics.AddError("unable to delete lifecycle", err.Error())
+		return
+	}
 }
 
 func handleUnitCasing(resource *lifecycles.Lifecycle, data *lifecycles.Lifecycle) {
@@ -194,25 +205,6 @@ func updateRetentionUnit(retentionResource *core.RetentionPeriod, dataUnit strin
 	return retentionResource
 }
 
-func removeDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool) {
-	// Remove default policies from data before setting state, but only if we added them
-	if !hasUserDefinedReleaseRetention {
-		data.ReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})
-	}
-	if !hasUserDefinedTentacleRetention {
-		data.TentacleRetention = types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})
-	}
-}
-func removeDefaultRetentionWithStrategyFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetentionWithStrategy bool, hasUserDefinedTentacleRetentionWithStrategy bool) {
-	// Remove default policies from data before setting state, but only if we added them
-	if !hasUserDefinedReleaseRetentionWithStrategy {
-		data.ReleaseRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
-	}
-	if !hasUserDefinedTentacleRetentionWithStrategy {
-		data.TentacleRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
-	}
-}
-
 func setDefaultRetention(data *lifecycleTypeResourceModel, isRetentionWithStrategyUsed bool) (bool, bool) {
 
 	hasUserDefinedReleaseRetention := attributeIsUsed(data.ReleaseRetention)
@@ -234,7 +226,6 @@ func setDefaultRetention(data *lifecycleTypeResourceModel, isRetentionWithStrate
 
 	return hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention
 }
-
 func setDefaultRetentionWithStrategy(data *lifecycleTypeResourceModel, isRetentionWithStrategyUsed bool) (bool, bool) {
 	hasUserDefinedReleaseRetentionWithStrategy := attributeIsUsed(data.ReleaseRetentionWithStrategy)
 	hasUserDefinedTentacleRetentionWithStrategy := attributeIsUsed(data.TentacleRetentionWithStrategy)
@@ -255,56 +246,82 @@ func setDefaultRetentionWithStrategy(data *lifecycleTypeResourceModel, isRetenti
 
 	return hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy
 }
+func removeDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool) {
+	// Remove retention policies from data before setting state, but only if they were not included in the plan
+	if !hasUserDefinedReleaseRetention {
+		data.ReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})
+	}
+	if !hasUserDefinedTentacleRetention {
+		data.TentacleRetention = types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})
+	}
+}
+func removeDefaultRetentionWithStrategyFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetentionWithStrategy bool, hasUserDefinedTentacleRetentionWithStrategy bool) {
+	// Remove retention policies from data before setting state, but only if they were not included in the plan
+	if !hasUserDefinedReleaseRetentionWithStrategy {
+		data.ReleaseRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+	}
+	if !hasUserDefinedTentacleRetentionWithStrategy {
+		data.TentacleRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+	}
+}
 
-func determineIfRetentionWithStrategyIsUsed(data *lifecycleTypeResourceModel, serverSupportsRetentionWithStrategy bool) bool {
+func determineIfRetentionWithStrategyIsUsed(data *lifecycleTypeResourceModel) bool {
 	if attributeIsUsed(data.ReleaseRetentionWithStrategy) || attributeIsUsed(data.TentacleRetentionWithStrategy) {
 		return true
 	}
-	if attributeIsUsed(data.ReleaseRetention) || attributeIsUsed(data.TentacleRetention) {
-		return false
-	}
-
 	for _, phase := range data.Phase.Elements() {
 		phaseAttributes := phase.(types.Object).Attributes()
-
 		releaseRetentionWithStrategy := phaseAttributes["release_retention_with_strategy"].(types.List)
 		tentacleRetentionWithStrategy := phaseAttributes["tentacle_retention_with_strategy"].(types.List)
-		releaseRetention := phaseAttributes["release_retention_policy"].(types.List)
-		tentacleRetention := phaseAttributes["tentacle_retention_policy"].(types.List)
 
 		if attributeIsUsed(releaseRetentionWithStrategy) || attributeIsUsed(tentacleRetentionWithStrategy) {
 			return true
 		}
-		if attributeIsUsed(releaseRetention) || attributeIsUsed(tentacleRetention) {
-			return false
-		}
-	}
-
-	if !serverSupportsRetentionWithStrategy {
-		return true
 	}
 	return false
+}
 
+func determineIfRetentionWithoutStrategyIsUsed(data *lifecycleTypeResourceModel) bool {
+	if attributeIsUsed(data.ReleaseRetention) || attributeIsUsed(data.TentacleRetention) {
+		return true
+	}
+	for _, phase := range data.Phase.Elements() {
+		phaseAttributes := phase.(types.Object).Attributes()
+		releaseRetention := phaseAttributes["release_retention_policy"].(types.List)
+		tentacleRetention := phaseAttributes["tentacle_retention_policy"].(types.List)
+		if attributeIsUsed(releaseRetention) || attributeIsUsed(tentacleRetention) {
+			return true
+		}
+	}
+	return false
+}
+
+func retentionWithStrategyWillBeUsedExclusively(data *lifecycleTypeResourceModel, serverSupportsRetentionWithStrategy bool) bool {
+	retentionWithoutStrategyIsUsed := determineIfRetentionWithoutStrategyIsUsed(data)
+	if retentionWithoutStrategyIsUsed {
+		return false
+	}
+	if !serverSupportsRetentionWithStrategy {
+		return false
+	}
+	return true
+}
+
+func validateRetentionBlocksUsed(data *lifecycleTypeResourceModel, diag *diag.Diagnostics, serverSupportsRetentionWithStrategy bool) {
+	retentionWithStrategyIsUsed := determineIfRetentionWithStrategyIsUsed(data)
+	retentionWithoutStrategyIsUsed := determineIfRetentionWithoutStrategyIsUsed(data)
+	if retentionWithStrategyIsUsed && retentionWithoutStrategyIsUsed {
+		diag.AddError("Retention blocks conflict", "Both release_retention_with_strategy and release_retention_policy are used. Only one can be used at a time.")
+	}
+	if retentionWithStrategyIsUsed && !serverSupportsRetentionWithStrategy {
+		diag.AddError("retention with strategy is not supported on this Octopus Server version", "")
+	}
 }
 func attributeIsUsed(attribute types.List) bool {
 	if !attribute.IsNull() && len(attribute.Elements()) > 0 {
 		return true
 	}
 	return false
-}
-
-func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data lifecycleTypeResourceModel
-
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if err := lifecycles.DeleteByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString()); err != nil {
-		resp.Diagnostics.AddError("unable to delete lifecycle", err.Error())
-		return
-	}
 }
 
 func resourceConfiguration(req resource.ConfigureRequest, resp *resource.ConfigureResponse) *Config {
