@@ -478,9 +478,11 @@ func expandLifecycle(data *lifecycleTypeResourceModel, isRetentionWithStrategyUs
 	if isRetentionWithStrategyUsedExclusively {
 		lifecycle.Phases = expandPhasesWithStrategy(data.Phase)
 		lifecycle.ReleaseRetentionPolicy = expandRetentionWithStrategy(data.ReleaseRetentionWithStrategy)
+		lifecycle.TentacleRetentionPolicy = expandRetentionWithStrategy(data.TentacleRetentionWithStrategy)
 	} else {
 		lifecycle.Phases = expandPhases(data.Phase)
 		lifecycle.ReleaseRetentionPolicy = expandRetention(data.ReleaseRetention)
+		lifecycle.TentacleRetentionPolicy = expandRetention(data.TentacleRetention)
 	}
 	return lifecycle
 }
