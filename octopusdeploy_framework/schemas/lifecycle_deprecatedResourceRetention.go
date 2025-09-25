@@ -5,6 +5,7 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -36,6 +37,7 @@ func DeprecatedGetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock 
 				"unit": util.ResourceString().
 					Optional().Computed().
 					Default(stringdefault.StaticString("Days")).
+					Validators(stringvalidator.OneOfCaseInsensitive("Days", "Items")).
 					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
 					Build(),
 			},
@@ -49,14 +51,29 @@ func DeprecatedGetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock 
 	}
 }
 
+func DeprecatedGetRetentionAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				"quantity_to_keep":    util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
+				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever.").Build(),
+				"unit":                util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
+			},
+		},
+	}
+}
+
 type deprecatedRetentionValidator struct{}
 
 func (v deprecatedRetentionValidator) Description(ctx context.Context) string {
 	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
 }
+
 func (v deprecatedRetentionValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
+
 func (v deprecatedRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
@@ -98,18 +115,5 @@ func (v deprecatedRetentionValidator) ValidateObject(ctx context.Context, req va
 				"Unit must be either 'Days' or 'Items' (case insensitive)",
 			)
 		}
-	}
-}
-
-func DeprecatedGetRetentionAttribute() datasourceSchema.ListNestedAttribute {
-	return datasourceSchema.ListNestedAttribute{
-		Computed: true,
-		NestedObject: datasourceSchema.NestedAttributeObject{
-			Attributes: map[string]datasourceSchema.Attribute{
-				"quantity_to_keep":    util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
-				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever.").Build(),
-				"unit":                util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
-			},
-		},
 	}
 }
