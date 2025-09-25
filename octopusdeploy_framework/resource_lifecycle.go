@@ -581,7 +581,7 @@ func expandPhasesWithStrategy(phases types.List) []*lifecycles.Phase {
 		if v, ok := phaseAttrs["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
 			phase.ReleaseRetentionPolicy = expandRetentionWithStrategy(v)
 		}
-		if v, ok := phaseAttrs["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
+		if v, ok := phaseAttrs["tentacle_retention_with_strategy"].(types.List); ok && !v.IsNull() {
 			phase.TentacleRetentionPolicy = expandRetentionWithStrategy(v)
 		}
 		result = append(result, phase)
