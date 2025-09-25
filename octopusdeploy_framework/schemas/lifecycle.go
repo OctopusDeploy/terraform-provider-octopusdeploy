@@ -350,9 +350,9 @@ func getRetentionWithStrategyAttribute() datasourceSchema.ListNestedAttribute {
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
-				"strategy":         util.DataSourceString().Computed().Description("The retention strategy.").Build(),
-				"quantity_to_keep": util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
-				"unit":             util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
+				"strategy":         util.DataSourceString().Computed().Description("The retention policy strategy. Can be \"Default\", \"Forever\", and \"Count\". \n  - \"Default\" indicates retention is set by the Space Default retention policy for lifecycles \n  - \"Forever\" indicates releases are never deleted \n  - \"Count\" indicates releases are kept according to `unit` and `quantity_to_keep`").Build(),
+				"quantity_to_keep": util.DataSourceInt64().Computed().Description("The unit for `quantity_to_keep`. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
+				"unit":             util.DataSourceString().Computed().Description("The number of units to keep. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
 			},
 		},
 	}
