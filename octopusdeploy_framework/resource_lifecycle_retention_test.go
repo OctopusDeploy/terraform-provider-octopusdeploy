@@ -86,7 +86,7 @@ func TestAccLifecycleRetentionPolicyUpdates(t *testing.T) {
 			// 4 update with Default retention policies
 			{
 				Config: defaultRetentionLifecycle_notUsingQuantityToKeep(lifecycleName),
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeTestCheckFunc(3
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
 					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),

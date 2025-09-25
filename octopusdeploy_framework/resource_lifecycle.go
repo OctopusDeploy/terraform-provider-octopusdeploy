@@ -71,7 +71,6 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	validateRetentionBlocksUsed(data, &resp.Diagnostics, r.serverSupportsRetentionWithStrategy)
 	isRetentionWithStrategyUsedExclusively := retentionWithStrategyWillBeUsedExclusively(data, r.serverSupportsRetentionWithStrategy)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -79,7 +78,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsedExclusively)
 	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, isRetentionWithStrategyUsedExclusively)
 
-	newLifecycle := expandLifecycle(data)
+	newLifecycle := expandLifecycle(data, isRetentionWithStrategyUsedExclusively)
 	lifecycle, err := lifecycles.Add(r.Config.Client, newLifecycle)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
@@ -89,9 +88,10 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	handleUnitCasing(lifecycle, newLifecycle)
 
 	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsedExclusively)
+	tflog.Debug(ctx, fmt.Sprintf("after the flatten rose '%v'", data.Phase))
 	removeDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
-
+	tflog.Debug(ctx, fmt.Sprintf("after the removal rose '%v'", data.Phase))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -113,7 +113,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	handleUnitCasing(lifecycle, expandLifecycle(data))
+	handleUnitCasing(lifecycle, expandLifecycle(data, isRetentionWithStrategyUsedExclusively))
 
 	data = flattenLifecycleResource(lifecycle, isRetentionWithStrategyUsedExclusively)
 
@@ -131,6 +131,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 	validateRetentionBlocksUsed(data, &resp.Diagnostics, r.serverSupportsRetentionWithStrategy)
 	isRetentionWithStrategyUsedExclusively := retentionWithStrategyWillBeUsedExclusively(data, r.serverSupportsRetentionWithStrategy)
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setDefaultRetention(data, isRetentionWithStrategyUsedExclusively)
@@ -138,7 +139,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 
 	tflog.Debug(ctx, fmt.Sprintf("updating lifecycle '%s'", data.ID.ValueString()))
 
-	lifecycle := expandLifecycle(data)
+	lifecycle := expandLifecycle(data, isRetentionWithStrategyUsedExclusively)
 	lifecycle.ID = state.ID.ValueString()
 
 	updatedLifecycle, err := lifecycles.Update(r.Config.Client, lifecycle)
@@ -350,7 +351,7 @@ func flattenLifecycleResource(lifecycle *lifecycles.Lifecycle, isRetentionWithSt
 			SpaceID:                       types.StringValue(lifecycle.SpaceID),
 			Name:                          types.StringValue(lifecycle.Name),
 			Description:                   types.StringValue(lifecycle.Description),
-			Phase:                         flattenPhases(lifecycle.Phases),
+			Phase:                         flattenPhasesWithStrategy(lifecycle.Phases),
 			ReleaseRetentionWithStrategy:  flattenRetentionWithStrategy(lifecycle.ReleaseRetentionPolicy),
 			TentacleRetentionWithStrategy: flattenRetentionWithStrategy(lifecycle.TentacleRetentionPolicy),
 		}
@@ -371,8 +372,9 @@ func flattenLifecycleResource(lifecycle *lifecycles.Lifecycle, isRetentionWithSt
 }
 
 func flattenPhases(phases []*lifecycles.Phase) types.List {
+	var attributeTypes = getPhaseAttrTypes()
 	if phases == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: getPhaseAttrTypes()})
+		return types.ListNull(types.ObjectType{AttrTypes: attributeTypes})
 	}
 	phasesList := make([]attr.Value, 0, len(phases))
 
@@ -385,14 +387,40 @@ func flattenPhases(phases []*lifecycles.Phase) types.List {
 			"minimum_environments_before_promotion": types.Int64Value(int64(phase.MinimumEnvironmentsBeforePromotion)),
 			"is_optional_phase":                     types.BoolValue(phase.IsOptionalPhase),
 			"is_priority_phase":                     types.BoolValue(phase.IsPriorityPhase),
-			"release_retention":                     util.Ternary(phase.ReleaseRetentionPolicy != nil, flattenRetention(phase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})),
-			"tentacle_retention":                    util.Ternary(phase.TentacleRetentionPolicy != nil, flattenRetention(phase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})),
+			"release_retention_policy":              util.Ternary(phase.ReleaseRetentionPolicy != nil, flattenRetention(phase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})),
+			"tentacle_retention_policy":             util.Ternary(phase.TentacleRetentionPolicy != nil, flattenRetention(phase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})),
+			"release_retention_with_strategy":       types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}),
+			"tentacle_retention_with_strategy":      types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}),
+		}
+		phasesList = append(phasesList, types.ObjectValueMust(attributeTypes, attrs))
+	}
+	return types.ListValueMust(types.ObjectType{AttrTypes: attributeTypes}, phasesList)
+}
+
+func flattenPhasesWithStrategy(phases []*lifecycles.Phase) types.List {
+	var attributeTypes = getPhaseWithStrategyAttrTypes()
+	if phases == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: attributeTypes})
+	}
+	phasesList := make([]attr.Value, 0, len(phases))
+
+	for _, phase := range phases {
+		attrs := map[string]attr.Value{
+			"id":                                    types.StringValue(phase.ID),
+			"name":                                  types.StringValue(phase.Name),
+			"automatic_deployment_targets":          util.FlattenStringList(phase.AutomaticDeploymentTargets),
+			"optional_deployment_targets":           util.FlattenStringList(phase.OptionalDeploymentTargets),
+			"minimum_environments_before_promotion": types.Int64Value(int64(phase.MinimumEnvironmentsBeforePromotion)),
+			"is_optional_phase":                     types.BoolValue(phase.IsOptionalPhase),
+			"is_priority_phase":                     types.BoolValue(phase.IsPriorityPhase),
+			"release_retention_policy":              types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()}),
+			"tentacle_retention_policy":             types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()}),
 			"release_retention_with_strategy":       util.Ternary(phase.ReleaseRetentionPolicy != nil, flattenRetentionWithStrategy(phase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})),
 			"tentacle_retention_with_strategy":      util.Ternary(phase.TentacleRetentionPolicy != nil, flattenRetentionWithStrategy(phase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})),
 		}
-		phasesList = append(phasesList, types.ObjectValueMust(getPhaseAttrTypes(), attrs))
+		phasesList = append(phasesList, types.ObjectValueMust(attributeTypes, attrs))
 	}
-	return types.ListValueMust(types.ObjectType{AttrTypes: getPhaseAttrTypes()}, phasesList)
+	return types.ListValueMust(types.ObjectType{AttrTypes: attributeTypes}, phasesList)
 }
 
 func flattenRetention(retention *core.RetentionPeriod) types.List {
@@ -435,7 +463,7 @@ func flattenRetentionWithStrategy(retentionWithStrategy *core.RetentionPeriod) t
 	)
 }
 
-func expandLifecycle(data *lifecycleTypeResourceModel) *lifecycles.Lifecycle {
+func expandLifecycle(data *lifecycleTypeResourceModel, isRetentionWithStrategyUsedExclusively bool) *lifecycles.Lifecycle {
 	if data == nil {
 		return nil
 	}
@@ -447,15 +475,17 @@ func expandLifecycle(data *lifecycleTypeResourceModel) *lifecycles.Lifecycle {
 		lifecycle.ID = data.ID.ValueString()
 	}
 
-	lifecycle.Phases = expandPhases(data.Phase)
-	lifecycle.ReleaseRetentionPolicy = expandRetentionWithOrWithoutStrategy(data.ReleaseRetention, data.ReleaseRetentionWithStrategy)
-	lifecycle.TentacleRetentionPolicy = expandRetentionWithOrWithoutStrategy(data.TentacleRetention, data.TentacleRetentionWithStrategy)
-
+	if isRetentionWithStrategyUsedExclusively {
+		lifecycle.Phases = expandPhasesWithStrategy(data.Phase)
+		lifecycle.ReleaseRetentionPolicy = expandRetentionWithStrategy(data.ReleaseRetentionWithStrategy)
+	} else {
+		lifecycle.Phases = expandPhases(data.Phase)
+		lifecycle.ReleaseRetentionPolicy = expandRetention(data.ReleaseRetention)
+	}
 	return lifecycle
 }
 
 func expandPhases(phases types.List) []*lifecycles.Phase {
-	//TODO: don't allow with strategy to be used with the pre 2025.3 octopus
 	if phases.IsNull() || phases.IsUnknown() || len(phases.Elements()) == 0 {
 		return nil
 	}
@@ -499,11 +529,57 @@ func expandPhases(phases types.List) []*lifecycles.Phase {
 		if v, ok := phaseAttrs["release_retention_policy"].(types.List); ok && !v.IsNull() {
 			phase.ReleaseRetentionPolicy = expandRetention(v)
 		}
-		if v, ok := phaseAttrs["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
-			phase.ReleaseRetentionPolicy = expandRetentionWithStrategy(v)
-		}
 		if v, ok := phaseAttrs["tentacle_retention_policy"].(types.List); ok && !v.IsNull() {
 			phase.TentacleRetentionPolicy = expandRetention(v)
+		}
+		result = append(result, phase)
+	}
+
+	return result
+}
+func expandPhasesWithStrategy(phases types.List) []*lifecycles.Phase {
+	if phases.IsNull() || phases.IsUnknown() || len(phases.Elements()) == 0 {
+		return nil
+	}
+
+	result := make([]*lifecycles.Phase, 0, len(phases.Elements()))
+
+	for _, phaseElem := range phases.Elements() {
+		phaseObj := phaseElem.(types.Object)
+		phaseAttrs := phaseObj.Attributes()
+
+		phase := &lifecycles.Phase{}
+
+		if v, ok := phaseAttrs["id"].(types.String); ok && !v.IsNull() {
+			phase.ID = v.ValueString()
+		}
+
+		if v, ok := phaseAttrs["name"].(types.String); ok && !v.IsNull() {
+			phase.Name = v.ValueString()
+		}
+
+		if v, ok := phaseAttrs["automatic_deployment_targets"].(types.List); ok && !v.IsNull() {
+			phase.AutomaticDeploymentTargets = util.ExpandStringList(v)
+		}
+
+		if v, ok := phaseAttrs["optional_deployment_targets"].(types.List); ok && !v.IsNull() {
+			phase.OptionalDeploymentTargets = util.ExpandStringList(v)
+		}
+
+		if v, ok := phaseAttrs["minimum_environments_before_promotion"].(types.Int64); ok && !v.IsNull() {
+			phase.MinimumEnvironmentsBeforePromotion = int32(v.ValueInt64())
+		}
+
+		if v, ok := phaseAttrs["is_optional_phase"].(types.Bool); ok && !v.IsNull() {
+			phase.IsOptionalPhase = v.ValueBool()
+		}
+
+		if v, ok := phaseAttrs["is_priority_phase"].(types.Bool); ok && !v.IsNull() {
+			phase.IsPriorityPhase = v.ValueBool()
+		}
+
+		if v, ok := phaseAttrs["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
+			phase.ReleaseRetentionPolicy = expandRetentionWithStrategy(v)
 		}
 		if v, ok := phaseAttrs["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
 			phase.TentacleRetentionPolicy = expandRetentionWithStrategy(v)
@@ -514,17 +590,6 @@ func expandPhases(phases types.List) []*lifecycles.Phase {
 	return result
 }
 
-func expandRetentionWithOrWithoutStrategy(oldRetention types.List, newRetention types.List) *core.RetentionPeriod {
-	oldRetentionPresent := !oldRetention.IsNull() && !oldRetention.IsUnknown()
-	newRetentionPresent := !newRetention.IsNull() && !newRetention.IsUnknown()
-	if !oldRetentionPresent && !newRetentionPresent {
-		return nil
-	}
-	if oldRetentionPresent {
-		return expandRetention(oldRetention)
-	}
-	return expandRetentionWithStrategy(newRetention)
-}
 func expandRetention(v types.List) *core.RetentionPeriod {
 	if v.IsNull() || v.IsUnknown() || len(v.Elements()) == 0 {
 		return nil
@@ -601,6 +666,22 @@ func getRetentionWithStrategyAttrTypes() map[string]attr.Type {
 }
 
 func getPhaseAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":                                    types.StringType,
+		"name":                                  types.StringType,
+		"automatic_deployment_targets":          types.ListType{ElemType: types.StringType},
+		"optional_deployment_targets":           types.ListType{ElemType: types.StringType},
+		"minimum_environments_before_promotion": types.Int64Type,
+		"is_optional_phase":                     types.BoolType,
+		"is_priority_phase":                     types.BoolType,
+		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionAttrTypes()}},
+		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionAttrTypes()}},
+		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
+		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
+	}
+}
+
+func getPhaseWithStrategyAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":                                    types.StringType,
 		"name":                                  types.StringType,

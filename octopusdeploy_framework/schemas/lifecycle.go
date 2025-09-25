@@ -136,19 +136,6 @@ func getLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
 	}
 }
 
-func getRetentionWithStrategyAttribute() datasourceSchema.Attribute {
-	return datasourceSchema.ListNestedAttribute{
-		Computed: true,
-		NestedObject: datasourceSchema.NestedAttributeObject{
-			Attributes: map[string]datasourceSchema.Attribute{
-				"strategy":         util.DataSourceString().Computed().Description("The retention strategy.").Build(),
-				"quantity_to_keep": util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
-				"unit":             util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
-			},
-		},
-	}
-}
-
 func getPhasesAttribute() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
@@ -176,7 +163,7 @@ func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBloc
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"strategy": util.ResourceString().
-					Required().
+					Optional().Computed().
 					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
 					Description("How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`." +
 						"\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. " +
@@ -191,7 +178,7 @@ func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBloc
 					Build(),
 				"unit": util.ResourceString().
 					Optional().Computed().
-					Validators(stringvalidator.OneOf(core.RetentionUnitDays, core.RetentionUnitItems)).
+					Validators(stringvalidator.OneOfCaseInsensitive(core.RetentionUnitDays, core.RetentionUnitItems)).
 					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
 					Build(),
 			},
@@ -263,7 +250,7 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 
 func GetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		DeprecationMessage: "This block will depreciate when octopus 2025.3 is no longer supported. Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
+		DeprecationMessage: "This block will deprecate when octopus 2025.3 is no longer supported. Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
@@ -345,6 +332,7 @@ func (v retentionValidator) ValidateObject(ctx context.Context, req validator.Ob
 		}
 	}
 }
+
 func GetRetentionAttribute() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
@@ -353,6 +341,18 @@ func GetRetentionAttribute() datasourceSchema.ListNestedAttribute {
 				"quantity_to_keep":    util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
 				"should_keep_forever": util.DataSourceBool().Computed().Description("Whether releases should be kept forever.").Build(),
 				"unit":                util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
+			},
+		},
+	}
+}
+func getRetentionWithStrategyAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				"strategy":         util.DataSourceString().Computed().Description("The retention strategy.").Build(),
+				"quantity_to_keep": util.DataSourceInt64().Computed().Description("The quantity of releases to keep.").Build(),
+				"unit":             util.DataSourceString().Computed().Description("The unit of time for the retention policy.").Build(),
 			},
 		},
 	}
