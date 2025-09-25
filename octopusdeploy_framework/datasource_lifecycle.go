@@ -88,9 +88,9 @@ func flattenLifecycles(items []*lifecycles.Lifecycle) types.List {
 			"space_id":                         types.StringValue(lifecycle.SpaceID),
 			"name":                             types.StringValue(lifecycle.Name),
 			"description":                      types.StringValue(lifecycle.Description),
-			"phase":                            flattenPhases(lifecycle.Phases),
-			"release_retention_policy":         flattenRetention(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_policy":        flattenRetention(lifecycle.TentacleRetentionPolicy),
+			"phase":                            deprecatedFlattenPhases(lifecycle.Phases),
+			"release_retention_policy":         deprecatedFlattenRetention(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_policy":        deprecatedFlattenRetention(lifecycle.TentacleRetentionPolicy),
 			"release_retention_with_strategy":  flattenRetentionWithStrategy(lifecycle.ReleaseRetentionPolicy),
 			"tentacle_retention_with_strategy": flattenRetentionWithStrategy(lifecycle.TentacleRetentionPolicy),
 		}
