@@ -163,7 +163,7 @@ func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBloc
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"strategy": util.ResourceString().
-					Optional().Computed().
+					Required().
 					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
 					Description("How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`." +
 						"\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. " +
@@ -250,7 +250,7 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 
 func GetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		DeprecationMessage: "This block will deprecate when octopus 2025.3 is no longer supported. Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
+		DeprecationMessage: "This block will deprecate when octopus 2025.2 is no longer supported. After upgrading to octopus 2025.3 or higher, please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
