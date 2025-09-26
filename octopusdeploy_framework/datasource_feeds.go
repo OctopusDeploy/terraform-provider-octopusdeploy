@@ -2,11 +2,12 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"time"
+
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/feeds"
 )
@@ -41,6 +42,7 @@ func (e *feedsDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	query := feeds.FeedsQuery{
 		Name:        data.Name.ValueString(),
+		FeedType:    data.FeedType.ValueString(),
 		IDs:         util.GetIds(data.IDs),
 		PartialName: data.PartialName.ValueString(),
 		Skip:        util.GetNumber(data.Skip),
