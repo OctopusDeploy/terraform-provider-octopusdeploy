@@ -33,10 +33,10 @@ func TestExpandLifecycle(t *testing.T) {
 		Name:        types.StringValue(name),
 		SpaceID:     types.StringValue(spaceID),
 		ReleaseRetention: types.ListValueMust(
-			types.ObjectType{AttrTypes: deprecatedGetRetentionAttTypes()},
+			types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()},
 			[]attr.Value{
 				types.ObjectValueMust(
-					deprecatedGetRetentionAttTypes(),
+					DeprecatedGetRetentionAttTypes(),
 					map[string]attr.Value{
 						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
@@ -46,10 +46,10 @@ func TestExpandLifecycle(t *testing.T) {
 			},
 		),
 		TentacleRetention: types.ListValueMust(
-			types.ObjectType{AttrTypes: deprecatedGetRetentionAttTypes()},
+			types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()},
 			[]attr.Value{
 				types.ObjectValueMust(
-					deprecatedGetRetentionAttTypes(),
+					DeprecatedGetRetentionAttTypes(),
 					map[string]attr.Value{
 						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
 						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
@@ -75,31 +75,31 @@ func TestExpandLifecycle(t *testing.T) {
 }
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
-	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: deprecatedGetAttributeTypes()}, []attr.Value{})
-	phases := deprecatedExpandPhases(emptyList)
+	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: DeprecatedGetAttributeTypes()}, []attr.Value{})
+	phases := DeprecatedExpandPhases(emptyList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithNullInput(t *testing.T) {
-	nullList := types.ListNull(types.ObjectType{AttrTypes: deprecatedGetAttributeTypes()})
-	phases := deprecatedExpandPhases(nullList)
+	nullList := types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetAttributeTypes()})
+	phases := DeprecatedExpandPhases(nullList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
-	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: deprecatedGetAttributeTypes()})
-	phases := deprecatedExpandPhases(unknownList)
+	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: DeprecatedGetAttributeTypes()})
+	phases := DeprecatedExpandPhases(unknownList)
 	require.Nil(t, phases)
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
-	flattenedPhases := deprecatedFlattenPhases([]*lifecycles.Phase{phase})
+	flattenedPhases := DeprecatedFlattenPhases([]*lifecycles.Phase{phase})
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
-	expandedPhases := deprecatedExpandPhases(flattenedPhases)
+	expandedPhases := DeprecatedExpandPhases(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 1)
 
@@ -117,11 +117,11 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults(t *testing.T) {
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
-	flattenedPhases := deprecatedFlattenPhases([]*lifecycles.Phase{phase1, phase2})
+	flattenedPhases := DeprecatedFlattenPhases([]*lifecycles.Phase{phase1, phase2})
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
-	expandedPhases := deprecatedExpandPhases(flattenedPhases)
+	expandedPhases := DeprecatedExpandPhases(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 2)
 
