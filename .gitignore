@@ -57,3 +57,5 @@ terraform/**/.terraform/*
 results.xml
 
 .DS_Store
+
+main.tf
