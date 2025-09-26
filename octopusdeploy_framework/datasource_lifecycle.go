@@ -106,8 +106,8 @@ func lifecycleObjectType() map[string]attr.Type {
 		"name":                             types.StringType,
 		"description":                      types.StringType,
 		"phase":                            types.ListType{ElemType: types.ObjectType{AttrTypes: phaseObjectType()}},
-		"release_retention_policy":         types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
-		"tentacle_retention_policy":        types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
+		"release_retention_policy":         types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
+		"tentacle_retention_policy":        types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
 		"release_retention_with_strategy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
 		"tentacle_retention_with_strategy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
 	}
@@ -122,14 +122,14 @@ func phaseObjectType() map[string]attr.Type {
 		"minimum_environments_before_promotion": types.Int64Type,
 		"is_optional_phase":                     types.BoolType,
 		"is_priority_phase":                     types.BoolType,
-		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
-		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
+		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
+		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
 		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
 		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: retentionWithStrategyObjectType()}},
 	}
 }
 
-func retentionObjectType() map[string]attr.Type {
+func deprecatedRetentionObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"quantity_to_keep":    types.Int64Type,
 		"should_keep_forever": types.BoolType,

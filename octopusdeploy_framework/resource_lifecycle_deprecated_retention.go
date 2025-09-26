@@ -10,28 +10,35 @@ import (
 )
 
 func SetDeprecatedDefaultRetention(data *lifecycleTypeResourceModel, initialDeprecatedRetentionSetting types.List) (bool, bool) {
-	hasUserDefinedReleaseRetention := attributeIsUsed(data.ReleaseRetention)
-	hasUserDefinedTentacleRetention := attributeIsUsed(data.TentacleRetention)
+	hasUserDefinedReleaseRetention := attributeIsUsed(data.DeprecatedReleaseRetention)
+	hasUserDefinedTentacleRetention := attributeIsUsed(data.DeprecatedTentacleRetention)
 	if !hasUserDefinedReleaseRetention {
-		data.ReleaseRetention = initialDeprecatedRetentionSetting
+		data.DeprecatedReleaseRetention = initialDeprecatedRetentionSetting
 	}
 	if !hasUserDefinedTentacleRetention {
-		data.TentacleRetention = initialDeprecatedRetentionSetting
+		data.DeprecatedTentacleRetention = initialDeprecatedRetentionSetting
 	}
 
 	return hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention
 }
-func RemoveDeprecatedDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool, initialDeprecatedRetentionSetting types.List) {
+func RemoveDeprecatedDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool) {
 	// Remove retention policies from data before setting state, but only if we added the initial value to them in the first place
-	if !hasUserDefinedReleaseRetention && data.ReleaseRetention.Equal(initialDeprecatedRetentionSetting) {
-		data.ReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+	if !hasUserDefinedReleaseRetention {
+		data.DeprecatedReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
 	}
-	if !hasUserDefinedTentacleRetention && data.TentacleRetention.Equal(initialDeprecatedRetentionSetting) {
-		data.TentacleRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+	if !hasUserDefinedTentacleRetention {
+		data.DeprecatedTentacleRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
 	}
+	//if !hasUserDefinedReleaseRetention && data.DeprecatedReleaseRetention.Equal(initialDeprecatedRetentionSetting) {
+	//	data.DeprecatedReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+	//}
+	//if !hasUserDefinedTentacleRetention && data.DeprecatedTentacleRetention.Equal(initialDeprecatedRetentionSetting) {
+	//	data.DeprecatedTentacleRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+	//}
+
 }
 func IsDeprecatedRetentionInPlan(data *lifecycleTypeResourceModel) bool {
-	if attributeIsUsed(data.ReleaseRetention) || attributeIsUsed(data.TentacleRetention) {
+	if attributeIsUsed(data.DeprecatedReleaseRetention) || attributeIsUsed(data.DeprecatedTentacleRetention) {
 		return true
 	}
 	for _, phase := range data.Phase.Elements() {
