@@ -5,36 +5,28 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func SetDeprecatedDefaultRetention(data *lifecycleTypeResourceModel, onlyDeprecatedRetentionIsUsed bool) (bool, bool) {
-
+func SetDeprecatedDefaultRetention(data *lifecycleTypeResourceModel, initialDeprecatedRetentionSetting types.List) (bool, bool) {
 	hasUserDefinedReleaseRetention := attributeIsUsed(data.ReleaseRetention)
 	hasUserDefinedTentacleRetention := attributeIsUsed(data.TentacleRetention)
-
-	var initialRetentionSetting types.List
-	if onlyDeprecatedRetentionIsUsed {
-		initialRetentionSetting = DeprecatedFlattenRetention(core.NewRetentionPeriod(30, "Days", false))
-	} else {
-		initialRetentionSetting = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
-	}
-
 	if !hasUserDefinedReleaseRetention {
-		data.ReleaseRetention = initialRetentionSetting
+		data.ReleaseRetention = initialDeprecatedRetentionSetting
 	}
 	if !hasUserDefinedTentacleRetention {
-		data.TentacleRetention = initialRetentionSetting
+		data.TentacleRetention = initialDeprecatedRetentionSetting
 	}
 
 	return hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention
 }
-func RemoveDeprecatedDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool) {
-	// Remove retention policies from data before setting state, but only if they were not included in the plan
-	if !hasUserDefinedReleaseRetention {
+func RemoveDeprecatedDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool, initialDeprecatedRetentionSetting types.List) {
+	// Remove retention policies from data before setting state, but only if we added the initial value to them in the first place
+	if !hasUserDefinedReleaseRetention && data.ReleaseRetention.Equal(initialDeprecatedRetentionSetting) {
 		data.ReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
 	}
-	if !hasUserDefinedTentacleRetention {
+	if !hasUserDefinedTentacleRetention && data.TentacleRetention.Equal(initialDeprecatedRetentionSetting) {
 		data.TentacleRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
 	}
 }
@@ -47,6 +39,21 @@ func IsDeprecatedRetentionInPlan(data *lifecycleTypeResourceModel) bool {
 		releaseRetention := phaseAttributes["release_retention_policy"].(types.List)
 		tentacleRetention := phaseAttributes["tentacle_retention_policy"].(types.List)
 		if attributeIsUsed(releaseRetention) || attributeIsUsed(tentacleRetention) {
+			return true
+		}
+	}
+	return false
+}
+func IsRetentionWithStrategyInPlan(data *lifecycleTypeResourceModel) bool {
+	if attributeIsUsed(data.ReleaseRetentionWithStrategy) || attributeIsUsed(data.TentacleRetentionWithStrategy) {
+		return true
+	}
+	for _, phase := range data.Phase.Elements() {
+		phaseAttributes := phase.(types.Object).Attributes()
+		releaseRetentionWithStrategy := phaseAttributes["release_retention_with_strategy"].(types.List)
+		tentacleRetentionWithStrategy := phaseAttributes["tentacle_retention_with_strategy"].(types.List)
+
+		if attributeIsUsed(releaseRetentionWithStrategy) || attributeIsUsed(tentacleRetentionWithStrategy) {
 			return true
 		}
 	}
@@ -202,5 +209,15 @@ func DeprecatedGetAttributeTypes() map[string]attr.Type {
 		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()}},
 		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
 		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
+	}
+}
+func ValidateRetentionBlocksUsed(data *lifecycleTypeResourceModel, diag *diag.Diagnostics, onlyDeprecatedRetentionIsSupported bool) {
+	retentionWithStrategyIsInPlan := IsRetentionWithStrategyInPlan(data)
+	deprecatedRetentionIsInPlan := IsDeprecatedRetentionInPlan(data)
+	if retentionWithStrategyIsInPlan && deprecatedRetentionIsInPlan {
+		diag.AddError("Retention blocks conflict", "Both release_retention_with_strategy and release_retention_policy are used. Only one can be used at a time.")
+	}
+	if retentionWithStrategyIsInPlan && onlyDeprecatedRetentionIsSupported {
+		diag.AddError("retention with strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later.", "")
 	}
 }
