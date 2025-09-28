@@ -24,19 +24,19 @@ func SetDeprecatedDefaultRetention(data *lifecycleTypeResourceModel, initialDepr
 func RemoveDeprecatedDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool) {
 	// Remove retention policies from data before setting state, but only if we added the initial value to them in the first place
 	if !hasUserDefinedReleaseRetention {
-		data.DeprecatedReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+		data.DeprecatedReleaseRetention = ListNullDeprecatedRetention()
 	}
 	if !hasUserDefinedTentacleRetention {
-		data.DeprecatedTentacleRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+		data.DeprecatedTentacleRetention = ListNullDeprecatedRetention()
 	}
-	//if !hasUserDefinedReleaseRetention && data.DeprecatedReleaseRetention.Equal(initialDeprecatedRetentionSetting) {
-	//	data.DeprecatedReleaseRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
-	//}
-	//if !hasUserDefinedTentacleRetention && data.DeprecatedTentacleRetention.Equal(initialDeprecatedRetentionSetting) {
-	//	data.DeprecatedTentacleRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
-	//}
-
 }
+func ListNullDeprecatedRetention() types.List {
+	return types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+}
+func ListNullRetentionWithStrategy() types.List {
+	return types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+}
+
 func IsDeprecatedRetentionInPlan(data *lifecycleTypeResourceModel) bool {
 	if attributeIsUsed(data.DeprecatedReleaseRetention) || attributeIsUsed(data.DeprecatedTentacleRetention) {
 		return true
@@ -51,7 +51,6 @@ func IsDeprecatedRetentionInPlan(data *lifecycleTypeResourceModel) bool {
 	}
 	return false
 }
-
 func IsRetentionWithStrategyInPlan(data *lifecycleTypeResourceModel) bool {
 	if attributeIsUsed(data.ReleaseRetentionWithStrategy) || attributeIsUsed(data.TentacleRetentionWithStrategy) {
 		return true
@@ -77,7 +76,6 @@ func IsOnlyDeprecatedRetentionUsed(data *lifecycleTypeResourceModel, onlyDepreca
 	}
 	return false
 }
-
 func DeprecatedFlattenPhases(goPhases []*lifecycles.Phase) types.List {
 	var deprecatedAttributeTypes = GetPhaseAttributeTypes()
 	if goPhases == nil {

@@ -72,12 +72,12 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 
 	var onlyDeprecatedRetentionIsUsed bool
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
-	var initialDeprecatedRetentionSetting = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+	var initialDeprecatedRetentionSetting = ListNullDeprecatedRetention()
 	if r.UseDeprecatedRetention {
 		ValidateRetentionBlocksUsed(data, &resp.Diagnostics, r.onlyDeprecatedRetentionIsSupportedByServer)
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {
-			initialRetentionWithStrategySetting = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+			initialRetentionWithStrategySetting = ListNullRetentionWithStrategy()
 			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
 	}
@@ -105,7 +105,6 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	tflog.Debug(ctx, fmt.Sprintf("rose created lifecycle '%s'", data.ReleaseRetentionWithStrategy.Type(ctx)))
 
 	RemoveDeprecatedDefaultRetentionFromUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention)
-
 	removeDefaultRetentionWithStrategyFromUnsetBlocks(data, hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy)
 
 	tflog.Debug(ctx, fmt.Sprintf("removed deprecated retention '%v' and '%v'", data.DeprecatedTentacleRetention, data.DeprecatedReleaseRetention))
@@ -142,16 +141,15 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 
 	var onlyDeprecatedRetentionIsUsed bool
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
-	var initialDeprecatedRetentionSetting = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+	var initialDeprecatedRetentionSetting = ListNullDeprecatedRetention()
 	if r.UseDeprecatedRetention {
 		ValidateRetentionBlocksUsed(data, &resp.Diagnostics, r.onlyDeprecatedRetentionIsSupportedByServer)
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {
-			initialRetentionWithStrategySetting = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+			initialRetentionWithStrategySetting = ListNullRetentionWithStrategy()
 			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
 	}
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -209,10 +207,10 @@ func setDefaultRetentionWithStrategy(data *lifecycleTypeResourceModel, initialDe
 func removeDefaultRetentionWithStrategyFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetentionWithStrategy bool, hasUserDefinedTentacleRetentionWithStrategy bool) {
 	// Remove retention policies from data before setting state, but only if we added the initial value to them in the first place
 	if !hasUserDefinedReleaseRetentionWithStrategy {
-		data.ReleaseRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+		data.ReleaseRetentionWithStrategy = ListNullRetentionWithStrategy()
 	}
 	if !hasUserDefinedTentacleRetentionWithStrategy {
-		data.TentacleRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
+		data.TentacleRetentionWithStrategy = ListNullRetentionWithStrategy()
 	}
 	//if !hasUserDefinedReleaseRetentionWithStrategy && data.ReleaseRetentionWithStrategy.Equal(initialRetentionWithStrategySetting) {
 	//	data.ReleaseRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})

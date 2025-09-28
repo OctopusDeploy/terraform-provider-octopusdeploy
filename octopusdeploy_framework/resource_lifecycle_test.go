@@ -16,7 +16,7 @@ import (
 )
 
 func TestExpandLifecycleWithNil(t *testing.T) {
-	lifecycle := expandLifecycle(nil)
+	lifecycle := expandLifecycle(nil, false)
 	require.Nil(t, lifecycle)
 }
 
@@ -61,7 +61,7 @@ func TestExpandLifecycle(t *testing.T) {
 	}
 	data.ID = types.StringValue(Id)
 
-	lifecycle := expandLifecycle(data)
+	lifecycle := expandLifecycle(data, false)
 
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
