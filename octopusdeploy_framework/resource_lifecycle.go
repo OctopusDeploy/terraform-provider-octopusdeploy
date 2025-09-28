@@ -450,3 +450,19 @@ func getPhaseWithStrategyAttrTypes() map[string]attr.Type {
 		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
 	}
 }
+
+func GetPhaseAttributeTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":                                    types.StringType,
+		"name":                                  types.StringType,
+		"automatic_deployment_targets":          types.ListType{ElemType: types.StringType},
+		"optional_deployment_targets":           types.ListType{ElemType: types.StringType},
+		"minimum_environments_before_promotion": types.Int64Type,
+		"is_optional_phase":                     types.BoolType,
+		"is_priority_phase":                     types.BoolType,
+		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()}},
+		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()}},
+		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
+		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
+	}
+}

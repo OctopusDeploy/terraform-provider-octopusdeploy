@@ -51,6 +51,7 @@ func IsDeprecatedRetentionInPlan(data *lifecycleTypeResourceModel) bool {
 	}
 	return false
 }
+
 func IsRetentionWithStrategyInPlan(data *lifecycleTypeResourceModel) bool {
 	if attributeIsUsed(data.ReleaseRetentionWithStrategy) || attributeIsUsed(data.TentacleRetentionWithStrategy) {
 		return true
@@ -76,8 +77,9 @@ func IsOnlyDeprecatedRetentionUsed(data *lifecycleTypeResourceModel, onlyDepreca
 	}
 	return false
 }
+
 func DeprecatedFlattenPhases(goPhases []*lifecycles.Phase) types.List {
-	var deprecatedAttributeTypes = DeprecatedGetAttributeTypes()
+	var deprecatedAttributeTypes = GetPhaseAttributeTypes()
 	if goPhases == nil {
 		return types.ListNull(types.ObjectType{AttrTypes: deprecatedAttributeTypes})
 	}
@@ -203,21 +205,6 @@ func DeprecatedGetRetentionAttTypes() map[string]attr.Type {
 		"unit":                types.StringType,
 	}
 }
-func DeprecatedGetAttributeTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"id":                                    types.StringType,
-		"name":                                  types.StringType,
-		"automatic_deployment_targets":          types.ListType{ElemType: types.StringType},
-		"optional_deployment_targets":           types.ListType{ElemType: types.StringType},
-		"minimum_environments_before_promotion": types.Int64Type,
-		"is_optional_phase":                     types.BoolType,
-		"is_priority_phase":                     types.BoolType,
-		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()}},
-		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()}},
-		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
-		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}},
-	}
-}
 func ValidateRetentionBlocksUsed(data *lifecycleTypeResourceModel, diag *diag.Diagnostics, onlyDeprecatedRetentionIsSupported bool) {
 	retentionWithStrategyIsInPlan := IsRetentionWithStrategyInPlan(data)
 	deprecatedRetentionIsInPlan := IsDeprecatedRetentionInPlan(data)
@@ -226,5 +213,12 @@ func ValidateRetentionBlocksUsed(data *lifecycleTypeResourceModel, diag *diag.Di
 	}
 	if retentionWithStrategyIsInPlan && onlyDeprecatedRetentionIsSupported {
 		diag.AddError("retention with strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later.", "")
+	}
+}
+func DeprecatedRetentionObjectType() map[string]attr.Type {
+	return map[string]attr.Type{
+		"quantity_to_keep":    types.Int64Type,
+		"should_keep_forever": types.BoolType,
+		"unit":                types.StringType,
 	}
 }

@@ -75,19 +75,19 @@ func TestExpandLifecycle(t *testing.T) {
 }
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
-	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: DeprecatedGetAttributeTypes()}, []attr.Value{})
+	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: GetPhaseAttributeTypes()}, []attr.Value{})
 	phases := DeprecatedExpandPhases(emptyList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithNullInput(t *testing.T) {
-	nullList := types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetAttributeTypes()})
+	nullList := types.ListNull(types.ObjectType{AttrTypes: GetPhaseAttributeTypes()})
 	phases := DeprecatedExpandPhases(nullList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
-	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: DeprecatedGetAttributeTypes()})
+	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: GetPhaseAttributeTypes()})
 	phases := DeprecatedExpandPhases(unknownList)
 	require.Nil(t, phases)
 }
