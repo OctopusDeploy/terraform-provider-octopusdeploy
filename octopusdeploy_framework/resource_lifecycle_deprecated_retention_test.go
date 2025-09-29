@@ -161,7 +161,12 @@ func TestAccRetentionDepreciatedAttributeValidation(t *testing.T) {
 				ExpectError: regexp.MustCompile(`An argument named "strategy" is not expected here.`),
 			},
 			{
-				Config:      lifestyleWithTwoTypesOfRetention(lifecycleName),
+				Config:      lifecycleWithTwoTypesOfRetention(lifecycleName),
+				PlanOnly:    false,
+				ExpectError: regexp.MustCompile(`Both release_retention_with_strategy and release_retention_policy are used.`),
+			},
+			{
+				Config:      lifecycleWithTwoTypesOfRetentionIncludingPhases(lifecycleName),
 				PlanOnly:    false,
 				ExpectError: regexp.MustCompile(`Both release_retention_with_strategy and release_retention_policy are used.`),
 			},
@@ -275,7 +280,7 @@ func lifecycleGivenDepreciatedRetentionAttributes(lifecycleName string, strategy
 	}`, lifecycleName, lifecycleName, strategyAttribute, quantityToKeepAttribute, shouldKeepForeverAttribute, unitAttribute, strategyAttribute, quantityToKeepAttribute, shouldKeepForeverAttribute, unitAttribute)
 }
 
-func lifestyleWithTwoTypesOfRetention(lifecycleName string) string {
+func lifecycleWithTwoTypesOfRetention(lifecycleName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
 		release_retention_policy {
@@ -284,5 +289,21 @@ func lifestyleWithTwoTypesOfRetention(lifecycleName string) string {
 		tentacle_retention_with_strategy{
 			strategy = "Forever"
 		}
+    }`, lifecycleName, lifecycleName)
+}
+
+func lifecycleWithTwoTypesOfRetentionIncludingPhases(lifecycleName string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+       name        = "%s"
+		release_retention_policy {
+			should_keep_forever = "true"
+		}
+		phase{
+   			name = "Phase1"
+			release_retention_with_strategy {
+				strategy = "Forever"
+			}		
+		}
+	
     }`, lifecycleName, lifecycleName)
 }
