@@ -41,14 +41,14 @@ func (r *tagSetResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	tagSet := expandTagSet(plan)
+	tagSet := expandTagSet(ctx, plan)
 	createdTagSet, err := tagsets.Add(r.Client, tagSet)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating tag set", err.Error())
 		return
 	}
 
-	state := flattenTagSet(createdTagSet)
+	state := flattenTagSet(ctx, createdTagSet)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -67,7 +67,7 @@ func (r *tagSetResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	newState := flattenTagSet(tagSet)
+	newState := flattenTagSet(ctx, tagSet)
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 }
 
@@ -78,14 +78,14 @@ func (r *tagSetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	tagSet := expandTagSet(plan)
+	tagSet := expandTagSet(ctx, plan)
 	updatedTagSet, err := tagsets.Update(r.Client, tagSet)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating tag set", err.Error())
 		return
 	}
 
-	state := flattenTagSet(updatedTagSet)
+	state := flattenTagSet(ctx, updatedTagSet)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -115,11 +115,11 @@ func (r *tagSetResource) ImportState(ctx context.Context, req resource.ImportSta
 		return
 	}
 
-	state := flattenTagSet(tagSet)
+	state := flattenTagSet(ctx, tagSet)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func expandTagSet(model schemas.TagSetResourceModel) *tagsets.TagSet {
+func expandTagSet(ctx context.Context, model schemas.TagSetResourceModel) *tagsets.TagSet {
 	tagSet := tagsets.NewTagSet(model.Name.ValueString())
 	tagSet.ID = model.ID.ValueString()
 	tagSet.Description = model.Description.ValueString()
@@ -129,15 +129,29 @@ func expandTagSet(model schemas.TagSetResourceModel) *tagsets.TagSet {
 		tagSet.SortOrder = int32(model.SortOrder.ValueInt64())
 	}
 
+	if !model.Scopes.IsNull() {
+		scopes := make([]string, 0, len(model.Scopes.Elements()))
+		model.Scopes.ElementsAs(ctx, &scopes, false)
+		tagSet.Scopes = scopes
+	}
+
+	if !model.Type.IsNull() {
+		tagSet.Type = model.Type.ValueString()
+	}
+
 	return tagSet
 }
 
-func flattenTagSet(tagSet *tagsets.TagSet) schemas.TagSetResourceModel {
+func flattenTagSet(ctx context.Context, tagSet *tagsets.TagSet) schemas.TagSetResourceModel {
+	scopes, _ := types.ListValueFrom(ctx, types.StringType, tagSet.Scopes)
+
 	model := schemas.TagSetResourceModel{
 		Name:        types.StringValue(tagSet.Name),
 		Description: types.StringValue(tagSet.Description),
+		Scopes:      scopes,
 		SortOrder:   types.Int64Value(int64(tagSet.SortOrder)),
 		SpaceID:     types.StringValue(tagSet.SpaceID),
+		Type:        types.StringValue(tagSet.Type),
 	}
 	model.ID = types.StringValue(tagSet.ID)
 	return model

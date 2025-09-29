@@ -67,6 +67,7 @@ func EnvironmentObjectType() map[string]attr.Type {
 		EnvironmentSortOrder:                  types.Int64Type,
 		EnvironmentUseGuidedFailure:           types.BoolType,
 		"space_id":                            types.StringType,
+		"environment_tags":                    types.SetType{ElemType: types.StringType},
 		EnvironmentJiraExtensionSettings: types.ListType{
 			ElemType: types.ObjectType{AttrTypes: JiraExtensionSettingsObjectType()},
 		},
@@ -118,6 +119,11 @@ func (e EnvironmentSchema) GetDatasourceSchemaAttributes() map[string]datasource
 			Computed: true,
 		},
 		"space_id": GetSpaceIdDatasourceSchema(EnvironmentResourceDescription, true),
+		"environment_tags": datasourceSchema.SetAttribute{
+			Computed:    true,
+			Description: "A list of environment tags associated with this resource.",
+			ElementType: types.StringType,
+		},
 		EnvironmentJiraExtensionSettings: datasourceSchema.ListNestedAttribute{
 			Description: "Provides extension settings for the Jira integration for this environment.",
 			Computed:    true,
@@ -183,6 +189,12 @@ func (e EnvironmentSchema) GetResourceSchema() resourceSchema.Schema {
 					stringplanmodifier.RequiresReplace(),
 				).
 				Build(),
+			"environment_tags": resourceSchema.SetAttribute{
+				Description: "A list of environment tags associated with this resource.",
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+			},
 		},
 		Blocks: map[string]resourceSchema.Block{
 			EnvironmentJiraExtensionSettings: resourceSchema.ListNestedBlock{
@@ -273,6 +285,9 @@ func MapFromEnvironment(ctx context.Context, environment *environments.Environme
 	env.AllowDynamicInfrastructure = types.BoolValue(environment.AllowDynamicInfrastructure)
 	env.SortOrder = types.Int64Value(int64(environment.SortOrder))
 	env.UseGuidedFailure = types.BoolValue(environment.UseGuidedFailure)
+
+	env.EnvironmentTags, _ = types.SetValueFrom(ctx, types.StringType, environment.EnvironmentTags)
+
 	env.JiraExtensionSettings, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: JiraExtensionSettingsObjectType()}, []any{})
 	env.JiraServiceManagementExtensionSettings, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: JiraServiceManagementExtensionSettingsObjectType()}, []any{})
 	env.ServiceNowExtensionSettings, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: ServiceNowExtensionSettingsObjectType()}, []any{})
@@ -316,6 +331,7 @@ type EnvironmentTypeResourceModel struct {
 	SortOrder                              types.Int64  `tfsdk:"sort_order"`
 	UseGuidedFailure                       types.Bool   `tfsdk:"use_guided_failure"`
 	SpaceID                                types.String `tfsdk:"space_id"`
+	EnvironmentTags                        types.Set    `tfsdk:"environment_tags"`
 	JiraExtensionSettings                  types.List   `tfsdk:"jira_extension_settings"`
 	JiraServiceManagementExtensionSettings types.List   `tfsdk:"jira_service_management_extension_settings"`
 	ServiceNowExtensionSettings            types.List   `tfsdk:"servicenow_extension_settings"`

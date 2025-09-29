@@ -2,6 +2,8 @@ package schemas
 
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -11,6 +13,35 @@ import (
 
 const TagSetDataSourceName = "tag_sets"
 const TagSetResourceName = "tag_set"
+
+var tagSetScopeNames = struct {
+	Tenant      string
+	Environment string
+}{
+	Tenant:      "Tenant",
+	Environment: "Environment",
+}
+
+var tagSetScopes = []string{
+	tagSetScopeNames.Tenant,
+	tagSetScopeNames.Environment,
+}
+
+var tagSetTypeNames = struct {
+	SingleSelect string
+	MultiSelect  string
+	FreeText     string
+}{
+	SingleSelect: "SingleSelect",
+	MultiSelect:  "MultiSelect",
+	FreeText:     "FreeText",
+}
+
+var tagSetTypes = []string{
+	tagSetTypeNames.SingleSelect,
+	tagSetTypeNames.MultiSelect,
+	tagSetTypeNames.FreeText,
+}
 
 type TagSetSchema struct{}
 
@@ -30,6 +61,12 @@ func (t TagSetSchema) GetResourceSchema() resourceSchema.Schema {
 				Computed().
 				Description("The description of this tag set.").
 				Build(),
+			"scopes": util.ResourceList(types.StringType).
+				Optional().
+				Computed().
+				Description("The resource scopes this tag set applies to. Valid values are `\"Tenant\"`, `\"Environment\"`.").
+				Validators(listvalidator.ValueStringsAre(stringvalidator.OneOf(tagSetScopes...))).
+				Build(),
 			"sort_order": util.ResourceInt64().
 				Optional().
 				Computed().
@@ -40,6 +77,12 @@ func (t TagSetSchema) GetResourceSchema() resourceSchema.Schema {
 				Computed().
 				Description("The space ID associated with this resource.").
 				PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+				Build(),
+			"type": util.ResourceString().
+				Optional().
+				Computed().
+				Description("The type of this tag set. Valid values are `\"SingleSelect\"`, `\"MultiSelect\"`, `\"FreeText\"`.").
+				Validators(stringvalidator.OneOf(tagSetTypes...)).
 				Build(),
 		},
 	}
@@ -64,6 +107,10 @@ func (t TagSetSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"partial_name": util.DataSourceString().
 				Optional().
 				Description("A filter to search by the partial match of a name.").
+				Build(),
+			"scopes": util.DataSourceList(types.StringType).
+				Optional().
+				Description("A filter to search by scopes. Valid values are `\"Tenant\"`, `\"Environment\"`.").
 				Build(),
 			"skip": util.DataSourceInt64().
 				Optional().
@@ -91,6 +138,10 @@ func (t TagSetSchema) GetDatasourceSchema() datasourceSchema.Schema {
 							Computed().
 							Description("The description of this tag set.").
 							Build(),
+						"scopes": util.DataSourceList(types.StringType).
+							Computed().
+							Description("The resource scopes this tag set applies to. Valid values are `\"Tenant\"`, `\"Environment\"`.").
+							Build(),
 						"sort_order": util.DataSourceInt64().
 							Computed().
 							Description("The sort order associated with this resource.").
@@ -98,6 +149,10 @@ func (t TagSetSchema) GetDatasourceSchema() datasourceSchema.Schema {
 						"space_id": util.DataSourceString().
 							Computed().
 							Description("The space ID associated with this resource.").
+							Build(),
+						"type": util.DataSourceString().
+							Computed().
+							Description("The type of this tag set. Valid values are `\"SingleSelect\"`, `\"MultiSelect\"`, `\"FreeText\"`.").
 							Build(),
 						"tags": datasourceSchema.ListNestedAttribute{
 							Computed:    true,
@@ -144,8 +199,10 @@ func GetTagSetAttrTypes() map[string]attr.Type {
 		"space_id":    types.StringType,
 		"name":        types.StringType,
 		"description": types.StringType,
+		"scopes":      types.ListType{ElemType: types.StringType},
 		"sort_order":  types.Int64Type,
 		"tags":        types.ListType{ElemType: types.ObjectType{AttrTypes: GetTagAttrTypes()}},
+		"type":        types.StringType,
 	}
 }
 
@@ -165,6 +222,7 @@ type TagSetDataSourceModel struct {
 	SpaceID     types.String `tfsdk:"space_id"`
 	IDs         types.List   `tfsdk:"ids"`
 	PartialName types.String `tfsdk:"partial_name"`
+	Scopes      types.List   `tfsdk:"scopes"`
 	Skip        types.Int64  `tfsdk:"skip"`
 	Take        types.Int64  `tfsdk:"take"`
 	TagSets     types.List   `tfsdk:"tag_sets"`
@@ -173,8 +231,10 @@ type TagSetDataSourceModel struct {
 type TagSetResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
+	Scopes      types.List   `tfsdk:"scopes"`
 	SortOrder   types.Int64  `tfsdk:"sort_order"`
 	SpaceID     types.String `tfsdk:"space_id"`
+	Type        types.String `tfsdk:"type"`
 
 	ResourceModel
 }

@@ -28,15 +28,21 @@ func TestAccDataSourceTagSets(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testTagSetExists(tagSetResourceName),
 					resource.TestCheckResourceAttr(tagSetResourceName, "name", tagSetName),
+					resource.TestCheckResourceAttr(tagSetResourceName, "scopes.#", "1"),
+					resource.TestCheckResourceAttr(tagSetResourceName, "scopes.0", "Tenant"),
+					resource.TestCheckResourceAttr(tagSetResourceName, "type", "MultiSelect"),
 				),
 			},
-			// Query the created tag set using the data source
+			// Query the created tag set using the data source with scope filter
 			{
 				Config: testAccTagSetConfig(localName, tagSetName, localTagName, tagName) + testAccDataSourceTagSetsConfig(localName, tagSetName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagSetsDataSourceID(dataSourceName),
 					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.id", tagSetResourceName, "id"),
 					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.name", tagSetResourceName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.scopes.#", tagSetResourceName, "scopes.#"),
+					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.scopes.0", tagSetResourceName, "scopes.0"),
+					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.type", tagSetResourceName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.tags.0.name", tagResourceName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.tags.0.color", tagResourceName, "color"),
 					resource.TestCheckResourceAttrPair(dataSourceName, "tag_sets.0.tags.0.description", tagResourceName, "description"),
@@ -65,6 +71,8 @@ func testAccTagSetConfig(localName, tagSetName, localTagName, tagName string) st
 resource "octopusdeploy_tag_set" "%s" {
     name        = "%s"
     description = "Test tag set"
+    scopes      = ["Tenant"]
+    type        = "MultiSelect"
 }
 
 resource "octopusdeploy_tag" "%s" {
@@ -81,6 +89,7 @@ func testAccDataSourceTagSetsConfig(localName, tagSetName string) string {
 	return fmt.Sprintf(`
 data "octopusdeploy_tag_sets" "%s" {
     partial_name = "%s"
+    scopes       = ["Tenant"]
     skip         = 0
     take         = 10
 }
