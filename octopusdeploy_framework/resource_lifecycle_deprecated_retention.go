@@ -24,18 +24,16 @@ func SetDeprecatedDefaultRetention(data *lifecycleTypeResourceModel, initialDepr
 func RemoveDeprecatedDefaultRetentionFromUnsetBlocks(data *lifecycleTypeResourceModel, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention bool) {
 	// Remove retention policies from data before setting state, but only if we added the initial value to them in the first place
 	if !hasUserDefinedReleaseRetention {
-		data.DeprecatedReleaseRetention = ListNullDeprecatedRetention()
+		data.DeprecatedReleaseRetention = ListNullDeprecatedRetention
 	}
 	if !hasUserDefinedTentacleRetention {
-		data.DeprecatedTentacleRetention = ListNullDeprecatedRetention()
+		data.DeprecatedTentacleRetention = ListNullDeprecatedRetention
 	}
 }
-func ListNullDeprecatedRetention() types.List {
-	return types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
-}
-func ListNullRetentionWithStrategy() types.List {
-	return types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
-}
+
+var ListNullDeprecatedRetention = types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})
+
+var ListNullRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
 
 func IsDeprecatedRetentionInPlan(data *lifecycleTypeResourceModel) bool {
 	if attributeIsUsed(data.DeprecatedReleaseRetention) || attributeIsUsed(data.DeprecatedTentacleRetention) {

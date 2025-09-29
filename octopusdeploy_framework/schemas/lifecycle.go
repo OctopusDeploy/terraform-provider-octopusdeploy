@@ -204,43 +204,41 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 		QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
 		Unit           types.String `tfsdk:"unit"`
 	}
-	strategy := retentionStrategy.Strategy.ValueString()
-	unitIsPresent := retentionStrategy.Unit.IsNull() || retentionStrategy.Unit.IsUnknown()
-	quantityToKeepIsPresent := retentionStrategy.QuantityToKeep.IsNull() || retentionStrategy.QuantityToKeep.IsUnknown()
 
 	diags := tfsdk.ValueAs(ctx, req.ConfigValue, &retentionStrategy)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if strategy == core.RetentionStrategyCount {
-		if unitIsPresent {
+	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyCount {
+		if retentionStrategy.Unit.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"unit",
-				"unit must be set when strategy is set to Count",
+				"unit must be set when strategy is set to Count.",
 			)
 		}
-		if quantityToKeepIsPresent {
+		if retentionStrategy.QuantityToKeep.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("quantity_to_keep"),
 				"quantity_to_keep",
-				"quantity_to_keep must be set when strategy is set to Count",
+				"quantity_to_keep must be set when strategy is set to Count.",
 			)
 		}
-	} else {
-		if !unitIsPresent {
+	}
+	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyForever || retentionStrategy.Strategy.ValueString() == core.RetentionStrategyDefault {
+		if !retentionStrategy.Unit.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"unit",
-				"unit must be set when strategy is Forever or Default",
+				"unit must not be set when strategy is Forever or Default.",
 			)
 		}
-		if !quantityToKeepIsPresent {
+		if !retentionStrategy.QuantityToKeep.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("quantity_to_keep"),
 				"quantity_to_keep",
-				"quantity_to_keep must be set when strategy is Forever or Default",
+				"quantity_to_keep must not be set when strategy is Forever or Default.",
 			)
 		}
 	}
