@@ -125,7 +125,6 @@ func TestAccRetentionDepreciatedAttributeValidation(t *testing.T) {
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
-			// when quantity_to_keep is > 0 should_keep_forever shouldn't be true
 			{
 				Config:      lifecycleGivenDepreciatedRetentionAttributes(lifecycleName, "", "1", "Items", "true"),
 				PlanOnly:    true,
@@ -136,7 +135,6 @@ func TestAccRetentionDepreciatedAttributeValidation(t *testing.T) {
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is not 0`),
 			},
-			// when quantity_to_keep is 0, should_keep_forever shouldn't be false
 			{
 				Config:      lifecycleGivenDepreciatedRetentionAttributes(lifecycleName, "", "0", "", "false"),
 				PlanOnly:    true,
@@ -161,6 +159,11 @@ func TestAccRetentionDepreciatedAttributeValidation(t *testing.T) {
 				Config:      lifecycleGivenDepreciatedRetentionAttributes(lifecycleName, "Default", "", "", ""),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`An argument named "strategy" is not expected here.`),
+			},
+			{
+				Config:      lifestyleWithTwoTypesOfRetention(lifecycleName),
+				PlanOnly:    false,
+				ExpectError: regexp.MustCompile(`Both release_retention_with_strategy and release_retention_policy are used.`),
 			},
 		},
 	})
@@ -270,5 +273,16 @@ func lifecycleGivenDepreciatedRetentionAttributes(lifecycleName string, strategy
 			%s
   		}
 	}`, lifecycleName, lifecycleName, strategyAttribute, quantityToKeepAttribute, shouldKeepForeverAttribute, unitAttribute, strategyAttribute, quantityToKeepAttribute, shouldKeepForeverAttribute, unitAttribute)
+}
 
+func lifestyleWithTwoTypesOfRetention(lifecycleName string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+       name        = "%s"
+		release_retention_policy {
+			should_keep_forever = "true"
+		}
+		tentacle_retention_with_strategy{
+			strategy = "Forever"
+		}
+    }`, lifecycleName, lifecycleName)
 }

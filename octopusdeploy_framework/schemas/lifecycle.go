@@ -210,15 +210,19 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	var unitIsPresent = !retentionStrategy.Unit.IsNull()
+	var quantityToKeepIsPresent = !retentionStrategy.QuantityToKeep.IsNull()
+
 	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyCount {
-		if retentionStrategy.Unit.IsNull() {
+		if !unitIsPresent {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"unit",
 				"unit must be set when strategy is set to Count.",
 			)
 		}
-		if retentionStrategy.QuantityToKeep.IsNull() {
+		if !quantityToKeepIsPresent {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("quantity_to_keep"),
 				"quantity_to_keep",
@@ -227,14 +231,14 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 		}
 	}
 	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyForever || retentionStrategy.Strategy.ValueString() == core.RetentionStrategyDefault {
-		if !retentionStrategy.Unit.IsNull() {
+		if unitIsPresent {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("unit"),
 				"unit",
 				"unit must not be set when strategy is Forever or Default.",
 			)
 		}
-		if !retentionStrategy.QuantityToKeep.IsNull() {
+		if quantityToKeepIsPresent {
 			resp.Diagnostics.AddAttributeError(
 				req.Path.AtName("quantity_to_keep"),
 				"quantity_to_keep",
