@@ -30,7 +30,7 @@ func TestAccDataSourceTagSets(t *testing.T) {
 					resource.TestCheckResourceAttr(tagSetResourceName, "name", tagSetName),
 				),
 			},
-			// Query the created tag set using the data source with scope filter
+			// Query the created tag set using the data source
 			{
 				Config: testAccTagSetConfig(localName, tagSetName, localTagName, tagName) + testAccDataSourceTagSetsConfig(localName, tagSetName),
 				Check: resource.ComposeTestCheckFunc(

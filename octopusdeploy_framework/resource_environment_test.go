@@ -36,7 +36,7 @@ func TestAccOctopusDeployEnvironmentBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "sort_order", strconv.Itoa(sortOrder)),
 					resource.TestCheckResourceAttr(prefix, "use_guided_failure", strconv.FormatBool(useGuidedFailure)),
 				),
-				Config: testAccEnvironmentWithTags(localName, name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure),
+				Config: testAccEnvironment(localName, name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure),
 			},
 		},
 	})
@@ -96,16 +96,6 @@ func TestAccOctopusDeployEnvironmentReplacement(t *testing.T) {
 }
 
 func testAccEnvironment(localName string, name string, description string, allowDynamicInfrastructure bool, sortOrder int, useGuidedFailure bool) string {
-	return fmt.Sprintf(`resource "octopusdeploy_environment" "%s" {
-		allow_dynamic_infrastructure = "%v"
-		description                  = "%s"
-		name                         = "%s"
-		sort_order                   = %v
-		use_guided_failure           = "%v"
-	}`, localName, allowDynamicInfrastructure, description, name, sortOrder, useGuidedFailure)
-}
-
-func testAccEnvironmentWithTags(localName string, name string, description string, allowDynamicInfrastructure bool, sortOrder int, useGuidedFailure bool) string {
 	return fmt.Sprintf(`resource "octopusdeploy_environment" "%s" {
 		allow_dynamic_infrastructure = "%v"
 		description                  = "%s"
