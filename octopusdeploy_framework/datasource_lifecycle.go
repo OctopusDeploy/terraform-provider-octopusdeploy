@@ -73,34 +73,11 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	util.DatasourceResultCount(ctx, "lifecycles", len(lifecyclesResult.Items))
 
-	if l.allowDeprecatedRetention {
-		data.Lifecycles = flattenLifecyclesForDatasource(lifecyclesResult.Items)
-	} else {
-		data.Lifecycles = deprecatedFlattenLifecyclesForDatasource(lifecyclesResult.Items)
-	}
+	data.Lifecycles = flattenLifecyclesForDatasource(lifecyclesResult.Items)
 
 	data.ID = types.StringValue("Lifecycles " + time.Now().UTC().String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func deprecatedFlattenLifecyclesForDatasource(requestedLifecycles []*lifecycles.Lifecycle) types.List {
-	lifecyclesList := make([]attr.Value, 0, len(requestedLifecycles))
-	for _, lifecycle := range requestedLifecycles {
-		lifecycleMap := map[string]attr.Value{
-			"id":                               types.StringValue(lifecycle.ID),
-			"space_id":                         types.StringValue(lifecycle.SpaceID),
-			"name":                             types.StringValue(lifecycle.Name),
-			"description":                      types.StringValue(lifecycle.Description),
-			"phase":                            deprecatedFlattenPhasesForDataSource(lifecycle.Phases),
-			"release_retention_policy":         deprecatedFlattenRetention(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_policy":        deprecatedFlattenRetention(lifecycle.TentacleRetentionPolicy),
-			"release_retention_with_strategy":  flattenRetention(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_with_strategy": flattenRetention(lifecycle.TentacleRetentionPolicy),
-		}
-		lifecyclesList = append(lifecyclesList, types.ObjectValueMust(deprecatedLifecycleObjectType(), lifecycleMap))
-	}
-	return types.ListValueMust(types.ObjectType{AttrTypes: deprecatedLifecycleObjectType()}, lifecyclesList)
 }
 
 func flattenLifecyclesForDatasource(requestedLifecycles []*lifecycles.Lifecycle) types.List {
@@ -144,32 +121,6 @@ func flattenPhasesForDataSource(goPhases []*lifecycles.Phase) types.List {
 	return types.ListValueMust(types.ObjectType{AttrTypes: attributeTypes}, phasesList)
 }
 
-func deprecatedFlattenPhasesForDataSource(goPhases []*lifecycles.Phase) types.List {
-	var deprecatedAttributeTypes = deprecatedGetPhaseAttrTypes()
-	if goPhases == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: deprecatedAttributeTypes})
-	}
-	phasesList := make([]attr.Value, 0, len(goPhases))
-
-	for _, goPhase := range goPhases {
-		attrs := map[string]attr.Value{
-			"id":                                    types.StringValue(goPhase.ID),
-			"name":                                  types.StringValue(goPhase.Name),
-			"automatic_deployment_targets":          util.FlattenStringList(goPhase.AutomaticDeploymentTargets),
-			"optional_deployment_targets":           util.FlattenStringList(goPhase.OptionalDeploymentTargets),
-			"minimum_environments_before_promotion": types.Int64Value(int64(goPhase.MinimumEnvironmentsBeforePromotion)),
-			"is_optional_phase":                     types.BoolValue(goPhase.IsOptionalPhase),
-			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
-			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, deprecatedFlattenRetention(goPhase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
-			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, deprecatedFlattenRetention(goPhase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
-			"release_retention_with_strategy":       util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetention(goPhase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})),
-			"tentacle_retention_with_strategy":      util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetention(goPhase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionAttrTypes()})),
-		}
-		phasesList = append(phasesList, types.ObjectValueMust(deprecatedAttributeTypes, attrs))
-	}
-	return types.ListValueMust(types.ObjectType{AttrTypes: deprecatedAttributeTypes}, phasesList)
-}
-
 func lifecycleObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":                               types.StringType,
@@ -177,20 +128,6 @@ func lifecycleObjectType() map[string]attr.Type {
 		"name":                             types.StringType,
 		"description":                      types.StringType,
 		"phase":                            types.ListType{ElemType: types.ObjectType{AttrTypes: phaseObjectType()}},
-		"release_retention_with_strategy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
-		"tentacle_retention_with_strategy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
-	}
-}
-
-func deprecatedLifecycleObjectType() map[string]attr.Type {
-	return map[string]attr.Type{
-		"id":                               types.StringType,
-		"space_id":                         types.StringType,
-		"name":                             types.StringType,
-		"description":                      types.StringType,
-		"phase":                            types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedPhaseObjectType()}},
-		"release_retention_policy":         types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
-		"tentacle_retention_policy":        types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
 		"release_retention_with_strategy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
 		"tentacle_retention_with_strategy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
 	}
@@ -209,34 +146,11 @@ func phaseObjectType() map[string]attr.Type {
 		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
 	}
 }
-func deprecatedPhaseObjectType() map[string]attr.Type {
-	return map[string]attr.Type{
-		"id":                                    types.StringType,
-		"name":                                  types.StringType,
-		"automatic_deployment_targets":          types.ListType{ElemType: types.StringType},
-		"optional_deployment_targets":           types.ListType{ElemType: types.StringType},
-		"minimum_environments_before_promotion": types.Int64Type,
-		"is_optional_phase":                     types.BoolType,
-		"is_priority_phase":                     types.BoolType,
-		"release_retention_policy":              types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
-		"tentacle_retention_policy":             types.ListType{ElemType: types.ObjectType{AttrTypes: deprecatedRetentionObjectType()}},
-		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
-		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: retentionObjectType()}},
-	}
-}
 
 func retentionObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"strategy":         types.StringType,
 		"quantity_to_keep": types.Int64Type,
 		"unit":             types.StringType,
-	}
-}
-
-func deprecatedRetentionObjectType() map[string]attr.Type {
-	return map[string]attr.Type{
-		"quantity_to_keep":    types.Int64Type,
-		"should_keep_forever": types.BoolType,
-		"unit":                types.StringType,
 	}
 }
