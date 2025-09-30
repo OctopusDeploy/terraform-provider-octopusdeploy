@@ -3,8 +3,6 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -15,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"strings"
 )
 
 type lifecycleTypeResource struct {
@@ -40,8 +39,7 @@ type lifecycleTypeResourceModel struct {
 }
 
 func NewLifecycleResource() resource.Resource {
-	allowDeprecatedRetention := true
-	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
+	return &lifecycleTypeResource{allowDeprecatedRetention: schemas.AllowDeprecatedRetentionFeatureFlag}
 }
 
 func (r *lifecycleTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -69,11 +67,13 @@ func (r *lifecycleTypeResource) Configure(_ context.Context, req resource.Config
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data *lifecycleTypeResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	var onlyDeprecatedRetentionIsUsed = false
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
 	var initialDeprecatedRetentionSetting = ListNullDeprecatedRetention
-
 	if r.allowDeprecatedRetention {
 		ValidateRetentionBlocksUsed(data, &resp.Diagnostics, r.onlyDeprecatedRetentionIsSupportedByServer)
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
@@ -81,10 +81,6 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 			initialRetentionWithStrategySetting = ListNullRetentionWithStrategy
 			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
-	}
-
-	if resp.Diagnostics.HasError() {
-		return
 	}
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := SetDeprecatedDefaultRetention(data, initialDeprecatedRetentionSetting)
 	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, initialRetentionWithStrategySetting)
@@ -114,8 +110,14 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *lifecycleTypeResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-	var onlyDeprecatedRetentionIsUsed bool
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
+	var onlyDeprecatedRetentionIsUsed bool
+
+	//create one function which sets deprecated default retention and outputs
 	var initialDeprecatedRetentionSetting = ListNullDeprecatedRetention
 	if r.allowDeprecatedRetention {
 		ValidateRetentionBlocksUsed(data, &resp.Diagnostics, r.onlyDeprecatedRetentionIsSupportedByServer)
@@ -125,10 +127,8 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
 	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := SetDeprecatedDefaultRetention(data, initialDeprecatedRetentionSetting)
+
 	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, initialRetentionWithStrategySetting)
 
 	lifecycle, err := lifecycles.GetByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString())
@@ -152,6 +152,9 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	var onlyDeprecatedRetentionIsUsed bool
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
@@ -164,10 +167,6 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
 	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := SetDeprecatedDefaultRetention(data, initialDeprecatedRetentionSetting)
 	hasUserDefinedReleaseRetentionWithStrategy, hasUserDefinedTentacleRetentionWithStrategy := setDefaultRetentionWithStrategy(data, initialRetentionWithStrategySetting)
 
@@ -226,12 +225,6 @@ func removeDefaultRetentionWithStrategyFromUnsetBlocks(data *lifecycleTypeResour
 	if !hasUserDefinedTentacleRetentionWithStrategy {
 		data.TentacleRetentionWithStrategy = ListNullRetentionWithStrategy
 	}
-	//if !hasUserDefinedReleaseRetentionWithStrategy && data.ReleaseRetentionWithStrategy.Equal(initialRetentionWithStrategySetting) {
-	//	data.ReleaseRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
-	//}
-	//if !hasUserDefinedTentacleRetentionWithStrategy && data.TentacleRetentionWithStrategy.Equal(initialRetentionWithStrategySetting) {
-	//	data.TentacleRetentionWithStrategy = types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})
-	//}
 }
 
 func attributeIsUsed(attribute types.List) bool {

@@ -22,6 +22,8 @@ import (
 
 var _ EntitySchema = LifecycleSchema{}
 
+var AllowDeprecatedRetentionFeatureFlag = true
+
 type LifecycleSchema struct {
 	AllowDeprecatedRetention bool
 }
