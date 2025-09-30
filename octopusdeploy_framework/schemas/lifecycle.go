@@ -22,7 +22,9 @@ import (
 
 var _ EntitySchema = LifecycleSchema{}
 
-type LifecycleSchema struct{}
+type LifecycleSchema struct {
+	AllowDeprecatedRetention bool
+}
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
@@ -40,9 +42,9 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
 		Blocks: map[string]resourceSchema.Block{
-			"phase":                            getResourcePhaseBlockSchema(),
-			"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(),
-			"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(),
+			"phase":                            getResourcePhaseBlockSchema(l.AllowDeprecatedRetention),
+			"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(l.AllowDeprecatedRetention),
+			"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(l.AllowDeprecatedRetention),
 			"release_retention_with_strategy":  getResourceRetentionWithStrategyBlockSchema(),
 			"tentacle_retention_with_strategy": getResourceRetentionWithStrategyBlockSchema(),
 		},
@@ -64,7 +66,7 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 	}
 }
 
-func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
+func getResourcePhaseBlockSchema(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines a phase in the lifecycle.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -105,8 +107,8 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 			},
 			Blocks: map[string]resourceSchema.Block{
-				"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(),
-				"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(),
+				"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention),
+				"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention),
 				"release_retention_with_strategy":  getResourceRetentionWithStrategyBlockSchema(),
 				"tentacle_retention_with_strategy": getResourceRetentionWithStrategyBlockSchema(),
 			},

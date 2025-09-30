@@ -20,7 +20,7 @@ import (
 type lifecycleTypeResource struct {
 	*Config
 	onlyDeprecatedRetentionIsSupportedByServer bool
-	UseDeprecatedRetention                     bool
+	allowDeprecatedRetention                   bool
 }
 
 var _ resource.Resource = &lifecycleTypeResource{}
@@ -40,8 +40,8 @@ type lifecycleTypeResourceModel struct {
 }
 
 func NewLifecycleResource() resource.Resource {
-	UseDeprecatedRetentionFeatureFlag := true
-	return &lifecycleTypeResource{UseDeprecatedRetention: UseDeprecatedRetentionFeatureFlag}
+	allowDeprecatedRetention := true
+	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
 }
 
 func (r *lifecycleTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -56,13 +56,12 @@ func (r *lifecycleTypeResource) Metadata(_ context.Context, req resource.Metadat
 }
 
 func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schemas.LifecycleSchema{}.GetResourceSchema()
+	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: r.allowDeprecatedRetention}.GetResourceSchema()
 }
 
 func (r *lifecycleTypeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	r.Config = resourceConfiguration(req, resp)
 	if r.Config != nil {
-		//r.onlyDeprecatedRetentionIsSupportedByServer = true
 		r.onlyDeprecatedRetentionIsSupportedByServer = !r.Config.IsVersionSameOrGreaterThan("2025.3") // this method always returns true if running on the local
 	}
 }
@@ -71,10 +70,11 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	var data *lifecycleTypeResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	var onlyDeprecatedRetentionIsUsed bool
+	var onlyDeprecatedRetentionIsUsed = false
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
 	var initialDeprecatedRetentionSetting = ListNullDeprecatedRetention
-	if r.UseDeprecatedRetention {
+
+	if r.allowDeprecatedRetention {
 		ValidateRetentionBlocksUsed(data, &resp.Diagnostics, r.onlyDeprecatedRetentionIsSupportedByServer)
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {
@@ -117,7 +117,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 	var onlyDeprecatedRetentionIsUsed bool
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
 	var initialDeprecatedRetentionSetting = ListNullDeprecatedRetention
-	if r.UseDeprecatedRetention {
+	if r.allowDeprecatedRetention {
 		ValidateRetentionBlocksUsed(data, &resp.Diagnostics, r.onlyDeprecatedRetentionIsSupportedByServer)
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {
@@ -156,7 +156,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 	var onlyDeprecatedRetentionIsUsed bool
 	var initialRetentionWithStrategySetting = flattenRetentionWithStrategy(core.SpaceDefaultRetentionPeriod())
 	var initialDeprecatedRetentionSetting = ListNullDeprecatedRetention
-	if r.UseDeprecatedRetention {
+	if r.allowDeprecatedRetention {
 		ValidateRetentionBlocksUsed(data, &resp.Diagnostics, r.onlyDeprecatedRetentionIsSupportedByServer)
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {

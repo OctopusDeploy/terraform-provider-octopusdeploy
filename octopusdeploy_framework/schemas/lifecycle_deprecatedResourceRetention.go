@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-func DeprecatedGetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
+func DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		DeprecationMessage: "This block will deprecate when octopus 2025.2 is no longer supported. After upgrading to octopus 2025.3 or higher, please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
@@ -42,7 +42,7 @@ func DeprecatedGetResourceRetentionBlockSchema() resourceSchema.ListNestedBlock 
 					Build(),
 			},
 			Validators: []validator.Object{
-				deprecatedRetentionValidator{},
+				deprecatedRetentionValidator{allowDeprecatedRetention: allowDeprecatedRetention},
 			},
 		},
 		Validators: []validator.List{
@@ -64,7 +64,9 @@ func DeprecatedGetRetentionAttribute() datasourceSchema.ListNestedAttribute {
 	}
 }
 
-type deprecatedRetentionValidator struct{}
+type deprecatedRetentionValidator struct {
+	allowDeprecatedRetention bool
+}
 
 func (v deprecatedRetentionValidator) Description(ctx context.Context) string {
 	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
@@ -85,6 +87,12 @@ func (v deprecatedRetentionValidator) ValidateObject(ctx context.Context, req va
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if !v.allowDeprecatedRetention {
+		resp.Diagnostics.AddError(
+			"release_retention_policy and tentacle_retention_policy are deprecated.",
+			"Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.")
 	}
 
 	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
