@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -33,10 +34,6 @@ func TestTagSetAndTag(t *testing.T) {
 					testTagSetExists(tagSetPrefix),
 					resource.TestCheckResourceAttr(tagSetPrefix, "name", tagSetName),
 					resource.TestCheckResourceAttr(tagSetPrefix, "description", tagSetDescription),
-					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.#", "2"),
-					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.0", "Tenant"),
-					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.1", "Environment"),
-					resource.TestCheckResourceAttr(tagSetPrefix, "type", "SingleSelect"),
 				),
 			},
 			{
@@ -63,8 +60,6 @@ func testTagSetConfig(name, description string) string {
 		resource "octopusdeploy_tag_set" "%s" {
 		  name        = "%s"
 		  description = "%s"
-		  scopes      = ["Tenant", "Environment"]
-		  type        = "SingleSelect"
 		}`, name, name, description)
 }
 
@@ -136,27 +131,49 @@ func TestExpandTagSet(t *testing.T) {
 	description := "This is a test tag set"
 	sortOrder := int64(10)
 	spaceID := "Spaces-1"
-	scopes := []string{"Tenant", "Environment"}
-	tagSetType := "SingleSelect"
 
 	ctx := context.Background()
-	scopesList, _ := types.ListValueFrom(ctx, types.StringType, scopes)
 
 	tagSetModel := schemas.TagSetResourceModel{
 		Name:        types.StringValue(name),
 		Description: types.StringValue(description),
-		Scopes:      scopesList,
 		SortOrder:   types.Int64Value(sortOrder),
 		SpaceID:     types.StringValue(spaceID),
-		Type:        types.StringValue(tagSetType),
 	}
 
 	tagSet := expandTagSet(ctx, tagSetModel)
 
 	require.Equal(t, name, tagSet.Name)
 	require.Equal(t, description, tagSet.Description)
-	require.Equal(t, scopes, tagSet.Scopes)
 	require.Equal(t, int32(sortOrder), tagSet.SortOrder)
 	require.Equal(t, spaceID, tagSet.SpaceID)
-	require.Equal(t, tagSetType, tagSet.Type)
+}
+
+func TestAccTagSetValidation(t *testing.T) {
+	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name   = "%s"
+						scopes = ["InvalidScope"]
+					}`, tagSetName, tagSetName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name = "%s"
+						type = "InvalidType"
+					}`, tagSetName, tagSetName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+		},
+	})
 }

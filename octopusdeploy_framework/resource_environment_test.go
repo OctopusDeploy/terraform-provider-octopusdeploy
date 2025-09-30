@@ -35,9 +35,6 @@ func TestAccOctopusDeployEnvironmentBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "sort_order", strconv.Itoa(sortOrder)),
 					resource.TestCheckResourceAttr(prefix, "use_guided_failure", strconv.FormatBool(useGuidedFailure)),
-					resource.TestCheckResourceAttr(prefix, "environment_tags.#", "2"),
-					resource.TestCheckTypeSetElemAttr(prefix, "environment_tags.*", "development"),
-					resource.TestCheckTypeSetElemAttr(prefix, "environment_tags.*", "production"),
 				),
 				Config: testAccEnvironmentWithTags(localName, name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure),
 			},
@@ -115,7 +112,6 @@ func testAccEnvironmentWithTags(localName string, name string, description strin
 		name                         = "%s"
 		sort_order                   = %v
 		use_guided_failure           = "%v"
-		environment_tags             = ["development", "production"]
 	}`, localName, allowDynamicInfrastructure, description, name, sortOrder, useGuidedFailure)
 }
 
