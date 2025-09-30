@@ -28,6 +28,21 @@ type LifecycleSchema struct {
 	AllowDeprecatedRetention bool
 }
 
+func getRetentionBlocks(allowDeprecatedRetention bool, includesPhaseBlock bool) map[string]resourceSchema.Block {
+	blocks := map[string]resourceSchema.Block{
+		"release_retention_with_strategy":  getResourceRetentionBlockSchema(),
+		"tentacle_retention_with_strategy": getResourceRetentionBlockSchema(),
+	}
+	if allowDeprecatedRetention {
+		blocks["release_retention_policy"] = DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention)
+		blocks["tentacle_retention_policy"] = DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention)
+	}
+	if includesPhaseBlock {
+		blocks["phase"] = getResourcePhaseBlockSchema(allowDeprecatedRetention)
+	}
+	return blocks
+}
+
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
 		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy." +
@@ -43,13 +58,7 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 			"name":        util.ResourceString().Required().Description("The name of this resource.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
-		Blocks: map[string]resourceSchema.Block{
-			"phase":                            getResourcePhaseBlockSchema(l.AllowDeprecatedRetention),
-			"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(l.AllowDeprecatedRetention),
-			"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(l.AllowDeprecatedRetention),
-			"release_retention_with_strategy":  getResourceRetentionBlockSchema(),
-			"tentacle_retention_with_strategy": getResourceRetentionBlockSchema(),
-		},
+		Blocks: getRetentionBlocks(l.AllowDeprecatedRetention, true),
 	}
 }
 
@@ -63,7 +72,7 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
 			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
 			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
-			"lifecycles":   getLifecyclesAttribute(),
+			"lifecycles":   util.Ternary(l.AllowDeprecatedRetention, getDeprecatedLifecyclesAttribute(), getLifecyclesAttribute()),
 		},
 	}
 }
@@ -108,12 +117,7 @@ func getResourcePhaseBlockSchema(allowDeprecatedRetention bool) resourceSchema.L
 					PlanModifiers(boolplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
-			Blocks: map[string]resourceSchema.Block{
-				"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention),
-				"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention),
-				"release_retention_with_strategy":  getResourceRetentionBlockSchema(),
-				"tentacle_retention_with_strategy": getResourceRetentionBlockSchema(),
-			},
+			Blocks: getRetentionBlocks(allowDeprecatedRetention, false),
 		},
 	}
 }
@@ -129,10 +133,49 @@ func getLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
 				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
 				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
 				"phase":                            getPhasesAttribute(),
-				"release_retention_policy":         DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
-				"tentacle_retention_policy":        DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
 				"release_retention_with_strategy":  getRetentionAttribute(),
 				"tentacle_retention_with_strategy": getRetentionAttribute(),
+			},
+		},
+	}
+}
+
+func getDeprecatedLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		Optional: false,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				"id":                               util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
+				"space_id":                         util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
+				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
+				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
+				"phase":                            getDeprecatedPhasesAttribute(),
+				"release_retention_policy":         DeprecatedGetRetentionAttribute(),
+				"tentacle_retention_policy":        DeprecatedGetRetentionAttribute(),
+				"release_retention_with_strategy":  getRetentionAttribute(),
+				"tentacle_retention_with_strategy": getRetentionAttribute(),
+			},
+		},
+	}
+}
+
+func getDeprecatedPhasesAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				"id":                                    util.DataSourceString().Computed().Description("The ID of the phase.").Build(),
+				"name":                                  util.DataSourceString().Computed().Description("The name of the phase.").Build(),
+				"automatic_deployment_targets":          util.DataSourceList(types.StringType).Computed().Description("The automatic deployment targets for this phase.").Build(),
+				"optional_deployment_targets":           util.DataSourceList(types.StringType).Computed().Description("The optional deployment targets for this phase.").Build(),
+				"minimum_environments_before_promotion": util.DataSourceInt64().Computed().Description("The minimum number of environments before promotion.").Build(),
+				"is_optional_phase":                     util.DataSourceBool().Computed().Description("Whether this phase is optional.").Build(),
+				"is_priority_phase":                     util.DataSourceBool().Computed().Description("Deployments will be prioritized in this phase").Build(),
+				"release_retention_policy":              DeprecatedGetRetentionAttribute(),
+				"tentacle_retention_policy":             DeprecatedGetRetentionAttribute(),
+				"release_retention_with_strategy":       getRetentionAttribute(),
+				"tentacle_retention_with_strategy":      getRetentionAttribute(),
 			},
 		},
 	}
@@ -150,8 +193,6 @@ func getPhasesAttribute() datasourceSchema.ListNestedAttribute {
 				"minimum_environments_before_promotion": util.DataSourceInt64().Computed().Description("The minimum number of environments before promotion.").Build(),
 				"is_optional_phase":                     util.DataSourceBool().Computed().Description("Whether this phase is optional.").Build(),
 				"is_priority_phase":                     util.DataSourceBool().Computed().Description("Deployments will be prioritized in this phase").Build(),
-				"release_retention_policy":              DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
-				"tentacle_retention_policy":             DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
 				"release_retention_with_strategy":       getRetentionAttribute(),
 				"tentacle_retention_with_strategy":      getRetentionAttribute(),
 			},
