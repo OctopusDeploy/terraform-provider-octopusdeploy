@@ -211,6 +211,7 @@ func TestAccLifecycle_WithPhase_InheritingRetentionPolicies(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
+				Config: lifecycle_withBasicPhase(lifecycleName, phaseName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -219,9 +220,9 @@ func TestAccLifecycle_WithPhase_InheritingRetentionPolicies(t *testing.T) {
 					//check that the phase retention policies remain empty so will inherit their policies from elsewhere
 					resource.TestCheckResourceAttr(lifecycleResource, "phase.0.release_retention_policy.#", "0"),
 					resource.TestCheckResourceAttr(lifecycleResource, "phase.0.tentacle_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(lifecycleResource, "phase.0.release_retention_with_strategy.#", "0"),
+					resource.TestCheckResourceAttr(lifecycleResource, "phase.0.tentacle_retention_with_strategy.#", "0"),
 				),
-
-				Config: lifecycle_withBasicPhase(lifecycleName, phaseName),
 			},
 		},
 	})
