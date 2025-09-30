@@ -47,8 +47,8 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 			"phase":                            getResourcePhaseBlockSchema(l.AllowDeprecatedRetention),
 			"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(l.AllowDeprecatedRetention),
 			"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(l.AllowDeprecatedRetention),
-			"release_retention_with_strategy":  getResourceRetentionWithStrategyBlockSchema(),
-			"tentacle_retention_with_strategy": getResourceRetentionWithStrategyBlockSchema(),
+			"release_retention_with_strategy":  getResourceRetentionBlockSchema(),
+			"tentacle_retention_with_strategy": getResourceRetentionBlockSchema(),
 		},
 	}
 }
@@ -111,8 +111,8 @@ func getResourcePhaseBlockSchema(allowDeprecatedRetention bool) resourceSchema.L
 			Blocks: map[string]resourceSchema.Block{
 				"release_retention_policy":         DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention),
 				"tentacle_retention_policy":        DeprecatedGetResourceRetentionBlockSchema(allowDeprecatedRetention),
-				"release_retention_with_strategy":  getResourceRetentionWithStrategyBlockSchema(),
-				"tentacle_retention_with_strategy": getResourceRetentionWithStrategyBlockSchema(),
+				"release_retention_with_strategy":  getResourceRetentionBlockSchema(),
+				"tentacle_retention_with_strategy": getResourceRetentionBlockSchema(),
 			},
 		},
 	}
@@ -131,8 +131,8 @@ func getLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
 				"phase":                            getPhasesAttribute(),
 				"release_retention_policy":         DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
 				"tentacle_retention_policy":        DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
-				"release_retention_with_strategy":  getRetentionWithStrategyAttribute(),
-				"tentacle_retention_with_strategy": getRetentionWithStrategyAttribute(),
+				"release_retention_with_strategy":  getRetentionAttribute(),
+				"tentacle_retention_with_strategy": getRetentionAttribute(),
 			},
 		},
 	}
@@ -152,14 +152,14 @@ func getPhasesAttribute() datasourceSchema.ListNestedAttribute {
 				"is_priority_phase":                     util.DataSourceBool().Computed().Description("Deployments will be prioritized in this phase").Build(),
 				"release_retention_policy":              DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
 				"tentacle_retention_policy":             DeprecatedGetRetentionAttribute(), //delete after release_retention_policy deprecation
-				"release_retention_with_strategy":       getRetentionWithStrategyAttribute(),
-				"tentacle_retention_with_strategy":      getRetentionWithStrategyAttribute(),
+				"release_retention_with_strategy":       getRetentionAttribute(),
+				"tentacle_retention_with_strategy":      getRetentionAttribute(),
 			},
 		},
 	}
 }
 
-func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBlock {
+func getResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -185,7 +185,7 @@ func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBloc
 					Build(),
 			},
 			Validators: []validator.Object{
-				retentionWithStrategyValidator{},
+				retentionValidator{},
 			},
 		},
 		Validators: []validator.List{
@@ -194,15 +194,15 @@ func getResourceRetentionWithStrategyBlockSchema() resourceSchema.ListNestedBloc
 	}
 }
 
-type retentionWithStrategyValidator struct{}
+type retentionValidator struct{}
 
-func (v retentionWithStrategyValidator) Description(ctx context.Context) string {
+func (v retentionValidator) Description(ctx context.Context) string {
 	return "ensures only a count strategy has a quantity_to_keep and unit"
 }
-func (v retentionWithStrategyValidator) MarkdownDescription(ctx context.Context) string {
+func (v retentionValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
-func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v retentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionStrategy struct {
 		Strategy       types.String `tfsdk:"strategy"`
 		QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
@@ -252,7 +252,7 @@ func (v retentionWithStrategyValidator) ValidateObject(ctx context.Context, req 
 	}
 }
 
-func getRetentionWithStrategyAttribute() datasourceSchema.ListNestedAttribute {
+func getRetentionAttribute() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
