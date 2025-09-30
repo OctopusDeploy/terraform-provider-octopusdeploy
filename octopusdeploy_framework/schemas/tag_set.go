@@ -14,33 +14,15 @@ import (
 const TagSetDataSourceName = "tag_sets"
 const TagSetResourceName = "tag_set"
 
-var tagSetScopeNames = struct {
-	Tenant      string
-	Environment string
-}{
-	Tenant:      "Tenant",
-	Environment: "Environment",
-}
-
 var tagSetScopes = []string{
-	tagSetScopeNames.Tenant,
-	tagSetScopeNames.Environment,
-}
-
-var tagSetTypeNames = struct {
-	SingleSelect string
-	MultiSelect  string
-	FreeText     string
-}{
-	SingleSelect: "SingleSelect",
-	MultiSelect:  "MultiSelect",
-	FreeText:     "FreeText",
+	"Tenant",
+	"Environment",
 }
 
 var tagSetTypes = []string{
-	tagSetTypeNames.SingleSelect,
-	tagSetTypeNames.MultiSelect,
-	tagSetTypeNames.FreeText,
+	"SingleSelect",
+	"MultiSelect",
+	"FreeText",
 }
 
 type TagSetSchema struct{}

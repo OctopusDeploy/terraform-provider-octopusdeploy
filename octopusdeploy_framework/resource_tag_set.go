@@ -132,18 +132,25 @@ func expandTagSet(ctx context.Context, model schemas.TagSetResourceModel) *tagse
 	if !model.Scopes.IsNull() && len(model.Scopes.Elements()) > 0 {
 		scopes := make([]string, 0, len(model.Scopes.Elements()))
 		model.Scopes.ElementsAs(ctx, &scopes, false)
-		tagSet.Scopes = scopes
+		tagSet.Scopes = make([]tagsets.TagSetScope, 0, len(scopes))
+		for _, scope := range scopes {
+			tagSet.Scopes = append(tagSet.Scopes, tagsets.TagSetScope(scope))
+		}
 	}
 
 	if !model.Type.IsNull() && model.Type.ValueString() != "" {
-		tagSet.Type = model.Type.ValueString()
+		tagSet.Type = tagsets.TagSetType(model.Type.ValueString())
 	}
 
 	return tagSet
 }
 
 func flattenTagSet(ctx context.Context, tagSet *tagsets.TagSet) schemas.TagSetResourceModel {
-	scopes, _ := types.ListValueFrom(ctx, types.StringType, tagSet.Scopes)
+	scopeStrings := make([]string, len(tagSet.Scopes))
+	for i, scope := range tagSet.Scopes {
+		scopeStrings[i] = string(scope)
+	}
+	scopes, _ := types.ListValueFrom(ctx, types.StringType, scopeStrings)
 
 	model := schemas.TagSetResourceModel{
 		Name:        types.StringValue(tagSet.Name),
@@ -151,7 +158,7 @@ func flattenTagSet(ctx context.Context, tagSet *tagsets.TagSet) schemas.TagSetRe
 		Scopes:      scopes,
 		SortOrder:   types.Int64Value(int64(tagSet.SortOrder)),
 		SpaceID:     types.StringValue(tagSet.SpaceID),
-		Type:        types.StringValue(tagSet.Type),
+		Type:        types.StringValue(string(tagSet.Type)),
 	}
 	model.ID = types.StringValue(tagSet.ID)
 	return model

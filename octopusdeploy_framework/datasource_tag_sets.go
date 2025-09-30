@@ -42,10 +42,16 @@ func (t *tagSetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
+	scopeStrings := util.ExpandStringList(data.Scopes)
+	scopes := make([]tagsets.TagSetScope, len(scopeStrings))
+	for i, scope := range scopeStrings {
+		scopes[i] = tagsets.TagSetScope(scope)
+	}
+
 	query := tagsets.TagSetsQuery{
 		IDs:         util.GetIds(data.IDs),
 		PartialName: data.PartialName.ValueString(),
-		Scopes:      util.ExpandStringList(data.Scopes),
+		Scopes:      scopes,
 		Skip:        int(data.Skip.ValueInt64()),
 		Take:        int(data.Take.ValueInt64()),
 	}
@@ -90,7 +96,11 @@ func flattenTagSets(ctx context.Context, tagSets []*tagsets.TagSet) types.List {
 			})
 		}
 
-		scopes, _ := types.ListValueFrom(ctx, types.StringType, tagSet.Scopes)
+		scopeStrings := make([]string, len(tagSet.Scopes))
+		for k, scope := range tagSet.Scopes {
+			scopeStrings[k] = string(scope)
+		}
+		scopes, _ := types.ListValueFrom(ctx, types.StringType, scopeStrings)
 
 		tfList[i] = types.ObjectValueMust(schemas.GetTagSetAttrTypes(), map[string]attr.Value{
 			"id":          types.StringValue(tagSet.ID),
@@ -100,7 +110,7 @@ func flattenTagSets(ctx context.Context, tagSets []*tagsets.TagSet) types.List {
 			"sort_order":  types.Int64Value(int64(tagSet.SortOrder)),
 			"space_id":    types.StringValue(tagSet.SpaceID),
 			"tags":        types.ListValueMust(types.ObjectType{AttrTypes: schemas.GetTagAttrTypes()}, tags),
-			"type":        types.StringValue(tagSet.Type),
+			"type":        types.StringValue(string(tagSet.Type)),
 		})
 	}
 
