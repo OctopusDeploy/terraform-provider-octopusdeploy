@@ -79,7 +79,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {
 			initialRetentionWithStrategySetting = ListNullRetentionWithStrategy
-			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
+			initialDeprecatedRetentionSetting = FlattenDeprecatedRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
 	}
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := SetDeprecatedDefaultRetention(data, initialDeprecatedRetentionSetting)
@@ -124,7 +124,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {
 			initialRetentionWithStrategySetting = ListNullRetentionWithStrategy
-			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
+			initialDeprecatedRetentionSetting = FlattenDeprecatedRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
 	}
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := SetDeprecatedDefaultRetention(data, initialDeprecatedRetentionSetting)
@@ -164,7 +164,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 		onlyDeprecatedRetentionIsUsed = IsOnlyDeprecatedRetentionUsed(data, r.onlyDeprecatedRetentionIsSupportedByServer)
 		if onlyDeprecatedRetentionIsUsed {
 			initialRetentionWithStrategySetting = ListNullRetentionWithStrategy
-			initialDeprecatedRetentionSetting = DeprecatedFlattenRetention(core.CountBasedRetentionPeriod(30, "Days"))
+			initialDeprecatedRetentionSetting = FlattenDeprecatedRetention(core.CountBasedRetentionPeriod(30, "Days"))
 		}
 	}
 	hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := SetDeprecatedDefaultRetention(data, initialDeprecatedRetentionSetting)
@@ -259,8 +259,8 @@ func flattenLifecycleResource(lifecycle *lifecycles.Lifecycle, onlyDeprecatedRet
 			Name:                        types.StringValue(lifecycle.Name),
 			Description:                 types.StringValue(lifecycle.Description),
 			Phase:                       DeprecatedFlattenPhases(lifecycle.Phases),
-			DeprecatedReleaseRetention:  DeprecatedFlattenRetention(lifecycle.ReleaseRetentionPolicy),
-			DeprecatedTentacleRetention: DeprecatedFlattenRetention(lifecycle.TentacleRetentionPolicy),
+			DeprecatedReleaseRetention:  FlattenDeprecatedRetention(lifecycle.ReleaseRetentionPolicy),
+			DeprecatedTentacleRetention: FlattenDeprecatedRetention(lifecycle.TentacleRetentionPolicy),
 		}
 	} else {
 		flattenedLifecycle = &lifecycleTypeResourceModel{
@@ -307,7 +307,7 @@ func flattenPhases(goPhases []*lifecycles.Phase) types.List {
 func flattenRetentionWithStrategy(goRetention *core.RetentionPeriod) types.List {
 	var attributeTypes = getRetentionWithStrategyAttrTypes()
 	if goRetention == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: attributeTypes})
+		return ListNullRetentionWithStrategy
 	}
 	return types.ListValueMust(
 		types.ObjectType{AttrTypes: attributeTypes},

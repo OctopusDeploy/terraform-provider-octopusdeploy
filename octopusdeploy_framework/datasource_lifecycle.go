@@ -89,8 +89,8 @@ func flattenLifecyclesForDatasource(requestedLifecycles []*lifecycles.Lifecycle)
 			"name":                             types.StringValue(lifecycle.Name),
 			"description":                      types.StringValue(lifecycle.Description),
 			"phase":                            flattenPhasesForDataSource(lifecycle.Phases),
-			"release_retention_policy":         DeprecatedFlattenRetention(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_policy":        DeprecatedFlattenRetention(lifecycle.TentacleRetentionPolicy),
+			"release_retention_policy":         FlattenDeprecatedRetention(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_policy":        FlattenDeprecatedRetention(lifecycle.TentacleRetentionPolicy),
 			"release_retention_with_strategy":  flattenRetentionWithStrategy(lifecycle.ReleaseRetentionPolicy),
 			"tentacle_retention_with_strategy": flattenRetentionWithStrategy(lifecycle.TentacleRetentionPolicy),
 		}
@@ -115,8 +115,8 @@ func flattenPhasesForDataSource(goPhases []*lifecycles.Phase) types.List {
 			"minimum_environments_before_promotion": types.Int64Value(int64(goPhase.MinimumEnvironmentsBeforePromotion)),
 			"is_optional_phase":                     types.BoolValue(goPhase.IsOptionalPhase),
 			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
-			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, DeprecatedFlattenRetention(goPhase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
-			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, DeprecatedFlattenRetention(goPhase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
+			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, FlattenDeprecatedRetention(goPhase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
+			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, FlattenDeprecatedRetention(goPhase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
 			"release_retention_with_strategy":       util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetentionWithStrategy(goPhase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})),
 			"tentacle_retention_with_strategy":      util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetentionWithStrategy(goPhase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()})),
 		}

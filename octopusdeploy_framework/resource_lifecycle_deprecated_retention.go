@@ -90,8 +90,8 @@ func DeprecatedFlattenPhases(goPhases []*lifecycles.Phase) types.List {
 			"minimum_environments_before_promotion": types.Int64Value(int64(goPhase.MinimumEnvironmentsBeforePromotion)),
 			"is_optional_phase":                     types.BoolValue(goPhase.IsOptionalPhase),
 			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
-			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, DeprecatedFlattenRetention(goPhase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
-			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, DeprecatedFlattenRetention(goPhase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
+			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, FlattenDeprecatedRetention(goPhase.ReleaseRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
+			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, FlattenDeprecatedRetention(goPhase.TentacleRetentionPolicy), types.ListNull(types.ObjectType{AttrTypes: DeprecatedGetRetentionAttTypes()})),
 			"release_retention_with_strategy":       types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}),
 			"tentacle_retention_with_strategy":      types.ListNull(types.ObjectType{AttrTypes: getRetentionWithStrategyAttrTypes()}),
 		}
@@ -99,10 +99,10 @@ func DeprecatedFlattenPhases(goPhases []*lifecycles.Phase) types.List {
 	}
 	return types.ListValueMust(types.ObjectType{AttrTypes: deprecatedAttributeTypes}, phasesList)
 }
-func DeprecatedFlattenRetention(goRetention *core.RetentionPeriod) types.List {
+func FlattenDeprecatedRetention(goRetention *core.RetentionPeriod) types.List {
 	var deprecatedAttributeTypes = DeprecatedGetRetentionAttTypes()
 	if goRetention == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: deprecatedAttributeTypes})
+		return ListNullDeprecatedRetention
 	}
 	return types.ListValueMust(
 		types.ObjectType{AttrTypes: deprecatedAttributeTypes},
