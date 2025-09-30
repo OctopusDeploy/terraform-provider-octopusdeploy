@@ -129,13 +129,13 @@ func expandTagSet(ctx context.Context, model schemas.TagSetResourceModel) *tagse
 		tagSet.SortOrder = int32(model.SortOrder.ValueInt64())
 	}
 
-	if !model.Scopes.IsNull() {
+	if !model.Scopes.IsNull() && len(model.Scopes.Elements()) > 0 {
 		scopes := make([]string, 0, len(model.Scopes.Elements()))
 		model.Scopes.ElementsAs(ctx, &scopes, false)
 		tagSet.Scopes = scopes
 	}
 
-	if !model.Type.IsNull() {
+	if !model.Type.IsNull() && model.Type.ValueString() != "" {
 		tagSet.Type = model.Type.ValueString()
 	}
 

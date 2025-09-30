@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -65,6 +66,7 @@ func (t TagSetSchema) GetResourceSchema() resourceSchema.Schema {
 				Optional().
 				Computed().
 				Description("The resource scopes this tag set applies to. Valid values are `\"Tenant\"`, `\"Environment\"`.").
+				PlanModifiers(listplanmodifier.UseStateForUnknown()).
 				Validators(listvalidator.ValueStringsAre(stringvalidator.OneOf(tagSetScopes...))).
 				Build(),
 			"sort_order": util.ResourceInt64().
@@ -82,6 +84,7 @@ func (t TagSetSchema) GetResourceSchema() resourceSchema.Schema {
 				Optional().
 				Computed().
 				Description("The type of this tag set. Valid values are `\"SingleSelect\"`, `\"MultiSelect\"`, `\"FreeText\"`.").
+				PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 				Validators(stringvalidator.OneOf(tagSetTypes...)).
 				Build(),
 		},
