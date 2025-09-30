@@ -32,8 +32,9 @@ type lifecycleTypeResourceModel struct {
 	Phase                       types.List   `tfsdk:"phase"`
 	DeprecatedReleaseRetention  types.List   `tfsdk:"release_retention_policy"`
 	DeprecatedTentacleRetention types.List   `tfsdk:"tentacle_retention_policy"`
-	ReleaseRetention            types.List   `tfsdk:"release_retention"`
-	TentacleRetention           types.List   `tfsdk:"tentacle_retention"`
+	ReleaseRetention            types.List   `tfsdk:"release_retention_with_strategy"`
+	TentacleRetention           types.List   `tfsdk:"tentacle_retention_with_strategy"`
+	ID                          types.String `tfsdk:"id"`
 
 	schemas.ResourceModel
 }
