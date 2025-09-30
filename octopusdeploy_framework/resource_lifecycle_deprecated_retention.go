@@ -64,16 +64,18 @@ func IsRetentionWithStrategyInPlan(data *lifecycleTypeResourceModel) bool {
 	}
 	return false
 }
-func IsOnlyDeprecatedRetentionUsed(data *lifecycleTypeResourceModel, onlyDeprecatedRetentionIsSupported bool) bool {
+func IsDeprecatedRetentionUsed(data *lifecycleTypeResourceModel, onlyDeprecatedRetentionIsSupported bool, allowDeprecatedRetention bool) bool {
 	deprecatedRetentionIsInPlan := IsDeprecatedRetentionInPlan(data)
 	if deprecatedRetentionIsInPlan {
 		return true
 	}
+	//if there is no retention strategies
 	if onlyDeprecatedRetentionIsSupported {
 		return true
 	}
 	return false
 }
+
 func DeprecatedFlattenPhases(goPhases []*lifecycles.Phase) types.List {
 	var deprecatedAttributeTypes = GetPhaseAttributeTypes()
 	if goPhases == nil {
@@ -201,7 +203,7 @@ func DeprecatedGetRetentionAttTypes() map[string]attr.Type {
 		"unit":                types.StringType,
 	}
 }
-func ValidateRetentionBlocksUsed(data *lifecycleTypeResourceModel, diag *diag.Diagnostics, onlyDeprecatedRetentionIsSupported bool) {
+func ValidateRetentionBlocksInPlan(data *lifecycleTypeResourceModel, diag *diag.Diagnostics, onlyDeprecatedRetentionIsSupported bool) {
 	retentionWithStrategyIsInPlan := IsRetentionWithStrategyInPlan(data)
 	deprecatedRetentionIsInPlan := IsDeprecatedRetentionInPlan(data)
 	if retentionWithStrategyIsInPlan && deprecatedRetentionIsInPlan {
@@ -211,6 +213,7 @@ func ValidateRetentionBlocksUsed(data *lifecycleTypeResourceModel, diag *diag.Di
 		diag.AddError("retention with strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later.", "")
 	}
 }
+
 func DeprecatedRetentionObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"quantity_to_keep":    types.Int64Type,
