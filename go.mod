@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.5
 
 require (
-	github.com/OctopusDeploy/go-octopusdeploy/v2 v2.82.1-0.20250930044656-0b3dcc3e8d21
+	github.com/OctopusDeploy/go-octopusdeploy/v2 v2.83.0
 	github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200723130312-85980079f637
