@@ -105,13 +105,47 @@ func getResourceSchemaBlocks(allowDeprecatedRetention bool, includesPhaseBlock b
 		blocks["phase"] = getResourceSchemaPhaseBlock(allowDeprecatedRetention)
 	}
 	if allowDeprecatedRetention {
-		blocks["release_retention_policy"] = getResourceSchemaDeprecatedRetentionBlock(allowDeprecatedRetention)
-		blocks["tentacle_retention_policy"] = getResourceSchemaDeprecatedRetentionBlock(allowDeprecatedRetention)
+		blocks["release_retention_policy"] = getDeprecatedResourceSchemaRetentionBlock(allowDeprecatedRetention)
+		blocks["tentacle_retention_policy"] = getDeprecatedResourceSchemaRetentionBlock(allowDeprecatedRetention)
 	}
 	return blocks
 }
 
-func getResourceSchemaDeprecatedRetentionBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
+func getResourceSchemaRetentionBlock() resourceSchema.ListNestedBlock {
+	return resourceSchema.ListNestedBlock{
+		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
+		NestedObject: resourceSchema.NestedBlockObject{
+			Attributes: map[string]resourceSchema.Attribute{
+				"strategy": util.ResourceString().
+					Required().
+					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
+					Description("How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`." +
+						"\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. " +
+						"When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle." +
+						"\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted." +
+						"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept.").
+					Build(),
+				"quantity_to_keep": util.ResourceInt64().
+					Optional().Computed().
+					Validators(int64validator.AtLeast(1)).
+					Description("The number of days/releases to keep.").
+					Build(),
+				"unit": util.ResourceString().
+					Optional().Computed().
+					Validators(stringvalidator.OneOfCaseInsensitive(core.RetentionUnitDays, core.RetentionUnitItems)).
+					Description("The unit of quantity to keep. Valid units are Days or Items.").
+					Build(),
+			},
+			Validators: []validator.Object{
+				resourceSchemaRetentionValidator{},
+			},
+		},
+		Validators: []validator.List{
+			listvalidator.SizeAtMost(1),
+		},
+	}
+}
+func getDeprecatedResourceSchemaRetentionBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		DeprecationMessage: "This block will deprecate when octopus 2025.2 is no longer supported. After upgrading to octopus 2025.3 or higher, please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
@@ -142,6 +176,64 @@ func getResourceSchemaDeprecatedRetentionBlock(allowDeprecatedRetention bool) re
 	}
 }
 
+type resourceSchemaRetentionValidator struct{}
+
+func (v resourceSchemaRetentionValidator) Description(ctx context.Context) string {
+	return "ensures only a count strategy has a quantity_to_keep and unit"
+}
+func (v resourceSchemaRetentionValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+func (v resourceSchemaRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+	var retentionStrategy struct {
+		Strategy       types.String `tfsdk:"strategy"`
+		QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
+		Unit           types.String `tfsdk:"unit"`
+	}
+
+	diags := tfsdk.ValueAs(ctx, req.ConfigValue, &retentionStrategy)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var unitIsPresent = !retentionStrategy.Unit.IsNull()
+	var quantityToKeepIsPresent = !retentionStrategy.QuantityToKeep.IsNull()
+
+	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyCount {
+		if !unitIsPresent {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"unit",
+				"unit must be set when strategy is set to Count.",
+			)
+		}
+		if !quantityToKeepIsPresent {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("quantity_to_keep"),
+				"quantity_to_keep",
+				"quantity_to_keep must be set when strategy is set to Count.",
+			)
+		}
+	}
+	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyForever || retentionStrategy.Strategy.ValueString() == core.RetentionStrategyDefault {
+		if unitIsPresent {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"unit",
+				"unit must not be set when strategy is Forever or Default.",
+			)
+		}
+		if quantityToKeepIsPresent {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("quantity_to_keep"),
+				"quantity_to_keep",
+				"quantity_to_keep must not be set when strategy is Forever or Default.",
+			)
+		}
+	}
+}
+
 type deprecatedRetentionValidator struct {
 	allowDeprecatedRetention bool
 }
@@ -149,11 +241,9 @@ type deprecatedRetentionValidator struct {
 func (v deprecatedRetentionValidator) Description(ctx context.Context) string {
 	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
 }
-
 func (v deprecatedRetentionValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
-
 func (v deprecatedRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
@@ -204,101 +294,6 @@ func (v deprecatedRetentionValidator) ValidateObject(ctx context.Context, req va
 	}
 }
 
-func getResourceSchemaRetentionBlock() resourceSchema.ListNestedBlock {
-	return resourceSchema.ListNestedBlock{
-		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
-		NestedObject: resourceSchema.NestedBlockObject{
-			Attributes: map[string]resourceSchema.Attribute{
-				"strategy": util.ResourceString().
-					Required().
-					Validators(stringvalidator.OneOf(core.RetentionStrategyDefault, core.RetentionStrategyCount, core.RetentionStrategyForever)).
-					Description("How retention will be set. Valid strategies are `Default`, `Forever`, and `Count`. The default value is `Default`." +
-						"\n  - `strategy = \"Default\"`, is used if the retention is set by the space-wide default lifecycle retention policy. " +
-						"When `Default` is used, no other attributes can be set since the specific retention policy is no longer defined within this lifecycle." +
-						"\n  - `strategy = \"Forever\"`, is used if items within this lifecycle should never be deleted." +
-						"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases should be kept.").
-					Build(),
-				"quantity_to_keep": util.ResourceInt64().
-					Optional().Computed().
-					Validators(int64validator.AtLeast(1)).
-					Description("The number of days/releases to keep.").
-					Build(),
-				"unit": util.ResourceString().
-					Optional().Computed().
-					Validators(stringvalidator.OneOfCaseInsensitive(core.RetentionUnitDays, core.RetentionUnitItems)).
-					Description("The unit of quantity to keep. Valid units are Days or Items.").
-					Build(),
-			},
-			Validators: []validator.Object{
-				resourceSchamaRetentionValidator{},
-			},
-		},
-		Validators: []validator.List{
-			listvalidator.SizeAtMost(1),
-		},
-	}
-}
-
-type resourceSchamaRetentionValidator struct{}
-
-func (v resourceSchamaRetentionValidator) Description(ctx context.Context) string {
-	return "ensures only a count strategy has a quantity_to_keep and unit"
-}
-
-func (v resourceSchamaRetentionValidator) MarkdownDescription(ctx context.Context) string {
-	return v.Description(ctx)
-}
-
-func (v resourceSchamaRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
-	var retentionStrategy struct {
-		Strategy       types.String `tfsdk:"strategy"`
-		QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
-		Unit           types.String `tfsdk:"unit"`
-	}
-
-	diags := tfsdk.ValueAs(ctx, req.ConfigValue, &retentionStrategy)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	var unitIsPresent = !retentionStrategy.Unit.IsNull()
-	var quantityToKeepIsPresent = !retentionStrategy.QuantityToKeep.IsNull()
-
-	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyCount {
-		if !unitIsPresent {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("unit"),
-				"unit",
-				"unit must be set when strategy is set to Count.",
-			)
-		}
-		if !quantityToKeepIsPresent {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("quantity_to_keep"),
-				"quantity_to_keep",
-				"quantity_to_keep must be set when strategy is set to Count.",
-			)
-		}
-	}
-	if retentionStrategy.Strategy.ValueString() == core.RetentionStrategyForever || retentionStrategy.Strategy.ValueString() == core.RetentionStrategyDefault {
-		if unitIsPresent {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("unit"),
-				"unit",
-				"unit must not be set when strategy is Forever or Default.",
-			)
-		}
-		if quantityToKeepIsPresent {
-			resp.Diagnostics.AddAttributeError(
-				req.Path.AtName("quantity_to_keep"),
-				"quantity_to_keep",
-				"quantity_to_keep must not be set when strategy is Forever or Default.",
-			)
-		}
-	}
-}
-
 //////////////////
 // DATASOURCE SCHEMA
 
@@ -334,7 +329,6 @@ func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 		},
 	}
 }
-
 func getDeprecatedDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 	var attributes = getDatasourceSchemaLifecycles().NestedObject.Attributes
 	attributes["phase"] = getDeprecatedDatasourceSchemaPhases()
@@ -392,7 +386,6 @@ func getDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
 		},
 	}
 }
-
 func getDeprecatedDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
