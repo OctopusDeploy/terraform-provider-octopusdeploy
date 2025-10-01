@@ -28,15 +28,13 @@ type LifecycleSchema struct {
 	AllowDeprecatedRetention bool
 }
 
-func getRetentionBlocks(allowDeprecatedRetention bool, includesPhaseBlock bool) map[string]resourceSchema.Block {
+func getRetentionBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
 		"release_retention_with_strategy":  getResourceRetentionBlockSchema(),
 		"tentacle_retention_with_strategy": getResourceRetentionBlockSchema(),
 	}
-	if allowDeprecatedRetention {
-	}
 	if includesPhaseBlock {
-		blocks["phase"] = getResourcePhaseBlockSchema(allowDeprecatedRetention)
+		blocks["phase"] = getResourcePhaseBlockSchema()
 	}
 	return blocks
 }
@@ -56,7 +54,7 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 			"name":        util.ResourceString().Required().Description("The name of this resource.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
-		Blocks: getRetentionBlocks(l.AllowDeprecatedRetention, true),
+		Blocks: getRetentionBlocks(true),
 	}
 }
 
@@ -75,7 +73,7 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 	}
 }
 
-func getResourcePhaseBlockSchema(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
+func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines a phase in the lifecycle.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -115,7 +113,7 @@ func getResourcePhaseBlockSchema(allowDeprecatedRetention bool) resourceSchema.L
 					PlanModifiers(boolplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
-			Blocks: getRetentionBlocks(allowDeprecatedRetention, false),
+			Blocks: getRetentionBlocks(false),
 		},
 	}
 }

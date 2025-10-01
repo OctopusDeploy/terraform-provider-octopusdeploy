@@ -15,7 +15,6 @@ import (
 
 type lifecyclesDataSource struct {
 	*Config
-	allowDeprecatedRetention bool
 }
 
 type lifecyclesDataSourceModel struct {
@@ -31,7 +30,7 @@ type lifecyclesDataSourceModel struct {
 var _ datasource.DataSource = &lifecyclesDataSource{}
 
 func NewLifecyclesDataSource() datasource.DataSource {
-	return &lifecyclesDataSource{allowDeprecatedRetention: schemas.AllowDeprecatedRetentionFeatureFlag}
+	return &lifecyclesDataSource{}
 }
 
 func (l *lifecyclesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {

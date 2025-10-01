@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestAccLifecycleRetentionPolicyUpdates(t *testing.T) {
+func TestAccLifecycleRetentionUpdates(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
 
@@ -17,7 +17,7 @@ func TestAccLifecycleRetentionPolicyUpdates(t *testing.T) {
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
-			// 1 create lifecycle without a retention policy
+			// 1 create lifecycle without retention settings
 			{
 				Config: lifecycleBasic(lifecycleName),
 				Check: resource.ComposeTestCheckFunc(
@@ -200,7 +200,7 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 	})
 }
 
-func TestAccLifecycle_WithPhase_InheritingRetentionPolicies(t *testing.T) {
+func TestAccLifecycle_WithPhase_InheritingRetentions(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	phaseName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
