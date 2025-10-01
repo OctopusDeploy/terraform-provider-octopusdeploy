@@ -24,6 +24,9 @@ var _ EntitySchema = LifecycleSchema{}
 
 type LifecycleSchema struct{}
 
+//////////////////
+// RESOURCE SCHEMA
+
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
 		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy.",
@@ -81,6 +84,7 @@ func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
 		},
 	}
 }
+
 func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
 		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(),
@@ -91,6 +95,7 @@ func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.
 	}
 	return blocks
 }
+
 func getResourceSchemaRetentionBlock() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
@@ -131,9 +136,11 @@ type resourceSchamaRetentionValidator struct{}
 func (v resourceSchamaRetentionValidator) Description(ctx context.Context) string {
 	return "ensures only a count strategy has a quantity_to_keep and unit"
 }
+
 func (v resourceSchamaRetentionValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
+
 func (v resourceSchamaRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionStrategy struct {
 		Strategy       types.String `tfsdk:"strategy"`
@@ -184,7 +191,8 @@ func (v resourceSchamaRetentionValidator) ValidateObject(ctx context.Context, re
 	}
 }
 
-// dataSourceSchema
+//////////////////
+// DATASOURCE SCHEMA
 
 func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 	return datasourceSchema.Schema{
@@ -250,5 +258,3 @@ func getDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
 		},
 	}
 }
-
-//Helper Functions
