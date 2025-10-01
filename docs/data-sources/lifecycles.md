@@ -46,10 +46,8 @@ Read-Only:
 - `id` (String) The ID of the lifecycle.
 - `name` (String) The name of the lifecycle.
 - `phase` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--phase))
-- `release_retention_policy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--release_retention_policy))
 - `release_retention_with_strategy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--release_retention_with_strategy))
 - `space_id` (String) The space ID associated with this lifecycle.
-- `tentacle_retention_policy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--tentacle_retention_policy))
 - `tentacle_retention_with_strategy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--tentacle_retention_with_strategy))
 
 <a id="nestedatt--lifecycles--phase"></a>
@@ -64,39 +62,20 @@ Read-Only:
 - `minimum_environments_before_promotion` (Number) The minimum number of environments before promotion.
 - `name` (String) The name of the phase.
 - `optional_deployment_targets` (List of String) The optional deployment targets for this phase.
-- `release_retention_policy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--phase--release_retention_policy))
 - `release_retention_with_strategy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--phase--release_retention_with_strategy))
-- `tentacle_retention_policy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--phase--tentacle_retention_policy))
 - `tentacle_retention_with_strategy` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles--phase--tentacle_retention_with_strategy))
-
-<a id="nestedatt--lifecycles--phase--release_retention_policy"></a>
-### Nested Schema for `lifecycles.phase.release_retention_policy`
-
-Read-Only:
-
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `should_keep_forever` (Boolean) Whether releases should be kept forever.
-- `unit` (String) The unit of time for the retention policy.
-
 
 <a id="nestedatt--lifecycles--phase--release_retention_with_strategy"></a>
 ### Nested Schema for `lifecycles.phase.release_retention_with_strategy`
 
 Read-Only:
 
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `strategy` (String) The retention strategy.
-- `unit` (String) The unit of time for the retention policy.
-
-
-<a id="nestedatt--lifecycles--phase--tentacle_retention_policy"></a>
-### Nested Schema for `lifecycles.phase.tentacle_retention_policy`
-
-Read-Only:
-
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `should_keep_forever` (Boolean) Whether releases should be kept forever.
-- `unit` (String) The unit of time for the retention policy.
+- `quantity_to_keep` (Number) The unit for `quantity_to_keep`. Dismiss when `strategy` is "Forever" or "Default".
+- `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
+  - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
+  - "Forever" indicates releases are never deleted 
+  - "Count" indicates releases are kept according to `unit` and `quantity_to_keep`
+- `unit` (String) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
 
 
 <a id="nestedatt--lifecycles--phase--tentacle_retention_with_strategy"></a>
@@ -104,20 +83,13 @@ Read-Only:
 
 Read-Only:
 
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `strategy` (String) The retention strategy.
-- `unit` (String) The unit of time for the retention policy.
+- `quantity_to_keep` (Number) The unit for `quantity_to_keep`. Dismiss when `strategy` is "Forever" or "Default".
+- `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
+  - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
+  - "Forever" indicates releases are never deleted 
+  - "Count" indicates releases are kept according to `unit` and `quantity_to_keep`
+- `unit` (String) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
 
-
-
-<a id="nestedatt--lifecycles--release_retention_policy"></a>
-### Nested Schema for `lifecycles.release_retention_policy`
-
-Read-Only:
-
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `should_keep_forever` (Boolean) Whether releases should be kept forever.
-- `unit` (String) The unit of time for the retention policy.
 
 
 <a id="nestedatt--lifecycles--release_retention_with_strategy"></a>
@@ -125,19 +97,12 @@ Read-Only:
 
 Read-Only:
 
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `strategy` (String) The retention strategy.
-- `unit` (String) The unit of time for the retention policy.
-
-
-<a id="nestedatt--lifecycles--tentacle_retention_policy"></a>
-### Nested Schema for `lifecycles.tentacle_retention_policy`
-
-Read-Only:
-
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `should_keep_forever` (Boolean) Whether releases should be kept forever.
-- `unit` (String) The unit of time for the retention policy.
+- `quantity_to_keep` (Number) The unit for `quantity_to_keep`. Dismiss when `strategy` is "Forever" or "Default".
+- `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
+  - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
+  - "Forever" indicates releases are never deleted 
+  - "Count" indicates releases are kept according to `unit` and `quantity_to_keep`
+- `unit` (String) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
 
 
 <a id="nestedatt--lifecycles--tentacle_retention_with_strategy"></a>
@@ -145,8 +110,11 @@ Read-Only:
 
 Read-Only:
 
-- `quantity_to_keep` (Number) The quantity of releases to keep.
-- `strategy` (String) The retention strategy.
-- `unit` (String) The unit of time for the retention policy.
+- `quantity_to_keep` (Number) The unit for `quantity_to_keep`. Dismiss when `strategy` is "Forever" or "Default".
+- `strategy` (String) The retention policy strategy. Can be "Default", "Forever", and "Count". 
+  - "Default" indicates retention is set by the Space Default retention policy for lifecycles 
+  - "Forever" indicates releases are never deleted 
+  - "Count" indicates releases are kept according to `unit` and `quantity_to_keep`
+- `unit` (String) The number of units to keep. Dismiss when `strategy` is "Forever" or "Default".
 
 
