@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var phaseAttrTypes = getResourcePhaseAttrTypes()
+
 func TestExpandLifecycleWithNil(t *testing.T) {
 	lifecycle := expandLifecycle(nil)
 	require.Nil(t, lifecycle)
@@ -27,7 +29,7 @@ func TestExpandLifecycle(t *testing.T) {
 	Id := "test-id"
 	releaseRetention := core.KeepForeverRetentionPeriod()
 	tentacleRetention := core.KeepForeverRetentionPeriod()
-	retentionAttributeTypes := getRetentionAttrTypes()
+	retentionAttributeTypes := getResourceRetentionAttrTypes()
 
 	data := &lifecycleTypeResourceModel{
 		Description: types.StringValue(description),
@@ -76,19 +78,19 @@ func TestExpandLifecycle(t *testing.T) {
 }
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
-	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getPhaseAttrTypes()}, []attr.Value{})
+	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: phaseAttrTypes}, []attr.Value{})
 	phases := expandPhases(emptyList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithNullInput(t *testing.T) {
-	nullList := types.ListNull(types.ObjectType{AttrTypes: getPhaseAttrTypes()})
+	nullList := types.ListNull(types.ObjectType{AttrTypes: phaseAttrTypes})
 	phases := expandPhases(nullList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
-	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getPhaseAttrTypes()})
+	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: phaseAttrTypes})
 	phases := expandPhases(unknownList)
 	require.Nil(t, phases)
 }
@@ -96,7 +98,7 @@ func TestExpandPhasesWithUnknownInput(t *testing.T) {
 func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
-	flattenedPhases := flattenPhases([]*lifecycles.Phase{phase})
+	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase})
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
@@ -118,7 +120,7 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults(t *testing.T) {
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
-	flattenedPhases := flattenPhases([]*lifecycles.Phase{phase1, phase2})
+	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase1, phase2})
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
