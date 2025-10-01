@@ -22,58 +22,22 @@ import (
 
 var _ EntitySchema = LifecycleSchema{}
 
-var AllowDeprecatedRetentionFeatureFlag = false
-
-type LifecycleSchema struct {
-	AllowDeprecatedRetention bool
-}
-
-func getRetentionBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
-	blocks := map[string]resourceSchema.Block{
-		"release_retention_with_strategy":  getResourceRetentionBlockSchema(),
-		"tentacle_retention_with_strategy": getResourceRetentionBlockSchema(),
-	}
-	if includesPhaseBlock {
-		blocks["phase"] = getResourcePhaseBlockSchema()
-	}
-	return blocks
-}
+type LifecycleSchema struct{}
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
-		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy." +
-			"\n\nLifecycle retention is set using either the `retention_policy` and `retention_with_strategy` blocks." +
-			"\n- When using an octopus version prior to `2025.3`" +
-			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks are used" +
-			"\n- when using an octopus version `2025.3` or later" +
-			"\n	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks may be used",
-
+		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy.",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":          GetIdResourceSchema(),
 			"space_id":    util.ResourceString().Optional().Computed().Description("The space ID associated with this resource.").PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
 			"name":        util.ResourceString().Required().Description("The name of this resource.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
-		Blocks: getRetentionBlocks(true),
+		Blocks: getResourceSchemaBlocks(true),
 	}
 }
 
-func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
-	return datasourceSchema.Schema{
-		Description: "Provides information about existing lifecycles.",
-		Attributes: map[string]datasourceSchema.Attribute{
-			"id":           util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
-			"space_id":     util.DataSourceString().Optional().Description("The space ID associated with this lifecycle.").Build(),
-			"ids":          util.DataSourceList(types.StringType).Optional().Description("A list of lifecycle IDs to filter by.").Build(),
-			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
-			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
-			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
-			"lifecycles":   getLifecyclesAttribute(),
-		},
-	}
-}
-
-func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
+func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines a phase in the lifecycle.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -113,49 +77,21 @@ func getResourcePhaseBlockSchema() resourceSchema.ListNestedBlock {
 					PlanModifiers(boolplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
-			Blocks: getRetentionBlocks(false),
+			Blocks: getResourceSchemaBlocks(false),
 		},
 	}
 }
-
-func getLifecyclesAttribute() datasourceSchema.ListNestedAttribute {
-	return datasourceSchema.ListNestedAttribute{
-		Computed: true,
-		Optional: false,
-		NestedObject: datasourceSchema.NestedAttributeObject{
-			Attributes: map[string]datasourceSchema.Attribute{
-				"id":                               util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
-				"space_id":                         util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
-				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
-				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
-				"phase":                            getPhasesAttribute(),
-				"release_retention_with_strategy":  getRetentionAttribute(),
-				"tentacle_retention_with_strategy": getRetentionAttribute(),
-			},
-		},
+func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
+	blocks := map[string]resourceSchema.Block{
+		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(),
+		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(),
 	}
-}
-
-func getPhasesAttribute() datasourceSchema.ListNestedAttribute {
-	return datasourceSchema.ListNestedAttribute{
-		Computed: true,
-		NestedObject: datasourceSchema.NestedAttributeObject{
-			Attributes: map[string]datasourceSchema.Attribute{
-				"id":                                    util.DataSourceString().Computed().Description("The ID of the phase.").Build(),
-				"name":                                  util.DataSourceString().Computed().Description("The name of the phase.").Build(),
-				"automatic_deployment_targets":          util.DataSourceList(types.StringType).Computed().Description("The automatic deployment targets for this phase.").Build(),
-				"optional_deployment_targets":           util.DataSourceList(types.StringType).Computed().Description("The optional deployment targets for this phase.").Build(),
-				"minimum_environments_before_promotion": util.DataSourceInt64().Computed().Description("The minimum number of environments before promotion.").Build(),
-				"is_optional_phase":                     util.DataSourceBool().Computed().Description("Whether this phase is optional.").Build(),
-				"is_priority_phase":                     util.DataSourceBool().Computed().Description("Deployments will be prioritized in this phase").Build(),
-				"release_retention_with_strategy":       getRetentionAttribute(),
-				"tentacle_retention_with_strategy":      getRetentionAttribute(),
-			},
-		},
+	if includesPhaseBlock {
+		blocks["phase"] = getResourceSchemaPhaseBlock()
 	}
+	return blocks
 }
-
-func getResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
+func getResourceSchemaRetentionBlock() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -181,7 +117,7 @@ func getResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 					Build(),
 			},
 			Validators: []validator.Object{
-				retentionValidator{},
+				resourceSchamaRetentionValidator{},
 			},
 		},
 		Validators: []validator.List{
@@ -190,15 +126,15 @@ func getResourceRetentionBlockSchema() resourceSchema.ListNestedBlock {
 	}
 }
 
-type retentionValidator struct{}
+type resourceSchamaRetentionValidator struct{}
 
-func (v retentionValidator) Description(ctx context.Context) string {
+func (v resourceSchamaRetentionValidator) Description(ctx context.Context) string {
 	return "ensures only a count strategy has a quantity_to_keep and unit"
 }
-func (v retentionValidator) MarkdownDescription(ctx context.Context) string {
+func (v resourceSchamaRetentionValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
-func (v retentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v resourceSchamaRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionStrategy struct {
 		Strategy       types.String `tfsdk:"strategy"`
 		QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
@@ -248,7 +184,61 @@ func (v retentionValidator) ValidateObject(ctx context.Context, req validator.Ob
 	}
 }
 
-func getRetentionAttribute() datasourceSchema.ListNestedAttribute {
+// dataSourceSchema
+
+func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
+	return datasourceSchema.Schema{
+		Description: "Provides information about existing lifecycles.",
+		Attributes: map[string]datasourceSchema.Attribute{
+			"id":           util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
+			"space_id":     util.DataSourceString().Optional().Description("The space ID associated with this lifecycle.").Build(),
+			"ids":          util.DataSourceList(types.StringType).Optional().Description("A list of lifecycle IDs to filter by.").Build(),
+			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
+			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
+			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
+			"lifecycles":   getDatasourceSchemaLifecycles(),
+		},
+	}
+}
+
+func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		Optional: false,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				"id":                               util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
+				"space_id":                         util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
+				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
+				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
+				"phase":                            getDatasourceSchemaPhases(),
+				"release_retention_with_strategy":  getDatasourceSchemaRetention(),
+				"tentacle_retention_with_strategy": getDatasourceSchemaRetention(),
+			},
+		},
+	}
+}
+
+func getDatasourceSchemaPhases() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				"id":                                    util.DataSourceString().Computed().Description("The ID of the phase.").Build(),
+				"name":                                  util.DataSourceString().Computed().Description("The name of the phase.").Build(),
+				"automatic_deployment_targets":          util.DataSourceList(types.StringType).Computed().Description("The automatic deployment targets for this phase.").Build(),
+				"optional_deployment_targets":           util.DataSourceList(types.StringType).Computed().Description("The optional deployment targets for this phase.").Build(),
+				"minimum_environments_before_promotion": util.DataSourceInt64().Computed().Description("The minimum number of environments before promotion.").Build(),
+				"is_optional_phase":                     util.DataSourceBool().Computed().Description("Whether this phase is optional.").Build(),
+				"is_priority_phase":                     util.DataSourceBool().Computed().Description("Deployments will be prioritized in this phase").Build(),
+				"release_retention_with_strategy":       getDatasourceSchemaRetention(),
+				"tentacle_retention_with_strategy":      getDatasourceSchemaRetention(),
+			},
+		},
+	}
+}
+
+func getDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
@@ -260,3 +250,5 @@ func getRetentionAttribute() datasourceSchema.ListNestedAttribute {
 		},
 	}
 }
+
+//Helper Functions
