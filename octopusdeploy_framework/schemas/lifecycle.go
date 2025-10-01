@@ -14,33 +14,44 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strings"
 )
 
 var _ EntitySchema = LifecycleSchema{}
 
-type LifecycleSchema struct{}
+var AllowDeprecatedRetentionFeatureFlag = true
+
+type LifecycleSchema struct {
+	AllowDeprecatedRetention bool
+}
 
 //////////////////
 // RESOURCE SCHEMA
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
-		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy.",
+		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy." +
+			"\n\nLifecycle retention is set using either the `retention_policy` and `retention_with_strategy` blocks." +
+			"\n- When using an octopus version prior to `2025.3`" +
+			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks are used" +
+			"\n- when using an octopus version `2025.3` or later" +
+			"\n	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks may be used",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":          GetIdResourceSchema(),
 			"space_id":    util.ResourceString().Optional().Computed().Description("The space ID associated with this resource.").PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
 			"name":        util.ResourceString().Required().Description("The name of this resource.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
-		Blocks: getResourceSchemaBlocks(true),
+		Blocks: getResourceSchemaBlocks(l.AllowDeprecatedRetention, true),
 	}
 }
 
-func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
+func getResourceSchemaPhaseBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines a phase in the lifecycle.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -80,20 +91,117 @@ func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
 					PlanModifiers(boolplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
-			Blocks: getResourceSchemaBlocks(false),
+			Blocks: getResourceSchemaBlocks(allowDeprecatedRetention, false),
 		},
 	}
 }
 
-func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
+func getResourceSchemaBlocks(allowDeprecatedRetention bool, includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
 		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(),
 		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(),
 	}
 	if includesPhaseBlock {
-		blocks["phase"] = getResourceSchemaPhaseBlock()
+		blocks["phase"] = getResourceSchemaPhaseBlock(allowDeprecatedRetention)
+	}
+	if allowDeprecatedRetention {
+		blocks["release_retention_policy"] = getResourceSchemaDeprecatedRetentionBlock(allowDeprecatedRetention)
+		blocks["tentacle_retention_policy"] = getResourceSchemaDeprecatedRetentionBlock(allowDeprecatedRetention)
 	}
 	return blocks
+}
+
+func getResourceSchemaDeprecatedRetentionBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
+	return resourceSchema.ListNestedBlock{
+		DeprecationMessage: "This block will deprecate when octopus 2025.2 is no longer supported. After upgrading to octopus 2025.3 or higher, please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
+		Description:        "Defines the retention policy for releases or tentacles.",
+		NestedObject: resourceSchema.NestedBlockObject{
+			Attributes: map[string]resourceSchema.Attribute{
+				"quantity_to_keep": util.ResourceInt64().
+					Optional().Computed().
+					Default(int64default.StaticInt64(30)).
+					Validators(int64validator.AtLeast(0)).
+					Description("The number of days/releases to keep. The default value is 30. If 0 then all are kept.").
+					Build(),
+				"should_keep_forever": util.ResourceBool().
+					Optional().Computed().
+					Default(booldefault.StaticBool(false)).
+					Description("Indicates if items should never be deleted. The default value is false.").
+					Build(),
+				"unit": util.ResourceString().
+					Optional().Computed().
+					Default(stringdefault.StaticString("Days")).
+					Validators(stringvalidator.OneOfCaseInsensitive("Days", "Items")).
+					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
+					Build(),
+			},
+			Validators: []validator.Object{
+				deprecatedRetentionValidator{allowDeprecatedRetention: allowDeprecatedRetention},
+			},
+		},
+	}
+}
+
+type deprecatedRetentionValidator struct {
+	allowDeprecatedRetention bool
+}
+
+func (v deprecatedRetentionValidator) Description(ctx context.Context) string {
+	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
+}
+
+func (v deprecatedRetentionValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v deprecatedRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+	var retentionPolicy struct {
+		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
+		ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
+		Unit              types.String `tfsdk:"unit"`
+	}
+
+	diags := tfsdk.ValueAs(ctx, req.ConfigValue, &retentionPolicy)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !v.allowDeprecatedRetention {
+		resp.Diagnostics.AddError(
+			"release_retention_policy and tentacle_retention_policy are deprecated.",
+			"Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.")
+	}
+
+	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
+		quantityToKeep := retentionPolicy.QuantityToKeep.ValueInt64()
+		shouldKeepForever := retentionPolicy.ShouldKeepForever.ValueBool()
+
+		if quantityToKeep == 0 && !shouldKeepForever {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("should_keep_forever"),
+				"Invalid retention policy configuration",
+				"should_keep_forever must be true when quantity_to_keep is 0",
+			)
+		} else if quantityToKeep != 0 && shouldKeepForever {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("should_keep_forever"),
+				"Invalid retention policy configuration",
+				"should_keep_forever must be false when quantity_to_keep is not 0",
+			)
+		}
+	}
+
+	if !retentionPolicy.Unit.IsNull() && !retentionPolicy.Unit.IsUnknown() {
+		unit := retentionPolicy.Unit.ValueString()
+		if !strings.EqualFold(unit, "Days") && !strings.EqualFold(unit, "Items") {
+			resp.Diagnostics.AddAttributeError(
+				req.Path.AtName("unit"),
+				"Invalid retention policy unit",
+				"Unit must be either 'Days' or 'Items' (case insensitive)",
+			)
+		}
+	}
 }
 
 func getResourceSchemaRetentionBlock() resourceSchema.ListNestedBlock {
@@ -204,7 +312,7 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
 			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
 			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
-			"lifecycles":   getDatasourceSchemaLifecycles(),
+			"lifecycles":   util.Ternary(l.AllowDeprecatedRetention, getDeprecatedDatasourceSchemaLifecycles(), getDatasourceSchemaLifecycles()),
 		},
 	}
 }
@@ -227,6 +335,20 @@ func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 	}
 }
 
+func getDeprecatedDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
+	var attributes = getDatasourceSchemaLifecycles().NestedObject.Attributes
+	attributes["phase"] = getDeprecatedDatasourceSchemaPhases()
+	attributes["release_retention_policy"] = getDeprecatedDatasourceSchemaRetention()
+	attributes["tentacle_retention_policy"] = getDeprecatedDatasourceSchemaRetention()
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		Optional: false,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: attributes,
+		},
+	}
+}
+
 func getDatasourceSchemaPhases() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
@@ -245,8 +367,33 @@ func getDatasourceSchemaPhases() datasourceSchema.ListNestedAttribute {
 		},
 	}
 }
+func getDeprecatedDatasourceSchemaPhases() datasourceSchema.ListNestedAttribute {
+	var attributes = getDatasourceSchemaPhases().NestedObject.Attributes
+	attributes["release_retention_policy"] = getDeprecatedDatasourceSchemaRetention()
+	attributes["tentacle_retention_policy"] = getDeprecatedDatasourceSchemaRetention()
+
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: attributes,
+		},
+	}
+}
 
 func getDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Computed: true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				"strategy":         util.DataSourceString().Computed().Description("The retention policy strategy. Can be \"Default\", \"Forever\", and \"Count\". \n  - \"Default\" indicates retention is set by the Space Default retention policy for lifecycles \n  - \"Forever\" indicates releases are never deleted \n  - \"Count\" indicates releases are kept according to `unit` and `quantity_to_keep`").Build(),
+				"quantity_to_keep": util.DataSourceInt64().Computed().Description("The unit for `quantity_to_keep`. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
+				"unit":             util.DataSourceString().Computed().Description("The number of units to keep. Dismiss when `strategy` is \"Forever\" or \"Default\".").Build(),
+			},
+		},
+	}
+}
+
+func getDeprecatedDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
