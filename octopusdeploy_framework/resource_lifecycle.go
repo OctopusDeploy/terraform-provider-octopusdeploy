@@ -307,12 +307,6 @@ func isDeprecatedRetentionInConfig(data *deprecatedLifecycleTypeResourceModel) b
 	return false
 }
 
-func whichRetentionBlocksAreInConfig(data *deprecatedLifecycleTypeResourceModel) (bool, bool) {
-	releaseRetentionIsInConfig := isLatestRetentionInConfig(data)
-	deprecatedRetentionIsInConfig := isDeprecatedRetentionInConfig(data)
-	return releaseRetentionIsInConfig, deprecatedRetentionIsInConfig
-}
-
 func IsDeprecatedRetentionToBeUsed(data *deprecatedLifecycleTypeResourceModel) bool {
 	releaseRetentionIsInConfig := isLatestRetentionInConfig(data)
 	if releaseRetentionIsInConfig {
