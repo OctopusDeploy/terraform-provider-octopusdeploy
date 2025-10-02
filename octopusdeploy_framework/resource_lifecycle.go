@@ -79,49 +79,46 @@ func (r *lifecycleTypeResource) Configure(_ context.Context, req resource.Config
 }
 
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-
 	if r.allowDeprecatedRetention {
-
 		var data *deprecatedLifecycleTypeResourceModel
 		resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 
-		ValidateRetentionBlocksInPlan(data, &resp.Diagnostics, r.retentionWithStrategyNotSupported)
-		deprecatedRetentionUsed := IsDeprecatedRetentionUsed(data)
-
-		if deprecatedRetentionUsed {
-			tflog.Debug(ctx, fmt.Sprintf("deprecatedRetentionUsed: `%v`", deprecatedRetentionUsed))
+		ValidateRetentionBlocksInConfig(data, &resp.Diagnostics, r.retentionWithStrategyNotSupported)
+		deprecatedRetentionIsUsed := IsDeprecatedRetentionToBeUsed(data)
+		
+		if deprecatedRetentionIsUsed {
 			initialRetentionSetting := core.CountBasedRetentionPeriod(30, "Days")
 			initialRetentionAsNewBlock := flattenResourceRetention(initialRetentionSetting)
 			initialRetentionAsDeprecatedBlock := flattenDeprecatedResourceRetention(initialRetentionSetting)
 			hasUserDefinedDeprecatedReleaseRetention, hasUserDefinedDeprecatedTentacleRetention := setInitialRetentionForOldBlock(data, initialRetentionAsDeprecatedBlock)
 
-			lifecycle := expandDeprecatedLifecycle(data, deprecatedRetentionUsed)
+			lifecycle := expandDeprecatedLifecycle(data, deprecatedRetentionIsUsed)
 			newLifecycle, err := lifecycles.Add(r.Config.Client, lifecycle)
 			if err != nil {
 				resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
 				return
 			}
 
-			data = flattenDeprecatedResourceLifecycle(newLifecycle, deprecatedRetentionUsed)
+			data = flattenDeprecatedResourceLifecycle(newLifecycle, deprecatedRetentionIsUsed)
 			removeDefaultRetentionFromDeprecatedAndNewUnsetBlocks(data, false, false, hasUserDefinedDeprecatedReleaseRetention, hasUserDefinedDeprecatedTentacleRetention, initialRetentionAsNewBlock, initialRetentionAsDeprecatedBlock, ctx)
 		} else {
-			tflog.Debug(ctx, fmt.Sprintf("deprecatedRetentionUsed: `%v`", deprecatedRetentionUsed))
+			tflog.Debug(ctx, fmt.Sprintf("deprecatedRetentionUsed: `%v`", deprecatedRetentionIsUsed))
 			initialRetentionSetting := core.SpaceDefaultRetentionPeriod()
 			initialRetentionAsNewBlock := flattenResourceRetention(initialRetentionSetting)
 			initialRetentionAsDeprecatedBlock := flattenDeprecatedResourceRetention(initialRetentionSetting)
 			hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention := setInitialRetentionForNewBlock(data, initialRetentionAsDeprecatedBlock)
 
-			lifecycle := expandDeprecatedLifecycle(data, deprecatedRetentionUsed)
+			lifecycle := expandDeprecatedLifecycle(data, deprecatedRetentionIsUsed)
 			newLifecycle, err := lifecycles.Add(r.Config.Client, lifecycle)
 			if err != nil {
 				resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
 				return
 			}
 
-			data = flattenDeprecatedResourceLifecycle(newLifecycle, deprecatedRetentionUsed)
+			data = flattenDeprecatedResourceLifecycle(newLifecycle, deprecatedRetentionIsUsed)
 			removeDefaultRetentionFromDeprecatedAndNewUnsetBlocks(data, hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention, false, false, initialRetentionAsNewBlock, initialRetentionAsDeprecatedBlock, ctx)
 		}
 
@@ -157,8 +154,8 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 			return
 		}
 
-		ValidateRetentionBlocksInPlan(data, &resp.Diagnostics, r.retentionWithStrategyNotSupported)
-		deprecatedRetentionUsed := IsDeprecatedRetentionUsed(data)
+		ValidateRetentionBlocksInConfig(data, &resp.Diagnostics, r.retentionWithStrategyNotSupported)
+		deprecatedRetentionUsed := IsDeprecatedRetentionToBeUsed(data)
 
 		if deprecatedRetentionUsed {
 			initialRetentionSetting := core.CountBasedRetentionPeriod(30, "Days")
@@ -229,8 +226,8 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 			return
 		}
 
-		ValidateRetentionBlocksInPlan(data, &resp.Diagnostics, r.retentionWithStrategyNotSupported)
-		deprecatedRetentionUsed := IsDeprecatedRetentionUsed(data)
+		ValidateRetentionBlocksInConfig(data, &resp.Diagnostics, r.retentionWithStrategyNotSupported)
+		deprecatedRetentionUsed := IsDeprecatedRetentionToBeUsed(data)
 
 		if deprecatedRetentionUsed {
 			initialRetentionSetting := core.CountBasedRetentionPeriod(30, "Days")
@@ -323,18 +320,18 @@ func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteR
 	}
 
 }
-func ValidateRetentionBlocksInPlan(data *deprecatedLifecycleTypeResourceModel, diag *diag.Diagnostics, onlyDeprecatedRetentionIsSupported bool) {
-	latestRetentionIsInPlan := IsLatestRetentionInPlan(data)
-	deprecatedRetentionIsInPlan := IsDeprecatedRetentionInPlan(data)
-	if latestRetentionIsInPlan && deprecatedRetentionIsInPlan {
+func ValidateRetentionBlocksInConfig(data *deprecatedLifecycleTypeResourceModel, diag *diag.Diagnostics, onlyDeprecatedRetentionIsSupported bool) {
+	latestRetentionIsInConfig := isLatestRetentionInConfig(data)
+	deprecatedRetentionIsInConfig := isDeprecatedRetentionInConfig(data)
+	if latestRetentionIsInConfig && deprecatedRetentionIsInConfig {
 		diag.AddError("Retention blocks conflict", "Both release_retention_with_strategy and release_retention_policy are used. Only one can be used at a time.")
 	}
-	if latestRetentionIsInPlan && onlyDeprecatedRetentionIsSupported {
+	if latestRetentionIsInConfig && onlyDeprecatedRetentionIsSupported {
 		diag.AddError("retention with strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later.", "")
 	}
 }
 
-func IsLatestRetentionInPlan(data *deprecatedLifecycleTypeResourceModel) bool {
+func isLatestRetentionInConfig(data *deprecatedLifecycleTypeResourceModel) bool {
 	if attributeIsUsed(data.ReleaseRetention) || attributeIsUsed(data.TentacleRetention) {
 		return true
 	}
@@ -350,7 +347,7 @@ func IsLatestRetentionInPlan(data *deprecatedLifecycleTypeResourceModel) bool {
 	return false
 }
 
-func IsDeprecatedRetentionInPlan(data *deprecatedLifecycleTypeResourceModel) bool {
+func isDeprecatedRetentionInConfig(data *deprecatedLifecycleTypeResourceModel) bool {
 	if attributeIsUsed(data.DeprecatedReleaseRetention) || attributeIsUsed(data.DeprecatedTentacleRetention) {
 		return true
 	}
@@ -365,9 +362,15 @@ func IsDeprecatedRetentionInPlan(data *deprecatedLifecycleTypeResourceModel) boo
 	return false
 }
 
-func IsDeprecatedRetentionUsed(data *deprecatedLifecycleTypeResourceModel) bool {
-	releaseRetentionIsInPlan := IsLatestRetentionInPlan(data)
-	if releaseRetentionIsInPlan {
+func whichRetentionBlocksAreInConfig(data *deprecatedLifecycleTypeResourceModel) (bool, bool) {
+	releaseRetentionIsInConfig := isLatestRetentionInConfig(data)
+	deprecatedRetentionIsInConfig := isDeprecatedRetentionInConfig(data)
+	return releaseRetentionIsInConfig, deprecatedRetentionIsInConfig
+}
+
+func IsDeprecatedRetentionToBeUsed(data *deprecatedLifecycleTypeResourceModel) bool {
+	releaseRetentionIsInConfig := isLatestRetentionInConfig(data)
+	if releaseRetentionIsInConfig {
 		return false
 	}
 	return true
