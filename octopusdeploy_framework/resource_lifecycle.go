@@ -223,7 +223,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	if r.allowDeprecatedRetention {
 		var data, state *deprecatedLifecycleTypeResourceModel
-		resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+		resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 		if resp.Diagnostics.HasError() {
 			return
