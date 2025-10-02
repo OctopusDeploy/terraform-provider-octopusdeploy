@@ -46,6 +46,7 @@ Read-Only:
 
 - `allow_dynamic_infrastructure` (Boolean)
 - `description` (String) The description of this environment.
+- `environment_tags` (Set of String) A list of environment tags associated with this resource.
 - `id` (String) The unique ID for this resource.
 - `jira_extension_settings` (Attributes List) Provides extension settings for the Jira integration for this environment. (see [below for nested schema](#nestedatt--environments--jira_extension_settings))
 - `jira_service_management_extension_settings` (Attributes List) Provides extension settings for the Jira Service Management (JSM) integration for this environment. (see [below for nested schema](#nestedatt--environments--jira_service_management_extension_settings))

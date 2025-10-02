@@ -3,6 +3,7 @@ resource "octopusdeploy_environment" "example" {
   description                  = "An environment for the development team."
   name                         = "Development Environment (OK to Delete)"
   use_guided_failure           = false
+  environment_tags             = ["TagSet1/Tag"]
 
   jira_extension_settings {
     environment_type = "unmapped"
