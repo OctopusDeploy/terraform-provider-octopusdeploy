@@ -42,16 +42,10 @@ func (t *tagSetsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	scopeStrings := util.ExpandStringList(data.Scopes)
-	scopes := make([]tagsets.TagSetScope, len(scopeStrings))
-	for i, scope := range scopeStrings {
-		scopes[i] = tagsets.TagSetScope(scope)
-	}
-
 	query := tagsets.TagSetsQuery{
 		IDs:         util.GetIds(data.IDs),
 		PartialName: data.PartialName.ValueString(),
-		Scopes:      scopes,
+		Scopes:      util.ExpandStringList(data.Scopes),
 		Skip:        int(data.Skip.ValueInt64()),
 		Take:        int(data.Take.ValueInt64()),
 	}
