@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
@@ -16,11 +17,17 @@ import (
 )
 
 func TestExpandLifecycleWithNil(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	lifecycle := expandLifecycle(nil)
 	require.Nil(t, lifecycle)
 }
 
 func TestExpandLifecycle(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	description := "test-description"
 	name := "test-name"
 	spaceID := "test-space-id"
@@ -76,24 +83,36 @@ func TestExpandLifecycle(t *testing.T) {
 }
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()}, []attr.Value{})
 	phases := expandPhases(emptyList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithNullInput(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
 	phases := expandPhases(nullList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
 	phases := expandPhases(unknownList)
 	require.Nil(t, phases)
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
 	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase})
@@ -115,6 +134,9 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
 }
 
 func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
@@ -157,6 +179,9 @@ func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs
 //Integration test under here
 
 func TestAccLifecycleBasic(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
 
@@ -183,6 +208,9 @@ func TestAccLifecycleBasic(t *testing.T) {
 }
 
 func TestAccLifecycleWithUpdate(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -203,6 +231,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
+					resource.TestCheckNoResourceAttr(resourceName, "release_retention_policy"),
 				),
 				Config: testAccLifecycle(localName, name),
 			},
@@ -216,6 +245,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
+					resource.TestCheckNoResourceAttr(resourceName, "release_retention_policy"),
 				),
 				Config: testAccLifecycleWithDescription(localName, name, description),
 			},
@@ -229,6 +259,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
+					resource.TestCheckNoResourceAttr(resourceName, "release_retention_policy"),
 				),
 				Config: testAccLifecycle(localName, name),
 			},
@@ -237,7 +268,6 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 				Config: testAccLifecycleWithPhase(localName, name, description, phaseName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(resourceName),
-					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
@@ -245,6 +275,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "phase.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.name", phaseName),
+					resource.TestCheckNoResourceAttr(resourceName, "release_retention_policy"),
 				),
 			},
 			// update lifecycle by modifying its phase
@@ -262,6 +293,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "phase.0.name", phaseName),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_with_strategy.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_with_strategy.0.strategy", "Default"),
+					resource.TestCheckNoResourceAttr(resourceName, "release_retention_policy"),
 				),
 			},
 		},
@@ -269,6 +301,9 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 }
 
 func TestAccLifecycleComplex(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
 
@@ -293,6 +328,7 @@ func TestAccLifecycleComplex(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.0.strategy", "Count"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.0.quantity_to_keep", "1"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.0.unit", "Days"),
+					resource.TestCheckNoResourceAttr(resourceName, "release_retention_policy"),
 					testAccCheckLifecyclePhaseCount(name, 2),
 				),
 				Config: testAccLifecycleComplex(localName, name),
