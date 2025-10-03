@@ -3,6 +3,8 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -14,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"strings"
 )
 
 type lifecycleTypeResource struct {
@@ -38,14 +39,14 @@ type lifecycleTypeResourceModel struct {
 }
 
 type lifecycleTypeResourceModelDEPRECATED struct {
-	SpaceID                     types.String `tfsdk:"space_id"`
-	Name                        types.String `tfsdk:"name"`
-	Description                 types.String `tfsdk:"description"`
-	Phase                       types.List   `tfsdk:"phase"`
-	DeprecatedReleaseRetention  types.List   `tfsdk:"release_retention_policy"`
-	DeprecatedTentacleRetention types.List   `tfsdk:"tentacle_retention_policy"`
-	ReleaseRetention            types.List   `tfsdk:"release_retention_with_strategy"`
-	TentacleRetention           types.List   `tfsdk:"tentacle_retention_with_strategy"`
+	SpaceID              types.String `tfsdk:"space_id"`
+	Name                 types.String `tfsdk:"name"`
+	Description          types.String `tfsdk:"description"`
+	Phase                types.List   `tfsdk:"phase"`
+	OldReleaseRetention  types.List   `tfsdk:"release_retention_policy"`
+	OldTentacleRetention types.List   `tfsdk:"tentacle_retention_policy"`
+	ReleaseRetention     types.List   `tfsdk:"release_retention_with_strategy"`
+	TentacleRetention    types.List   `tfsdk:"tentacle_retention_with_strategy"`
 
 	schemas.ResourceModel
 }
@@ -268,8 +269,8 @@ func validateRetentionBlocksInConfigDEPRECATED(data *lifecycleTypeResourceModelD
 func determineWhichRetentionBlocksAreInConfigDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED) (bool, bool, bool, bool) {
 	isNewReleaseRetentionSet := attributeIsUsed(data.ReleaseRetention)
 	isNewTentacleRetentionSet := attributeIsUsed(data.TentacleRetention)
-	isOldReleaseRetentionSet := attributeIsUsed(data.DeprecatedReleaseRetention)
-	isOldTentacleRetentionSet := attributeIsUsed(data.DeprecatedTentacleRetention)
+	isOldReleaseRetentionSet := attributeIsUsed(data.OldReleaseRetention)
+	isOldTentacleRetentionSet := attributeIsUsed(data.OldTentacleRetention)
 
 	return isNewReleaseRetentionSet, isNewTentacleRetentionSet, isOldReleaseRetentionSet, isOldTentacleRetentionSet
 }
@@ -289,14 +290,14 @@ func isNewBlockInRetentionConfigDEPRECATED(data *lifecycleTypeResourceModelDEPRE
 	return false
 }
 func isOldBlockInRetentionConfigDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED) bool {
-	if attributeIsUsed(data.DeprecatedReleaseRetention) || attributeIsUsed(data.DeprecatedTentacleRetention) {
+	if attributeIsUsed(data.OldReleaseRetention) || attributeIsUsed(data.OldTentacleRetention) {
 		return true
 	}
 	for _, phase := range data.Phase.Elements() {
 		phaseAttributes := phase.(types.Object).Attributes()
-		deprecatedReleaseRetention := phaseAttributes["release_retention_policy"].(types.List)
-		deprecatedTentacleRetention := phaseAttributes["tentacle_retention_policy"].(types.List)
-		if attributeIsUsed(deprecatedReleaseRetention) || attributeIsUsed(deprecatedTentacleRetention) {
+		oldReleaseRetention := phaseAttributes["release_retention_policy"].(types.List)
+		oldTentacleRetention := phaseAttributes["tentacle_retention_policy"].(types.List)
+		if attributeIsUsed(oldReleaseRetention) || attributeIsUsed(oldTentacleRetention) {
 			return true
 		}
 	}
@@ -310,16 +311,16 @@ func isOldBlockToBeUsedForLifecycleDEPRECATED(data *lifecycleTypeResourceModelDE
 	return true
 }
 func setInitialRetentionForOldBlockDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED, initialRetentionSettingForOldBlock types.List) (bool, bool) {
-	hasUserDefinedDeprecatedReleaseRetention := attributeIsUsed(data.DeprecatedReleaseRetention)
-	hasUserDefinedDeprecatedTentacleRetention := attributeIsUsed(data.DeprecatedTentacleRetention)
-	if !hasUserDefinedDeprecatedReleaseRetention {
-		data.DeprecatedReleaseRetention = initialRetentionSettingForOldBlock
+	hasUserDefinedOldReleaseRetention := attributeIsUsed(data.OldReleaseRetention)
+	hasUserDefinedOldTentacleRetention := attributeIsUsed(data.OldTentacleRetention)
+	if !hasUserDefinedOldReleaseRetention {
+		data.OldReleaseRetention = initialRetentionSettingForOldBlock
 	}
-	if !hasUserDefinedDeprecatedTentacleRetention {
-		data.DeprecatedTentacleRetention = initialRetentionSettingForOldBlock
+	if !hasUserDefinedOldTentacleRetention {
+		data.OldTentacleRetention = initialRetentionSettingForOldBlock
 	}
 
-	return hasUserDefinedDeprecatedReleaseRetention, hasUserDefinedDeprecatedTentacleRetention
+	return hasUserDefinedOldReleaseRetention, hasUserDefinedOldTentacleRetention
 }
 func setInitialRetentionForNewBlockDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED, initialRetentionSettingForNewBlock types.List) (bool, bool) {
 	hasUserDefinedReleaseRetention := attributeIsUsed(data.ReleaseRetention)
@@ -355,12 +356,12 @@ func removeInitialRetentionDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED
 		data.TentacleRetention = ListNullRetention
 	}
 
-	if !isOldReleaseRetentionSet && (data.DeprecatedReleaseRetention.Equal(initialRetentionSettingForOldBlock) || data.DeprecatedReleaseRetention.IsNull()) {
-		data.DeprecatedReleaseRetention = ListNullRetentionDEPRECATED
+	if !isOldReleaseRetentionSet && (data.OldReleaseRetention.Equal(initialRetentionSettingForOldBlock) || data.OldReleaseRetention.IsNull()) {
+		data.OldReleaseRetention = ListNullRetentionDEPRECATED
 	}
 
-	if !isOldTentacleRetentionSet && (data.DeprecatedTentacleRetention.Equal(initialRetentionSettingForOldBlock) || data.DeprecatedTentacleRetention.IsNull()) {
-		data.DeprecatedTentacleRetention = ListNullRetentionDEPRECATED
+	if !isOldTentacleRetentionSet && (data.OldTentacleRetention.Equal(initialRetentionSettingForOldBlock) || data.OldTentacleRetention.IsNull()) {
+		data.OldTentacleRetention = ListNullRetentionDEPRECATED
 	}
 }
 
@@ -433,8 +434,8 @@ func flattenResourceLifecycleDEPRECATED(lifecycle *lifecycles.Lifecycle, depreca
 		Phase:       flattenResourcePhasesDEPRECATED(lifecycle.Phases, deprecatedRetentionUsed),
 	}
 	if deprecatedRetentionUsed {
-		flattenedLifecycle.DeprecatedReleaseRetention = flattenResourceRetentionDEPRECATED(lifecycle.ReleaseRetentionPolicy)
-		flattenedLifecycle.DeprecatedTentacleRetention = flattenResourceRetentionDEPRECATED(lifecycle.TentacleRetentionPolicy)
+		flattenedLifecycle.OldReleaseRetention = flattenResourceRetentionDEPRECATED(lifecycle.ReleaseRetentionPolicy)
+		flattenedLifecycle.OldTentacleRetention = flattenResourceRetentionDEPRECATED(lifecycle.TentacleRetentionPolicy)
 	} else {
 		flattenedLifecycle.ReleaseRetention = flattenResourceRetention(lifecycle.ReleaseRetentionPolicy)
 		flattenedLifecycle.TentacleRetention = flattenResourceRetention(lifecycle.TentacleRetentionPolicy)
@@ -568,8 +569,8 @@ func expandLifecycleDEPRECATED(lifecycleUserInput *lifecycleTypeResourceModelDEP
 	lifecycleSentToGo.Phases = expandPhasesDEPRECATED(lifecycleUserInput.Phase)
 
 	if onlyOldRetentionBlockWillBeUsed {
-		lifecycleSentToGo.ReleaseRetentionPolicy = expandRetentionDEPRECATED(lifecycleUserInput.DeprecatedReleaseRetention)
-		lifecycleSentToGo.TentacleRetentionPolicy = expandRetentionDEPRECATED(lifecycleUserInput.DeprecatedTentacleRetention)
+		lifecycleSentToGo.ReleaseRetentionPolicy = expandRetentionDEPRECATED(lifecycleUserInput.OldReleaseRetention)
+		lifecycleSentToGo.TentacleRetentionPolicy = expandRetentionDEPRECATED(lifecycleUserInput.OldTentacleRetention)
 	} else {
 		lifecycleSentToGo.ReleaseRetentionPolicy = expandRetention(lifecycleUserInput.ReleaseRetention)
 		lifecycleSentToGo.TentacleRetentionPolicy = expandRetention(lifecycleUserInput.TentacleRetention)

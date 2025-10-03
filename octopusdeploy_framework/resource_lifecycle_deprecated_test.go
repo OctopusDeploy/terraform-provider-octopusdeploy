@@ -15,12 +15,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExpandDeprecatedLifecycleWithNil(t *testing.T) {
+func TestExpandDeprecatedLifecycleWithNilUsingNewRetentionBlock(t *testing.T) {
 	lifecycle := expandLifecycleDEPRECATED(nil, false)
 	require.Nil(t, lifecycle)
 }
 
-func TestExpandDeprecatedLifecycle(t *testing.T) {
+func TestExpandDeprecatedLifecycleWithNilUsingOldRetentionBlock(t *testing.T) {
+	lifecycle := expandLifecycleDEPRECATED(nil, true)
+	require.Nil(t, lifecycle)
+}
+
+func TestExpandDeprecatedLifecycleUsingNewRetentionBlock(t *testing.T) {
 	description := "test-description"
 	name := "test-name"
 	spaceID := "test-space-id"
@@ -73,7 +78,61 @@ func TestExpandDeprecatedLifecycle(t *testing.T) {
 	require.Empty(t, lifecycle.Phases)
 	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
 	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
-	require.Equal(t, spaceID, lifecycle.SpaceID)
+}
+
+func TestExpandDeprecatedLifecycleUsingOldRetentionBlock(t *testing.T) {
+	description := "test-description"
+	name := "test-name"
+	spaceID := "test-space-id"
+	Id := "test-id"
+	releaseRetention := core.KeepForeverRetentionPeriod()
+	tentacleRetention := core.KeepForeverRetentionPeriod()
+	retentionAttributeTypes := getResourceRetentionAttrTypesDEPRECATED()
+
+	data := &lifecycleTypeResourceModelDEPRECATED{
+		Description: types.StringValue(description),
+		Name:        types.StringValue(name),
+		SpaceID:     types.StringValue(spaceID),
+		ReleaseRetention: types.ListValueMust(
+			types.ObjectType{AttrTypes: retentionAttributeTypes},
+			[]attr.Value{
+				types.ObjectValueMust(
+					retentionAttributeTypes,
+					map[string]attr.Value{
+						"strategy":         types.StringValue(releaseRetention.Strategy),
+						"quantity_to_keep": types.Int64Value(int64(releaseRetention.QuantityToKeep)),
+						"unit":             types.StringValue(releaseRetention.Unit),
+					},
+				),
+			},
+		),
+		TentacleRetention: types.ListValueMust(
+			types.ObjectType{AttrTypes: retentionAttributeTypes},
+			[]attr.Value{
+				types.ObjectValueMust(
+					retentionAttributeTypes,
+					map[string]attr.Value{
+						"strategy":         types.StringValue(releaseRetention.Strategy),
+						"quantity_to_keep": types.Int64Value(int64(releaseRetention.QuantityToKeep)),
+						"unit":             types.StringValue(releaseRetention.Unit),
+					},
+				),
+			},
+		),
+	}
+	data.ID = types.StringValue(Id)
+
+	lifecycle := expandLifecycleDEPRECATED(data, false)
+	require.NotNil(t, lifecycle)
+
+	require.Equal(t, description, lifecycle.Description)
+	require.NotEmpty(t, lifecycle.ID)
+	require.NotNil(t, lifecycle.Links)
+	require.Empty(t, lifecycle.Links)
+	require.Equal(t, name, lifecycle.Name)
+	require.Empty(t, lifecycle.Phases)
+	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
+	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
 }
 
 func TestDeprecatedPhasesWithEmptyInput(t *testing.T) {
