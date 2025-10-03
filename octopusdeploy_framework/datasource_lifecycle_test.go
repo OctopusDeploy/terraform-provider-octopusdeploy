@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"testing"
 
@@ -9,6 +10,9 @@ import (
 )
 
 func TestAccDataSourceLifecycles(t *testing.T) {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := "Default Lifecycle"
 	resourceName := "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle"
@@ -25,6 +29,38 @@ func TestAccDataSourceLifecycles(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.#", "1"),
 					resource.TestCheckResourceAttrSet(resourceName, "lifecycles.0.id"),
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.name", lifecycleName),
+					resource.TestCheckNoResourceAttr(resourceName, "lifecycles.0.release_retention_policy.0.quantity_to_keep"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_with_strategy.0.quantity_to_keep", "0"),
+					testAccCheckOutputExists("octopus_space_id"),
+					testAccCheckOutputExists("octopus_lifecycle_id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceLifecyclesDEPRECATED(t *testing.T) {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
+	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := "Default Lifecycle"
+	resourceName := "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDataSourceLifecyclesConfig(spaceName, lifecycleName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
+					resource.TestCheckResourceAttr(resourceName, "partial_name", lifecycleName),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.#", "1"),
+					resource.TestCheckResourceAttrSet(resourceName, "lifecycles.0.id"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.name", lifecycleName),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_policy.0.quantity_to_keep", "0"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_with_strategy.0.quantity_to_keep", "0"),
 					testAccCheckOutputExists("octopus_space_id"),
 					testAccCheckOutputExists("octopus_lifecycle_id"),
 				),
