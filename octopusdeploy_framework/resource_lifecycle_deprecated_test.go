@@ -179,7 +179,7 @@ func TestExpandAndFlattenPhasesWithSensibleDefaultsDEPRECATED(t *testing.T) {
 	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
-	phase := deprecatedCreateTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
 	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, false)
 	require.NotNil(t, flattenedPhases)
@@ -203,8 +203,8 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaultsDEPRECATED(t *testing
 	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
-	phase1 := deprecatedCreateTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
-	phase2 := deprecatedCreateTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
+	phase1 := createTestPhaseDEPRECATED("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase2 := createTestPhaseDEPRECATED("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
 	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2}, false)
 	require.NotNil(t, flattenedPhases)
@@ -231,7 +231,7 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaultsDEPRECATED(t *testing
 	require.Equal(t, phase2.TentacleRetentionPolicy, expandedPhases[1].TentacleRetentionPolicy)
 }
 
-func deprecatedCreateTestPhase(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
+func createTestPhaseDEPRECATED(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
 	phase := lifecycles.NewPhase(name)
 	phase.AutomaticDeploymentTargets = autoTargets
 	phase.IsOptionalPhase = isOptional
@@ -257,14 +257,14 @@ func TestLifecycleBasicDEPRECATED(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testDeprecatedAccCheckLifecycleExists(resourceName),
+					testAccCheckLifecycleExistsDEPRECATED(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy .#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy .#", "0"),
 				),
-				Config: testDeprecatedAccLifecycle(localName, name),
+				Config: testAccLifecycleDEPRECATED(localName, name),
 			},
 		},
 	})
@@ -285,19 +285,19 @@ func TestAccLifecycleWithUpdateDEPRECATED(t *testing.T) {
 			// create lifecycle with no description
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testDeprecatedAccCheckLifecycleExists(resourceName),
+					testAccCheckLifecycleExistsDEPRECATED(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 				),
-				Config: testDeprecatedAccLifecycle(localName, name),
+				Config: testAccLifecycleDEPRECATED(localName, name),
 			},
 			// update lifecycle with a description
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testDeprecatedAccCheckLifecycleExists(resourceName),
+					testAccCheckLifecycleExistsDEPRECATED(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
@@ -305,12 +305,12 @@ func TestAccLifecycleWithUpdateDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 				),
-				Config: testDeprecatedAccLifecycleWithDescription(localName, name, description),
+				Config: testAccLifecycleWithDescriptionDEPRECATED(localName, name, description),
 			},
 			// update lifecycle by removing its description
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testDeprecatedAccCheckLifecycleExists(resourceName),
+					testAccCheckLifecycleExistsDEPRECATED(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", ""),
@@ -318,7 +318,7 @@ func TestAccLifecycleWithUpdateDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 				),
-				Config: testDeprecatedAccLifecycle(localName, name),
+				Config: testAccLifecycleDEPRECATED(localName, name),
 			},
 			// update lifecycle by adding a phase
 			{
@@ -369,7 +369,7 @@ func TestAccLifecycleComplexDEPRECATED(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testDeprecatedAccCheckLifecycleExists(resourceName),
+					testAccCheckLifecycleExistsDEPRECATED(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "1"),
@@ -381,29 +381,29 @@ func TestAccLifecycleComplexDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.0.strategy", "Count"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.0.quantity_to_keep", "1"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.0.unit", "Days"),
-					testDeprecatedAccCheckLifecyclePhaseCount(name, 2),
+					testAccCheckLifecyclePhaseCountDEPRECATED(name, 2),
 				),
-				Config: testDeprecatedAccLifecycleComplex(localName, name),
+				Config: testAccLifecycleComplexDEPRECATED(localName, name),
 			},
 		},
 	})
 }
 
-func testDeprecatedAccLifecycle(localName string, name string) string {
+func testAccLifecycleDEPRECATED(localName string, name string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
         description = ""
 	}`, localName, name)
 }
 
-func testDeprecatedAccLifecycleWithDescription(localName string, name string, description string) string {
+func testAccLifecycleWithDescriptionDEPRECATED(localName string, name string, description string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
        description = "%s"
     }`, localName, name, description)
 }
 
-func testDeprecatedAccLifecycleComplex(localName string, name string) string {
+func testAccLifecycleComplexDEPRECATED(localName string, name string) string {
 	environment1LocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environment1Name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environment2LocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -449,7 +449,7 @@ func testDeprecatedAccLifecycleComplex(localName string, name string) string {
 	}`, localName, name, environment2LocalName, environment3LocalName)
 }
 
-func testDeprecatedAccCheckLifecycleExists(n string) resource.TestCheckFunc {
+func testAccCheckLifecycleExistsDEPRECATED(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if err := existsHelperLifecycle(s, octoClient); err != nil {
 			return err
@@ -458,7 +458,7 @@ func testDeprecatedAccCheckLifecycleExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testDeprecatedAccCheckLifecyclePhaseCount(name string, expected int) resource.TestCheckFunc {
+func testAccCheckLifecyclePhaseCountDEPRECATED(name string, expected int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceList, err := octoClient.Lifecycles.GetByPartialName(name)
 		if err != nil {
