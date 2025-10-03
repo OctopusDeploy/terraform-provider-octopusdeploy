@@ -54,9 +54,7 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	tflog.Debug(ctx, "lifecycles datasource Read")
 	var data lifecyclesDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	//
 
-	tflog.Debug(ctx, fmt.Sprintf("data in read dataSource START: `%+v`", data))
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -68,7 +66,6 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		Take:        int(data.Take.ValueInt64()),
 	}
 	util.DatasourceReading(ctx, "lifecycles", query)
-	tflog.Debug(ctx, fmt.Sprintf("query ROSEM: `%+v`", query))
 
 	lifecyclesResult, err := lifecycles.Get(l.Config.Client, data.SpaceID.ValueString(), query)
 	if err != nil {
@@ -79,13 +76,12 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	util.DatasourceResultCount(ctx, "lifecycles", len(lifecyclesResult.Items))
 
 	if l.allowDeprecatedAndNewRetentionBlocks {
-		data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items, ctx)
+		data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items)
 	} else {
 		data.Lifecycles = flattenLifecyclesForDatasource(lifecyclesResult.Items)
 	}
 
 	data.ID = types.StringValue("Lifecycles " + time.Now().UTC().String())
-	tflog.Debug(ctx, fmt.Sprintf("data in read dataSource END: `%+v`", data))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -107,9 +103,8 @@ func flattenLifecyclesForDatasource(requestedLifecycles []*lifecycles.Lifecycle)
 	return types.ListValueMust(types.ObjectType{AttrTypes: lifecycleAttrTypes}, lifecyclesList)
 }
 
-func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.Lifecycle, ctx context.Context) types.List {
+func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.Lifecycle) types.List {
 	var lifecycleAttrTypes = getDatasourceLifecycleAttrTypesDEPRECATED()
-	tflog.Debug(ctx, fmt.Sprintf("lifecycleAttrTypes: `%+v`", lifecycleAttrTypes))
 	lifecyclesList := make([]attr.Value, 0, len(requestedLifecycles))
 	for _, lifecycle := range requestedLifecycles {
 		lifecycleMap := map[string]attr.Value{
