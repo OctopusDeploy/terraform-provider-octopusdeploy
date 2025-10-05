@@ -80,6 +80,7 @@ resource "octopusdeploy_project" "example" {
 - `default_guided_failure_mode` (String)
 - `default_to_skip_if_already_installed` (Boolean)
 - `deployment_changes_template` (String)
+- `deprovisioning_runbook_id` (String) The ID of the runbook to run when deprovisioning an ephemeral environment for this project.
 - `description` (String) The description of this project.
 - `discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `git_anonymous_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_anonymous_persistence_settings))
@@ -90,6 +91,7 @@ resource "octopusdeploy_project" "example" {
 - `is_discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `is_version_controlled` (Boolean)
 - `jira_service_management_extension_settings` (Block List) Provides extension settings for the Jira Service Management (JSM) integration for this project. (see [below for nested schema](#nestedblock--jira_service_management_extension_settings))
+- `provisioning_runbook_id` (String) The ID of the runbook to run when provisioning an ephemeral environment for this project.
 - `release_creation_strategy` (Block List, Deprecated) (see [below for nested schema](#nestedblock--release_creation_strategy))
 - `release_notes_template` (String)
 - `servicenow_extension_settings` (Block List) Provides extension settings for the ServiceNow integration for this project. (see [below for nested schema](#nestedblock--servicenow_extension_settings))

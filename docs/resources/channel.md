@@ -30,11 +30,14 @@ resource "octopusdeploy_channel" "example" {
 ### Optional
 
 - `description` (String) The description of this channel.
+- `ephemeral_environment_name_template` (String) The name template for ephemeral environments created from this channel.
 - `is_default` (Boolean) Indicates whether this is the default channel for the associated project.
 - `lifecycle_id` (String) The lifecycle ID associated with this channel.
+- `parent_environment_id` (String) The parent environment ID for ephemeral environments.
 - `rule` (Block List) A list of rules associated with this channel. (see [below for nested schema](#nestedblock--rule))
 - `space_id` (String) The space ID associated with this channel.
 - `tenant_tags` (Set of String) A set of tenant tags associated with this channel.
+- `type` (String) The type of channel. Valid values are `"Lifecycle"` or `"EphemeralEnvironment"`. Defaults to `"Lifecycle"`.
 
 ### Read-Only
 
