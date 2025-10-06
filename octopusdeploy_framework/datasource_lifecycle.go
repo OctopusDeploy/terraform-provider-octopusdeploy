@@ -75,7 +75,6 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	util.DatasourceResultCount(ctx, "lifecycles", len(lifecyclesResult.Items))
 
-	resp.Diagnostics.AddWarning("Deprecated attributes should be disregarded", "release_retention_policy and tentacle_retention_policy are deprecated and will be removed in a future release.\nPlease use release_retention_with_strategy and tentacle_retention_with_strategy instead.")
 	data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items)
 
 	data.ID = types.StringValue("Lifecycles " + time.Now().UTC().String())
@@ -83,19 +82,17 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 }
 
 func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.Lifecycle) types.List {
-	var lifecycleAttrTypes = getDatasourceLifecycleAttrTypesDEPRECATED()
+	var lifecycleAttrTypes = getDatasourceLifecycleAttrTypesIncludingPhaseAndRetentionDEPRECATED()
 	lifecyclesList := make([]attr.Value, 0, len(requestedLifecycles))
 	for _, lifecycle := range requestedLifecycles {
 		lifecycleMap := map[string]attr.Value{
-			"id":                               types.StringValue(lifecycle.ID),
-			"space_id":                         types.StringValue(lifecycle.SpaceID),
-			"name":                             types.StringValue(lifecycle.Name),
-			"description":                      types.StringValue(lifecycle.Description),
-			"phase":                            flattenPhasesForDataSourceDEPRECATED(lifecycle.Phases),
-			"release_retention_with_strategy":  flattenRetentionForDataSource(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_with_strategy": flattenRetentionForDataSource(lifecycle.TentacleRetentionPolicy),
-			"release_retention_policy":         flattenRetentionWithoutStrategyForDataSourceDEPRECATED(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_policy":        flattenRetentionWithoutStrategyForDataSourceDEPRECATED(lifecycle.TentacleRetentionPolicy),
+			"id":                        types.StringValue(lifecycle.ID),
+			"space_id":                  types.StringValue(lifecycle.SpaceID),
+			"name":                      types.StringValue(lifecycle.Name),
+			"description":               types.StringValue(lifecycle.Description),
+			"phase":                     flattenPhasesForDataSourceDEPRECATED(lifecycle.Phases),
+			"release_retention_policy":  flattenRetentionWithoutStrategyForDataSourceDEPRECATED(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_policy": flattenRetentionWithoutStrategyForDataSourceDEPRECATED(lifecycle.TentacleRetentionPolicy),
 		}
 		lifecyclesList = append(lifecyclesList, types.ObjectValueMust(lifecycleAttrTypes, lifecycleMap))
 
@@ -104,7 +101,7 @@ func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.
 }
 
 func flattenPhasesForDataSourceDEPRECATED(requestedPhases []*lifecycles.Phase) types.List {
-	var phaseAttrTypes = getDatasourcePhaseAttrTypesDEPRECATED()
+	var phaseAttrTypes = getDatasourcePhaseAttrTypesIncludingRetentionDEPRECATED()
 	if requestedPhases == nil {
 		return types.ListNull(types.ObjectType{AttrTypes: phaseAttrTypes})
 	}
@@ -118,34 +115,12 @@ func flattenPhasesForDataSourceDEPRECATED(requestedPhases []*lifecycles.Phase) t
 			"minimum_environments_before_promotion": types.Int64Value(int64(goPhase.MinimumEnvironmentsBeforePromotion)),
 			"is_optional_phase":                     types.BoolValue(goPhase.IsOptionalPhase),
 			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
-			"release_retention_with_strategy":       util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetentionForDataSource(goPhase.ReleaseRetentionPolicy), ListNullRetention),
-			"tentacle_retention_with_strategy":      util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetentionForDataSource(goPhase.TentacleRetentionPolicy), ListNullRetention),
 			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetentionWithoutStrategyForDataSourceDEPRECATED(goPhase.ReleaseRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED),
 			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetentionWithoutStrategyForDataSourceDEPRECATED(goPhase.TentacleRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED),
 		}
 		phasesList = append(phasesList, types.ObjectValueMust(phaseAttrTypes, attrs))
 	}
 	return types.ListValueMust(types.ObjectType{AttrTypes: phaseAttrTypes}, phasesList)
-}
-
-func flattenRetentionForDataSource(requestedRetention *core.RetentionPeriod) types.List {
-	var retentionAttrTypes = getDatasourceRetentionAttrTypes()
-	if requestedRetention == nil {
-		return ListNullRetention
-	}
-	return types.ListValueMust(
-		types.ObjectType{AttrTypes: retentionAttrTypes},
-		[]attr.Value{
-			types.ObjectValueMust(
-				retentionAttrTypes,
-				map[string]attr.Value{
-					"strategy":         types.StringValue(requestedRetention.Strategy),
-					"unit":             types.StringValue(requestedRetention.Unit),
-					"quantity_to_keep": types.Int64Value(int64(requestedRetention.QuantityToKeep)),
-				},
-			),
-		},
-	)
 }
 
 func flattenRetentionWithoutStrategyForDataSourceDEPRECATED(requestedRetention *core.RetentionPeriod) types.List {
@@ -169,22 +144,17 @@ func flattenRetentionWithoutStrategyForDataSourceDEPRECATED(requestedRetention *
 }
 
 func getDatasourceLifecycleAttrTypes() map[string]attr.Type {
-	var retentionAttrTypes = getDatasourceRetentionAttrTypes()
 	return map[string]attr.Type{
-		"id":                               types.StringType,
-		"space_id":                         types.StringType,
-		"name":                             types.StringType,
-		"description":                      types.StringType,
-		"phase":                            types.ListType{ElemType: types.ObjectType{AttrTypes: getDatasourcePhaseAttrTypes()}},
-		"release_retention_with_strategy":  types.ListType{ElemType: types.ObjectType{AttrTypes: retentionAttrTypes}},
-		"tentacle_retention_with_strategy": types.ListType{ElemType: types.ObjectType{AttrTypes: retentionAttrTypes}},
+		"id":          types.StringType,
+		"space_id":    types.StringType,
+		"name":        types.StringType,
+		"description": types.StringType,
 	}
 }
-func getDatasourceLifecycleAttrTypesDEPRECATED() map[string]attr.Type {
+func getDatasourceLifecycleAttrTypesIncludingPhaseAndRetentionDEPRECATED() map[string]attr.Type {
 
 	var datasourceLifecycleAttrTypesDeprecated = getDatasourceLifecycleAttrTypes()
-	delete(datasourceLifecycleAttrTypesDeprecated, "phase")
-	datasourceLifecycleAttrTypesDeprecated["phase"] = types.ListType{ElemType: types.ObjectType{AttrTypes: getDatasourcePhaseAttrTypesDEPRECATED()}}
+	datasourceLifecycleAttrTypesDeprecated["phase"] = types.ListType{ElemType: types.ObjectType{AttrTypes: getDatasourcePhaseAttrTypesIncludingRetentionDEPRECATED()}}
 	datasourceLifecycleAttrTypesDeprecated["release_retention_policy"] = types.ListType{ElemType: types.ObjectType{AttrTypes: getDataSourceRetentionWithoutStrategyAttrTypesDEPRECATED()}}
 	datasourceLifecycleAttrTypesDeprecated["tentacle_retention_policy"] = types.ListType{ElemType: types.ObjectType{AttrTypes: getDataSourceRetentionWithoutStrategyAttrTypesDEPRECATED()}}
 
@@ -192,7 +162,6 @@ func getDatasourceLifecycleAttrTypesDEPRECATED() map[string]attr.Type {
 }
 
 func getDatasourcePhaseAttrTypes() map[string]attr.Type {
-	var retentionAttrTypes = getDatasourceRetentionAttrTypes()
 	return map[string]attr.Type{
 		"id":                                    types.StringType,
 		"name":                                  types.StringType,
@@ -201,24 +170,15 @@ func getDatasourcePhaseAttrTypes() map[string]attr.Type {
 		"minimum_environments_before_promotion": types.Int64Type,
 		"is_optional_phase":                     types.BoolType,
 		"is_priority_phase":                     types.BoolType,
-		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: retentionAttrTypes}},
-		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: retentionAttrTypes}},
 	}
 }
-func getDatasourcePhaseAttrTypesDEPRECATED() map[string]attr.Type {
+func getDatasourcePhaseAttrTypesIncludingRetentionDEPRECATED() map[string]attr.Type {
 	var datasourcePhaseAttrTypesDeprecated = getDatasourcePhaseAttrTypes()
 	datasourcePhaseAttrTypesDeprecated["release_retention_policy"] = types.ListType{ElemType: types.ObjectType{AttrTypes: getDataSourceRetentionWithoutStrategyAttrTypesDEPRECATED()}}
 	datasourcePhaseAttrTypesDeprecated["tentacle_retention_policy"] = types.ListType{ElemType: types.ObjectType{AttrTypes: getDataSourceRetentionWithoutStrategyAttrTypesDEPRECATED()}}
 	return datasourcePhaseAttrTypesDeprecated
 }
 
-func getDatasourceRetentionAttrTypes() map[string]attr.Type {
-	return map[string]attr.Type{
-		"strategy":         types.StringType,
-		"quantity_to_keep": types.Int64Type,
-		"unit":             types.StringType,
-	}
-}
 func getDataSourceRetentionWithoutStrategyAttrTypesDEPRECATED() map[string]attr.Type {
 	return map[string]attr.Type{
 		"quantity_to_keep":    types.Int64Type,
