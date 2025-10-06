@@ -343,7 +343,7 @@ func setInitialRetentionDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED, o
 		initialRetentionSettingForNewBlock = ListNullRetention
 		setInitialRetentionForOldBlockDEPRECATED(data, initialRetentionSettingForOldBlock)
 	} else {
-		initialRetentionSettingForOldBlock = ListNullRetentionDEPRECATED
+		initialRetentionSettingForOldBlock = ListNullRetentionWithoutStrategyDEPRECATED
 		initialRetentionSettingForNewBlock = flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
 		setInitialRetentionForNewBlockDEPRECATED(data, initialRetentionSettingForNewBlock)
 	}
@@ -358,11 +358,11 @@ func removeInitialRetentionDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED
 	}
 
 	if !isReleaseRetentionWithoutStrategySet && (data.ReleaseRetentionWithoutStrategy.Equal(initialRetentionSettingForOldBlock) || data.ReleaseRetentionWithoutStrategy.IsNull()) {
-		data.ReleaseRetentionWithoutStrategy = ListNullRetentionDEPRECATED
+		data.ReleaseRetentionWithoutStrategy = ListNullRetentionWithoutStrategyDEPRECATED
 	}
 
 	if !isTentacleRetentionWithoutStrategySet && (data.TentacleRetentionWithoutStrategy.Equal(initialRetentionSettingForOldBlock) || data.TentacleRetentionWithoutStrategy.IsNull()) {
-		data.TentacleRetentionWithoutStrategy = ListNullRetentionDEPRECATED
+		data.TentacleRetentionWithoutStrategy = ListNullRetentionWithoutStrategyDEPRECATED
 	}
 }
 
@@ -486,13 +486,13 @@ func flattenResourcePhasesDEPRECATED(goPhases []*lifecycles.Phase, onlyRetention
 			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
 		}
 		if onlyRetentionWithoutStrategyWillBeUsed {
-			attrs["release_retention_policy"] = util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenResourceRetentionDEPRECATED(goPhase.ReleaseRetentionPolicy), ListNullRetentionDEPRECATED)
-			attrs["tentacle_retention_policy"] = util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenResourceRetentionDEPRECATED(goPhase.TentacleRetentionPolicy), ListNullRetentionDEPRECATED)
+			attrs["release_retention_policy"] = util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenResourceRetentionDEPRECATED(goPhase.ReleaseRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED)
+			attrs["tentacle_retention_policy"] = util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenResourceRetentionDEPRECATED(goPhase.TentacleRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED)
 			attrs["release_retention_with_strategy"] = ListNullRetention
 			attrs["tentacle_retention_with_strategy"] = ListNullRetention
 		} else {
-			attrs["release_retention_policy"] = ListNullRetentionDEPRECATED
-			attrs["tentacle_retention_policy"] = ListNullRetentionDEPRECATED
+			attrs["release_retention_policy"] = ListNullRetentionWithoutStrategyDEPRECATED
+			attrs["tentacle_retention_policy"] = ListNullRetentionWithoutStrategyDEPRECATED
 			attrs["release_retention_with_strategy"] = util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenResourceRetention(goPhase.ReleaseRetentionPolicy), ListNullRetention)
 			attrs["tentacle_retention_with_strategy"] = util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenResourceRetention(goPhase.TentacleRetentionPolicy), ListNullRetention)
 		}
@@ -524,7 +524,7 @@ func flattenResourceRetention(goRetention *core.RetentionPeriod) types.List {
 func flattenResourceRetentionDEPRECATED(goRetention *core.RetentionPeriod) types.List {
 	var retentionAttrTypes = getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()
 	if goRetention == nil {
-		return ListNullRetentionDEPRECATED
+		return ListNullRetentionWithoutStrategyDEPRECATED
 	}
 	return types.ListValueMust(
 		types.ObjectType{AttrTypes: retentionAttrTypes},
@@ -752,7 +752,7 @@ func expandRetentionDEPRECATED(v types.List) *core.RetentionPeriod {
 }
 
 var ListNullRetention = types.ListNull(types.ObjectType{AttrTypes: getResourceRetentionAttrTypes()})
-var ListNullRetentionDEPRECATED = types.ListNull(types.ObjectType{AttrTypes: getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()})
+var ListNullRetentionWithoutStrategyDEPRECATED = types.ListNull(types.ObjectType{AttrTypes: getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()})
 
 func getResourceRetentionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
