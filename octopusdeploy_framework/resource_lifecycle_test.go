@@ -2,6 +2,8 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
@@ -12,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 //unit tests
@@ -173,7 +174,7 @@ func TestAccLifecycleBasic(t *testing.T) {
 }
 
 func TestAccLifecycleWithUpdate(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -266,7 +267,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 }
 
 func TestAccLifecycleComplex(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)

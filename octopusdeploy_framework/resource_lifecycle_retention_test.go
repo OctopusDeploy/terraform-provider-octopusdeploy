@@ -11,7 +11,7 @@ import (
 )
 
 func TestAccLifecycleRetentionUpdates(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because deprecated retention is used")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -153,7 +153,7 @@ func TestAccLifecycleRetentionUpdates(t *testing.T) {
 	})
 }
 func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if !schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -356,7 +356,7 @@ func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
 }
 
 func TestAccRetentionAttributeValidation(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because deprecated retention is used")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -410,7 +410,7 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 	})
 }
 func TestAccRetentionAttributeValidationDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if !schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -498,7 +498,7 @@ func TestAccRetentionAttributeValidationDEPRECATED(t *testing.T) {
 }
 
 func TestAccLifecycle_WithPhase_InheritingRetentions(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because deprecated retention is used")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -528,7 +528,7 @@ func TestAccLifecycle_WithPhase_InheritingRetentions(t *testing.T) {
 	})
 }
 func TestAccLifecycleWithPhaseInheritingRetentionsDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if !schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)

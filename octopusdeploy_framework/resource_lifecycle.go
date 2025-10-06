@@ -21,7 +21,7 @@ import (
 type lifecycleTypeResource struct {
 	*Config
 	retentionWithStrategyNotSupported    bool
-	allowDeprecatedAndNewRetentionBlocks bool
+	allowDeprecatedRetention bool
 }
 
 var _ resource.Resource = &lifecycleTypeResource{}
@@ -52,8 +52,8 @@ type lifecycleTypeResourceModelDEPRECATED struct {
 }
 
 func NewLifecycleResource() resource.Resource {
-	allowDeprecatedAndNewRetentionBlocks := schemas.AllowDeprecatedAndNewRetentionBlocks()
-	return &lifecycleTypeResource{allowDeprecatedAndNewRetentionBlocks: allowDeprecatedAndNewRetentionBlocks}
+	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
+	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
 }
 
 func (r *lifecycleTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -68,7 +68,7 @@ func (r *lifecycleTypeResource) Metadata(_ context.Context, req resource.Metadat
 }
 
 func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedAndNewRetentionBlocks: r.allowDeprecatedAndNewRetentionBlocks}.GetResourceSchema()
+	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: r.allowDeprecatedRetention}.GetResourceSchema()
 }
 
 func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -81,7 +81,7 @@ func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.Conf
 }
 
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	if r.allowDeprecatedAndNewRetentionBlocks {
+	if r.allowDeprecatedRetention {
 		var data *lifecycleTypeResourceModelDEPRECATED
 		resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 		if resp.Diagnostics.HasError() {
@@ -128,7 +128,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	}
 }
 func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	if r.allowDeprecatedAndNewRetentionBlocks {
+	if r.allowDeprecatedRetention {
 		var data *lifecycleTypeResourceModelDEPRECATED
 		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 		if resp.Diagnostics.HasError() {
@@ -177,7 +177,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	if r.allowDeprecatedAndNewRetentionBlocks {
+	if r.allowDeprecatedRetention {
 		var data, state *lifecycleTypeResourceModelDEPRECATED
 		resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -230,7 +230,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 }
 
 func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	if r.allowDeprecatedAndNewRetentionBlocks {
+	if r.allowDeprecatedRetention {
 		var data lifecycleTypeResourceModelDEPRECATED
 		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 		if resp.Diagnostics.HasError() {

@@ -2,15 +2,16 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
-	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccDataSourceLifecycles(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -42,7 +43,7 @@ func TestAccDataSourceLifecycles(t *testing.T) {
 }
 
 func TestAccDataSourceLifecyclesDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
+	if !schemas.AllowDeprecatedRetention() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)

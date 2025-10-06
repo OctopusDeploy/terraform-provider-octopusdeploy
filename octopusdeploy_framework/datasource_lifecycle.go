@@ -17,7 +17,7 @@ import (
 
 type lifecyclesDataSource struct {
 	*Config
-	allowDeprecatedAndNewRetentionBlocks bool
+	allowDeprecatedRetention bool
 }
 type lifecyclesDataSourceModel struct {
 	ID          types.String `tfsdk:"id"`
@@ -32,8 +32,8 @@ type lifecyclesDataSourceModel struct {
 var _ datasource.DataSource = &lifecyclesDataSource{}
 
 func NewLifecyclesDataSource() datasource.DataSource {
-	allowDeprecatedAndNewRetentionBlocks := schemas.AllowDeprecatedAndNewRetentionBlocks()
-	return &lifecyclesDataSource{allowDeprecatedAndNewRetentionBlocks: allowDeprecatedAndNewRetentionBlocks}
+	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
+	return &lifecyclesDataSource{allowDeprecatedRetention: allowDeprecatedRetention}
 }
 
 func (l *lifecyclesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -43,7 +43,7 @@ func (l *lifecyclesDataSource) Metadata(ctx context.Context, req datasource.Meta
 
 func (l *lifecyclesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	tflog.Debug(ctx, "lifecycles datasource Schema")
-	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedAndNewRetentionBlocks: l.allowDeprecatedAndNewRetentionBlocks}.GetDatasourceSchema()
+	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: l.allowDeprecatedRetention}.GetDatasourceSchema()
 }
 
 func (l *lifecyclesDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -77,7 +77,7 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	util.DatasourceResultCount(ctx, "lifecycles", len(lifecyclesResult.Items))
 
-	if l.allowDeprecatedAndNewRetentionBlocks {
+	if l.allowDeprecatedRetention {
 		resp.Diagnostics.AddWarning("Deprecated attributes should be disregarded", "release_retention_policy and tentacle_retention_policy are deprecated and will be removed in a future release.\nPlease use release_retention_with_strategy and tentacle_retention_with_strategy instead.")
 		data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items)
 	} else {
