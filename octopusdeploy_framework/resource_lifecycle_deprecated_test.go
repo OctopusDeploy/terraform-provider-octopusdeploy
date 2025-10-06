@@ -2,8 +2,9 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"testing"
+
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
@@ -16,7 +17,7 @@ import (
 )
 
 func TestExpandLifecycleWithNilUsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	lifecycle := expandLifecycleDEPRECATED(nil, false)
@@ -24,7 +25,7 @@ func TestExpandLifecycleWithNilUsingNewRetentionBlockDEPRECATED(t *testing.T) {
 }
 
 func TestExpanDLifecycleWithNilUsingOldRetentionBlockDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	lifecycle := expandLifecycleDEPRECATED(nil, true)
@@ -32,7 +33,7 @@ func TestExpanDLifecycleWithNilUsingOldRetentionBlockDEPRECATED(t *testing.T) {
 }
 
 func TestExpandLifecycleUsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	description := "test-description"
@@ -90,7 +91,7 @@ func TestExpandLifecycleUsingNewRetentionBlockDEPRECATED(t *testing.T) {
 }
 
 func TestExpandLifecycleUsingOldRetentionBlockDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	description := "test-description"
@@ -148,7 +149,7 @@ func TestExpandLifecycleUsingOldRetentionBlockDEPRECATED(t *testing.T) {
 }
 
 func TestPhasesWithEmptyInputDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	getResourcePhaseAttrTypesDEPRECATED()
@@ -158,7 +159,7 @@ func TestPhasesWithEmptyInputDEPRECATED(t *testing.T) {
 }
 
 func TestExpandPhasesWithNullInputDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()})
@@ -167,7 +168,7 @@ func TestExpandPhasesWithNullInputDEPRECATED(t *testing.T) {
 }
 
 func TestExpandPhasesWithUnknownInputDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()})
@@ -176,7 +177,7 @@ func TestExpandPhasesWithUnknownInputDEPRECATED(t *testing.T) {
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaultsDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
@@ -200,7 +201,7 @@ func TestExpandAndFlattenPhasesWithSensibleDefaultsDEPRECATED(t *testing.T) {
 }
 
 func TestExpandAndFlattenMultiplePhasesWithSensibleDefaultsDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("skipping test because deprecated retention blocks are not used")
 	}
 	phase1 := createTestPhaseDEPRECATED("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)

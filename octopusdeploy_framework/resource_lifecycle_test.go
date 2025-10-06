@@ -2,8 +2,9 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"testing"
+
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -17,7 +18,7 @@ import (
 )
 
 func TestExpandLifecycleWithNil(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	lifecycle := expandLifecycle(nil)
@@ -25,7 +26,7 @@ func TestExpandLifecycleWithNil(t *testing.T) {
 }
 
 func TestExpandLifecycle(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	description := "test-description"
@@ -83,7 +84,7 @@ func TestExpandLifecycle(t *testing.T) {
 }
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()}, []attr.Value{})
@@ -92,7 +93,7 @@ func TestExpandPhasesWithEmptyInput(t *testing.T) {
 }
 
 func TestExpandPhasesWithNullInput(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
@@ -101,7 +102,7 @@ func TestExpandPhasesWithNullInput(t *testing.T) {
 }
 
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
@@ -110,7 +111,7 @@ func TestExpandPhasesWithUnknownInput(t *testing.T) {
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
@@ -134,7 +135,7 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
 }
 
 func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
@@ -179,7 +180,7 @@ func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs
 //Integration test under here
 
 func TestAccLifecycleBasic(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -208,7 +209,7 @@ func TestAccLifecycleBasic(t *testing.T) {
 }
 
 func TestAccLifecycleWithUpdate(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -301,7 +302,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 }
 
 func TestAccLifecycleComplex(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because users may still use the deprecated retention blocks")
 	}
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)

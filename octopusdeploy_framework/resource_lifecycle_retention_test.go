@@ -2,15 +2,16 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"regexp"
+	"testing"
+
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"regexp"
-	"testing"
 )
 
 func TestAccLifecycleRetentionUpdates(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because deprecated retention is used")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -153,7 +154,7 @@ func TestAccLifecycleRetentionUpdates(t *testing.T) {
 }
 
 func TestAccRetentionAttributeValidation(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because deprecated retention is used")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -208,7 +209,7 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 }
 
 func TestAccLifecycle_WithPhase_InheritingRetentions(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because deprecated retention is used")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)

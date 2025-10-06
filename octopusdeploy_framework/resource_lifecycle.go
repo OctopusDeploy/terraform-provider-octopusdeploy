@@ -52,7 +52,8 @@ type lifecycleTypeResourceModelDEPRECATED struct {
 }
 
 func NewLifecycleResource() resource.Resource {
-	return &lifecycleTypeResource{allowDeprecatedAndNewRetentionBlocks: schemas.AllowDeprecatedAndNewRetentionBlocks}
+	allowDeprecatedAndNewRetentionBlocks := schemas.AllowDeprecatedAndNewRetentionBlocks()
+	return &lifecycleTypeResource{allowDeprecatedAndNewRetentionBlocks: allowDeprecatedAndNewRetentionBlocks}
 }
 
 func (r *lifecycleTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -67,10 +68,10 @@ func (r *lifecycleTypeResource) Metadata(_ context.Context, req resource.Metadat
 }
 
 func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schemas.LifecycleSchema{r.allowDeprecatedAndNewRetentionBlocks}.GetResourceSchema()
+	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedAndNewRetentionBlocks: r.allowDeprecatedAndNewRetentionBlocks}.GetResourceSchema()
 }
 
-func (r *lifecycleTypeResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	r.Config = resourceConfiguration(req, resp)
 	if r.Config != nil {
 		if !r.Config.IsVersionSameOrGreaterThan("2025.3") {

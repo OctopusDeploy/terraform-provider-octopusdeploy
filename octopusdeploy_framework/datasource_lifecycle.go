@@ -31,7 +31,8 @@ type lifecyclesDataSourceModel struct {
 var _ datasource.DataSource = &lifecyclesDataSource{}
 
 func NewLifecyclesDataSource() datasource.DataSource {
-	return &lifecyclesDataSource{allowDeprecatedAndNewRetentionBlocks: schemas.AllowDeprecatedAndNewRetentionBlocks}
+	allowDeprecatedAndNewRetentionBlocks := schemas.AllowDeprecatedAndNewRetentionBlocks()
+	return &lifecyclesDataSource{allowDeprecatedAndNewRetentionBlocks: allowDeprecatedAndNewRetentionBlocks}
 }
 
 func (l *lifecyclesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -76,6 +77,7 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	util.DatasourceResultCount(ctx, "lifecycles", len(lifecyclesResult.Items))
 
 	if l.allowDeprecatedAndNewRetentionBlocks {
+		resp.Diagnostics.AddWarning("Deprecated attributes should be disregarded", "release_retention_policy and tentacle_retention_policy are deprecated and will be removed in a future release.\nPlease use release_retention_with_strategy and tentacle_retention_with_strategy instead.")
 		data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items)
 	} else {
 		data.Lifecycles = flattenLifecyclesForDatasource(lifecyclesResult.Items)

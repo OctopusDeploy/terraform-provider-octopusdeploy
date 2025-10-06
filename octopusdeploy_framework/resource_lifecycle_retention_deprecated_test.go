@@ -2,15 +2,16 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"regexp"
+	"testing"
+
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"regexp"
-	"testing"
 )
 
 func TestAccifecycleRetentionUpdatesdeprecated(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -213,7 +214,7 @@ func TestAccifecycleRetentionUpdatesdeprecated(t *testing.T) {
 }
 
 func TestAccRetentionAttributeValidationdeprecated(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -301,7 +302,7 @@ func TestAccRetentionAttributeValidationdeprecated(t *testing.T) {
 }
 
 func TestAccLifecycleWithPhaseInheritingRetentionsDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedAndNewRetentionBlocks {
+	if !schemas.AllowDeprecatedAndNewRetentionBlocks() {
 		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
 	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
