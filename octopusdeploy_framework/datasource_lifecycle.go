@@ -118,8 +118,8 @@ func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.
 			"phase":                            flattenPhasesForDataSourceDEPRECATED(lifecycle.Phases),
 			"release_retention_with_strategy":  flattenRetentionForDataSource(lifecycle.ReleaseRetentionPolicy),
 			"tentacle_retention_with_strategy": flattenRetentionForDataSource(lifecycle.TentacleRetentionPolicy),
-			"release_retention_policy":         flattenRetentionWithoutStrategyForDataSource(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_policy":        flattenRetentionWithoutStrategyForDataSource(lifecycle.TentacleRetentionPolicy),
+			"release_retention_policy":         flattenRetentionWithoutStrategyForDataSourceDEPRECATED(lifecycle.ReleaseRetentionPolicy),
+			"tentacle_retention_policy":        flattenRetentionWithoutStrategyForDataSourceDEPRECATED(lifecycle.TentacleRetentionPolicy),
 		}
 		lifecyclesList = append(lifecyclesList, types.ObjectValueMust(lifecycleAttrTypes, lifecycleMap))
 
@@ -168,8 +168,8 @@ func flattenPhasesForDataSourceDEPRECATED(requestedPhases []*lifecycles.Phase) t
 			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
 			"release_retention_with_strategy":       util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetentionForDataSource(goPhase.ReleaseRetentionPolicy), ListNullRetention),
 			"tentacle_retention_with_strategy":      util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetentionForDataSource(goPhase.TentacleRetentionPolicy), ListNullRetention),
-			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetentionWithoutStrategyForDataSource(goPhase.ReleaseRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED),
-			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetentionWithoutStrategyForDataSource(goPhase.TentacleRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED),
+			"release_retention_policy":              util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetentionWithoutStrategyForDataSourceDEPRECATED(goPhase.ReleaseRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED),
+			"tentacle_retention_policy":             util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetentionWithoutStrategyForDataSourceDEPRECATED(goPhase.TentacleRetentionPolicy), ListNullRetentionWithoutStrategyDEPRECATED),
 		}
 		phasesList = append(phasesList, types.ObjectValueMust(phaseAttrTypes, attrs))
 	}
@@ -196,7 +196,7 @@ func flattenRetentionForDataSource(requestedRetention *core.RetentionPeriod) typ
 	)
 }
 
-func flattenRetentionWithoutStrategyForDataSource(requestedRetention *core.RetentionPeriod) types.List {
+func flattenRetentionWithoutStrategyForDataSourceDEPRECATED(requestedRetention *core.RetentionPeriod) types.List {
 	var retentionAttrTypes = getDataSourceRetentionWithoutStrategyAttrTypesDEPRECATED()
 	if requestedRetention == nil {
 		return ListNullRetentionWithoutStrategyDEPRECATED
