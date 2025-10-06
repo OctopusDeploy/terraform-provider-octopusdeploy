@@ -27,7 +27,7 @@ import (
 var _ EntitySchema = LifecycleSchema{}
 
 func AllowDeprecatedAndNewRetentionBlocks() bool {
-	allowDeprecatedAndNewRetentionBlocksFeatureToggle := false // change this to false to disallow deprecated retention by default
+	allowDeprecatedAndNewRetentionBlocksFeatureToggle := true // change this to false to disallow deprecated retention by default
 	deprecationReversals := strings.TrimSpace(os.Getenv("TF_OCTOPUS_DEPRECATION_REVERSALS"))
 	if strings.EqualFold(deprecationReversals, "octopusdeploy_lifecycles.retention_policy") {
 		return true

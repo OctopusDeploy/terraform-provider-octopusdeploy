@@ -2,33 +2,27 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"testing"
-
-	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
-
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
+//unit tests
+
 func TestExpandLifecycleWithNil(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
 	lifecycle := expandLifecycle(nil)
 	require.Nil(t, lifecycle)
 }
 
 func TestExpandLifecycle(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
 	description := "test-description"
 	name := "test-name"
 	spaceID := "test-space-id"
@@ -84,36 +78,24 @@ func TestExpandLifecycle(t *testing.T) {
 }
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
 	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()}, []attr.Value{})
 	phases := expandPhases(emptyList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithNullInput(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
 	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
 	phases := expandPhases(nullList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
 	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
 	phases := expandPhases(unknownList)
 	require.Nil(t, phases)
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
 	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase})
@@ -135,9 +117,6 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults(t *testing.T) {
 }
 
 func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
@@ -166,28 +145,13 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults(t *testing.T) {
 	require.Equal(t, phase2.TentacleRetentionPolicy, expandedPhases[1].TentacleRetentionPolicy)
 }
 
-func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
-	phase := lifecycles.NewPhase(name)
-	phase.AutomaticDeploymentTargets = autoTargets
-	phase.IsOptionalPhase = isOptional
-	phase.MinimumEnvironmentsBeforePromotion = minEnvs
-	phase.ReleaseRetentionPolicy = core.NewRetentionPeriod(15, "Items", false)
-	phase.TentacleRetentionPolicy = core.NewRetentionPeriod(0, "Days", true)
-	phase.ID = name + "-Id"
-	return phase
-}
-
-//Integration test under here
+//integration tests
 
 func TestAccLifecycleBasic(t *testing.T) {
-	if schemas.AllowDeprecatedAndNewRetentionBlocks() {
-		t.Skip("Skipping test because users may still use the deprecated retention blocks")
-	}
+	t.Setenv("TF_OCTOPUS_DEPRECATION_REVERSALS", "octopusdeploy_lifecycles.retention_policy")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
-
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccLifecycleCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -338,6 +302,18 @@ func TestAccLifecycleComplex(t *testing.T) {
 	})
 }
 
+// Setup for testing
+func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
+	phase := lifecycles.NewPhase(name)
+	phase.AutomaticDeploymentTargets = autoTargets
+	phase.IsOptionalPhase = isOptional
+	phase.MinimumEnvironmentsBeforePromotion = minEnvs
+	phase.ReleaseRetentionPolicy = core.NewRetentionPeriod(15, "Items", false)
+	phase.TentacleRetentionPolicy = core.NewRetentionPeriod(0, "Days", true)
+	phase.ID = name + "-Id"
+	return phase
+}
+
 func testAccLifecycleWithPhase(localName string, name string, description string, phaseName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
@@ -347,6 +323,7 @@ func testAccLifecycleWithPhase(localName string, name string, description string
 		}
 	}`, localName, name, description, phaseName)
 }
+
 func testAccLifecycleWithPhaseAndPhaseRetention(localName string, name string, description string, phaseName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
@@ -371,24 +348,6 @@ func testAccLifecycleWithDescription(localName string, name string, description 
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
        description = "%s"
-    }`, localName, name, description)
-}
-
-func testAccLifecycleWithRetention(localName string, name string, description string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-       name        = "%s"
-       description = "%s"
-		release_retention_with_strategy {
-			unit             = "Days"
-			quantity_to_keep = 60
-			should_keep_forever = false
-		}
-
-		tentacle_retention_with_strategy {
-			unit             = "Items"
-			quantity_to_keep = 0
-			should_keep_forever = true
-		}
     }`, localName, name, description)
 }
 
@@ -490,7 +449,7 @@ func testAccLifecycleCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-/// Deprecating unit tests
+/// Deprecating Unit tests
 
 func TestExpandLifecycleWithNilUsingNewRetentionBlockDEPRECATED(t *testing.T) {
 	lifecycle := expandLifecycleDEPRECATED(nil, false)
@@ -651,6 +610,8 @@ func TestExpandAndFlattenPhasesWithSensibleDefaultsAndRetentionWithoutStrategyDE
 	require.Equal(t, phase.ReleaseRetentionPolicy, expandedPhase.ReleaseRetentionPolicy)
 	require.Equal(t, phase.TentacleRetentionPolicy, expandedPhase.TentacleRetentionPolicy)
 }
+
+// setup for deprecating tests
 
 func createTestPhaseDEPRECATED(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
 	phase := lifecycles.NewPhase(name)
