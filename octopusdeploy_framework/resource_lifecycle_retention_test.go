@@ -5,15 +5,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccLifecycleRetentionUpdates(t *testing.T) {
-	if schemas.AllowDeprecatedRetention() {
-		t.Skip("Skipping test because deprecated retention is used")
-	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
 
@@ -153,9 +149,6 @@ func TestAccLifecycleRetentionUpdates(t *testing.T) {
 	})
 }
 func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedRetention() {
-		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
-	}
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
 
@@ -356,9 +349,7 @@ func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
 }
 
 func TestAccRetentionAttributeValidation(t *testing.T) {
-	if schemas.AllowDeprecatedRetention() {
-		t.Skip("Skipping test because deprecated retention is used")
-	}
+
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -410,9 +401,7 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 	})
 }
 func TestAccRetentionAttributeValidationDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedRetention() {
-		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
-	}
+
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -498,9 +487,7 @@ func TestAccRetentionAttributeValidationDEPRECATED(t *testing.T) {
 }
 
 func TestAccLifecycle_WithPhase_InheritingRetentions(t *testing.T) {
-	if schemas.AllowDeprecatedRetention() {
-		t.Skip("Skipping test because deprecated retention is used")
-	}
+
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	phaseName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
@@ -528,9 +515,7 @@ func TestAccLifecycle_WithPhase_InheritingRetentions(t *testing.T) {
 	})
 }
 func TestAccLifecycleWithPhaseInheritingRetentionsDEPRECATED(t *testing.T) {
-	if !schemas.AllowDeprecatedRetention() {
-		t.Skip("Skipping test because deprecated and new retention blocks are not allowed")
-	}
+
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	phaseName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
