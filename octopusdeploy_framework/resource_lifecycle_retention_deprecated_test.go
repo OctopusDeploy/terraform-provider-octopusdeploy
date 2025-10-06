@@ -151,7 +151,7 @@ func TestAccifecycleRetentionUpdatesdeprecated(t *testing.T) {
 			},
 			//8 set old style retention Block to Forever
 			{
-				Config: oldRetentionLifecycleDEPRECATED(lifecycleName, "", "", "true"),
+				Config: retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "", "", "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -171,7 +171,7 @@ func TestAccifecycleRetentionUpdatesdeprecated(t *testing.T) {
 			},
 			// 9 update with Count retention policies using days
 			{
-				Config: oldRetentionLifecycleDEPRECATED(lifecycleName, "1", "Days", "false"),
+				Config: retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "1", "Days", "false"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -191,7 +191,7 @@ func TestAccifecycleRetentionUpdatesdeprecated(t *testing.T) {
 			},
 			// 10 update with Count retention policies using items
 			{
-				Config: oldRetentionLifecycleDEPRECATED(lifecycleName, "1", "Items", "false"),
+				Config: retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "1", "Items", "false"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
@@ -264,36 +264,36 @@ func TestAccRetentionAttributeValidationdeprecated(t *testing.T) {
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep must be set when strategy is set to Count.*quantity_to_keep must be set when strategy is set to Count`),
 			},
-			//Using Old retention Blocks
+			//Using Old retention Blocks without strategy
 			// when quantity_to_keep is > 0 should_keep_forever shouldn't be true
 			{
-				Config:      oldRetentionLifecycleDEPRECATED(lifecycleName, "1", "", "true"),
+				Config:      retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "1", "", "true"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is not 0`),
 			},
 			{
-				Config:      oldRetentionLifecycleDEPRECATED(lifecycleName, "1", "", "true"),
+				Config:      retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "1", "", "true"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`should_keep_forever must be false when quantity_to_keep is not 0`),
 			},
 			// when quantity_to_keep is 0, should_keep_forever shouldn't be false
 			{
-				Config:      oldRetentionLifecycleDEPRECATED(lifecycleName, "0", "", "false"),
+				Config:      retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "0", "", "false"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`should_keep_forever must be true when quantity_to_keep is 0`),
 			},
 			{
-				Config:      oldRetentionLifecycleDEPRECATED(lifecycleName, "", "", "false"),
+				Config:      retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "", "", "false"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
 			{
-				Config:      oldRetentionLifecycleDEPRECATED(lifecycleName, "", "Items", "false"),
+				Config:      retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "", "Items", "false"),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
 			{
-				Config:      oldRetentionLifecycleDEPRECATED(lifecycleName, "", "", ""),
+				Config:      retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName, "", "", ""),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`The non-refresh plan was not empty`),
 			},
@@ -370,7 +370,7 @@ func newRetentionLifecycleDEPRECATED(lifecycleName string, strategy string, quan
 	return resource
 }
 
-func oldRetentionLifecycleDEPRECATED(lifecycleName string, quantityToKeep string, unit string, shouldKeepForever string) string {
+func retentionWithoutStrategyLifecycleDEPRECATED(lifecycleName string, quantityToKeep string, unit string, shouldKeepForever string) string {
 	var quantityToKeepAttribute string
 	if quantityToKeep != "" {
 		quantityToKeepAttribute = fmt.Sprintf(`quantity_to_keep = "%s"`, quantityToKeep)

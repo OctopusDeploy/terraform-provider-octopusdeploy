@@ -179,7 +179,7 @@ func getDeprecatedResourceSchemaRetentionBlock(allowDeprecatedAndNewRetentionBlo
 					Build(),
 			},
 			Validators: []validator.Object{
-				deprecatedRetentionValidator{allowDeprecatedAndNewRetentionBlocks: allowDeprecatedAndNewRetentionBlocks},
+				retentionWithoutStrategyValidatorDEPRECATED{allowDeprecatedAndNewRetentionBlocks: allowDeprecatedAndNewRetentionBlocks},
 			},
 		},
 	}
@@ -243,17 +243,17 @@ func (v resourceSchemaRetentionValidator) ValidateObject(ctx context.Context, re
 	}
 }
 
-type deprecatedRetentionValidator struct {
+type retentionWithoutStrategyValidatorDEPRECATED struct {
 	allowDeprecatedAndNewRetentionBlocks bool
 }
 
-func (v deprecatedRetentionValidator) Description(ctx context.Context) string {
+func (v retentionWithoutStrategyValidatorDEPRECATED) Description(ctx context.Context) string {
 	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
 }
-func (v deprecatedRetentionValidator) MarkdownDescription(ctx context.Context) string {
+func (v retentionWithoutStrategyValidatorDEPRECATED) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
-func (v deprecatedRetentionValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v retentionWithoutStrategyValidatorDEPRECATED) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
 		ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
