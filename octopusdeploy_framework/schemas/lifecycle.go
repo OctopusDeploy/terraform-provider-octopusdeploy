@@ -29,12 +29,7 @@ type LifecycleSchema struct{}
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
-		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy." +
-			"\n\nLifecycle retention is set using either the `retention_policy` and `retention_with_strategy` blocks." +
-			"\n- When using an octopus version prior to `2025.3`" +
-			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks are used" +
-			"\n- when using an octopus version `2025.3` or later" +
-			"\n	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks may be used",
+		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy.",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":          GetIdResourceSchema(),
 			"space_id":    util.ResourceString().Optional().Computed().Description("The space ID associated with this resource.").PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
@@ -103,7 +98,6 @@ func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.
 
 func getResourceSchemaRetentionBlockDEPRECATED() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		DeprecationMessage: "This block will deprecate when octopus 2025.2 is no longer supported. After upgrading to octopus 2025.3 or higher, please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
