@@ -75,29 +75,11 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	util.DatasourceResultCount(ctx, "lifecycles", len(lifecyclesResult.Items))
 
-		resp.Diagnostics.AddWarning("Deprecated attributes should be disregarded", "release_retention_policy and tentacle_retention_policy are deprecated and will be removed in a future release.\nPlease use release_retention_with_strategy and tentacle_retention_with_strategy instead.")
-		data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items)
+	resp.Diagnostics.AddWarning("Deprecated attributes should be disregarded", "release_retention_policy and tentacle_retention_policy are deprecated and will be removed in a future release.\nPlease use release_retention_with_strategy and tentacle_retention_with_strategy instead.")
+	data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items)
 
 	data.ID = types.StringValue("Lifecycles " + time.Now().UTC().String())
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func flattenLifecyclesForDatasource(requestedLifecycles []*lifecycles.Lifecycle) types.List {
-	var lifecycleAttrTypes = getDatasourceLifecycleAttrTypes()
-	lifecyclesList := make([]attr.Value, 0, len(requestedLifecycles))
-	for _, lifecycle := range requestedLifecycles {
-		lifecycleMap := map[string]attr.Value{
-			"id":                               types.StringValue(lifecycle.ID),
-			"space_id":                         types.StringValue(lifecycle.SpaceID),
-			"name":                             types.StringValue(lifecycle.Name),
-			"description":                      types.StringValue(lifecycle.Description),
-			"phase":                            flattenPhasesForDataSource(lifecycle.Phases),
-			"release_retention_with_strategy":  flattenRetentionForDataSource(lifecycle.ReleaseRetentionPolicy),
-			"tentacle_retention_with_strategy": flattenRetentionForDataSource(lifecycle.TentacleRetentionPolicy),
-		}
-		lifecyclesList = append(lifecyclesList, types.ObjectValueMust(lifecycleAttrTypes, lifecycleMap))
-	}
-	return types.ListValueMust(types.ObjectType{AttrTypes: lifecycleAttrTypes}, lifecyclesList)
 }
 
 func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.Lifecycle) types.List {
@@ -119,30 +101,6 @@ func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.
 
 	}
 	return types.ListValueMust(types.ObjectType{AttrTypes: lifecycleAttrTypes}, lifecyclesList)
-}
-
-func flattenPhasesForDataSource(requestedPhases []*lifecycles.Phase) types.List {
-	var phaseAttrTypes = getDatasourcePhaseAttrTypes()
-	if requestedPhases == nil {
-		return types.ListNull(types.ObjectType{AttrTypes: phaseAttrTypes})
-	}
-	phasesList := make([]attr.Value, 0, len(requestedPhases))
-
-	for _, goPhase := range requestedPhases {
-		attrs := map[string]attr.Value{
-			"id":                                    types.StringValue(goPhase.ID),
-			"name":                                  types.StringValue(goPhase.Name),
-			"automatic_deployment_targets":          util.FlattenStringList(goPhase.AutomaticDeploymentTargets),
-			"optional_deployment_targets":           util.FlattenStringList(goPhase.OptionalDeploymentTargets),
-			"minimum_environments_before_promotion": types.Int64Value(int64(goPhase.MinimumEnvironmentsBeforePromotion)),
-			"is_optional_phase":                     types.BoolValue(goPhase.IsOptionalPhase),
-			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
-			"release_retention_with_strategy":       util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenRetentionForDataSource(goPhase.ReleaseRetentionPolicy), ListNullRetention),
-			"tentacle_retention_with_strategy":      util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenRetentionForDataSource(goPhase.TentacleRetentionPolicy), ListNullRetention),
-		}
-		phasesList = append(phasesList, types.ObjectValueMust(phaseAttrTypes, attrs))
-	}
-	return types.ListValueMust(types.ObjectType{AttrTypes: phaseAttrTypes}, phasesList)
 }
 
 func flattenPhasesForDataSourceDEPRECATED(requestedPhases []*lifecycles.Phase) types.List {
