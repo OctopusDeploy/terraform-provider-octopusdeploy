@@ -522,7 +522,7 @@ func flattenResourceRetention(goRetention *core.RetentionPeriod) types.List {
 	)
 }
 func flattenResourceRetentionDEPRECATED(goRetention *core.RetentionPeriod) types.List {
-	var retentionAttrTypes = getResourceRetentionAttrTypesDEPRECATED()
+	var retentionAttrTypes = getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()
 	if goRetention == nil {
 		return ListNullRetentionDEPRECATED
 	}
@@ -752,7 +752,7 @@ func expandRetentionDEPRECATED(v types.List) *core.RetentionPeriod {
 }
 
 var ListNullRetention = types.ListNull(types.ObjectType{AttrTypes: getResourceRetentionAttrTypes()})
-var ListNullRetentionDEPRECATED = types.ListNull(types.ObjectType{AttrTypes: getResourceRetentionAttrTypesDEPRECATED()})
+var ListNullRetentionDEPRECATED = types.ListNull(types.ObjectType{AttrTypes: getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()})
 
 func getResourceRetentionAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
@@ -761,7 +761,7 @@ func getResourceRetentionAttrTypes() map[string]attr.Type {
 		"unit":             types.StringType,
 	}
 }
-func getResourceRetentionAttrTypesDEPRECATED() map[string]attr.Type {
+func getResourceRetentionWithoutStrategyAttrTypesDEPRECATED() map[string]attr.Type {
 	return map[string]attr.Type{
 		"quantity_to_keep":    types.Int64Type,
 		"should_keep_forever": types.BoolType,
@@ -785,7 +785,7 @@ func getResourcePhaseAttrTypes() map[string]attr.Type {
 }
 func getResourcePhaseAttrTypesDEPRECATED() map[string]attr.Type {
 	var retentionAttrTypes = getResourceRetentionAttrTypes()
-	var AttrTypesWithoutStrategy = getResourceRetentionAttrTypesDEPRECATED()
+	var AttrTypesWithoutStrategy = getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()
 	return map[string]attr.Type{
 		"id":                                    types.StringType,
 		"name":                                  types.StringType,

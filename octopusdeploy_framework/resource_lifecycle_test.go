@@ -489,3 +489,176 @@ func testAccLifecycleCheckDestroy(s *terraform.State) error {
 
 	return nil
 }
+
+/// Deprecating unit tests
+
+func TestExpandLifecycleWithNilUsingNewRetentionBlockDEPRECATED(t *testing.T) {
+	lifecycle := expandLifecycleDEPRECATED(nil, false)
+	require.Nil(t, lifecycle)
+}
+
+func TestExpanDLifecycleWithNilUsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
+	lifecycle := expandLifecycleDEPRECATED(nil, true)
+	require.Nil(t, lifecycle)
+}
+
+func TestExpandLifecycleUsingNewRetentionBlockDEPRECATED(t *testing.T) {
+	description := "test-description"
+	name := "test-name"
+	spaceID := "test-space-id"
+	Id := "test-id"
+	releaseRetention := core.KeepForeverRetentionPeriod()
+	tentacleRetention := core.KeepForeverRetentionPeriod()
+	retentionAttributeTypes := getResourceRetentionAttrTypes()
+
+	data := &lifecycleTypeResourceModelDEPRECATED{
+		Description: types.StringValue(description),
+		Name:        types.StringValue(name),
+		SpaceID:     types.StringValue(spaceID),
+		ReleaseRetention: types.ListValueMust(
+			types.ObjectType{AttrTypes: retentionAttributeTypes},
+			[]attr.Value{
+				types.ObjectValueMust(
+					retentionAttributeTypes,
+					map[string]attr.Value{
+						"strategy":         types.StringValue(releaseRetention.Strategy),
+						"quantity_to_keep": types.Int64Value(int64(releaseRetention.QuantityToKeep)),
+						"unit":             types.StringValue(releaseRetention.Unit),
+					},
+				),
+			},
+		),
+		TentacleRetention: types.ListValueMust(
+			types.ObjectType{AttrTypes: retentionAttributeTypes},
+			[]attr.Value{
+				types.ObjectValueMust(
+					retentionAttributeTypes,
+					map[string]attr.Value{
+						"strategy":         types.StringValue(releaseRetention.Strategy),
+						"quantity_to_keep": types.Int64Value(int64(releaseRetention.QuantityToKeep)),
+						"unit":             types.StringValue(releaseRetention.Unit),
+					},
+				),
+			},
+		),
+	}
+	data.ID = types.StringValue(Id)
+
+	lifecycle := expandLifecycleDEPRECATED(data, false)
+	require.NotNil(t, lifecycle)
+	require.Equal(t, description, lifecycle.Description)
+	require.NotEmpty(t, lifecycle.ID)
+	require.NotNil(t, lifecycle.Links)
+	require.Empty(t, lifecycle.Links)
+	require.Equal(t, name, lifecycle.Name)
+	require.Empty(t, lifecycle.Phases)
+	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
+	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
+}
+
+func TestExpandLifecycleUsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
+	description := "test-description"
+	name := "test-name"
+	spaceID := "test-space-id"
+	Id := "test-id"
+	releaseRetention := core.KeepForeverRetentionPeriod()
+	tentacleRetention := core.KeepForeverRetentionPeriod()
+	retentionAttributeTypes := getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()
+
+	data := &lifecycleTypeResourceModelDEPRECATED{
+		Description: types.StringValue(description),
+		Name:        types.StringValue(name),
+		SpaceID:     types.StringValue(spaceID),
+		ReleaseRetentionWithoutStrategy: types.ListValueMust(
+			types.ObjectType{AttrTypes: retentionAttributeTypes},
+			[]attr.Value{
+				types.ObjectValueMust(
+					retentionAttributeTypes,
+					map[string]attr.Value{
+						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
+						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
+						"unit":                types.StringValue(releaseRetention.Unit),
+					},
+				),
+			},
+		),
+		TentacleRetentionWithoutStrategy: types.ListValueMust(
+			types.ObjectType{AttrTypes: retentionAttributeTypes},
+			[]attr.Value{
+				types.ObjectValueMust(
+					retentionAttributeTypes,
+					map[string]attr.Value{
+						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
+						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
+						"unit":                types.StringValue(releaseRetention.Unit),
+					},
+				),
+			},
+		),
+	}
+	data.ID = types.StringValue(Id)
+
+	lifecycle := expandLifecycleDEPRECATED(data, true)
+	require.NotNil(t, lifecycle)
+	require.Equal(t, description, lifecycle.Description)
+	require.NotEmpty(t, lifecycle.ID)
+	require.NotNil(t, lifecycle.Links)
+	require.Empty(t, lifecycle.Links)
+	require.Equal(t, name, lifecycle.Name)
+	require.Empty(t, lifecycle.Phases)
+	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
+	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
+}
+
+func TestExpandAndFlattenPhasesWithSensibleDefaultsAndNewRetentionDEPRECATED(t *testing.T) {
+	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+
+	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, false)
+	require.NotNil(t, flattenedPhases)
+	require.Equal(t, 1, len(flattenedPhases.Elements()))
+
+	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
+	require.NotNil(t, expandedPhases)
+	require.Len(t, expandedPhases, 1)
+
+	expandedPhase := expandedPhases[0]
+	require.NotEmpty(t, expandedPhase.ID)
+	require.Equal(t, phase.AutomaticDeploymentTargets, expandedPhase.AutomaticDeploymentTargets)
+	require.Equal(t, phase.IsOptionalPhase, expandedPhase.IsOptionalPhase)
+	require.EqualValues(t, phase.MinimumEnvironmentsBeforePromotion, expandedPhase.MinimumEnvironmentsBeforePromotion)
+	require.Equal(t, phase.Name, expandedPhase.Name)
+	require.Equal(t, phase.ReleaseRetentionPolicy, expandedPhase.ReleaseRetentionPolicy)
+	require.Equal(t, phase.TentacleRetentionPolicy, expandedPhase.TentacleRetentionPolicy)
+}
+
+func TestExpandAndFlattenPhasesWithSensibleDefaultsAndRetentionWithoutStrategyDEPRECATED(t *testing.T) {
+	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+
+	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, true)
+	require.NotNil(t, flattenedPhases)
+	require.Equal(t, 1, len(flattenedPhases.Elements()))
+
+	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
+	require.NotNil(t, expandedPhases)
+	require.Len(t, expandedPhases, 1)
+
+	expandedPhase := expandedPhases[0]
+	require.NotEmpty(t, expandedPhase.ID)
+	require.Equal(t, phase.AutomaticDeploymentTargets, expandedPhase.AutomaticDeploymentTargets)
+	require.Equal(t, phase.IsOptionalPhase, expandedPhase.IsOptionalPhase)
+	require.EqualValues(t, phase.MinimumEnvironmentsBeforePromotion, expandedPhase.MinimumEnvironmentsBeforePromotion)
+	require.Equal(t, phase.Name, expandedPhase.Name)
+	require.Equal(t, phase.ReleaseRetentionPolicy, expandedPhase.ReleaseRetentionPolicy)
+	require.Equal(t, phase.TentacleRetentionPolicy, expandedPhase.TentacleRetentionPolicy)
+}
+
+func createTestPhaseDEPRECATED(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
+	phase := lifecycles.NewPhase(name)
+	phase.AutomaticDeploymentTargets = autoTargets
+	phase.IsOptionalPhase = isOptional
+	phase.MinimumEnvironmentsBeforePromotion = minEnvs
+	phase.ReleaseRetentionPolicy = core.CountBasedRetentionPeriod(15, "Items")
+	phase.TentacleRetentionPolicy = core.KeepForeverRetentionPeriod()
+	phase.ID = name + "-Id"
+	return phase
+}
