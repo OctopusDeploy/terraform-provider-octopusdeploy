@@ -2,14 +2,13 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"regexp"
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"regexp"
+	"testing"
 )
 
-func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
+func TestAccLifecycleRetentionUpdates_DEPRECATED(t *testing.T) {
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
 
@@ -30,7 +29,7 @@ func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
 				),
 			},
-			// 2 update with forever retention policies
+			// 2 update with the default (forever) retention policies
 			{
 				Config: lifecycle_retentionWithoutStrategy_DEPRECATED(lifecycleName, "0", "", "true"),
 				Check: resource.ComposeTestCheckFunc(
@@ -90,7 +89,7 @@ func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
 	})
 }
 
-func TestAccRetentionAttributeValidationDEPRECATED(t *testing.T) {
+func TestAccRetentionAttributeValidation_DEPRECATED(t *testing.T) {
 
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
@@ -174,6 +173,13 @@ func lifecycleBasic(lifecycleName string) string {
 func lifecycle_withBasicPhase(lifecycleName string, phaseName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
+		release_retention_policy {
+			should_keep_forever = "true"
+		}
+		tentacle_retention_policy {
+			should_keep_forever = "true"
+			unit = "Items"
+		}
   		phase {
     		name = "%s"
   		}
