@@ -15,7 +15,7 @@ import (
 )
 
 // unit tests
-func TestExpanDLifecycleWithNil_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
+func TestExpandLifecycleWithNil_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
 	lifecycle := expandLifecycleDEPRECATED(nil)
 	require.Nil(t, lifecycle)
 }
@@ -26,7 +26,7 @@ func TestExpandLifecycle_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing
 	spaceID := "test-space-id"
 	Id := "test-id"
 	releaseRetention := core.KeepForeverRetentionPeriod()
-	tentacleRetention := core.KeepForeverRetentionPeriod()
+	tentacleRetention := core.CountBasedRetentionPeriod(2, "Items")
 	retentionAttributeTypes := getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()
 
 	data := &lifecycleTypeResourceModelDEPRECATED{
@@ -52,9 +52,9 @@ func TestExpandLifecycle_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing
 				types.ObjectValueMust(
 					retentionAttributeTypes,
 					map[string]attr.Value{
-						"quantity_to_keep":    types.Int64Value(int64(releaseRetention.QuantityToKeep)),
-						"should_keep_forever": types.BoolValue(releaseRetention.ShouldKeepForever),
-						"unit":                types.StringValue(releaseRetention.Unit),
+						"quantity_to_keep":    types.Int64Value(int64(tentacleRetention.QuantityToKeep)),
+						"should_keep_forever": types.BoolValue(tentacleRetention.ShouldKeepForever),
+						"unit":                types.StringValue(tentacleRetention.Unit),
 					},
 				),
 			},
@@ -63,7 +63,6 @@ func TestExpandLifecycle_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing
 	data.ID = types.StringValue(Id)
 
 	lifecycle := expandLifecycleDEPRECATED(data)
-	require.NotNil(t, lifecycle)
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
 	require.NotNil(t, lifecycle.Links)
@@ -72,6 +71,7 @@ func TestExpandLifecycle_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing
 	require.Empty(t, lifecycle.Phases)
 	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
 	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
+	require.Equal(t, spaceID, lifecycle.SpaceID)
 }
 
 func TestExpandPhasesWithEmptyInput_DEPRECATED(t *testing.T) {
@@ -158,9 +158,9 @@ func TestAccLifecycleBasic(t *testing.T) {
 					testAccCheckLifecycleExists(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy .#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "release_retention_policy .#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy .#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy .#", "0"),
 				),
 				Config: testAccLifecycle(localName, name),
 			},
@@ -234,7 +234,7 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_policy.#", "0"),
 				),
 			},
-			// update lifecycle by switching its phase to use retention without strategy
+			// update lifecycle by adding phase retention
 			{
 				Config: testAccLifecycleWithPhaseAndPhaseRetentionWithoutStrategy(localName, name, description, phaseName),
 				Check: resource.ComposeTestCheckFunc(
