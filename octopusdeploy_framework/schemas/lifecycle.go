@@ -98,7 +98,7 @@ func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.
 
 func getResourceSchemaRetentionBlockDEPRECATED() resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
-		Description:        "Defines the retention policy for releases or tentacles.",
+		Description: "Defines the retention policy for releases or tentacles.",
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"quantity_to_keep": util.ResourceInt64().
@@ -115,7 +115,7 @@ func getResourceSchemaRetentionBlockDEPRECATED() resourceSchema.ListNestedBlock 
 				"unit": util.ResourceString().
 					Optional().Computed().
 					Default(stringdefault.StaticString("Days")).
-					Validators(stringvalidator.OneOfCaseInsensitive("Days", "Items")).
+					Validators(stringvalidator.OneOf("Days", "Items")).
 					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
 					Build(),
 			},
