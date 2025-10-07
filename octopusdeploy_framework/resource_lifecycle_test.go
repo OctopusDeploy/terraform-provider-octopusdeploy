@@ -17,67 +17,14 @@ import (
 
 // unit tests
 func TestExpandLifecycleWithNil_UsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	lifecycle := expandLifecycleDEPRECATED(nil, false)
+	lifecycle := expandLifecycleDEPRECATED(nil)
 	require.Nil(t, lifecycle)
 }
 func TestExpanDLifecycleWithNil_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
-	lifecycle := expandLifecycleDEPRECATED(nil, true)
+	lifecycle := expandLifecycleDEPRECATED(nil)
 	require.Nil(t, lifecycle)
 }
 
-func TestExpandLifecycleUsingNewRetentionBlock_DEPRECATED(t *testing.T) {
-	description := "test-description"
-	name := "test-name"
-	spaceID := "test-space-id"
-	Id := "test-id"
-	releaseRetention := core.KeepForeverRetentionPeriod()
-	tentacleRetention := core.KeepForeverRetentionPeriod()
-	retentionAttributeTypes := getResourceRetentionAttrTypes()
-
-	data := &lifecycleTypeResourceModelDEPRECATED{
-		Description: types.StringValue(description),
-		Name:        types.StringValue(name),
-		SpaceID:     types.StringValue(spaceID),
-		ReleaseRetention: types.ListValueMust(
-			types.ObjectType{AttrTypes: retentionAttributeTypes},
-			[]attr.Value{
-				types.ObjectValueMust(
-					retentionAttributeTypes,
-					map[string]attr.Value{
-						"strategy":         types.StringValue(releaseRetention.Strategy),
-						"quantity_to_keep": types.Int64Value(int64(releaseRetention.QuantityToKeep)),
-						"unit":             types.StringValue(releaseRetention.Unit),
-					},
-				),
-			},
-		),
-		TentacleRetention: types.ListValueMust(
-			types.ObjectType{AttrTypes: retentionAttributeTypes},
-			[]attr.Value{
-				types.ObjectValueMust(
-					retentionAttributeTypes,
-					map[string]attr.Value{
-						"strategy":         types.StringValue(releaseRetention.Strategy),
-						"quantity_to_keep": types.Int64Value(int64(releaseRetention.QuantityToKeep)),
-						"unit":             types.StringValue(releaseRetention.Unit),
-					},
-				),
-			},
-		),
-	}
-	data.ID = types.StringValue(Id)
-
-	lifecycle := expandLifecycleDEPRECATED(data, false)
-	require.NotNil(t, lifecycle)
-	require.Equal(t, description, lifecycle.Description)
-	require.NotEmpty(t, lifecycle.ID)
-	require.NotNil(t, lifecycle.Links)
-	require.Empty(t, lifecycle.Links)
-	require.Equal(t, name, lifecycle.Name)
-	require.Empty(t, lifecycle.Phases)
-	require.Equal(t, releaseRetention, lifecycle.ReleaseRetentionPolicy)
-	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
-}
 func TestExpandLifecycleUsingRetentionWithoutStrategyBlock_DEPRECATED(t *testing.T) {
 	description := "test-description"
 	name := "test-name"
@@ -120,7 +67,7 @@ func TestExpandLifecycleUsingRetentionWithoutStrategyBlock_DEPRECATED(t *testing
 	}
 	data.ID = types.StringValue(Id)
 
-	lifecycle := expandLifecycleDEPRECATED(data, true)
+	lifecycle := expandLifecycleDEPRECATED(data)
 	require.NotNil(t, lifecycle)
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
@@ -134,47 +81,26 @@ func TestExpandLifecycleUsingRetentionWithoutStrategyBlock_DEPRECATED(t *testing
 
 func TestExpandPhasesWithEmptyInput_DEPRECATED(t *testing.T) {
 	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()}, []attr.Value{})
-	phases := expandPhases(emptyList)
+	phases := expandPhasesDEPRECATED(emptyList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithNullInput_DEPRECATED(t *testing.T) {
 	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()})
-	phases := expandPhases(nullList)
+	phases := expandPhasesDEPRECATED(nullList)
 	require.Nil(t, phases)
 }
 
 func TestExpandPhasesWithUnknownInput_DEPRECATED(t *testing.T) {
 	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()})
-	phases := expandPhases(unknownList)
+	phases := expandPhasesDEPRECATED(unknownList)
 	require.Nil(t, phases)
-}
-
-func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
-
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, false)
-	require.NotNil(t, flattenedPhases)
-	require.Equal(t, 1, len(flattenedPhases.Elements()))
-
-	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
-	require.NotNil(t, expandedPhases)
-	require.Len(t, expandedPhases, 1)
-
-	expandedPhase := expandedPhases[0]
-	require.NotEmpty(t, expandedPhase.ID)
-	require.Equal(t, phase.AutomaticDeploymentTargets, expandedPhase.AutomaticDeploymentTargets)
-	require.Equal(t, phase.IsOptionalPhase, expandedPhase.IsOptionalPhase)
-	require.EqualValues(t, phase.MinimumEnvironmentsBeforePromotion, expandedPhase.MinimumEnvironmentsBeforePromotion)
-	require.Equal(t, phase.Name, expandedPhase.Name)
-	require.Equal(t, phase.ReleaseRetentionPolicy, expandedPhase.ReleaseRetentionPolicy)
-	require.Equal(t, phase.TentacleRetentionPolicy, expandedPhase.TentacleRetentionPolicy)
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, true)
+	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase})
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
@@ -190,42 +116,13 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrateg
 	require.Equal(t, phase.Name, expandedPhase.Name)
 	require.Equal(t, phase.ReleaseRetentionPolicy, expandedPhase.ReleaseRetentionPolicy)
 	require.Equal(t, phase.TentacleRetentionPolicy, expandedPhase.TentacleRetentionPolicy)
-}
-
-func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
-	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
-
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2}, false)
-	require.NotNil(t, flattenedPhases)
-	require.Equal(t, 2, len(flattenedPhases.Elements()))
-
-	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
-	require.NotNil(t, expandedPhases)
-	require.Len(t, expandedPhases, 2)
-
-	require.NotEmpty(t, expandedPhases[0].ID)
-	require.Equal(t, phase1.AutomaticDeploymentTargets, expandedPhases[0].AutomaticDeploymentTargets)
-	require.Equal(t, phase1.IsOptionalPhase, expandedPhases[0].IsOptionalPhase)
-	require.EqualValues(t, phase1.MinimumEnvironmentsBeforePromotion, expandedPhases[0].MinimumEnvironmentsBeforePromotion)
-	require.Equal(t, phase1.Name, expandedPhases[0].Name)
-	require.Equal(t, phase1.ReleaseRetentionPolicy, expandedPhases[0].ReleaseRetentionPolicy)
-	require.Equal(t, phase1.TentacleRetentionPolicy, expandedPhases[0].TentacleRetentionPolicy)
-
-	require.NotEmpty(t, expandedPhases[1].ID)
-	require.Equal(t, phase2.AutomaticDeploymentTargets, expandedPhases[1].AutomaticDeploymentTargets)
-	require.Equal(t, phase2.IsOptionalPhase, expandedPhases[1].IsOptionalPhase)
-	require.EqualValues(t, phase2.MinimumEnvironmentsBeforePromotion, expandedPhases[1].MinimumEnvironmentsBeforePromotion)
-	require.Equal(t, phase2.Name, expandedPhases[1].Name)
-	require.Equal(t, phase2.ReleaseRetentionPolicy, expandedPhases[1].ReleaseRetentionPolicy)
-	require.Equal(t, phase2.TentacleRetentionPolicy, expandedPhases[1].TentacleRetentionPolicy)
 }
 
 func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2}, true)
+	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2})
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
@@ -294,10 +191,9 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					testAccCheckLifecycleExists(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "0"),
 				),
 				Config: testAccLifecycle(localName, name),
 			},
@@ -308,10 +204,9 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "0"),
 				),
 				Config: testAccLifecycleWithDescription(localName, name, description),
 			},
@@ -322,10 +217,9 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", ""),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "0"),
 				),
 				Config: testAccLifecycle(localName, name),
 			},
@@ -337,29 +231,12 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "phase.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.name", phaseName),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.#", "0"),
-				),
-			},
-			// update lifecycle by modifying its phase
-			{
-				Config: testAccLifecycleWithPhaseAndPhaseRetention(localName, name, description, phaseName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(resourceName),
-					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "name", name),
-					resource.TestCheckResourceAttr(resourceName, "description", description),
-					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(resourceName, "phase.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.name", phaseName),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_with_strategy.0.strategy", "Default"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_policy.#", "0"),
 				),
 			},
 			// update lifecycle by switching its phase to use retention without strategy
@@ -371,13 +248,18 @@ func TestAccLifecycleWithUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "phase.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.name", phaseName),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.0.should_keep_forever", "true"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_with_strategy.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.0.quantity_to_keep", "0"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.0.unit", "Items"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_policy.0.should_keep_forever", "true"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_policy.0.quantity_to_keep", "0"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_policy.0.unit", "Items"),
 				),
 			},
 		},
@@ -437,19 +319,6 @@ func testAccLifecycleWithPhase(localName string, name string, description string
         description = "%s"
 		phase {
 			name = "%s"
-		}
-	}`, localName, name, description, phaseName)
-}
-
-func testAccLifecycleWithPhaseAndPhaseRetention(localName string, name string, description string, phaseName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-        description = "%s"
-		phase {
-			name = "%s"
-			release_retention_with_strategy {
-				strategy         = "Default"
-			}
 		}
 	}`, localName, name, description, phaseName)
 }

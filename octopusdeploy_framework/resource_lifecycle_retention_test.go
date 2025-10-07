@@ -28,144 +28,21 @@ func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "0"),
 				),
 			},
-			// 2 update with default retention policies
+			// 2 update with forever retention policies
 			{
-				Config: lifecycle_newRetention_DEPRECATED(lifecycleName, "Default", "", "", ""),
+				Config: lifecycle_retentionWithoutStrategy_DEPRECATED(lifecycleName, "0", "", "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
 					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
 					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.strategy", "Default"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.strategy", "Default"),
-				),
-			},
-			//	3 update with Forever retention policies
-			{
-				Config: lifecycle_newRetention_DEPRECATED(lifecycleName, "Forever", "", "", ""),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.strategy", "Forever"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.strategy", "Forever"),
-				)},
-			// 4 update with Count retention policies using days
-			{
-				Config: lifecycle_newRetention_DEPRECATED(lifecycleName, "Count", "1", "Days", ""),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.strategy", "Count"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.quantity_to_keep", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.unit", "Days"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.strategy", "Count"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.quantity_to_keep", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.unit", "Days"),
-				),
-			},
-			// 5 update with Count retention policies using items
-			{
-				Config: lifecycle_newRetention_DEPRECATED(lifecycleName, "Count", "1", "Items", ""),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.strategy", "Count"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.quantity_to_keep", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.unit", "Items"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.strategy", "Count"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.quantity_to_keep", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.unit", "Items"),
-				),
-			},
-			// 6 only set release retention
-			{
-				Config: lifecycle_newReleaseRetention_DEPRECATED(lifecycleName, "Default", "", "", ""),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.strategy", "Default"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "0"),
-				),
-			},
-			// 7 change only release retention to count
-			{
-				Config: lifecycle_newReleaseRetention_DEPRECATED(lifecycleName, "Count", "3", "Items", ""),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
-
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.strategy", "Count"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.quantity_to_keep", "3"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.unit", "Items"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "0"),
-				),
-			},
-			//8 set old style retention Block to Forever
-			{
-				Config: lifecycle_retentionWithoutStrategy_DEPRECATED(lifecycleName, "", "", "true"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.quantity_to_keep", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.should_keep_forever", "true"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.unit", "Items"),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.quantity_to_keep", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.should_keep_forever", "true"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.unit", "Items"),
-					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.#", "0"),
-					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "0"),
-				),
+					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.should_keep_forever", "true")),
 			},
-			// 9 update with Count retention policies using days
+			// 3 update with Count retention policies using days
 			{
 				Config: lifecycle_retentionWithoutStrategy_DEPRECATED(lifecycleName, "1", "Days", "false"),
 				Check: resource.ComposeTestCheckFunc(
@@ -185,7 +62,7 @@ func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "0"),
 				),
 			},
-			// 10 update with Count retention policies using items
+			// 4 update with Count retention policies using items
 			{
 				Config: lifecycle_retentionWithoutStrategy_DEPRECATED(lifecycleName, "1", "Items", "false"),
 				Check: resource.ComposeTestCheckFunc(
@@ -205,6 +82,10 @@ func TestAccLifecycleRetentionUpdatesDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.#", "0"),
 				),
 			},
+			// 5 set only release retention policy
+			{
+				Config: lifecycle_ReleaseRetentionWithoutStrategy_DEPRECATED(lifecycleName, "1", "Days", "false"),
+			},
 		},
 	})
 }
@@ -218,46 +99,6 @@ func TestAccRetentionAttributeValidationDEPRECATED(t *testing.T) {
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "Default", "1", "", ""),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep must not be set when strategy is Forever or Default.*quantity_to_keep must not be set when strategy is Forever or Default`),
-			},
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "Forever", "1", "", ""),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep must not be set when strategy is Forever or Default.*quantity_to_keep must not be set when strategy is Forever or Default`),
-			},
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "Default", "", "days", ""),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)unit must not be set when strategy is Forever or Default.*unit must not be set when strategy is Forever or Default`),
-			},
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "Forever", "", "items", ""),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)unit must not be set when strategy is Forever or Default.*unit must not be set when strategy is Forever or Default`),
-			},
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "", "", "", ""),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)The argument "strategy" is required, but no definition was found.*The argument "strategy" is required, but no definition was found.`),
-			},
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "Count", "1", "Days", "true"),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)An argument named "should_keep_forever" is not expected here.*An argument named "should_keep_forever" is not expected here.`),
-			},
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "Count", "1", "", ""),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)unit must be set when strategy is set to Count.*unit must be set when strategy is set to Count.`),
-			},
-			{
-				Config:      lifecycle_newRetention_DEPRECATED(lifecycleName, "Count", "", "Days", ""),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)quantity_to_keep must be set when strategy is set to Count.*quantity_to_keep must be set when strategy is set to Count`),
-			},
 			//Using Old retention Blocks without strategy
 			// when quantity_to_keep is > 0 should_keep_forever shouldn't be true
 			{
@@ -339,76 +180,6 @@ func lifecycle_withBasicPhase(lifecycleName string, phaseName string) string {
 	}`, lifecycleName, lifecycleName, phaseName)
 }
 
-func lifecycle_newReleaseRetention_DEPRECATED(lifecycleName string, strategy string, quantityToKeep string, unit string, shouldKeepForever string) string {
-	var strategyAttribute string
-	if strategy != "" {
-		strategyAttribute = fmt.Sprintf(`strategy = "%s"`, strategy)
-	}
-
-	var quantityToKeepAttribute string
-	if quantityToKeep != "" {
-		quantityToKeepAttribute = fmt.Sprintf(`quantity_to_keep = "%s"`, quantityToKeep)
-	}
-	var shouldKeepForeverAttribute string
-	if shouldKeepForever != "" {
-		shouldKeepForeverAttribute = fmt.Sprintf(`should_keep_forever = "%s"`, shouldKeepForever)
-	}
-	var unitAttribute string
-	if unit != "" {
-		unitAttribute = fmt.Sprintf(`unit = "%s"`, unit)
-	}
-	resource := fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-    	release_retention_with_strategy {
-			%s
-    		%s
-			%s
-			%s
-  		}
-
-	}`, lifecycleName, lifecycleName, strategyAttribute, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute)
-
-	return resource
-}
-
-func lifecycle_newRetention_DEPRECATED(lifecycleName string, strategy string, quantityToKeep string, unit string, shouldKeepForever string) string {
-	var strategyAttribute string
-	if strategy != "" {
-		strategyAttribute = fmt.Sprintf(`strategy = "%s"`, strategy)
-	}
-
-	var quantityToKeepAttribute string
-	if quantityToKeep != "" {
-		quantityToKeepAttribute = fmt.Sprintf(`quantity_to_keep = "%s"`, quantityToKeep)
-	}
-	var shouldKeepForeverAttribute string
-	if shouldKeepForever != "" {
-		shouldKeepForeverAttribute = fmt.Sprintf(`should_keep_forever = "%s"`, shouldKeepForever)
-	}
-	var unitAttribute string
-	if unit != "" {
-		unitAttribute = fmt.Sprintf(`unit = "%s"`, unit)
-	}
-	resource := fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-    	release_retention_with_strategy {
-			%s
-    		%s
-			%s
-			%s
-  		}
-		tentacle_retention_with_strategy {
-			%s
-    		%s
-			%s	
-			%s
-  		}
-
-	}`, lifecycleName, lifecycleName, strategyAttribute, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute, strategyAttribute, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute)
-
-	return resource
-}
-
 func lifecycle_retentionWithoutStrategy_DEPRECATED(lifecycleName string, quantityToKeep string, unit string, shouldKeepForever string) string {
 	var quantityToKeepAttribute string
 	if quantityToKeep != "" {
@@ -436,6 +207,32 @@ func lifecycle_retentionWithoutStrategy_DEPRECATED(lifecycleName string, quantit
   		}
 
 	}`, lifecycleName, lifecycleName, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute)
+
+	return resource
+}
+
+func lifecycle_ReleaseRetentionWithoutStrategy_DEPRECATED(lifecycleName string, quantityToKeep string, unit string, shouldKeepForever string) string {
+	var quantityToKeepAttribute string
+	if quantityToKeep != "" {
+		quantityToKeepAttribute = fmt.Sprintf(`quantity_to_keep = "%s"`, quantityToKeep)
+	}
+	var shouldKeepForeverAttribute string
+	if shouldKeepForever != "" {
+		shouldKeepForeverAttribute = fmt.Sprintf(`should_keep_forever = "%s"`, shouldKeepForever)
+	}
+	var unitAttribute string
+	if unit != "" {
+		unitAttribute = fmt.Sprintf(`unit = "%s"`, unit)
+	}
+	resource := fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+		name = "%s"
+    	release_retention_policy {
+			%s
+    		%s
+			%s
+  		}
+
+	}`, lifecycleName, lifecycleName, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute)
 
 	return resource
 }

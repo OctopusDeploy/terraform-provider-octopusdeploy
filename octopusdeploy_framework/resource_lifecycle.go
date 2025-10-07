@@ -55,6 +55,7 @@ func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaReque
 }
 
 func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	r.Config = resourceConfiguration(req, resp)
 }
 
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -64,11 +65,11 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
+	tflog.Debug(ctx, fmt.Sprintf("debugging before initial set '%v'", data))
 	isReleaseRetentionWithoutStrategySet := attributeIsUsed(data.ReleaseRetentionWithoutStrategy)
 	isTentacleRetentionWithoutStrategySet := attributeIsUsed(data.TentacleRetentionWithoutStrategy)
 	initialRetentionWithoutStrategySetting := setInitialRetentionDEPRECATED(data)
-
+	tflog.Debug(ctx, fmt.Sprintf("debugging after initial set '%v'", data))
 	lifecycle := expandLifecycleDEPRECATED(data)
 	newLifecycle, err := lifecycles.Add(r.Config.Client, lifecycle)
 	if err != nil {
@@ -161,16 +162,13 @@ func setInitialRetentionWithoutStrategyBlockDEPRECATED(data *lifecycleTypeResour
 }
 func setInitialRetentionDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED) types.List {
 	var initialRetentionWithoutStrategySetting types.List
-
 	setInitialRetentionWithoutStrategyBlockDEPRECATED(data, initialRetentionWithoutStrategySetting)
-
 	return initialRetentionWithoutStrategySetting
 }
 func removeInitialRetentionDEPRECATED(data *lifecycleTypeResourceModelDEPRECATED, isReleaseRetentionWithoutStrategySet bool, isTentacleRetentionWithoutStrategySet bool, initialRetentionWithoutStrategySetting types.List) {
 	if !isReleaseRetentionWithoutStrategySet && (data.ReleaseRetentionWithoutStrategy.Equal(initialRetentionWithoutStrategySetting) || data.ReleaseRetentionWithoutStrategy.IsNull()) {
 		data.ReleaseRetentionWithoutStrategy = ListNullRetentionWithoutStrategyDEPRECATED
 	}
-
 	if !isTentacleRetentionWithoutStrategySet && (data.TentacleRetentionWithoutStrategy.Equal(initialRetentionWithoutStrategySetting) || data.TentacleRetentionWithoutStrategy.IsNull()) {
 		data.TentacleRetentionWithoutStrategy = ListNullRetentionWithoutStrategyDEPRECATED
 	}
