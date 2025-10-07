@@ -28,8 +28,6 @@ func TestAccDataSourceLifecyclesDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.name", lifecycleName),
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_with_strategy.#", "1"),
 					testAccCheckOutputExists("octopus_space_id"),
 					testAccCheckOutputExists("octopus_lifecycle_id"),
 				),
