@@ -77,6 +77,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
+	handleUnitCasing(lifecycle, newLifecycle, ctx)
 	data = flattenResourceLifecycleDEPRECATED(newLifecycle)
 	removeInitialRetentionDEPRECATED(data, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionWithoutStrategySetting)
 
@@ -100,6 +101,8 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 		}
 		return
 	}
+
+	handleUnitCasing(lifecycle, lifecycle, ctx)
 	data = flattenResourceLifecycleDEPRECATED(lifecycle)
 
 	removeInitialRetentionDEPRECATED(data, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionWithoutStrategySetting)
@@ -127,10 +130,41 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 		resp.Diagnostics.AddError("unable to update lifecycle", err.Error())
 		return
 	}
+
+	handleUnitCasing(lifecycle, updatedLifecycle, ctx)
 	data = flattenResourceLifecycleDEPRECATED(updatedLifecycle)
 
 	removeInitialRetentionDEPRECATED(data, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionWithoutStrategySetting)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func handleUnitCasing(lifecycleDataSentToGo *lifecycles.Lifecycle, lifecycleToBeFlattenedIntoState *lifecycles.Lifecycle, ctx context.Context) {
+	// Set state to the casing provided in the desired state, as the Api will always return capitalised units
+	if lifecycleDataSentToGo.ReleaseRetentionPolicy != nil && lifecycleDataSentToGo.ReleaseRetentionPolicy.Unit != "" {
+		lifecycleToBeFlattenedIntoState.ReleaseRetentionPolicy.Unit = updateRetentionUnit(lifecycleDataSentToGo.ReleaseRetentionPolicy.Unit, lifecycleDataSentToGo.ReleaseRetentionPolicy.Unit)
+	}
+	if lifecycleDataSentToGo.TentacleRetentionPolicy != nil && lifecycleDataSentToGo.TentacleRetentionPolicy.Unit != "" {
+		lifecycleToBeFlattenedIntoState.TentacleRetentionPolicy.Unit = updateRetentionUnit(lifecycleDataSentToGo.TentacleRetentionPolicy.Unit, lifecycleDataSentToGo.TentacleRetentionPolicy.Unit)
+	}
+	if len(lifecycleDataSentToGo.Phases) == 0 {
+		return
+	}
+	for i, phaseToBeFlattenedIntoState := range lifecycleToBeFlattenedIntoState.Phases {
+		if phaseToBeFlattenedIntoState.ReleaseRetentionPolicy != nil && phaseToBeFlattenedIntoState.ReleaseRetentionPolicy.Unit != "" {
+			phaseToBeFlattenedIntoState.ReleaseRetentionPolicy.Unit = updateRetentionUnit(lifecycleDataSentToGo.Phases[i].ReleaseRetentionPolicy.Unit, phaseToBeFlattenedIntoState.ReleaseRetentionPolicy.Unit)
+		}
+		if phaseToBeFlattenedIntoState.TentacleRetentionPolicy != nil && phaseToBeFlattenedIntoState.TentacleRetentionPolicy.Unit != "" {
+			phaseToBeFlattenedIntoState.ReleaseRetentionPolicy.Unit = updateRetentionUnit(lifecycleDataSentToGo.Phases[i].ReleaseRetentionPolicy.Unit, phaseToBeFlattenedIntoState.TentacleRetentionPolicy.Unit)
+		}
+	}
+
+}
+
+func updateRetentionUnit(unitSentToGo, unitToBeFlattenedIntoState string) string {
+	if strings.EqualFold(unitSentToGo, unitToBeFlattenedIntoState) {
+		return unitSentToGo
+	}
+	return unitToBeFlattenedIntoState
 }
 
 func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
