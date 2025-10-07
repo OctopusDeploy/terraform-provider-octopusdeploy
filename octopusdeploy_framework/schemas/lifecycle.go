@@ -115,7 +115,7 @@ func getResourceSchemaRetentionBlockDEPRECATED() resourceSchema.ListNestedBlock 
 				"unit": util.ResourceString().
 					Optional().Computed().
 					Default(stringdefault.StaticString("Days")).
-					Validators(stringvalidator.OneOf("Days", "Items")).
+					Validators(stringvalidator.OneOfCaseInsensitive("Days", "Items")).
 					Description("The unit of quantity to keep. Valid units are Days or Items. The default value is Days.").
 					Build(),
 			},
