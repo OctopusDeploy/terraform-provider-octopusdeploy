@@ -70,14 +70,14 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 	isTentacleRetentionWithoutStrategySet := attributeIsUsed(stateData.TentacleRetentionWithoutStrategy)
 	initialRetentionWithoutStrategySetting := setInitialRetentionDEPRECATED(stateData)
 
-	lifecycleToBeSent := expandLifecycleDEPRECATED(stateData)
-	lifecycleFromGo, err := lifecycles.Add(r.Config.Client, lifecycleToBeSent)
+	lifecycleSentToGo := expandLifecycleDEPRECATED(stateData)
+	lifecycleFromGo, err := lifecycles.Add(r.Config.Client, lifecycleSentToGo)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
 		return
 	}
 
-	handleUnitCasing(lifecycleFromGo, lifecycleToBeSent)
+	handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
 	stateData = flattenResourceLifecycleDEPRECATED(lifecycleFromGo)
 	removeInitialRetentionDEPRECATED(stateData, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionWithoutStrategySetting)
 

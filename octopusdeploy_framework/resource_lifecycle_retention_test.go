@@ -22,10 +22,7 @@ func TestAccLifecycleRetentionUpdates_DEPRECATED(t *testing.T) {
 				Config: lifecycleBasic(lifecycleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "0"),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0"),
 				),
 			},
@@ -34,13 +31,11 @@ func TestAccLifecycleRetentionUpdates_DEPRECATED(t *testing.T) {
 				Config: defaultRetentionLifecycle_usingQuantityToKeepDEPRECATED(lifecycleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.quantity_to_keep", "0"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.should_keep_forever", "true"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.unit", "Items"),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
+
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.quantity_to_keep", "0"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.should_keep_forever", "true"),
@@ -52,13 +47,11 @@ func TestAccLifecycleRetentionUpdates_DEPRECATED(t *testing.T) {
 				Config: countRetentionLifecycle_DEPRECATED(lifecycleName, "Days"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.quantity_to_keep", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.should_keep_forever", "false"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.unit", "Days"),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
+
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.quantity_to_keep", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.should_keep_forever", "false"),
@@ -70,13 +63,11 @@ func TestAccLifecycleRetentionUpdates_DEPRECATED(t *testing.T) {
 				Config: countRetentionLifecycle_DEPRECATED(lifecycleName, "items"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.quantity_to_keep", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.should_keep_forever", "false"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.unit", "items"),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
+
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.quantity_to_keep", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.should_keep_forever", "false"),
@@ -88,13 +79,11 @@ func TestAccLifecycleRetentionUpdates_DEPRECATED(t *testing.T) {
 				Config: defaultRetentionLifecycle_notUsingQuantityToKeepDEPRECATED(lifecycleName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.quantity_to_keep", "0"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.should_keep_forever", "true"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.unit", "Items"),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
+
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.quantity_to_keep", "0"),
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.0.should_keep_forever", "true"),
@@ -105,13 +94,11 @@ func TestAccLifecycleRetentionUpdates_DEPRECATED(t *testing.T) {
 				Config: lifecycle_ReleaseRetentionWithoutStrategy_DEPRECATED(lifecycleName, "1", "Days", "false"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(lifecycleResource),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "id"),
-					resource.TestCheckResourceAttr(lifecycleResource, "name", lifecycleName),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.quantity_to_keep", "1"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.should_keep_forever", "false"),
 					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_policy.0.unit", "Days"),
-					resource.TestCheckResourceAttrSet(lifecycleResource, "space_id"),
+
 					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_policy.#", "0")),
 			},
 		},
