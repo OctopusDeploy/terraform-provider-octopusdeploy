@@ -27,7 +27,6 @@ var _ EntitySchema = LifecycleSchema{}
 
 type LifecycleSchema struct{}
 
-//////////////////
 // RESOURCE SCHEMA
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
@@ -283,7 +282,6 @@ func (v retentionWithoutStrategyValidatorDEPRECATED) ValidateObject(ctx context.
 	}
 }
 
-//////////////////
 // DATASOURCE SCHEMA
 
 func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
