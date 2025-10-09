@@ -229,7 +229,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 			return
 		}
 
-		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo, ctx)
+		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
 		stateData = flattenResourceLifecycle(lifecycleFromGo)
 
 		removeInitialRetention(stateData, isReleaseRetentionDefined, isTentacleRetentionDefined, initialRetentionSetting)
