@@ -27,12 +27,11 @@ import (
 var _ EntitySchema = LifecycleSchema{}
 
 func AllowDeprecatedRetention() bool {
-	allowDeprecatedRetentionFeatureToggle := true // change this to false to disallow deprecated retention by default
 	deprecationReversals := strings.TrimSpace(os.Getenv("TF_OCTOPUS_DEPRECATION_REVERSALS"))
 	if strings.EqualFold(deprecationReversals, "octopusdeploy_lifecycles.retention_policy") {
 		return true
 	}
-	return allowDeprecatedRetentionFeatureToggle
+	return false
 }
 
 type LifecycleSchema struct {
