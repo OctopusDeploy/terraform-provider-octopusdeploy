@@ -5,9 +5,9 @@ description: |-
   This resource manages lifecycles in Octopus Deploy.
   Lifecycle retention is set using either the retention_policy and retention_with_strategy blocks.
   - When using an octopus version prior to 2025.3
-      - the release_retention_policy and tentacle_retention_policy blocks are used
+      - the release_retention_policy and tentacle_retention_policy blocks are to be used
   - when using an octopus version 2025.3 or later
-      - the release_retention_with_strategy and tentacle_retention_with_strategy blocks may be used
+      - the release_retention_with_strategy and tentacle_retention_with_strategy blocks are reccommended for use
 ---
 
 # octopusdeploy_lifecycle (Resource)
@@ -16,9 +16,9 @@ This resource manages lifecycles in Octopus Deploy.
 
 Lifecycle retention is set using either the `retention_policy` and `retention_with_strategy` blocks.
 - When using an octopus version prior to `2025.3`
-	- the `release_retention_policy` and `tentacle_retention_policy` blocks are used
+	- the `release_retention_policy` and `tentacle_retention_policy` blocks are to be used
 - when using an octopus version `2025.3` or later
-	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks may be used
+	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks are reccommended for use
 
 ## Example Usage
 
@@ -106,11 +106,11 @@ Optional:
 - `optional_deployment_targets` (List of String) Environment IDs in this phase that a release can be deployed to, but is not automatically deployed to
 - `release_retention_policy` (Block List, Deprecated) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--phase--release_retention_policy))
 - `release_retention_with_strategy` (Block List) Defines the retention policy for releases or tentacles.
-	- When this block is not included, the space-wide "Default" retention policy is used. 
+	- When this block is not included, the phase inherits the retention from the lifecycle 
  	- This block may only be used on Octopus server 2025.3 or later. (see [below for nested schema](#nestedblock--phase--release_retention_with_strategy))
 - `tentacle_retention_policy` (Block List, Deprecated) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--phase--tentacle_retention_policy))
 - `tentacle_retention_with_strategy` (Block List) Defines the retention policy for releases or tentacles.
-	- When this block is not included, the space-wide "Default" retention policy is used. 
+	- When this block is not included, the phase inherits the retention from the lifecycle 
  	- This block may only be used on Octopus server 2025.3 or later. (see [below for nested schema](#nestedblock--phase--tentacle_retention_with_strategy))
 
 <a id="nestedblock--phase--release_retention_policy"></a>
