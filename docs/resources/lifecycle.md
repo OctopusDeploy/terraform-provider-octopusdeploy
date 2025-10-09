@@ -5,9 +5,9 @@ description: |-
   This resource manages lifecycles in Octopus Deploy.
   Lifecycle retention is set using either the retention_policy and retention_with_strategy blocks.
   - When using an octopus version prior to 2025.3
-      - the release_retention_policy and tentacle_retention_policy blocks are used
+      - the release_retention_policy and tentacle_retention_policy blocks are to be used
   - when using an octopus version 2025.3 or later
-      - the release_retention_with_strategy and tentacle_retention_with_strategy blocks may be used
+      - the release_retention_with_strategy and tentacle_retention_with_strategy blocks are reccommended for use
 ---
 
 # octopusdeploy_lifecycle (Resource)
@@ -16,9 +16,9 @@ This resource manages lifecycles in Octopus Deploy.
 
 Lifecycle retention is set using either the `retention_policy` and `retention_with_strategy` blocks.
 - When using an octopus version prior to `2025.3`
-	- the `release_retention_policy` and `tentacle_retention_policy` blocks are used
+	- the `release_retention_policy` and `tentacle_retention_policy` blocks are to be used
 - when using an octopus version `2025.3` or later
-	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks may be used
+	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks are reccommended for use
 
 ## Example Usage
 
@@ -75,14 +75,12 @@ resource "octopusdeploy_lifecycle" "example" {
 
 - `description` (String) The description of this lifecycle.
 - `phase` (Block List) Defines a phase in the lifecycle. (see [below for nested schema](#nestedblock--phase))
-- `release_retention_policy` (Block List, Deprecated) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--release_retention_policy))
 - `release_retention_with_strategy` (Block List) Defines the retention policy for releases or tentacles.
-	- When this block is not included, the space-wide "Default" retention policy is used. 
+	- When this block is not included, the phase inherits the retention from the lifecycle 
  	- This block may only be used on Octopus server 2025.3 or later. (see [below for nested schema](#nestedblock--release_retention_with_strategy))
 - `space_id` (String) The space ID associated with this resource.
-- `tentacle_retention_policy` (Block List, Deprecated) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--tentacle_retention_policy))
 - `tentacle_retention_with_strategy` (Block List) Defines the retention policy for releases or tentacles.
-	- When this block is not included, the space-wide "Default" retention policy is used. 
+	- When this block is not included, the phase inherits the retention from the lifecycle 
  	- This block may only be used on Octopus server 2025.3 or later. (see [below for nested schema](#nestedblock--tentacle_retention_with_strategy))
 
 ### Read-Only
@@ -104,24 +102,12 @@ Optional:
 - `is_priority_phase` (Boolean) Deployments will be prioritized in this phase
 - `minimum_environments_before_promotion` (Number) The number of units required before a release can enter the next phase. If 0, all environments are required.
 - `optional_deployment_targets` (List of String) Environment IDs in this phase that a release can be deployed to, but is not automatically deployed to
-- `release_retention_policy` (Block List, Deprecated) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--phase--release_retention_policy))
 - `release_retention_with_strategy` (Block List) Defines the retention policy for releases or tentacles.
-	- When this block is not included, the space-wide "Default" retention policy is used. 
+	- When this block is not included, the phase inherits the retention from the lifecycle 
  	- This block may only be used on Octopus server 2025.3 or later. (see [below for nested schema](#nestedblock--phase--release_retention_with_strategy))
-- `tentacle_retention_policy` (Block List, Deprecated) Defines the retention policy for releases or tentacles. (see [below for nested schema](#nestedblock--phase--tentacle_retention_policy))
 - `tentacle_retention_with_strategy` (Block List) Defines the retention policy for releases or tentacles.
-	- When this block is not included, the space-wide "Default" retention policy is used. 
+	- When this block is not included, the phase inherits the retention from the lifecycle 
  	- This block may only be used on Octopus server 2025.3 or later. (see [below for nested schema](#nestedblock--phase--tentacle_retention_with_strategy))
-
-<a id="nestedblock--phase--release_retention_policy"></a>
-### Nested Schema for `phase.release_retention_policy`
-
-Optional:
-
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
-
 
 <a id="nestedblock--phase--release_retention_with_strategy"></a>
 ### Nested Schema for `phase.release_retention_with_strategy`
@@ -137,16 +123,6 @@ Optional:
 
 - `quantity_to_keep` (Number) The number of days/releases to keep.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
-
-
-<a id="nestedblock--phase--tentacle_retention_policy"></a>
-### Nested Schema for `phase.tentacle_retention_policy`
-
-Optional:
-
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
 
 
 <a id="nestedblock--phase--tentacle_retention_with_strategy"></a>
@@ -166,16 +142,6 @@ Optional:
 
 
 
-<a id="nestedblock--release_retention_policy"></a>
-### Nested Schema for `release_retention_policy`
-
-Optional:
-
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
-
-
 <a id="nestedblock--release_retention_with_strategy"></a>
 ### Nested Schema for `release_retention_with_strategy`
 
@@ -190,16 +156,6 @@ Optional:
 
 - `quantity_to_keep` (Number) The number of days/releases to keep.
 - `unit` (String) The unit of quantity to keep. Valid units are Days or Items.
-
-
-<a id="nestedblock--tentacle_retention_policy"></a>
-### Nested Schema for `tentacle_retention_policy`
-
-Optional:
-
-- `quantity_to_keep` (Number) The number of days/releases to keep. The default value is 30. If 0 then all are kept.
-- `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is false.
-- `unit` (String) The unit of quantity to keep. Valid units are Days or Items. The default value is Days.
 
 
 <a id="nestedblock--tentacle_retention_with_strategy"></a>
