@@ -116,8 +116,8 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
 		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(stateData, initialRetentionSetting)
 
-		lifecycleFromGo := expandLifecycle(stateData)
-		lifecycleSentToGo, err := lifecycles.Add(r.Config.Client, lifecycleFromGo)
+		lifecycleSentToGo := expandLifecycle(stateData)
+		lifecycleFromGo, err := lifecycles.Add(r.Config.Client, lifecycleSentToGo)
 		if err != nil {
 			resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
 			return
@@ -221,14 +221,16 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(stateData, initialRetentionSetting)
 
 		tflog.Debug(ctx, fmt.Sprintf("updating lifecycle '%s'", stateData.ID.ValueString()))
-		lifecycle := expandLifecycle(stateData)
-		lifecycle.ID = state.ID.ValueString()
-		updatedLifecycle, err := lifecycles.Update(r.Config.Client, lifecycle)
+		lifecycleSentToGo := expandLifecycle(stateData)
+		lifecycleSentToGo.ID = state.ID.ValueString()
+		lifecycleFromGo, err := lifecycles.Update(r.Config.Client, lifecycleSentToGo)
 		if err != nil {
 			resp.Diagnostics.AddError("unable to update lifecycle", err.Error())
 			return
 		}
-		stateData = flattenResourceLifecycle(updatedLifecycle)
+
+		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo, ctx)
+		stateData = flattenResourceLifecycle(lifecycleFromGo)
 
 		removeInitialRetention(stateData, isReleaseRetentionDefined, isTentacleRetentionDefined, initialRetentionSetting)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &stateData)...)
