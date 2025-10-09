@@ -375,7 +375,7 @@ func getDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
 }
 func getDatasourceSchemaRetentionWithoutStrategyDEPRECATED() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
-		DeprecationMessage: "release_retention_policy and tentacle_retention_policy are deprecated and will be removed soon. Please use release_retention_with_strategy and tentacle_retention_with_strategy instead.",
+		DeprecationMessage: "release_retention_policy and tentacle_retention_policy are deprecated and will be removed soon. Please disregard and use release_retention_with_strategy and tentacle_retention_with_strategy instead.",
 		Computed:           true,
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
