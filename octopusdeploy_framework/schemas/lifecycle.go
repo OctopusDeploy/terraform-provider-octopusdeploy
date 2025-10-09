@@ -318,7 +318,7 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
 			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
 			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
-			"lifecycles":   util.Ternary(l.AllowDeprecatedRetention, getDeprecatedDatasourceSchemaLifecycles(), getDatasourceSchemaLifecycles()),
+			"lifecycles":   util.Ternary(l.AllowDeprecatedRetention, getDatasourceSchemaLifecyclesDEPRECATED(), getDatasourceSchemaLifecycles()),
 		},
 	}
 }

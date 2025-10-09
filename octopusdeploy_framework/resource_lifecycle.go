@@ -51,7 +51,7 @@ type lifecycleTypeResourceModelDEPRECATED struct {
 	schemas.ResourceModel
 }
 
-func NewLifecycleResource() lifecycleTypeResource {
+func NewLifecycleResource() resource.Resource {
 	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
 	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
 }
