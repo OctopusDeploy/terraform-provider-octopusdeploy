@@ -107,8 +107,8 @@ func getResourceSchemaPhaseBlock(allowDeprecatedRetention bool) resourceSchema.L
 
 func getResourceSchemaBlocks(allowDeprecatedRetention bool, includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
-		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(),
-		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(),
+		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(allowDeprecatedRetention),
+		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(allowDeprecatedRetention),
 	}
 	if includesPhaseBlock {
 		blocks["phase"] = getResourceSchemaPhaseBlock(allowDeprecatedRetention)
