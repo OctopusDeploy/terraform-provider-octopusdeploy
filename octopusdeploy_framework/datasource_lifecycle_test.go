@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccDataSourceLifecyclesDEPRECATED(t *testing.T) {
+	if !schemas.AllowDeprecatedRetention() {
+		t.Skip("Skipping test because users may still use the deprecated retention blocks")
+	}
 	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := "Default Lifecycle"
 	resourceName := "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle"
