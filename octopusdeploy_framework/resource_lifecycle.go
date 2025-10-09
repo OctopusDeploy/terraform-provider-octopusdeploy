@@ -124,7 +124,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 		}
 
 		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
-		stateData = flattenResourceLifecycle(lifecycleSentToGo)
+		stateData = flattenResourceLifecycle(lifecycleFromGo)
 
 		removeInitialRetention(stateData, isReleaseRetentionDefined, isTentacleRetentionDefined, initialRetentionSetting)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &stateData)...)
