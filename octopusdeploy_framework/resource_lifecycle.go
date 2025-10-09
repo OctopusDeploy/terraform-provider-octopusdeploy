@@ -346,13 +346,6 @@ func isRetentionWithoutStrategyBlockConfigDEPRECATED(stateData *lifecycleTypeRes
 	}
 	return false
 }
-func isRetentionWithoutStrategyBlockToBeUsedForLifecycleDEPRECATED(stateData *lifecycleTypeResourceModelDEPRECATED) bool {
-	releaseRetentionIsInConfig := isNewBlockInRetentionConfigDEPRECATED(stateData)
-	if releaseRetentionIsInConfig {
-		return false
-	}
-	return true
-}
 
 func setInitialRetentionWithoutStrategyBlockDEPRECATED(stateData *lifecycleTypeResourceModelDEPRECATED, initialRetentionSettingForWithoutStrategyBlock types.List) (bool, bool) {
 	hasUserDefinedReleaseRetentionWithoutStrategy := attributeIsUsed(stateData.ReleaseRetentionWithoutStrategy)
@@ -842,20 +835,6 @@ func getResourcePhaseAttrTypesDEPRECATED() map[string]attr.Type {
 	}
 }
 
-func isWithoutStrategyBlockInRetentionConfigDEPRECATED(stateData *lifecycleTypeResourceModelDEPRECATED) bool {
-	if attributeIsUsed(stateData.ReleaseRetentionWithoutStrategy) || attributeIsUsed(stateData.TentacleRetentionWithoutStrategy) {
-		return true
-	}
-	for _, phase := range stateData.Phase.Elements() {
-		phaseAttributes := phase.(types.Object).Attributes()
-		releaseRetentionWithoutStrategy := phaseAttributes["release_retention_policy"].(types.List)
-		tentacleRetentionWithoutStrategy := phaseAttributes["tentacle_retention_policy"].(types.List)
-		if attributeIsUsed(releaseRetentionWithoutStrategy) || attributeIsUsed(tentacleRetentionWithoutStrategy) {
-			return true
-		}
-	}
-	return false
-}
 func isRetentionWithoutStrategyToBeUsedForLifecycleDEPRECATED(stateData *lifecycleTypeResourceModelDEPRECATED) bool {
 	releaseRetentionIsInConfig := isNewBlockInRetentionConfigDEPRECATED(stateData)
 	if releaseRetentionIsInConfig {
