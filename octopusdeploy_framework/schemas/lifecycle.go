@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"context"
+	"os"
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -25,8 +26,20 @@ import (
 
 var _ EntitySchema = LifecycleSchema{}
 
-type LifecycleSchema struct{}
+func AllowDeprecatedRetention() bool {
+	allowDeprecatedRetentionFeatureToggle := true // change this to false to disallow deprecated retention by default
+	deprecationReversals := strings.TrimSpace(os.Getenv("TF_OCTOPUS_DEPRECATION_REVERSALS"))
+	if strings.EqualFold(deprecationReversals, "octopusdeploy_lifecycles.retention_policy") {
+		return true
+	}
+	return allowDeprecatedRetentionFeatureToggle
+}
 
+type LifecycleSchema struct {
+	AllowDeprecatedRetention bool
+}
+
+//////////////////
 // RESOURCE SCHEMA
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
@@ -43,11 +56,11 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 			"name":        util.ResourceString().Required().Description("The name of this resource.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
-		Blocks: getResourceSchemaBlocks(true),
+		Blocks: getResourceSchemaBlocks(l.AllowDeprecatedRetention, true),
 	}
 }
 
-func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
+func getResourceSchemaPhaseBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines a phase in the lifecycle.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -87,20 +100,22 @@ func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
 					PlanModifiers(boolplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
-			Blocks: getResourceSchemaBlocks(false),
+			Blocks: getResourceSchemaBlocks(allowDeprecatedRetention, false),
 		},
 	}
 }
 
-func getResourceSchemaBlocks(isForLifecycle bool) map[string]resourceSchema.Block {
+func getResourceSchemaBlocks(allowDeprecatedRetention bool, includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
-		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(isForLifecycle),
-		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(isForLifecycle),
-		"release_retention_policy":         getResourceSchemaRetentionBlockDEPRECATED(),
-		"tentacle_retention_policy":        getResourceSchemaRetentionBlockDEPRECATED(),
+		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(),
+		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(),
 	}
-	if isForLifecycle {
-		blocks["phase"] = getResourceSchemaPhaseBlock()
+	if includesPhaseBlock {
+		blocks["phase"] = getResourceSchemaPhaseBlock(allowDeprecatedRetention)
+	}
+	if allowDeprecatedRetention {
+		blocks["release_retention_policy"] = getDeprecatedResourceSchemaRetentionBlock(allowDeprecatedRetention)
+		blocks["tentacle_retention_policy"] = getDeprecatedResourceSchemaRetentionBlock(allowDeprecatedRetention)
 	}
 	return blocks
 }
@@ -141,7 +156,7 @@ func getResourceSchemaRetentionBlock(isForLifecycle bool) resourceSchema.ListNes
 		},
 	}
 }
-func getResourceSchemaRetentionBlockDEPRECATED() resourceSchema.ListNestedBlock {
+func getDeprecatedResourceSchemaRetentionBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		DeprecationMessage: "This block will deprecate when octopus 2025.2 is no longer supported. After upgrading to octopus 2025.3 or higher, please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
 		Description:        "Defines the retention policy for releases or tentacles.",
@@ -166,7 +181,7 @@ func getResourceSchemaRetentionBlockDEPRECATED() resourceSchema.ListNestedBlock 
 					Build(),
 			},
 			Validators: []validator.Object{
-				retentionWithoutStrategyValidatorDEPRECATED{},
+				retentionWithoutStrategyValidatorDEPRECATED{allowDeprecatedRetention: allowDeprecatedRetention},
 			},
 		},
 	}
@@ -230,7 +245,9 @@ func (v resourceSchemaRetentionValidator) ValidateObject(ctx context.Context, re
 	}
 }
 
-type retentionWithoutStrategyValidatorDEPRECATED struct{}
+type retentionWithoutStrategyValidatorDEPRECATED struct {
+	allowDeprecatedRetention bool
+}
 
 func (v retentionWithoutStrategyValidatorDEPRECATED) Description(ctx context.Context) string {
 	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
@@ -249,6 +266,12 @@ func (v retentionWithoutStrategyValidatorDEPRECATED) ValidateObject(ctx context.
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if !v.allowDeprecatedRetention {
+		resp.Diagnostics.AddError(
+			"release_retention_policy and tentacle_retention_policy are deprecated.",
+			"Please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.")
 	}
 
 	if !retentionPolicy.QuantityToKeep.IsNull() && !retentionPolicy.QuantityToKeep.IsUnknown() && !retentionPolicy.ShouldKeepForever.IsNull() && !retentionPolicy.ShouldKeepForever.IsUnknown() {
@@ -282,6 +305,7 @@ func (v retentionWithoutStrategyValidatorDEPRECATED) ValidateObject(ctx context.
 	}
 }
 
+//////////////////
 // DATASOURCE SCHEMA
 
 func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
@@ -294,7 +318,7 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
 			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
 			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
-			"lifecycles":   getDatasourceSchemaLifecyclesDEPRECATED(),
+			"lifecycles":   util.Ternary(l.AllowDeprecatedRetention, getDeprecatedDatasourceSchemaLifecycles(), getDatasourceSchemaLifecycles()),
 		},
 	}
 }
@@ -309,6 +333,7 @@ func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 				"space_id":                         util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
 				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
 				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
+				"phase":                            getDatasourceSchemaPhases(),
 				"release_retention_with_strategy":  getDatasourceSchemaRetention(),
 				"tentacle_retention_with_strategy": getDatasourceSchemaRetention(),
 			},
