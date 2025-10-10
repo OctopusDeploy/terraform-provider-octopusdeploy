@@ -42,6 +42,7 @@ func testAccRunKubectlScriptAction() string {
 
 			script_file_name = "Test.ps1"
 			script_parameters = "-Test 1"
+            script_source = "Package"
 
 			namespace = "test-namespace"
     }
