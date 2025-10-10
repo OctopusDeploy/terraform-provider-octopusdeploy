@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
@@ -141,6 +142,9 @@ func expandChannel(ctx context.Context, model schemas.ChannelModel) *channels.Ch
 	channel.Rules = expandChannelRules(model.Rule)
 	channel.SpaceID = model.SpaceId.ValueString()
 	channel.TenantTags = util.ExpandStringSet(model.TenantTags)
+	channel.Type = channels.ChannelType(model.Type.ValueString())
+	channel.ParentEnvironmentID = model.ParentEnvironmentID.ValueString()
+	channel.EphemeralEnvironmentNameTemplate = model.EphemeralEnvironmentNameTemplate.ValueString()
 
 	return channel
 }
@@ -257,6 +261,10 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 	}
 
 	model.TenantTags = util.FlattenStringSet(channel.TenantTags, model.TenantTags)
+
+	model.Type = types.StringValue(string(channel.Type))
+	model.ParentEnvironmentID = util.StringOrNull(channel.ParentEnvironmentID)
+	model.EphemeralEnvironmentNameTemplate = util.StringOrNull(channel.EphemeralEnvironmentNameTemplate)
 
 	return model
 }

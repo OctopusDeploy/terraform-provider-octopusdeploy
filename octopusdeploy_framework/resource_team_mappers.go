@@ -109,7 +109,10 @@ func mapTeamResourceToState(ctx context.Context, team *teams.Team, model schemas
 
 	userRoles, err := client.Teams.GetScopedUserRoles(*team, core.SkipTakeQuery{})
 	if err == nil {
-		model.UserRole = mapUserRoleSetResourceToState(ctx, userRoles.Items, model.UserRole)
+		// Only include user roles that are managed by this team resource
+		// Filter out user roles that might be managed by standalone octopusdeploy_scoped_user_role resources
+		managedUserRoles := filterUserRolesByPreviousState(ctx, userRoles.Items, model.UserRole)
+		model.UserRole = mapUserRoleSetResourceToState(ctx, managedUserRoles, model.UserRole)
 	}
 
 	return model
@@ -225,4 +228,55 @@ func mapUserRoleSetResourceToState(ctx context.Context, userRoles []*userroles.S
 	}
 
 	return types.SetValueMust(userRoleObjectType, roleList)
+}
+
+func filterUserRolesByPreviousState(ctx context.Context, serverUserRoles []*userroles.ScopedUserRole, previousUserRolesState types.Set) []*userroles.ScopedUserRole {
+	if previousUserRolesState.IsNull() {
+		return []*userroles.ScopedUserRole{}
+	}
+
+	if previousUserRolesState.IsUnknown() {
+		return serverUserRoles
+	}
+
+	previousElements := previousUserRolesState.Elements()
+
+	hasUnknownIds := false
+	for _, element := range previousElements {
+		if objElement, ok := element.(types.Object); ok {
+			attributes := objElement.Attributes()
+			if idAttr, exists := attributes["id"]; exists {
+				if idStr, ok := idAttr.(types.String); ok && (idStr.IsNull() || idStr.IsUnknown()) {
+					hasUnknownIds = true
+					break
+				}
+			}
+		}
+	}
+
+	if hasUnknownIds {
+		return serverUserRoles
+	}
+
+	previouslyManagedIDs := make(map[string]bool)
+
+	for _, element := range previousElements {
+		if objElement, ok := element.(types.Object); ok {
+			attributes := objElement.Attributes()
+			if idAttr, exists := attributes["id"]; exists {
+				if idStr, ok := idAttr.(types.String); ok && !idStr.IsNull() && !idStr.IsUnknown() {
+					previouslyManagedIDs[idStr.ValueString()] = true
+				}
+			}
+		}
+	}
+
+	var managedUserRoles []*userroles.ScopedUserRole
+	for _, serverRole := range serverUserRoles {
+		if serverRole.ID != "" && previouslyManagedIDs[serverRole.ID] {
+			managedUserRoles = append(managedUserRoles, serverRole)
+		}
+	}
+
+	return managedUserRoles
 }

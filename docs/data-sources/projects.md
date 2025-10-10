@@ -57,6 +57,7 @@ Read-Only:
 - `default_to_skip_if_already_installed` (Boolean)
 - `deployment_changes_template` (String)
 - `deployment_process_id` (String)
+- `deprovisioning_runbook_id` (String) The ID of the runbook to run when deprovisioning an ephemeral environment for this project.
 - `description` (String) The description of this project
 - `discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `git_anonymous_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using anonymous authentication. (see [below for nested schema](#nestedatt--projects--git_anonymous_persistence_settings))
@@ -71,6 +72,7 @@ Read-Only:
 - `lifecycle_id` (String) The lifecycle ID associated with this project
 - `name` (String) The name of the project in Octopus Deploy. This name must be unique.
 - `project_group_id` (String) The project group ID associated with this project.
+- `provisioning_runbook_id` (String) The ID of the runbook to run when provisioning an ephemeral environment for this project.
 - `release_creation_strategy` (Attributes List) The release creation strategy for the project. (see [below for nested schema](#nestedatt--projects--release_creation_strategy))
 - `release_notes_template` (String) The template to use for release notes.
 - `servicenow_extension_settings` (Attributes List) Extension settings for the ServiceNow integration. (see [below for nested schema](#nestedatt--projects--servicenow_extension_settings))
