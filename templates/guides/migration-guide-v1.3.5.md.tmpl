@@ -1,0 +1,78 @@
+---
+page_title: "Migrating to v1.3.0"
+subcategory: "Upgrades & Migrations"
+---
+
+# v1.3.0 Migration Guide
+In this release, we've announced a deprecation that will require action from some customers, depending on their configuration
+
+## Deprecated - `octopusdeploy_lifecycles.release_retention_policy` and `octopusdeploy_lifecycles.tentacle_retention_policy`
+In this release, we announced the deprecation the following lifecycle resource and datasource blocks:
+- `octopusdeploy_lifecycles.release_retention_policy`
+- `octopusdeploy_lifecycles.tentacle_retention_policy`
+- `octopusdeploy_lifecycles.phase.release_retention_policy`
+- `octopusdeploy_lifecycles.phase.tentacle_retention_policy`
+in favour of the following lifecycle resource blocks:
+- `octopusdeploy_lifecycles.release_retention_with_strategy`
+- `octopusdeploy_lifecycles.tentacle_retention_with_strategy`
+- `octopusdeploy_lifecycles.phase.release_retention_with_strategy`
+- `octopusdeploy_lifecycles.phase.tentacle_retention_with_strategy`
+
+The default retention policy for lifecycles without explicit retention was previously set to 30 days.
+In the future it will be initially set to "Default".
+Note that phases without explicit retention will still inherit retention from the lifecycle.
+
+`retention_with_strategy` blocks must be used with version 2025.3 of the octopus server or higher.
+
+### Rationale
+After octopus 2025.3, a default retention setting can be set at the space level and applied to lifecycles and phases. The new `retention_with_strategy`blocks support this.
+The older `retention_policy` block is deleted to avoid confusion when retention is defined outside of the lifecycle.
+Lifecycles will now be initially set to the Space Default retention setting. This enables retention of many lifecycles to be changed on mass or more easily initiated at the desired retention.
+
+### Impact
+This change affects all customers using lifecycles.
+
+Users who have lifecycles without set retention settings are affected as below:
+- lifecycles without retention settings will be initialised with the retention strategy = "Default"
+- this means retention is defined by the space default retention setting (initially set as keep forever)
+
+Users who have lifecycles with retention_policy are affected as below:
+- users will need to change their HCL to use the new `retention_with_strategy` block
+
+Users who access their lifecycle retention datasource are affected as below:
+- viewing the `retention_policy` settings is potentially inaccurate as it will not show when the space default retention is used
+- `retention_with_strategy` block should be used instead
+
+### Timeline
+Migration will be required no earlier than 15 Oct 2026
+
+| Date          | What we'll do                                                             | What you need to do                                                      |
+|---------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| 15 APR 2026   | **Enactment**: Soft-delete the deprecated block (Major release)           | Migrate your Terraform config, or use the escape-hatch, before upgrading |
+| 15 OCT 2026   | **Completion**: Remove the deprecated block entirely (Patch release)      | Migrate your Terraform config before upgrading                           |
+
+### How to migrate
+
+Please ensure you are working from a clean slate and have no pending changes to your Terraform config, by running a `terraform plan`. If you have outstanding changes, please resolve them before proceeding with this guide.
+
+-> This migration substitutes equivalent resources. This is non-destructive as long as you complete the migration in one go.
+1. Replace all `retention_policy` blocks with `retention_with_strategy` blocks and equivalent retention settings
+
+
+1. Declare a new resource of type `octopusdeploy_built_in_trigger`
+1. Set `project_id` to the parent project of your `deployment_process_id` attribute on your existing `octopusdeploy_project_auto_create_release` resource
+1. Set all other `octopusdeploy_built_in_trigger` attributes to match the remaining `octopusdeploy_project_auto_create_release` attributes
+1. Run `terraform plan`
+1. When satisfied, run `terraform apply` to complete the migration
+
+### Escape hatch
+
+We expect customers to migrate their configs in the 6 months between Announcement and Enactment of a deprecation. However, we know that this isn't always possible, so we have a further 6 months grace period.
+
+If you're caught out during this period and need a bit more time to migrate, you can use this escape hatch to revert the soft-deletion from the Enactment stage.
+
+| Environment Variable | Required Value                 |
+|----------------------|--------------------------------|
+| `TF_OCTOPUS_DEPRECATION_REVERSALS` | `project-auto-create_release_v1.3.0` |
+
+This escape hatch will be removed and migration will be required during the [Completion phase](#Timeline)
