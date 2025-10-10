@@ -1,6 +1,8 @@
 resource "octopusdeploy_tag_set" "example" {
   description = "Provides tenants with access to certain early access programs."
   name        = "Early Access Program (EAP)"
+  scopes      = ["Tenant"]
+  type        = "MultiSelect"
 }
 
 # tags are distinct resources and associated with tag sets through tag_set_id

@@ -18,6 +18,7 @@ resource "octopusdeploy_environment" "example" {
   description                  = "An environment for the development team."
   name                         = "Development Environment (OK to Delete)"
   use_guided_failure           = false
+  environment_tags             = ["TagSet1/Tag"]
 
   jira_extension_settings {
     environment_type = "unmapped"
@@ -44,6 +45,7 @@ resource "octopusdeploy_environment" "example" {
 
 - `allow_dynamic_infrastructure` (Boolean)
 - `description` (String) The description of this environment.
+- `environment_tags` (Set of String) A list of environment tags associated with this resource.
 - `jira_extension_settings` (Block List) Provides extension settings for the Jira integration for this environment. (see [below for nested schema](#nestedblock--jira_extension_settings))
 - `jira_service_management_extension_settings` (Block List) Provides extension settings for the Jira Service Management (JSM) integration for this environment. (see [below for nested schema](#nestedblock--jira_service_management_extension_settings))
 - `servicenow_extension_settings` (Block List) Provides extension settings for the ServiceNow integration for this environment. (see [below for nested schema](#nestedblock--servicenow_extension_settings))
