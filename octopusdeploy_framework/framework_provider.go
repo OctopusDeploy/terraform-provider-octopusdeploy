@@ -108,6 +108,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewAzureSubscriptionAccountResource,
 		NewLifecycleResource,
 		NewEnvironmentResource,
+		NewParentEnvironmentResource,
 		NewStepTemplateResource,
 		NewCommunityStepTemplateResource,
 		NewGitCredentialResource,
