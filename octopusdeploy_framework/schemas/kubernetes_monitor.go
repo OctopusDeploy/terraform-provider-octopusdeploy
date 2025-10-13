@@ -16,12 +16,12 @@ import (
 const KubernetesMonitorResourceName = "kubernetes_monitor"
 
 type KubernetesMonitorResourceModel struct {
-	ID                         types.String `tfsdk:"id"`
-	SpaceID                    types.String `tfsdk:"space_id"`
-	InstallationID             types.String `tfsdk:"installation_id"`
-	MachineID                  types.String `tfsdk:"machine_id"`
-	AuthenticationToken        types.String `tfsdk:"authentication_token"`
-	CertificateThumbprint      types.String `tfsdk:"certificate_thumbprint"`
+	ID                          types.String `tfsdk:"id"`
+	SpaceID                     types.String `tfsdk:"space_id"`
+	InstallationID              types.String `tfsdk:"installation_id"`
+	MachineID                   types.String `tfsdk:"machine_id"`
+	AuthenticationToken         types.String `tfsdk:"authentication_token"`
+	CertificateThumbprint       types.String `tfsdk:"certificate_thumbprint"`
 	PreserveAuthenticationToken types.Bool   `tfsdk:"preserve_authentication_token"`
 }
 
@@ -81,7 +81,7 @@ func (s KubernetesMonitorSchema) GetResourceSchema() schema.Schema {
 				},
 			},
 			"preserve_authentication_token": schema.BoolAttribute{
-				Description: "Controls whether the authentication token should be preserved during re-registration. If not supplied (null), the token will be regenerated (default behavior). If false, the token will be regenerated. If true, the existing token will be preserved.",
+				Description: "Controls whether the authentication token should be preserved during re-registration. If not supplied (null), or false, the token will be regenerated (default behavior). If true, the existing token will be preserved.",
 				Optional:    true,
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.RequiresReplace(),
