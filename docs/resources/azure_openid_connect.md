@@ -56,6 +56,8 @@ resource "octopusdeploy_azure_openid_connect" "example" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 terraform import [options] octopusdeploy_azure_openid_connect.<name> <account-id>
 ```

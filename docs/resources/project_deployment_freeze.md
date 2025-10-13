@@ -113,5 +113,3 @@ Optional:
 - `end_on_date` (String) The date when the recurring schedule should end
 - `monthly_schedule_type` (String) Type of monthly schedule (DayOfMonth, DateOfMonth)
 - `utc_offset_in_minutes` (Number) The UTC offset in minutes of the timezone the schedule should run in, will use offset from freeze start date if not specified.
-
-

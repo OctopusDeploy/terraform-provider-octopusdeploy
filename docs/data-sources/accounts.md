@@ -72,5 +72,3 @@ Read-Only:
 - `tenants` (List of String)
 - `token` (String)
 - `username` (String)
-
-
