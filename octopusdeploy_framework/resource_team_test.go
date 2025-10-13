@@ -204,6 +204,78 @@ func testAccTeamCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
+func TestAccOctopusDeployTeamScopedUserRoleNoConflict(t *testing.T) {
+	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTeamCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			// Create team without user_role blocks
+			{
+				Config: testAccTeamWithoutUserRolesConfig(teamName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "name", teamName),
+					resource.TestCheckNoResourceAttr("octopusdeploy_team.test_team", "user_role.#"),
+				),
+			},
+			// Add standalone scoped_user_role resource
+			{
+				Config: testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "name", teamName),
+					resource.TestCheckResourceAttrSet("octopusdeploy_scoped_user_role.test_role", "id"),
+					resource.TestCheckResourceAttrSet("octopusdeploy_scoped_user_role.test_role", "team_id"),
+				),
+			},
+			// Apply again with no changes - should have no diff (this is the critical test)
+			{
+				Config:             testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false, // This should pass with the fix
+			},
+			// Apply a third time to ensure stability
+			{
+				Config:             testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false, // This should also pass with the fix
+			},
+		},
+	})
+}
+
+func testAccTeamWithoutUserRolesConfig(teamName string) string {
+	return fmt.Sprintf(`
+resource "octopusdeploy_team" "test_team" {
+	name        = "%s"
+	description = "Test team without user roles"
+	# Explicitly no user_role blocks
+}`, teamName)
+}
+
+func testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName string) string {
+	return fmt.Sprintf(`
+resource "octopusdeploy_user_role" "test_user_role" {
+	name = "%s"
+	description = "Test user role"
+	granted_space_permissions = ["EnvironmentView"]
+}
+
+resource "octopusdeploy_team" "test_team" {
+	name        = "%s"
+	description = "Test team without user roles"
+	# Explicitly no user_role blocks - standalone scoped_user_role should not conflict
+}
+
+resource "octopusdeploy_scoped_user_role" "test_role" {
+	team_id      = octopusdeploy_team.test_team.id
+	user_role_id = octopusdeploy_user_role.test_user_role.id
+	space_id     = "Spaces-1"
+}`, userRoleName, teamName)
+}
+
 func testAccTeamImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]
