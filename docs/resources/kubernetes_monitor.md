@@ -176,6 +176,7 @@ resource "helm_release" "kubernetes_agent1" {
 
 ### Optional
 
+- `preserve_authentication_token` (Boolean) Controls whether the authentication token should be preserved during re-registration. If not supplied (null), or false, the token will be regenerated (default behavior). If true, the existing token will be preserved.
 - `space_id` (String) The space ID associated with this resource.
 
 ### Read-Only
