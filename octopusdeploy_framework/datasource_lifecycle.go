@@ -50,7 +50,6 @@ func (l *lifecyclesDataSource) Configure(ctx context.Context, req datasource.Con
 }
 
 func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-
 	tflog.Debug(ctx, "lifecycles datasource Read")
 	var data lifecyclesDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -65,6 +64,7 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		Skip:        int(data.Skip.ValueInt64()),
 		Take:        int(data.Take.ValueInt64()),
 	}
+
 	util.DatasourceReading(ctx, "lifecycles", query)
 
 	lifecyclesResult, err := lifecycles.Get(l.Config.Client, data.SpaceID.ValueString(), query)
@@ -79,9 +79,9 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	data.Lifecycles = flattenLifecyclesForDatasourceDEPRECATED(lifecyclesResult.Items)
 
 	data.ID = types.StringValue("Lifecycles " + time.Now().UTC().String())
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
-
 func flattenLifecyclesForDatasourceDEPRECATED(requestedLifecycles []*lifecycles.Lifecycle) types.List {
 	var lifecycleAttrTypes = getDatasourceLifecycleAttrTypesDEPRECATED()
 	lifecyclesList := make([]attr.Value, 0, len(requestedLifecycles))
