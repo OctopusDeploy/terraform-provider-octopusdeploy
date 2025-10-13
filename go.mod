@@ -1,11 +1,11 @@
 module github.com/OctopusDeploy/terraform-provider-octopusdeploy
 
-go 1.23.0
+go 1.23.12
 
 toolchain go1.24.5
 
 require (
-	github.com/OctopusDeploy/go-octopusdeploy/v2 v2.84.0
+	github.com/OctopusDeploy/go-octopusdeploy/v2 v2.84.3-0.20251013033149-2315de31923a
 	github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200723130312-85980079f637
