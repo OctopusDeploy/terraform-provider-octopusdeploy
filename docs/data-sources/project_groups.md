@@ -47,3 +47,5 @@ Read-Only:
 - `name` (String) The name of this resource.
 - `slug` (String) The unique slug of this project group
 - `space_id` (String) The space ID associated with this project group.
+
+

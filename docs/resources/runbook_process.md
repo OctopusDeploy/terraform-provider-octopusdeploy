@@ -94,14 +94,14 @@ Read-Only:
 <a id="nestedblock--step--action--action_template"></a>
 ### Nested Schema for `step.action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--action--container"></a>
@@ -219,14 +219,14 @@ Optional:
 <a id="nestedblock--step--apply_terraform_template_action--action_template"></a>
 ### Nested Schema for `step.apply_terraform_template_action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--apply_terraform_template_action--aws_account"></a>
@@ -381,14 +381,14 @@ Read-Only:
 <a id="nestedblock--step--deploy_kubernetes_secret_action--action_template"></a>
 ### Nested Schema for `step.deploy_kubernetes_secret_action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--deploy_kubernetes_secret_action--container"></a>
@@ -484,14 +484,14 @@ Optional:
 <a id="nestedblock--step--deploy_package_action--action_template"></a>
 ### Nested Schema for `step.deploy_package_action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--deploy_package_action--container"></a>
@@ -618,14 +618,14 @@ Optional:
 <a id="nestedblock--step--deploy_windows_service_action--action_template"></a>
 ### Nested Schema for `step.deploy_windows_service_action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--deploy_windows_service_action--container"></a>
@@ -706,14 +706,14 @@ Read-Only:
 <a id="nestedblock--step--manual_intervention_action--action_template"></a>
 ### Nested Schema for `step.manual_intervention_action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--manual_intervention_action--container"></a>
@@ -802,14 +802,14 @@ Read-Only:
 <a id="nestedblock--step--run_kubectl_script_action--action_template"></a>
 ### Nested Schema for `step.run_kubectl_script_action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--run_kubectl_script_action--container"></a>
@@ -914,14 +914,14 @@ Read-Only:
 <a id="nestedblock--step--run_script_action--action_template"></a>
 ### Nested Schema for `step.run_script_action.action_template`
 
-Required:
-
-- `id` (String)
-
 Optional:
 
 - `community_action_template_id` (String)
 - `version` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--step--run_script_action--container"></a>

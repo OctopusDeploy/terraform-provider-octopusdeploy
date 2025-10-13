@@ -57,8 +57,6 @@ resource "octopusdeploy_listening_tentacle_worker" "optionals" {
 
 Import is supported using the following syntax:
 
-The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
-
 ```shell
 terraform import [options] octopusdeploy_listening_tentacle_worker.<name> <machine-id>
 ```

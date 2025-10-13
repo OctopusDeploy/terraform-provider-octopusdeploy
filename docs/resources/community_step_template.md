@@ -3,7 +3,7 @@
 page_title: "octopusdeploy_community_step_template Resource - terraform-provider-octopusdeploy"
 subcategory: ""
 description: |-
-  This resource manages community_step_templates in Octopus Deploy.
+  This resource manages communitysteptemplates in Octopus Deploy.
 ---
 
 # octopusdeploy_community_step_template (Resource)
@@ -70,3 +70,5 @@ Read-Only:
 - `id` (String) The id for the property.
 - `label` (String) The label shown beside the parameter when presented in the deployment process. Example: `Server name`.
 - `name` (String) The name of the variable set by the parameter. The name can contain letters, digits, dashes and periods. Example: `ServerName`
+
+
