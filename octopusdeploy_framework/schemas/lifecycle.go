@@ -92,24 +92,24 @@ func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
 	}
 }
 
-func getResourceSchemaBlocks(isForLifecycle bool) map[string]resourceSchema.Block {
+func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
-		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(isForLifecycle),
-		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(isForLifecycle),
+		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(includesPhaseBlock),
+		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(includesPhaseBlock),
 		"release_retention_policy":         getResourceSchemaRetentionBlockDEPRECATED(),
 		"tentacle_retention_policy":        getResourceSchemaRetentionBlockDEPRECATED(),
 	}
-	if isForLifecycle {
+	if includesPhaseBlock {
 		blocks["phase"] = getResourceSchemaPhaseBlock()
 	}
 	return blocks
 }
 
-func getResourceSchemaRetentionBlock(isForLifecycle bool) resourceSchema.ListNestedBlock {
+func getResourceSchemaRetentionBlock(includesPhaseBlock bool) resourceSchema.ListNestedBlock {
 	descriptionForLifecycleRetention := "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later."
 	descriptionForPhaseRetention := "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the phase inherits the retention from the lifecycle \n 	- This block may only be used on Octopus server 2025.3 or later."
 	return resourceSchema.ListNestedBlock{
-		Description: util.Ternary(isForLifecycle, descriptionForLifecycleRetention, descriptionForPhaseRetention),
+		Description: util.Ternary(includesPhaseBlock, descriptionForLifecycleRetention, descriptionForPhaseRetention),
 		NestedObject: resourceSchema.NestedBlockObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"strategy": util.ResourceString().

@@ -149,7 +149,7 @@ func TestExpandPhasesWithUnknownInput_DEPRECATED(t *testing.T) {
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
 	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, false)
 	require.NotNil(t, flattenedPhases)
@@ -170,7 +170,7 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlockDEPREC
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
-	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
 	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, true)
 	require.NotNil(t, flattenedPhases)
@@ -191,8 +191,8 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrateg
 }
 
 func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
-	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
+	phase1 := createTestPhaseDEPRECATED("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase2 := createTestPhaseDEPRECATED("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
 	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2}, false)
 	require.NotNil(t, flattenedPhases)
@@ -220,8 +220,8 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingNewRetentionBlo
 }
 
 func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
-	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
-	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
+	phase1 := createTestPhaseDEPRECATED("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase2 := createTestPhaseDEPRECATED("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
 	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2}, true)
 	require.NotNil(t, flattenedPhases)
@@ -465,7 +465,7 @@ func TestAccLifecycleComplex_usingRetentionWithoutStrategyDEPRECATED(t *testing.
 }
 
 // Setup for testing
-func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
+func createTestPhaseDEPRECATED(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
 	phase := lifecycles.NewPhase(name)
 	phase.AutomaticDeploymentTargets = autoTargets
 	phase.IsOptionalPhase = isOptional
