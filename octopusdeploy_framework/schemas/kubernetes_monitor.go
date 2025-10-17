@@ -6,6 +6,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/kubernetesmonitors"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -15,12 +16,13 @@ import (
 const KubernetesMonitorResourceName = "kubernetes_monitor"
 
 type KubernetesMonitorResourceModel struct {
-	ID                    types.String `tfsdk:"id"`
-	SpaceID               types.String `tfsdk:"space_id"`
-	InstallationID        types.String `tfsdk:"installation_id"`
-	MachineID             types.String `tfsdk:"machine_id"`
-	AuthenticationToken   types.String `tfsdk:"authentication_token"`
-	CertificateThumbprint types.String `tfsdk:"certificate_thumbprint"`
+	ID                          types.String `tfsdk:"id"`
+	SpaceID                     types.String `tfsdk:"space_id"`
+	InstallationID              types.String `tfsdk:"installation_id"`
+	MachineID                   types.String `tfsdk:"machine_id"`
+	AuthenticationToken         types.String `tfsdk:"authentication_token"`
+	CertificateThumbprint       types.String `tfsdk:"certificate_thumbprint"`
+	PreserveAuthenticationToken types.Bool   `tfsdk:"preserve_authentication_token"`
 }
 
 func (s KubernetesMonitorSchema) GetResourceSchema() schema.Schema {
@@ -78,6 +80,13 @@ func (s KubernetesMonitorSchema) GetResourceSchema() schema.Schema {
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"preserve_authentication_token": schema.BoolAttribute{
+				Description: "Controls whether the authentication token should be preserved during re-registration. If not supplied (null), or false, the token will be regenerated (default behavior). If true, the existing token will be preserved.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
 		},
 	}
 }
@@ -104,6 +113,9 @@ func MapFromKubernetesMonitorToState(
 	if certThumbprint != "" {
 		data.CertificateThumbprint = types.StringValue(certThumbprint)
 	}
+
+	// Note: PreserveAuthenticationToken is preserved from the existing state
+	// as it's an input-only field that controls registration behavior
 }
 
 var uuidRegex = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)

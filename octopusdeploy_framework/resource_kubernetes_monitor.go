@@ -95,6 +95,11 @@ func (r *kubernetesMonitorResource) Create(
 	)
 	command.SpaceID = data.SpaceID.ValueString()
 
+	if !data.PreserveAuthenticationToken.IsNull() {
+		preserveToken := data.PreserveAuthenticationToken.ValueBool()
+		command.PreserveAuthenticationToken = &preserveToken
+	}
+
 	// Register the Kubernetes monitor
 	tflog.Info(ctx, fmt.Sprintf("Creating Kubernetes monitor with installation ID %s", installationID.String()))
 
@@ -105,10 +110,15 @@ func (r *kubernetesMonitorResource) Create(
 	}
 
 	// Map the response to state
+	var authToken string
+	if response.AuthenticationToken != nil {
+		authToken = *response.AuthenticationToken
+	}
+
 	schemas.MapFromKubernetesMonitorToState(
 		data,
 		&response.Resource,
-		response.AuthenticationToken,
+		authToken,
 		response.CertificateThumbprint,
 	)
 
