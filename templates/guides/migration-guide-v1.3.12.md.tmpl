@@ -1,9 +1,9 @@
 ---
-page_title: 'Migrating to v1.3.0'
+page_title: 'Migrating to v1.3.12'
 subcategory: 'Upgrades & Migrations'
 ---
 
-# v1.3.0 Migration Guide
+# v1.3.12 Migration Guide
 
 In this release, we've announced a deprecation that will require action from some customers, depending on their configuration
 
@@ -50,12 +50,12 @@ Lifecycles data source use:
 
 ### Timeline
 
-Migration will be required no earlier than 15 Oct 2026
+Migration will be required no earlier than 19 Oct 2026
 
 | Date        | What we'll do                                                        | What you need to do                                                      |
 | ----------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 15 APR 2026 | **Enactment**: Soft-delete the deprecated block (Major release)      | Migrate your Terraform config, or use the escape-hatch, before upgrading |
-| 15 OCT 2026 | **Completion**: Remove the deprecated block entirely (Patch release) | Migrate your Terraform config before upgrading                           |
+| 19 APR 2026 | **Enactment**: Soft-delete the deprecated block (Major release)      | Migrate your Terraform config, or use the escape-hatch, before upgrading |
+| 19 OCT 2026 | **Completion**: Remove the deprecated block entirely (Patch release) | Migrate your Terraform config before upgrading                           |
 
 ### How to migrate
 
