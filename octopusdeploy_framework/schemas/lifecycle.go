@@ -166,7 +166,7 @@ func getResourceSchemaRetentionBlockDEPRECATED() resourceSchema.ListNestedBlock 
 					Build(),
 			},
 			Validators: []validator.Object{
-				retentionWithoutStrategyValidatorDEPRECATED{},
+				retentionWithoutStrategyValidator{},
 			},
 		},
 	}
@@ -230,15 +230,15 @@ func (v resourceSchemaRetentionValidator) ValidateObject(ctx context.Context, re
 	}
 }
 
-type retentionWithoutStrategyValidatorDEPRECATED struct{}
+type retentionWithoutStrategyValidator struct{}
 
-func (v retentionWithoutStrategyValidatorDEPRECATED) Description(ctx context.Context) string {
+func (v retentionWithoutStrategyValidator) Description(ctx context.Context) string {
 	return "validates that should_keep_forever is true only if quantity_to_keep is 0"
 }
-func (v retentionWithoutStrategyValidatorDEPRECATED) MarkdownDescription(ctx context.Context) string {
+func (v retentionWithoutStrategyValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
-func (v retentionWithoutStrategyValidatorDEPRECATED) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v retentionWithoutStrategyValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	var retentionPolicy struct {
 		QuantityToKeep    types.Int64  `tfsdk:"quantity_to_keep"`
 		ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
@@ -318,8 +318,8 @@ func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 func getDatasourceSchemaLifecyclesDEPRECATED() datasourceSchema.ListNestedAttribute {
 	var attributes = getDatasourceSchemaLifecycles().NestedObject.Attributes
 	attributes["phase"] = getDatasourceSchemaPhasesDEPRECATED()
-	attributes["release_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategyDEPRECATED()
-	attributes["tentacle_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategyDEPRECATED()
+	attributes["release_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategy()
+	attributes["tentacle_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategy()
 	return datasourceSchema.ListNestedAttribute{
 		Computed:    true,
 		Optional:    false,
@@ -350,8 +350,8 @@ func getDatasourceSchemaPhases() datasourceSchema.ListNestedAttribute {
 }
 func getDatasourceSchemaPhasesDEPRECATED() datasourceSchema.ListNestedAttribute {
 	var attributes = getDatasourceSchemaPhases().NestedObject.Attributes
-	attributes["release_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategyDEPRECATED()
-	attributes["tentacle_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategyDEPRECATED()
+	attributes["release_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategy()
+	attributes["tentacle_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategy()
 
 	return datasourceSchema.ListNestedAttribute{
 		Computed: true,
@@ -373,7 +373,7 @@ func getDatasourceSchemaRetention() datasourceSchema.ListNestedAttribute {
 		},
 	}
 }
-func getDatasourceSchemaRetentionWithoutStrategyDEPRECATED() datasourceSchema.ListNestedAttribute {
+func getDatasourceSchemaRetentionWithoutStrategy() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
 		DeprecationMessage: "release_retention_policy and tentacle_retention_policy are deprecated and will be removed soon. Please disregard and use release_retention_with_strategy and tentacle_retention_with_strategy instead.",
 		Computed:           true,

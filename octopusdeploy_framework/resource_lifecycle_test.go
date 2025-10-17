@@ -16,16 +16,16 @@ import (
 )
 
 // unit tests
-func TestExpandLifecycleWithNil_usingNewRetentionBlockDEPRECATED(t *testing.T) {
-	lifecycle := expandLifecycleDEPRECATED(nil, false)
+func TestExpandLifecycleWithNil_usingNewRetentionBlock(t *testing.T) {
+	lifecycle := expandLifecycle(nil, false)
 	require.Nil(t, lifecycle)
 }
-func TestExpanDLifecycleWithNil_usingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
-	lifecycle := expandLifecycleDEPRECATED(nil, true)
+func TestExpanDLifecycleWithNil_usingRetentionWithoutStrategyBlock(t *testing.T) {
+	lifecycle := expandLifecycle(nil, true)
 	require.Nil(t, lifecycle)
 }
 
-func TestExpandLifecycle_usingNewRetentionBlockDEPRECATED(t *testing.T) {
+func TestExpandLifecycle_usingNewRetentionBlock(t *testing.T) {
 	description := "test-description"
 	name := "test-name"
 	spaceID := "test-space-id"
@@ -34,7 +34,7 @@ func TestExpandLifecycle_usingNewRetentionBlockDEPRECATED(t *testing.T) {
 	tentacleRetention := core.CountBasedRetentionPeriod(2, "Items")
 	retentionAttributeTypes := getResourceRetentionAttrTypes()
 
-	data := &lifecycleTypeResourceModelDEPRECATED{
+	data := &lifecycleTypeResourceModel{
 		Description: types.StringValue(description),
 		Name:        types.StringValue(name),
 		SpaceID:     types.StringValue(spaceID),
@@ -67,7 +67,7 @@ func TestExpandLifecycle_usingNewRetentionBlockDEPRECATED(t *testing.T) {
 	}
 	data.ID = types.StringValue(Id)
 
-	lifecycle := expandLifecycleDEPRECATED(data, false)
+	lifecycle := expandLifecycle(data, false)
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
 	require.NotNil(t, lifecycle.Links)
@@ -78,16 +78,16 @@ func TestExpandLifecycle_usingNewRetentionBlockDEPRECATED(t *testing.T) {
 	require.Equal(t, tentacleRetention, lifecycle.TentacleRetentionPolicy)
 	require.Equal(t, spaceID, lifecycle.SpaceID)
 }
-func TestExpandLifecycle_usingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
+func TestExpandLifecycle_usingRetentionWithoutStrategyBlock(t *testing.T) {
 	description := "test-description"
 	name := "test-name"
 	spaceID := "test-space-id"
 	Id := "test-id"
 	releaseRetention := core.KeepForeverRetentionPeriod()
 	tentacleRetention := core.CountBasedRetentionPeriod(2, "Items")
-	retentionAttributeTypes := getResourceRetentionWithoutStrategyAttrTypesDEPRECATED()
+	retentionAttributeTypes := getResourceRetentionWithoutStrategyAttrTypes()
 
-	data := &lifecycleTypeResourceModelDEPRECATED{
+	data := &lifecycleTypeResourceModel{
 		Description: types.StringValue(description),
 		Name:        types.StringValue(name),
 		SpaceID:     types.StringValue(spaceID),
@@ -120,7 +120,7 @@ func TestExpandLifecycle_usingRetentionWithoutStrategyBlockDEPRECATED(t *testing
 	}
 	data.ID = types.StringValue(Id)
 
-	lifecycle := expandLifecycleDEPRECATED(data, true)
+	lifecycle := expandLifecycle(data, true)
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
 	require.NotNil(t, lifecycle.Links)
@@ -132,30 +132,30 @@ func TestExpandLifecycle_usingRetentionWithoutStrategyBlockDEPRECATED(t *testing
 	require.Equal(t, spaceID, lifecycle.SpaceID)
 }
 
-func TestExpandPhasesWithEmptyInput_DEPRECATED(t *testing.T) {
-	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()}, []attr.Value{})
-	phases := expandPhasesDEPRECATED(emptyList)
+func TestExpandPhasesWithEmptyInput(t *testing.T) {
+	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()}, []attr.Value{})
+	phases := expandPhases(emptyList)
 	require.Nil(t, phases)
 }
-func TestExpandPhasesWithNullInput_DEPRECATED(t *testing.T) {
-	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()})
-	phases := expandPhasesDEPRECATED(nullList)
+func TestExpandPhasesWithNullInput(t *testing.T) {
+	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
+	phases := expandPhases(nullList)
 	require.Nil(t, phases)
 }
-func TestExpandPhasesWithUnknownInput_DEPRECATED(t *testing.T) {
-	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDEPRECATED()})
-	phases := expandPhasesDEPRECATED(unknownList)
+func TestExpandPhasesWithUnknownInput(t *testing.T) {
+	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
+	phases := expandPhases(unknownList)
 	require.Nil(t, phases)
 }
 
-func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlock(t *testing.T) {
+	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, false)
+	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase}, false)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
+	expandedPhases := expandPhases(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 1)
 
@@ -169,14 +169,14 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlockDEPREC
 	require.Equal(t, phase.TentacleRetentionPolicy, expandedPhase.TentacleRetentionPolicy)
 }
 
-func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
-	phase := createTestPhaseDEPRECATED("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlock(t *testing.T) {
+	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase}, true)
+	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase}, true)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
+	expandedPhases := expandPhases(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 1)
 
@@ -190,15 +190,15 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrateg
 	require.Equal(t, phase.TentacleRetentionPolicy, expandedPhase.TentacleRetentionPolicy)
 }
 
-func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingNewRetentionBlockDEPRECATED(t *testing.T) {
-	phase1 := createTestPhaseDEPRECATED("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
-	phase2 := createTestPhaseDEPRECATED("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
+func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingNewRetentionBlock(t *testing.T) {
+	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2}, false)
+	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase1, phase2}, false)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
+	expandedPhases := expandPhases(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 2)
 
@@ -219,15 +219,15 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingNewRetentionBlo
 	require.Equal(t, phase2.TentacleRetentionPolicy, expandedPhases[1].TentacleRetentionPolicy)
 }
 
-func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlockDEPRECATED(t *testing.T) {
-	phase1 := createTestPhaseDEPRECATED("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
-	phase2 := createTestPhaseDEPRECATED("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
+func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlock(t *testing.T) {
+	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
+	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
-	flattenedPhases := flattenResourcePhasesDEPRECATED([]*lifecycles.Phase{phase1, phase2}, true)
+	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase1, phase2}, true)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhasesDEPRECATED(flattenedPhases)
+	expandedPhases := expandPhases(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 2)
 
@@ -250,7 +250,7 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingRetentionWithou
 
 //integration tests
 
-func TestAccLifecycleBasicDEPRECATED(t *testing.T) {
+func TestAccLifecycleBasic(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -276,7 +276,7 @@ func TestAccLifecycleBasicDEPRECATED(t *testing.T) {
 	})
 }
 
-func TestAccLifecycleWithUpdateDEPRECATED(t *testing.T) {
+func TestAccLifecycleWithUpdate(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -371,7 +371,7 @@ func TestAccLifecycleWithUpdateDEPRECATED(t *testing.T) {
 			},
 			// update lifecycle by switching its phase to use retention without strategy
 			{
-				Config: testAccLifecycleWithPhase_AndPhaseRetentionWithoutStrategyDEPRECATED(localName, name, description, phaseName),
+				Config: testAccLifecycleWithPhase_AndPhaseRetentionWithoutStrategy(localName, name, description, phaseName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLifecycleExists(resourceName),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
@@ -394,7 +394,7 @@ func TestAccLifecycleWithUpdateDEPRECATED(t *testing.T) {
 	})
 }
 
-func TestAccLifecycleComplex_usingNewRetentionDEPRECATED(t *testing.T) {
+func TestAccLifecycleComplex_usingNewRetention(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
 
@@ -429,7 +429,7 @@ func TestAccLifecycleComplex_usingNewRetentionDEPRECATED(t *testing.T) {
 	})
 }
 
-func TestAccLifecycleComplex_usingRetentionWithoutStrategyDEPRECATED(t *testing.T) {
+func TestAccLifecycleComplex_usingRetentionWithoutStrategy(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_lifecycle." + localName
 
@@ -465,7 +465,7 @@ func TestAccLifecycleComplex_usingRetentionWithoutStrategyDEPRECATED(t *testing.
 }
 
 // Setup for testing
-func createTestPhaseDEPRECATED(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
+func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
 	phase := lifecycles.NewPhase(name)
 	phase.AutomaticDeploymentTargets = autoTargets
 	phase.IsOptionalPhase = isOptional
@@ -499,7 +499,7 @@ func testAccLifecycleWithPhase_AndPhaseRetention(localName string, name string, 
 	}`, localName, name, description, phaseName)
 }
 
-func testAccLifecycleWithPhase_AndPhaseRetentionWithoutStrategyDEPRECATED(localName string, name string, description string, phaseName string) string {
+func testAccLifecycleWithPhase_AndPhaseRetentionWithoutStrategy(localName string, name string, description string, phaseName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
         description = "%s"
