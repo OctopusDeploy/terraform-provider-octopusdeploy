@@ -50,12 +50,12 @@ Lifecycles data source use:
 
 ### Timeline
 
-Migration will be required no earlier than 19 Oct 2026
+Migration will be required no earlier than 21 Oct 2026
 
 | Date        | What we'll do                                                        | What you need to do                                                      |
 | ----------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 19 APR 2026 | **Enactment**: Soft-delete the deprecated block (Major release)      | Migrate your Terraform config, or use the escape-hatch, before upgrading |
-| 19 OCT 2026 | **Completion**: Remove the deprecated block entirely (Patch release) | Migrate your Terraform config before upgrading                           |
+| 21 APR 2026 | **Enactment**: Soft-delete the deprecated block (Major release)      | Migrate your Terraform config, or use the escape-hatch, before upgrading |
+| 21 OCT 2026 | **Completion**: Remove the deprecated block entirely (Patch release) | Migrate your Terraform config before upgrading                           |
 
 ### How to migrate
 
