@@ -33,8 +33,9 @@ func TestAccOctopusDeployDockerContainerRegistry(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "password", password),
 					resource.TestCheckResourceAttr(prefix, "registry_path", registryPath),
 					resource.TestCheckResourceAttr(prefix, "username", username),
-					resource.TestCheckResourceAttr(prefix, "download_attempts", "3"),
-					resource.TestCheckResourceAttr(prefix, "download_retry_backoff_seconds", "15"),
+					// Uncomment when download_attempts and download_retry_backoff_seconds are supported in Octopus server GA
+					//resource.TestCheckResourceAttr(prefix, "download_attempts", "3"),
+					//resource.TestCheckResourceAttr(prefix, "download_retry_backoff_seconds", "15"),
 				),
 				Config: testDockerContainerRegistryBasic(localName, apiVersion, feedURI, name, registryPath, username, password),
 			},
