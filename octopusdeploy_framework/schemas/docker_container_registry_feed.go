@@ -18,6 +18,8 @@ func (d DockerContainerRegistryFeedSchema) GetResourceSchema() resourceSchema.Sc
 			"api_version": resourceSchema.StringAttribute{
 				Optional: true,
 			},
+			"download_attempts":                    GetDownloadAttemptsResourceSchema(),
+			"download_retry_backoff_seconds":       GetDownloadRetryBackoffSecondsResourceSchema(),
 			"feed_uri":                             GetFeedUriResourceSchema(),
 			"id":                                   GetIdResourceSchema(),
 			"name":                                 GetNameResourceSchema(true),
@@ -39,6 +41,8 @@ func (d DockerContainerRegistryFeedSchema) GetDatasourceSchema() datasourceSchem
 
 type DockerContainerRegistryFeedTypeResourceModel struct {
 	APIVersion                        types.String `tfsdk:"api_version"`
+	DownloadAttempts                  types.Int64  `tfsdk:"download_attempts"`
+	DownloadRetryBackoffSeconds       types.Int64  `tfsdk:"download_retry_backoff_seconds"`
 	FeedUri                           types.String `tfsdk:"feed_uri"`
 	Name                              types.String `tfsdk:"name"`
 	PackageAcquisitionLocationOptions types.List   `tfsdk:"package_acquisition_location_options"`

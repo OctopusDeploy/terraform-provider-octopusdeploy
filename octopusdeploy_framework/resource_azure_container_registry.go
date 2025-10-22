@@ -174,6 +174,14 @@ func createContainerRegistryFeedResourceFromAzureData(data *schemas.AzureContain
 
 	feed.ID = data.ID.ValueString()
 	feed.FeedURI = data.FeedUri.ValueString()
+
+	if !data.DownloadAttempts.IsNull() && data.DownloadAttempts.ValueInt64() > 0 {
+		feed.DownloadAttempts = int(data.DownloadAttempts.ValueInt64())
+	}
+	if !data.DownloadRetryBackoffSeconds.IsNull() && data.DownloadRetryBackoffSeconds.ValueInt64() >= 0 {
+		feed.DownloadRetryBackoffSeconds = int(data.DownloadRetryBackoffSeconds.ValueInt64())
+	}
+
 	feed.PackageAcquisitionLocationOptions = nil
 	feed.SpaceID = data.SpaceID.ValueString()
 	feed.APIVersion = data.APIVersion.ValueString()
@@ -186,6 +194,8 @@ func createContainerRegistryFeedResourceFromAzureData(data *schemas.AzureContain
 }
 
 func updateDataFromAzureContainerRegistryFeed(data *schemas.AzureContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.AzureContainerRegistry) {
+	data.DownloadAttempts = types.Int64Value(int64(feed.DownloadAttempts))
+	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(feed.DownloadRetryBackoffSeconds))
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)
@@ -213,6 +223,8 @@ func updateDataFromAzureContainerRegistryFeed(data *schemas.AzureContainerRegist
 
 // // This is a workaround since the old provider/server saved acr registries as docker registries
 func updateDataFromDockerContainerRegistryFeedForACR(data *schemas.AzureContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.DockerContainerRegistry) {
+	data.DownloadAttempts = types.Int64Value(int64(feed.DownloadAttempts))
+	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(feed.DownloadRetryBackoffSeconds))
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)

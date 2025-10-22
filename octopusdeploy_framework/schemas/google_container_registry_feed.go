@@ -18,12 +18,14 @@ func (d GoogleContainerRegistryFeedSchema) GetResourceSchema() resourceSchema.Sc
 			"api_version": resourceSchema.StringAttribute{
 				Optional: true,
 			},
-			"feed_uri": GetFeedUriResourceSchema(),
-			"id":       GetIdResourceSchema(),
-			"name":     GetNameResourceSchema(true),
-			"password": GetPasswordResourceSchema(false),
-			"space_id": GetSpaceIdResourceSchema("Google container registry feed"),
-			"username": GetUsernameResourceSchema(false),
+			"download_attempts":              GetDownloadAttemptsResourceSchema(),
+			"download_retry_backoff_seconds": GetDownloadRetryBackoffSecondsResourceSchema(),
+			"feed_uri":                       GetFeedUriResourceSchema(),
+			"id":                             GetIdResourceSchema(),
+			"name":                           GetNameResourceSchema(true),
+			"password":                       GetPasswordResourceSchema(false),
+			"space_id":                       GetSpaceIdResourceSchema("Google container registry feed"),
+			"username":                       GetUsernameResourceSchema(false),
 			"registry_path": resourceSchema.StringAttribute{
 				Optional: true,
 			},
@@ -48,14 +50,16 @@ func (d GoogleContainerRegistryFeedSchema) GetDatasourceSchema() datasourceSchem
 }
 
 type GoogleContainerRegistryFeedTypeResourceModel struct {
-	APIVersion         types.String                                            `tfsdk:"api_version"`
-	FeedUri            types.String                                            `tfsdk:"feed_uri"`
-	Name               types.String                                            `tfsdk:"name"`
-	Password           types.String                                            `tfsdk:"password"`
-	SpaceID            types.String                                            `tfsdk:"space_id"`
-	Username           types.String                                            `tfsdk:"username"`
-	RegistryPath       types.String                                            `tfsdk:"registry_path"`
-	OidcAuthentication *GoogleContainerRegistryOidcAuthenticationResourceModel `tfsdk:"oidc_authentication"`
+	APIVersion                  types.String                                            `tfsdk:"api_version"`
+	DownloadAttempts            types.Int64                                             `tfsdk:"download_attempts"`
+	DownloadRetryBackoffSeconds types.Int64                                             `tfsdk:"download_retry_backoff_seconds"`
+	FeedUri                     types.String                                            `tfsdk:"feed_uri"`
+	Name                        types.String                                            `tfsdk:"name"`
+	Password                    types.String                                            `tfsdk:"password"`
+	SpaceID                     types.String                                            `tfsdk:"space_id"`
+	Username                    types.String                                            `tfsdk:"username"`
+	RegistryPath                types.String                                            `tfsdk:"registry_path"`
+	OidcAuthentication          *GoogleContainerRegistryOidcAuthenticationResourceModel `tfsdk:"oidc_authentication"`
 
 	ResourceModel
 }
