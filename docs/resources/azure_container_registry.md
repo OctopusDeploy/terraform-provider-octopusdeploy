@@ -14,10 +14,12 @@ This resource manages Azure Container Registry feed in Octopus Deploy (alias of 
 
 ```terraform
 resource "octopusdeploy_azure_container_registry" "example" {
-  name          = "Test Azure Container Registry (OK to Delete)"
-  feed_uri      = "https://test-azure.azurecr.io"
-  username      = "username"
-  password      = "password"
+  name                           = "Test Azure Container Registry (OK to Delete)"
+  feed_uri                       = "https://test-azure.azurecr.io"
+  username                       = "username"
+  password                       = "password"
+  download_attempts              = 3
+  download_retry_backoff_seconds = 15
 }
 
 resource "octopusdeploy_azure_container_register" "example_with_oidc" {
@@ -43,6 +45,8 @@ resource "octopusdeploy_azure_container_register" "example_with_oidc" {
 ### Optional
 
 - `api_version` (String)
+- `download_attempts` (Number) The number of times a deployment should attempt to download a package from this feed before failing.
+- `download_retry_backoff_seconds` (Number) The number of seconds to apply as a linear back off between download attempts.
 - `oidc_authentication` (Attributes) (see [below for nested schema](#nestedatt--oidc_authentication))
 - `password` (String, Sensitive) The password associated with this resource.
 - `registry_path` (String)

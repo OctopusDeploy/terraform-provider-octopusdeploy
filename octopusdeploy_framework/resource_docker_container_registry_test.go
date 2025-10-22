@@ -33,6 +33,8 @@ func TestAccOctopusDeployDockerContainerRegistry(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "password", password),
 					resource.TestCheckResourceAttr(prefix, "registry_path", registryPath),
 					resource.TestCheckResourceAttr(prefix, "username", username),
+					resource.TestCheckResourceAttr(prefix, "download_attempts", "3"),
+					resource.TestCheckResourceAttr(prefix, "download_retry_backoff_seconds", "15"),
 				),
 				Config: testDockerContainerRegistryBasic(localName, apiVersion, feedURI, name, registryPath, username, password),
 			},
@@ -48,6 +50,8 @@ func testDockerContainerRegistryBasic(localName string, apiVersion string, feedU
 		password = "%s"
 		registry_path = "%s"
 		username = "%s"
+		download_attempts = 3
+		download_retry_backoff_seconds = 15
 	}`, localName, apiVersion, feedURI, name, password, registryPath, username)
 }
 

@@ -1,8 +1,10 @@
 resource "octopusdeploy_azure_container_registry" "example" {
-  name          = "Test Azure Container Registry (OK to Delete)"
-  feed_uri      = "https://test-azure.azurecr.io"
-  username      = "username"
-  password      = "password"
+  name                           = "Test Azure Container Registry (OK to Delete)"
+  feed_uri                       = "https://test-azure.azurecr.io"
+  username                       = "username"
+  password                       = "password"
+  download_attempts              = 3
+  download_retry_backoff_seconds = 15
 }
 
 resource "octopusdeploy_azure_container_register" "example_with_oidc" {
