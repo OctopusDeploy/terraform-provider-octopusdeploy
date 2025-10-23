@@ -189,8 +189,8 @@ func createContainerRegistryFeedResourceFromGoogleData(data *schemas.GoogleConta
 }
 
 func updateGoogleDataFromDockerContainerRegistryFeed(data *schemas.GoogleContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.GoogleContainerRegistry) {
-	data.DownloadAttempts = types.Int64Value(int64(feed.DownloadAttempts))
-	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(feed.DownloadRetryBackoffSeconds))
+	data.DownloadAttempts = types.Int64Value(int64(schemas.DownloadAttemptsOrDefault(feed.DownloadAttempts)))
+	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(schemas.DownloadRetryBackoffSecondsOrDefault(feed.DownloadRetryBackoffSeconds)))
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)
@@ -215,8 +215,8 @@ func updateGoogleDataFromDockerContainerRegistryFeed(data *schemas.GoogleContain
 }
 
 func updateDataFromDockerContainerRegistryFeedForGCR(data *schemas.GoogleContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.DockerContainerRegistry) {
-	data.DownloadAttempts = types.Int64Value(int64(feed.DownloadAttempts))
-	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(feed.DownloadRetryBackoffSeconds))
+	data.DownloadAttempts = types.Int64Value(int64(schemas.DownloadAttemptsOrDefault(feed.DownloadAttempts)))
+	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(schemas.DownloadRetryBackoffSecondsOrDefault(feed.DownloadRetryBackoffSeconds)))
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)

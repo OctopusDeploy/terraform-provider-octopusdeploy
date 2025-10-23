@@ -53,3 +53,23 @@ type DockerContainerRegistryFeedTypeResourceModel struct {
 
 	ResourceModel
 }
+
+// DownloadAttemptsOrDefault returns 5 if downloadAttempts is zero.
+// Handles backward compatibility with pre-2025.4 servers that don't return this field.
+// Zero indicates missing field (old server), not user-set value (valid range: 1-5).
+func DownloadAttemptsOrDefault(downloadAttempts int) int {
+	if downloadAttempts == 0 {
+		return 5
+	}
+	return downloadAttempts
+}
+
+// DownloadRetryBackoffSecondsOrDefault returns 10 if downloadRetryBackoffSeconds is zero.
+// Handles backward compatibility with pre-2025.4 servers that don't return this field.
+// Zero indicates missing field (old server), not user-set value.
+func DownloadRetryBackoffSecondsOrDefault(downloadRetryBackoffSeconds int) int {
+	if downloadRetryBackoffSeconds == 0 {
+		return 10
+	}
+	return downloadRetryBackoffSeconds
+}

@@ -169,8 +169,8 @@ func createDockerContainerRegistryFeedResourceFromData(data *schemas.DockerConta
 }
 
 func updateDataFromDockerContainerRegistryFeed(data *schemas.DockerContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.DockerContainerRegistry) {
-	data.DownloadAttempts = types.Int64Value(int64(feed.DownloadAttempts))
-	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(feed.DownloadRetryBackoffSeconds))
+	data.DownloadAttempts = types.Int64Value(int64(schemas.DownloadAttemptsOrDefault(feed.DownloadAttempts)))
+	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(schemas.DownloadRetryBackoffSecondsOrDefault(feed.DownloadRetryBackoffSeconds)))
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)
