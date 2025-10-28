@@ -25,10 +25,40 @@ func TestAccDataSourceFeeds(t *testing.T) {
 			{
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFeedsDataSourceID(prefix),
-					// Check that at least the feeds we created exist (there may be more in the test environment)
 					resource.TestCheckResourceAttrSet(prefix, "feeds.#"),
+					resource.TestCheckResourceAttrSet(prefix, "feeds.0.feed_type"),
 				),
 				Config: testAccDataSourceFeedsConfig(localName, take),
+			},
+			{
+				Check: func(s *terraform.State) error {
+					nugetPrefix := fmt.Sprintf("data.octopusdeploy_feeds.%s_nuget", localName)
+					return resource.ComposeTestCheckFunc(
+						testAccCheckFeedsDataSourceID(nugetPrefix),
+						testAccCheckFeedsFilteredByType(nugetPrefix, "NuGet"),
+					)(s)
+				},
+				Config: testAccDataSourceFeedsWithFilterConfig(localName+"_nuget", "NuGet"),
+			},
+			{
+				Check: func(s *terraform.State) error {
+					mavenPrefix := fmt.Sprintf("data.octopusdeploy_feeds.%s_maven", localName)
+					return resource.ComposeTestCheckFunc(
+						testAccCheckFeedsDataSourceID(mavenPrefix),
+						testAccCheckFeedsFilteredByType(mavenPrefix, "Maven"),
+					)(s)
+				},
+				Config: testAccDataSourceFeedsWithFilterConfig(localName+"_maven", "Maven"),
+			},
+			{
+				Check: func(s *terraform.State) error {
+					helmPrefix := fmt.Sprintf("data.octopusdeploy_feeds.%s_helm", localName)
+					return resource.ComposeTestCheckFunc(
+						testAccCheckFeedsDataSourceID(helmPrefix),
+						testAccCheckFeedsFilteredByType(helmPrefix, "Helm"),
+					)(s)
+				},
+				Config: testAccDataSourceFeedsWithFilterConfig(localName+"_helm", "Helm"),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -63,6 +93,44 @@ func testAccDataSourceFeedsConfig(localName string, take int) string {
 
 func testAccDataSourceFeedsEmpty(localName string) string {
 	return fmt.Sprintf(`data "octopusdeploy_feeds" "%s" {}`, localName)
+}
+
+func testAccCheckFeedsFilteredByType(n string, expectedType string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("cannot find Feeds data source: %s", n)
+		}
+
+		count := rs.Primary.Attributes["feeds.#"]
+		if count == "" {
+			return fmt.Errorf("feeds count not set")
+		}
+
+		if count == "0" {
+			return nil
+		}
+
+		feedCount := 0
+		for key, value := range rs.Primary.Attributes {
+			if key == fmt.Sprintf("feeds.%d.feed_type", feedCount) {
+				if value != expectedType {
+					return fmt.Errorf("feed %d has unexpected type: expected %s, got %s", feedCount, expectedType, value)
+				}
+				feedCount++
+			}
+		}
+
+		return nil
+	}
+}
+
+func testAccDataSourceFeedsWithFilterConfig(localName string, feedType string) string {
+	return fmt.Sprintf(`%s
+
+data "octopusdeploy_feeds" "%s" {
+	feed_type = "%s"
+}`, createTestAccDataSourceFeedsConfig(), localName, feedType)
 }
 
 func createTestAccDataSourceFeedsConfig() string {
