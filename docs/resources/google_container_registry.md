@@ -14,10 +14,12 @@ This resource manages a Google Container Registry feed in Octopus Deploy (alias 
 
 ```terraform
 resource "octopusdeploy_google_container_registry" "example" {
-  name          = "Test Google Container Registry (OK to Delete)"
-  feed_uri      = "https://google.docker.test"
-  registry_path = "testing/test-image"
-  password      = "google authentication key file contents (json)"
+  name                           = "Test Google Container Registry (OK to Delete)"
+  feed_uri                       = "https://google.docker.test"
+  registry_path                  = "testing/test-image"
+  password                       = "google authentication key file contents (json)"
+  download_attempts              = 4
+  download_retry_backoff_seconds = 20
 }
 
 resource "octopusdeploy_google_container_registry" "example_with_oidc" {
@@ -42,6 +44,8 @@ resource "octopusdeploy_google_container_registry" "example_with_oidc" {
 ### Optional
 
 - `api_version` (String)
+- `download_attempts` (Number) The number of times a deployment should attempt to download a package from this feed before failing.
+- `download_retry_backoff_seconds` (Number) The number of seconds to apply as a linear back off between download attempts.
 - `oidc_authentication` (Attributes) (see [below for nested schema](#nestedatt--oidc_authentication))
 - `password` (String, Sensitive) The password associated with this resource.
 - `registry_path` (String)

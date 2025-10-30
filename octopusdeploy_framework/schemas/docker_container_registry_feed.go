@@ -18,6 +18,8 @@ func (d DockerContainerRegistryFeedSchema) GetResourceSchema() resourceSchema.Sc
 			"api_version": resourceSchema.StringAttribute{
 				Optional: true,
 			},
+			"download_attempts":                    GetDownloadAttemptsResourceSchema(),
+			"download_retry_backoff_seconds":       GetDownloadRetryBackoffSecondsResourceSchema(),
 			"feed_uri":                             GetFeedUriResourceSchema(),
 			"id":                                   GetIdResourceSchema(),
 			"name":                                 GetNameResourceSchema(true),
@@ -39,6 +41,8 @@ func (d DockerContainerRegistryFeedSchema) GetDatasourceSchema() datasourceSchem
 
 type DockerContainerRegistryFeedTypeResourceModel struct {
 	APIVersion                        types.String `tfsdk:"api_version"`
+	DownloadAttempts                  types.Int64  `tfsdk:"download_attempts"`
+	DownloadRetryBackoffSeconds       types.Int64  `tfsdk:"download_retry_backoff_seconds"`
 	FeedUri                           types.String `tfsdk:"feed_uri"`
 	Name                              types.String `tfsdk:"name"`
 	PackageAcquisitionLocationOptions types.List   `tfsdk:"package_acquisition_location_options"`
@@ -48,4 +52,24 @@ type DockerContainerRegistryFeedTypeResourceModel struct {
 	RegistryPath                      types.String `tfsdk:"registry_path"`
 
 	ResourceModel
+}
+
+// DownloadAttemptsOrDefault returns 5 if downloadAttempts is zero.
+// Handles backward compatibility with pre-2025.4 servers that don't return this field.
+// Zero indicates missing field (old server), not user-set value (valid range: 1-5).
+func DownloadAttemptsOrDefault(downloadAttempts int) int {
+	if downloadAttempts == 0 {
+		return 5
+	}
+	return downloadAttempts
+}
+
+// DownloadRetryBackoffSecondsOrDefault returns 10 if downloadRetryBackoffSeconds is zero.
+// Handles backward compatibility with pre-2025.4 servers that don't return this field.
+// Zero indicates missing field (old server), not user-set value.
+func DownloadRetryBackoffSecondsOrDefault(downloadRetryBackoffSeconds int) int {
+	if downloadRetryBackoffSeconds == 0 {
+		return 10
+	}
+	return downloadRetryBackoffSeconds
 }
