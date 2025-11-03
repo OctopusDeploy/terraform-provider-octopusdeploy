@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccDataSourceLifecyclesDEPRECATED(t *testing.T) {
+func TestAccDataSourceLifecycles(t *testing.T) {
 	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := "Default Lifecycle"
 	resourceName := "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle"
@@ -28,6 +28,8 @@ func TestAccDataSourceLifecyclesDEPRECATED(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.name", lifecycleName),
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_policy.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_with_strategy.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_with_strategy.#", "1"),
 					testAccCheckOutputExists("octopus_space_id"),
 					testAccCheckOutputExists("octopus_lifecycle_id"),
 				),

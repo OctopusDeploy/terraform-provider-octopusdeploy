@@ -146,6 +146,13 @@ func createDockerContainerRegistryFeedResourceFromData(data *schemas.DockerConta
 	feed.ID = data.ID.ValueString()
 	feed.FeedURI = data.FeedUri.ValueString()
 
+	if !data.DownloadAttempts.IsNull() && data.DownloadAttempts.ValueInt64() > 0 {
+		feed.DownloadAttempts = int(data.DownloadAttempts.ValueInt64())
+	}
+	if !data.DownloadRetryBackoffSeconds.IsNull() && data.DownloadRetryBackoffSeconds.ValueInt64() >= 0 {
+		feed.DownloadRetryBackoffSeconds = int(data.DownloadRetryBackoffSeconds.ValueInt64())
+	}
+
 	var packageAcquisitionLocationOptions []string
 	for _, element := range data.PackageAcquisitionLocationOptions.Elements() {
 		packageAcquisitionLocationOptions = append(packageAcquisitionLocationOptions, element.(types.String).ValueString())
@@ -162,6 +169,8 @@ func createDockerContainerRegistryFeedResourceFromData(data *schemas.DockerConta
 }
 
 func updateDataFromDockerContainerRegistryFeed(data *schemas.DockerContainerRegistryFeedTypeResourceModel, spaceId string, feed *feeds.DockerContainerRegistry) {
+	data.DownloadAttempts = types.Int64Value(int64(schemas.DownloadAttemptsOrDefault(feed.DownloadAttempts)))
+	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(schemas.DownloadRetryBackoffSecondsOrDefault(feed.DownloadRetryBackoffSeconds)))
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)
