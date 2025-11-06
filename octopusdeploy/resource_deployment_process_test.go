@@ -2,10 +2,12 @@ package octopusdeploy
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	internalTest "github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -26,7 +28,24 @@ func testAccProjectCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
+func TestAccOctopusDeployDeploymentProcessDeprecated(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccDeploymentProcessBasic(localName),
+				ExpectError: regexp.MustCompile("octopusdeploy_deployment_process.*deprecated and disabled.*TF_OCTOPUS_DEPRECATION_REVERSALS=Process_v1.0.0"),
+			},
+		},
+	})
+}
+
 func TestAccOctopusDeployDeploymentProcessBasic(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_deployment_process." + localName
 
@@ -53,6 +72,8 @@ func TestAccOctopusDeployDeploymentProcessBasic(t *testing.T) {
 }
 
 func TestAccOctopusDeployDeploymentProcessWithActionTemplate(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	internalTest.SkipCI(t, "Unsupported block type on `template` block")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_deployment_process." + localName
@@ -93,6 +114,8 @@ func TestAccOctopusDeployDeploymentProcessWithActionTemplate(t *testing.T) {
 }
 
 func TestAccOctopusDeployDeploymentProcessWithImpliedPrimaryPackage(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_deployment_process." + localName
 

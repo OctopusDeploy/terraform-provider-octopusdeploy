@@ -9,6 +9,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -57,6 +58,10 @@ func getDeploymentProcessSchema() map[string]*schema.Schema {
 }
 
 func resourceDeploymentProcessCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_deployment_process", internal.DeprecationKeyProcess))
+	}
+
 	client := m.(*client.Client)
 	deploymentProcess, err := expandDeploymentProcess(ctx, d, client)
 
@@ -111,6 +116,10 @@ func resourceDeploymentProcessCreate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceDeploymentProcessDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_deployment_process", internal.DeprecationKeyProcess))
+	}
+
 	log.Printf("[INFO] deleting deployment process (%s)", d.Id())
 	spaceID := d.Get("space_id").(string)
 
@@ -165,6 +174,10 @@ func resourceDeploymentProcessDelete(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceDeploymentProcessRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_deployment_process", internal.DeprecationKeyProcess))
+	}
+
 	log.Printf("[INFO] reading deployment process (%s)", d.Id())
 
 	client := m.(*client.Client)
@@ -203,6 +216,10 @@ func resourceDeploymentProcessRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDeploymentProcessUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_deployment_process", internal.DeprecationKeyProcess))
+	}
+
 	log.Printf("[INFO] updating deployment process (%s)", d.Id())
 
 	client := m.(*client.Client)
