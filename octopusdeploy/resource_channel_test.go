@@ -7,6 +7,7 @@ import (
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	internalTest "github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -86,6 +87,8 @@ func TestAccOctopusDeployChannelBasicWithUpdate(t *testing.T) {
 }
 
 func TestAccOctopusDeployChannelWithOneRule(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	internalTest.SkipCI(t, "action_package blocks required on rule, this test is out of date.")
 	const terraformNamePrefix = "octopusdeploy_channel.ch"
 	const channelName = "Funky Channel"
@@ -113,6 +116,8 @@ func TestAccOctopusDeployChannelWithOneRule(t *testing.T) {
 }
 
 func TestAccOctopusDeployChannelWithOneRuleWithUpdate(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	internalTest.SkipCI(t, "action_package blocks required on rule, this test is out of date.")
 	const terraformNamePrefix = "octopusdeploy_channel.ch"
 	const channelName = "Funky Channel"
@@ -154,6 +159,8 @@ func TestAccOctopusDeployChannelWithOneRuleWithUpdate(t *testing.T) {
 }
 
 func TestAccOctopusDeployChannelWithTwoRules(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	internalTest.SkipCI(t, "action_package blocks required on rule, this test is out of date.")
 	const terraformNamePrefix = "octopusdeploy_channel.ch"
 	const channelName = "Funky Channel"
