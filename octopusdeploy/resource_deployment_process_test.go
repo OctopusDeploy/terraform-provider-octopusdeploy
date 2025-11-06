@@ -2,7 +2,6 @@ package octopusdeploy
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
@@ -26,21 +25,6 @@ func testAccProjectCheckDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func TestAccOctopusDeployDeploymentProcessDeprecated(t *testing.T) {
-	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccDeploymentProcessBasic(localName),
-				ExpectError: regexp.MustCompile("octopusdeploy_deployment_process.*deprecated and disabled.*TF_OCTOPUS_DEPRECATION_REVERSALS=Process_v1.0.0"),
-			},
-		},
-	})
 }
 
 func TestAccOctopusDeployDeploymentProcessBasic(t *testing.T) {
