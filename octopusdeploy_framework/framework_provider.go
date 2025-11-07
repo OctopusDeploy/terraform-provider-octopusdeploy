@@ -156,6 +156,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewKubernetesMonitorResource,
 		NewTeamResource,
 		NewScopedUserRoleResource,
+		NewSpaceDefaultLifecycleReleaseRetentionPolicyResource,
 	}
 }
 
