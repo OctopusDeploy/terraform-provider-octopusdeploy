@@ -47,6 +47,11 @@ func TestMain(m *testing.M) {
 			log.Fatalf("Failed to set TF_ACC env: (%s)", err.Error())
 			return
 		}
+		err = os.Setenv("TF_OCTOPUS_DEPRECATION_REVERSALS", "Process_v1.0.0")
+		if err != nil {
+			log.Fatalf("Failed to set TF_OCTOPUS_DEPRECATION_REVERSALS env: (%s)", err.Error())
+			return
+		}
 
 		code := m.Run()
 		ctx := context.Background()
