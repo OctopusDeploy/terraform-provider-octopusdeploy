@@ -48,7 +48,7 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Create(ctx context
 	// Read existing policy
 	query := retention.SpaceDefaultRetentionPolicyQuery{
 		SpaceID:       data.SpaceID.ValueString(),
-		RetentionType: retention.RetentionType(data.RetentionType.ValueString()),
+		RetentionType: retention.LifecycleReleaseRetentionType,
 	}
 	existingPolicy, err := retention.Get(s.Client, query)
 	if err != nil {
@@ -93,7 +93,7 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Read(ctx context.C
 	}
 	query := retention.SpaceDefaultRetentionPolicyQuery{
 		SpaceID:       data.SpaceID.ValueString(),
-		RetentionType: retention.RetentionType(data.RetentionType.ValueString()),
+		RetentionType: retention.LifecycleReleaseRetentionType,
 	}
 	policy, err := retention.Get(s.Client, query)
 	if err != nil {
@@ -144,7 +144,6 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) ImportState(contex
 
 func updateModelFromResource(data *schemas.SpaceDefaultLifecycleReleaseRetentionPoliciesResourceModel, resource *retention.SpaceDefaultRetentionPolicyResource) {
 	data.ID = types.StringValue(resource.GetID())
-	data.RetentionType = types.StringValue(string(resource.RetentionType))
 	data.Strategy = types.StringValue(resource.Strategy)
 	data.QuantityToKeep = util.Ternary(resource.QuantityToKeep == 0, types.Int64Null(), types.Int64Value(int64(resource.QuantityToKeep)))
 	data.Unit = util.Ternary(resource.Unit == "", types.StringNull(), types.StringValue(resource.Unit))

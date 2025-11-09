@@ -22,10 +22,9 @@ func (s SpaceDefaultLifecycleReleaseRetentionPolicySchema) GetResourceSchema() r
 	return rs.Schema{
 		Description: "Manages a space's default lifecycle release retention policy.",
 		Attributes: map[string]rs.Attribute{
-			"id":             GetIdResourceSchema(),
-			"space_id":       GetSpaceIdResourceSchema("space default retention policy"),
-			"retention_type": util.ResourceString().Description("The type of retention policy.").Required().Validators(stringvalidator.OneOf("LifecycleRelease", "LifecycleTentacle")).Build(),
-			"strategy":       util.ResourceString().Description("The strategy for the retention policy.").Required().Validators(stringvalidator.OneOf("Forever", "Count")).Build(),
+			"id":       GetIdResourceSchema(),
+			"space_id": GetSpaceIdResourceSchema("space default retention policy"),
+			"strategy": util.ResourceString().Description("The strategy for the retention policy.").Required().Validators(stringvalidator.OneOf("Forever", "Count")).Build(),
 			// Optional
 			"quantity_to_keep": util.ResourceInt64().Description("The quantity of items to keep.").Validators(int64validator.AtLeast(1)).Optional().Build(),
 			"unit":             util.ResourceString().Description("The unit of time for the retention policy.").Optional().Validators(stringvalidator.OneOf("Days", "Items")).Build(),
@@ -36,7 +35,6 @@ func (s SpaceDefaultLifecycleReleaseRetentionPolicySchema) GetResourceSchema() r
 type SpaceDefaultLifecycleReleaseRetentionPoliciesResourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	SpaceID        types.String `tfsdk:"space_id"`
-	RetentionType  types.String `tfsdk:"retention_type"`
 	Strategy       types.String `tfsdk:"strategy"`
 	QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
 	Unit           types.String `tfsdk:"unit"`

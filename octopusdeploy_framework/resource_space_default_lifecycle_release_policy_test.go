@@ -22,7 +22,6 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateForev
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "retention_type", "LifecycleRelease"),
 					resource.TestCheckResourceAttr(resourceName, "strategy", "Forever"),
 				),
 			},
@@ -44,7 +43,6 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCount
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "retention_type", "LifecycleRelease"),
 					resource.TestCheckResourceAttr(resourceName, "strategy", "Count"),
 					resource.TestCheckResourceAttr(resourceName, "quantity_to_keep", "5"),
 					resource.TestCheckResourceAttr(resourceName, "unit", "Days"),
@@ -70,7 +68,6 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_ModifyStrat
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "retention_type", "LifecycleRelease"),
 					resource.TestCheckResourceAttr(resourceName, "strategy", "Forever"),
 				),
 			},
@@ -94,7 +91,6 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_ModifyStrat
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "retention_type", "LifecycleRelease"),
 					resource.TestCheckResourceAttr(resourceName, "strategy", "Count"),
 					resource.TestCheckResourceAttr(resourceName, "quantity_to_keep", "5"),
 					resource.TestCheckResourceAttr(resourceName, "unit", "Days"),
@@ -137,7 +133,6 @@ func spaceDefaultLifecycleRetentionPolicy_Forever(localName string) string {
 
 		resource "octopusdeploy_space_default_lifecycle_release_retention_policy" "policy_%[1]s" {
 			space_id = octopusdeploy_space.space_%[1]s.id
-			retention_type = "LifecycleRelease"
 			strategy = "Forever"
 		}
 	`, localName)
@@ -155,7 +150,6 @@ func spaceDefaultLifecycleRetentionPolicy_Count(localName string) string {
 
 		resource "octopusdeploy_space_default_lifecycle_release_retention_policy" "policy_%[1]s" {
 			space_id = octopusdeploy_space.space_%[1]s.id
-			retention_type = "LifecycleRelease"
 			strategy = "Count"
 			quantity_to_keep = 5
 			unit = "Days"
