@@ -10,16 +10,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateForever(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_CreateForever(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	resourceName := "octopusdeploy_space_default_lifecycle_release_retention_policy.policy_" + localName
+	resourceName := "octopusdeploy_space_default_lifecycle_tentacle_retention_policy.policy_" + localName
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config: spaceDefaultLifecycleReleaseRetentionPolicy_Forever(localName),
+				Config: spaceDefaultLifecycleTentacleRetentionPolicy_Forever(localName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
@@ -30,9 +30,9 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateForev
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCountAndModifyToForever(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_CreateCountAndModifyToForever(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	resourceName := "octopusdeploy_space_default_lifecycle_release_retention_policy.policy_" + localName
+	resourceName := "octopusdeploy_space_default_lifecycle_tentacle_retention_policy.policy_" + localName
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testSpaceCheckDestroy,
@@ -40,7 +40,7 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCount
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config: spaceDefaultLifecycleReleaseRetentionPolicy_Count(localName, 5, "Days"),
+				Config: spaceDefaultLifecycleTentacleRetentionPolicy_Count(localName, 5, "Days"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
@@ -53,19 +53,19 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCount
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_ModifyStrategyFromCountToForever(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_ModifyStrategyFromCountToForever(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	resourceName := "octopusdeploy_space_default_lifecycle_release_retention_policy.policy_" + localName
+	resourceName := "octopusdeploy_space_default_lifecycle_tentacle_retention_policy.policy_" + localName
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config: spaceDefaultLifecycleReleaseRetentionPolicy_Count(localName, 5, "Days"),
+				Config: spaceDefaultLifecycleTentacleRetentionPolicy_Count(localName, 5, "Days"),
 			},
 			{
-				Config: spaceDefaultLifecycleReleaseRetentionPolicy_Forever(localName),
+				Config: spaceDefaultLifecycleTentacleRetentionPolicy_Forever(localName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
@@ -76,19 +76,19 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_ModifyStrat
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_ModifyStrategyFromForeverToCount(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_ModifyStrategyFromForeverToCount(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	resourceName := "octopusdeploy_space_default_lifecycle_release_retention_policy.policy_" + localName
+	resourceName := "octopusdeploy_space_default_lifecycle_tentacle_retention_policy.policy_" + localName
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config: spaceDefaultLifecycleReleaseRetentionPolicy_Forever(localName),
+				Config: spaceDefaultLifecycleTentacleRetentionPolicy_Forever(localName),
 			},
 			{
-				Config: spaceDefaultLifecycleReleaseRetentionPolicy_Count(localName, 5, "Days"),
+				Config: spaceDefaultLifecycleTentacleRetentionPolicy_Count(localName, 5, "Days"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
@@ -101,7 +101,7 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_ModifyStrat
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCountWithMissingFields(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_CreateCountWithMissingFields(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -109,14 +109,14 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCount
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config:      invalidSpaceDefaultLifecycleReleaseRetentionPolicy_Count(localName),
+				Config:      invalidSpaceDefaultLifecycleTentacleRetentionPolicy_Count(localName),
 				ExpectError: regexp.MustCompile(`Missing Required Field`),
 			},
 		},
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateForeverWithCountAttributes(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_CreateForeverWithCountAttributes(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -124,14 +124,14 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateForev
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config:      invalidSpaceDefaultLifecycleReleaseRetentionPolicy_Forever(localName),
+				Config:      invalidSpaceDefaultLifecycleTentacleRetentionPolicy_Forever(localName),
 				ExpectError: regexp.MustCompile(`Invalid Field`),
 			},
 		},
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCountWithInvalidQuantity(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_CreateCountWithInvalidQuantity(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -139,35 +139,35 @@ func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_CreateCount
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config:      spaceDefaultLifecycleReleaseRetentionPolicy_Count(localName, -1, "Days"),
+				Config:      spaceDefaultLifecycleTentacleRetentionPolicy_Count(localName, -1, "Days"),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
 			},
 		},
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultLifecycleReleaseRetentionPolicy_Delete(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultLifecycleTentacleRetentionPolicy_Delete(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	resourceName := "octopusdeploy_space_default_lifecycle_release_retention_policy.policy_" + localName
+	resourceName := "octopusdeploy_space_default_lifecycle_tentacle_retention_policy.policy_" + localName
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				Config: spaceDefaultLifecycleReleaseRetentionPolicy_Forever(localName),
+				Config: spaceDefaultLifecycleTentacleRetentionPolicy_Forever(localName),
 			},
 			{
-				Config: noSpaceDefaultLifecycleReleaseRetentionPolicy(localName),
+				Config: noSpaceDefaultLifecycleTentacleRetentionPolicy(localName),
 				Check: resource.ComposeTestCheckFunc(
-					testNoSpaceDefaultLifecycleReleaseRetentionPolicyResource(resourceName),
+					testNoSpaceDefaultLifecycleTentacleRetentionPolicyResource(resourceName),
 				),
 			},
 		},
 	})
 }
 
-func spaceDefaultLifecycleReleaseRetentionPolicy(localName string, strategy string, quantityToKeep *int64, unit *string) string {
+func spaceDefaultLifecycleTentacleRetentionPolicy(localName string, strategy string, quantityToKeep *int64, unit *string) string {
 	var quantityToKeepStr, unitStr string
 	if quantityToKeep != nil {
 		quantityToKeepStr = fmt.Sprintf("quantity_to_keep = %d", *quantityToKeep)
@@ -184,8 +184,8 @@ func spaceDefaultLifecycleReleaseRetentionPolicy(localName string, strategy stri
 			description           = "Test space for lifecycles datasource"
 			space_managers_teams  = ["teams-administrators"]
 		}
-			
-		resource "octopusdeploy_space_default_lifecycle_release_retention_policy" "policy_%[1]s" {
+
+		resource "octopusdeploy_space_default_lifecycle_tentacle_retention_policy" "policy_%[1]s" {
 			space_id = octopusdeploy_space.space_%[1]s.id
 			strategy = "%[2]s"
 			%[3]s
@@ -194,15 +194,15 @@ func spaceDefaultLifecycleReleaseRetentionPolicy(localName string, strategy stri
 	`, localName, strategy, quantityToKeepStr, unitStr)
 }
 
-func spaceDefaultLifecycleReleaseRetentionPolicy_Forever(localName string) string {
-	return spaceDefaultLifecycleReleaseRetentionPolicy(localName, "Forever", nil, nil)
+func spaceDefaultLifecycleTentacleRetentionPolicy_Forever(localName string) string {
+	return spaceDefaultLifecycleTentacleRetentionPolicy(localName, "Forever", nil, nil)
 }
 
-func spaceDefaultLifecycleReleaseRetentionPolicy_Count(localName string, quantityToKeep int64, unit string) string {
-	return spaceDefaultLifecycleReleaseRetentionPolicy(localName, "Count", &quantityToKeep, &unit)
+func spaceDefaultLifecycleTentacleRetentionPolicy_Count(localName string, quantityToKeep int64, unit string) string {
+	return spaceDefaultLifecycleTentacleRetentionPolicy(localName, "Count", &quantityToKeep, &unit)
 }
 
-func noSpaceDefaultLifecycleReleaseRetentionPolicy(localName string) string {
+func noSpaceDefaultLifecycleTentacleRetentionPolicy(localName string) string {
 	return fmt.Sprintf(`
 		resource "octopusdeploy_space" "space_%[1]s" {
 			name                  = "%[1]s"
@@ -214,17 +214,17 @@ func noSpaceDefaultLifecycleReleaseRetentionPolicy(localName string) string {
 	`, localName)
 }
 
-func invalidSpaceDefaultLifecycleReleaseRetentionPolicy_Count(localName string) string {
-	return spaceDefaultLifecycleReleaseRetentionPolicy(localName, "Count", nil, nil)
+func invalidSpaceDefaultLifecycleTentacleRetentionPolicy_Count(localName string) string {
+	return spaceDefaultLifecycleTentacleRetentionPolicy(localName, "Count", nil, nil)
 }
 
-func invalidSpaceDefaultLifecycleReleaseRetentionPolicy_Forever(localName string) string {
+func invalidSpaceDefaultLifecycleTentacleRetentionPolicy_Forever(localName string) string {
 	var quantityToKeep int64 = 5
 	var unit string = "Days"
-	return spaceDefaultLifecycleReleaseRetentionPolicy(localName, "Forever", &quantityToKeep, &unit)
+	return spaceDefaultLifecycleTentacleRetentionPolicy(localName, "Forever", &quantityToKeep, &unit)
 }
 
-func testNoSpaceDefaultLifecycleReleaseRetentionPolicyResource(resourceName string) resource.TestCheckFunc {
+func testNoSpaceDefaultLifecycleTentacleRetentionPolicyResource(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		_, ok := s.RootModule().Resources[resourceName]
 		if ok {
