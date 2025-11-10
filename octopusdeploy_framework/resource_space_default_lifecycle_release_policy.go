@@ -20,7 +20,6 @@ func NewSpaceDefaultLifecycleReleaseRetentionPolicyResource() resource.Resource 
 }
 
 var _ resource.Resource = &spaceDefaultLifecycleReleaseRetentionPolicyResource{}
-var _ resource.ResourceWithImportState = &spaceDefaultLifecycleReleaseRetentionPolicyResource{}
 
 func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schemas.SpaceDefaultLifecycleReleaseRetentionPolicySchema{}.GetResourceSchema()
@@ -136,10 +135,6 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Update(ctx context
 	updateLifecycleReleasePolicyModelFromResource(&data, updatedPolicy)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) ImportState(context.Context, resource.ImportStateRequest, *resource.ImportStateResponse) {
-	panic("unimplemented")
 }
 
 func updateLifecycleReleasePolicyModelFromResource(data *schemas.SpaceDefaultLifecycleReleaseRetentionPoliciesResourceModel, resource *retention.SpaceDefaultRetentionPolicyResource) {

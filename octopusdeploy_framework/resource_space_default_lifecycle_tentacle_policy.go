@@ -20,7 +20,6 @@ func NewSpaceDefaultLifecycleTentacleRetentionPolicyResource() resource.Resource
 }
 
 var _ resource.Resource = &spaceDefaultLifecycleTentacleRetentionPolicyResource{}
-var _ resource.ResourceWithImportState = &spaceDefaultLifecycleTentacleRetentionPolicyResource{}
 
 func (s *spaceDefaultLifecycleTentacleRetentionPolicyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schemas.SpaceDefaultLifecycleTentacleRetentionPolicySchema{}.GetResourceSchema()
@@ -136,10 +135,6 @@ func (s *spaceDefaultLifecycleTentacleRetentionPolicyResource) Update(ctx contex
 	updateLifecycleTentaclePolicyModelFromResource(&data, updatedPolicy)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (s *spaceDefaultLifecycleTentacleRetentionPolicyResource) ImportState(context.Context, resource.ImportStateRequest, *resource.ImportStateResponse) {
-	panic("unimplemented")
 }
 
 func updateLifecycleTentaclePolicyModelFromResource(data *schemas.SpaceDefaultLifecycleTentacleRetentionPoliciesResourceModel, resource *retention.SpaceDefaultRetentionPolicyResource) {
