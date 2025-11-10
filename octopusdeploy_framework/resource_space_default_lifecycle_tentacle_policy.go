@@ -59,9 +59,9 @@ func (s *spaceDefaultLifecycleTentacleRetentionPolicyResource) Create(ctx contex
 
 	switch strategy := data.Strategy.ValueString(); {
 	case strategy == "Forever":
-		newPolicy = retention.KeepForeverLifecycleTentacleRetentionPolicy(data.SpaceID.ValueString(), existingPolicy.GetID())
+		newPolicy = retention.NewKeepForeverLifecycleTentacleRetentionPolicy(data.SpaceID.ValueString(), existingPolicy.GetID())
 	case strategy == "Count":
-		newPolicy = retention.CountBasedLifecycleTentacleRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), existingPolicy.GetID())
+		newPolicy = retention.NewCountBasedLifecycleTentacleRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), existingPolicy.GetID())
 	default:
 		resp.Diagnostics.AddError("Invalid strategy", "The strategy must be either 'Forever' or 'Count'.")
 		return
@@ -119,9 +119,9 @@ func (s *spaceDefaultLifecycleTentacleRetentionPolicyResource) Update(ctx contex
 
 	switch strategy := data.Strategy.ValueString(); {
 	case strategy == "Forever":
-		newPolicy = retention.KeepForeverLifecycleTentacleRetentionPolicy(data.SpaceID.ValueString(), state.ID.ValueString())
+		newPolicy = retention.NewKeepForeverLifecycleTentacleRetentionPolicy(data.SpaceID.ValueString(), state.ID.ValueString())
 	case strategy == "Count":
-		newPolicy = retention.CountBasedLifecycleTentacleRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), state.ID.ValueString())
+		newPolicy = retention.NewCountBasedLifecycleTentacleRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), state.ID.ValueString())
 	default:
 		resp.Diagnostics.AddError("Invalid strategy", "The strategy must be either 'Forever' or 'Count'.")
 		return

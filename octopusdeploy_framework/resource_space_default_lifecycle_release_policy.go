@@ -59,9 +59,9 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Create(ctx context
 
 	switch strategy := data.Strategy.ValueString(); {
 	case strategy == "Forever":
-		newPolicy = retention.KeepForeverLifecycleReleaseRetentionPolicy(data.SpaceID.ValueString(), existingPolicy.GetID())
+		newPolicy = retention.NewKeepForeverLifecycleReleaseRetentionPolicy(data.SpaceID.ValueString(), existingPolicy.GetID())
 	case strategy == "Count":
-		newPolicy = retention.CountBasedLifecycleReleaseRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), existingPolicy.GetID())
+		newPolicy = retention.NewCountBasedLifecycleReleaseRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), existingPolicy.GetID())
 	default:
 		resp.Diagnostics.AddError("Invalid strategy", "The strategy must be either 'Forever' or 'Count'.")
 		return
@@ -119,9 +119,9 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Update(ctx context
 
 	switch strategy := data.Strategy.ValueString(); {
 	case strategy == "Forever":
-		newPolicy = retention.KeepForeverLifecycleReleaseRetentionPolicy(data.SpaceID.ValueString(), state.ID.ValueString())
+		newPolicy = retention.NewKeepForeverLifecycleReleaseRetentionPolicy(data.SpaceID.ValueString(), state.ID.ValueString())
 	case strategy == "Count":
-		newPolicy = retention.CountBasedLifecycleReleaseRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), state.ID.ValueString())
+		newPolicy = retention.NewCountBasedLifecycleReleaseRetentionPolicy(int(data.QuantityToKeep.ValueInt64()), data.Unit.ValueString(), data.SpaceID.ValueString(), state.ID.ValueString())
 	default:
 		resp.Diagnostics.AddError("Invalid strategy", "The strategy must be either 'Forever' or 'Count'.")
 		return
