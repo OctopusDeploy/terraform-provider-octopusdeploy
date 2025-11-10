@@ -157,6 +157,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewTeamResource,
 		NewScopedUserRoleResource,
 		NewSpaceDefaultLifecycleReleaseRetentionPolicyResource,
+		NewSpaceDefaultLifecycleTentacleRetentionPolicyResource,
 	}
 }
 

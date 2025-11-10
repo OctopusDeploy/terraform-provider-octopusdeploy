@@ -74,7 +74,7 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Create(ctx context
 		return
 	}
 
-	updateModelFromResource(&data, updatedPolicy)
+	updateLifecycleReleasePolicyModelFromResource(&data, updatedPolicy)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -101,7 +101,7 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Read(ctx context.C
 		return
 	}
 
-	updateModelFromResource(&data, policy)
+	updateLifecycleReleasePolicyModelFromResource(&data, policy)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -133,7 +133,7 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Update(ctx context
 		resp.Diagnostics.AddError("Failed to update retention policy", err.Error())
 		return
 	}
-	updateModelFromResource(&data, updatedPolicy)
+	updateLifecycleReleasePolicyModelFromResource(&data, updatedPolicy)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -142,7 +142,7 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) ImportState(contex
 	panic("unimplemented")
 }
 
-func updateModelFromResource(data *schemas.SpaceDefaultLifecycleReleaseRetentionPoliciesResourceModel, resource *retention.SpaceDefaultRetentionPolicyResource) {
+func updateLifecycleReleasePolicyModelFromResource(data *schemas.SpaceDefaultLifecycleReleaseRetentionPoliciesResourceModel, resource *retention.SpaceDefaultRetentionPolicyResource) {
 	data.ID = types.StringValue(resource.GetID())
 	data.Strategy = types.StringValue(resource.Strategy)
 	data.QuantityToKeep = util.Ternary(resource.QuantityToKeep == 0, types.Int64Null(), types.Int64Value(int64(resource.QuantityToKeep)))

@@ -10,18 +10,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type SpaceDefaultLifecycleReleaseRetentionPolicySchema struct{}
+type SpaceDefaultLifecycleTentacleRetentionPolicySchema struct{}
 
 // GetDatasourceSchema implements EntitySchema.
-func (s SpaceDefaultLifecycleReleaseRetentionPolicySchema) GetDatasourceSchema() ds.Schema {
+func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetDatasourceSchema() ds.Schema {
 	return ds.Schema{}
 }
 
-var _ EntitySchema = SpaceDefaultLifecycleReleaseRetentionPolicySchema{}
+var _ EntitySchema = SpaceDefaultLifecycleTentacleRetentionPolicySchema{}
 
-func (s SpaceDefaultLifecycleReleaseRetentionPolicySchema) GetResourceSchema() rs.Schema {
+func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() rs.Schema {
 	return rs.Schema{
-		Description: "Manages a space's default lifecycle release retention policy.",
+		Description: "Manages a space's default lifecycle tentacle retention policy.",
 		Attributes: map[string]rs.Attribute{
 			"id":       GetIdResourceSchema(),
 			"space_id": GetSpaceIdResourceSchema("space default retention policy"),
@@ -47,7 +47,7 @@ func (s SpaceDefaultLifecycleReleaseRetentionPolicySchema) GetResourceSchema() r
 	}
 }
 
-type SpaceDefaultLifecycleReleaseRetentionPoliciesResourceModel struct {
+type SpaceDefaultLifecycleTentacleRetentionPoliciesResourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	SpaceID        types.String `tfsdk:"space_id"`
 	Strategy       types.String `tfsdk:"strategy"`
