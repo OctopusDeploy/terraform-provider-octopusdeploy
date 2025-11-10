@@ -81,7 +81,7 @@ func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Create(ctx context
 
 // Delete implements resource.Resource.
 func (s *spaceDefaultLifecycleReleaseRetentionPolicyResource) Delete(context.Context, resource.DeleteRequest, *resource.DeleteResponse) {
-	// Deletion is not support so is no-op.
+	// Deletion is not supported so is no-op.
 }
 
 // Read implements resource.Resource.
