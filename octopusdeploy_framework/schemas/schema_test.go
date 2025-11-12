@@ -31,6 +31,7 @@ var testableSchemas = []EntitySchema{
 	MavenFeedSchema{},
 	ProjectGroupSchema{},
 	TagSchema{},
+	TagSetSchema{},
 	UsernamePasswordAccountSchema{},
 	VariableSchema{},
 	TenantProjectVariableSchema{},

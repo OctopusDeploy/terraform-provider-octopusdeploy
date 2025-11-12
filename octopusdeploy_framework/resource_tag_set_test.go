@@ -1,7 +1,9 @@
 package octopusdeploy_framework
 
 import (
+	"context"
 	"fmt"
+	"regexp"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -130,6 +132,8 @@ func TestExpandTagSet(t *testing.T) {
 	sortOrder := int64(10)
 	spaceID := "Spaces-1"
 
+	ctx := context.Background()
+
 	tagSetModel := schemas.TagSetResourceModel{
 		Name:        types.StringValue(name),
 		Description: types.StringValue(description),
@@ -137,10 +141,39 @@ func TestExpandTagSet(t *testing.T) {
 		SpaceID:     types.StringValue(spaceID),
 	}
 
-	tagSet := expandTagSet(tagSetModel)
+	tagSet := expandTagSet(ctx, tagSetModel)
 
 	require.Equal(t, name, tagSet.Name)
 	require.Equal(t, description, tagSet.Description)
 	require.Equal(t, int32(sortOrder), tagSet.SortOrder)
 	require.Equal(t, spaceID, tagSet.SpaceID)
+}
+
+func TestAccTagSetValidation(t *testing.T) {
+	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name   = "%s"
+						scopes = ["InvalidScope"]
+					}`, tagSetName, tagSetName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name = "%s"
+						type = "InvalidType"
+					}`, tagSetName, tagSetName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+		},
+	})
 }

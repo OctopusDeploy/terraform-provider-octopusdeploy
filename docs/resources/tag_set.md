@@ -16,6 +16,8 @@ This resource manages tag sets in Octopus Deploy.
 resource "octopusdeploy_tag_set" "example" {
   description = "Provides tenants with access to certain early access programs."
   name        = "Early Access Program (EAP)"
+  scopes      = ["Tenant"]
+  type        = "MultiSelect"
 }
 
 # tags are distinct resources and associated with tag sets through tag_set_id
@@ -43,8 +45,10 @@ resource "octopusdeploy_tag" "beta" {
 ### Optional
 
 - `description` (String) The description of this tag set.
+- `scopes` (List of String) The resource scopes this tag set applies to. Valid values are `"Tenant"`, `"Environment"`.
 - `sort_order` (Number) The sort order associated with this resource.
 - `space_id` (String) The space ID associated with this resource.
+- `type` (String) The type of this tag set. Valid values are `"SingleSelect"`, `"MultiSelect"`, `"FreeText"`.
 
 ### Read-Only
 
