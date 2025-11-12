@@ -48,6 +48,12 @@ func (p ProjectSchema) GetResourceSchema() resourceSchema.Schema {
 			"slug":                                 util.ResourceString().Optional().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Description("A human-readable, unique identifier, used to identify a project.").Build(),
 			"deployment_process_id":                util.ResourceString().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
 			"variable_set_id":                      util.ResourceString().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
+			"project_tags": resourceSchema.SetAttribute{
+				Description: "A list of project tags associated with this resource.",
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+			},
 		},
 		Blocks: map[string]resourceSchema.Block{
 			// This is correct object that return from api for project object not a list string.
@@ -241,6 +247,11 @@ func getProjectsDataSourceAttribute() datasourceSchema.ListNestedAttribute {
 				"space_id":                                   util.DataSourceString().Computed().Description("The space ID associated with this project.").Build(),
 				"tenanted_deployment_participation":          util.DataSourceString().Computed().Description("The tenanted deployment mode of the project.").Build(),
 				"variable_set_id":                            util.DataSourceString().Computed().Description("The ID of the variable set associated with this project.").Build(),
+				"project_tags": datasourceSchema.SetAttribute{
+					Computed:    true,
+					Description: "A list of project tags associated with this resource.",
+					ElementType: types.StringType,
+				},
 				"connectivity_policy":                        getDataSourceConnectivityPolicyAttribute(),
 				"git_library_persistence_settings":           getDataSourceGitPersistenceSettingsAttribute("library"),
 				"git_username_password_persistence_settings": getDataSourceGitPersistenceSettingsAttribute("username_password"),

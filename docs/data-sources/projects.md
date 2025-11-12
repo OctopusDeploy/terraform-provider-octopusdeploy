@@ -72,6 +72,7 @@ Read-Only:
 - `lifecycle_id` (String) The lifecycle ID associated with this project
 - `name` (String) The name of the project in Octopus Deploy. This name must be unique.
 - `project_group_id` (String) The project group ID associated with this project.
+- `project_tags` (Set of String) A list of project tags associated with this resource.
 - `provisioning_runbook_id` (String) The ID of the runbook to run when provisioning an ephemeral environment for this project.
 - `release_creation_strategy` (Attributes List) The release creation strategy for the project. (see [below for nested schema](#nestedatt--projects--release_creation_strategy))
 - `release_notes_template` (String) The template to use for release notes.

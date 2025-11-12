@@ -12,6 +12,7 @@ resource "octopusdeploy_project" "example" {
   project_group_id                     = "ProjectGroups-123"
   tenanted_deployment_participation    = "TenantedOrUntenanted"
   included_library_variable_sets       = [ "LibraryVariablesSets-456", "LibraryVariablesSets-789" ]
+  project_tags                         = ["TagSet1/Tag"]
 
 
   connectivity_policy {
