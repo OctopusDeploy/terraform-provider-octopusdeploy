@@ -85,5 +85,15 @@ func (t TenantProjectVariableSchema) GetResourceSchema() schema.Schema {
 				Description("The value of the variable.").
 				Build(),
 		},
+		Blocks: map[string]schema.Block{
+			"scope": schema.ListNestedBlock{
+				Description: "Sets the scope of the variable.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"environment_ids": getEnvironmentsResourceSchema("A set of environment IDs to scope this variable to."),
+					},
+				},
+			},
+		},
 	}
 }
