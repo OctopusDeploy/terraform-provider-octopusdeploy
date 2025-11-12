@@ -2,8 +2,9 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -25,6 +26,10 @@ func TestAccDataSourceLifecycles(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.#", "1"),
 					resource.TestCheckResourceAttrSet(resourceName, "lifecycles.0.id"),
 					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.name", lifecycleName),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_policy.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_policy.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_with_strategy.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_with_strategy.#", "1"),
 					testAccCheckOutputExists("octopus_space_id"),
 					testAccCheckOutputExists("octopus_lifecycle_id"),
 				),

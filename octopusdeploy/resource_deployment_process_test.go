@@ -6,6 +6,7 @@ import (
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	internalTest "github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -27,6 +28,8 @@ func testAccProjectCheckDestroy(s *terraform.State) error {
 }
 
 func TestAccOctopusDeployDeploymentProcessBasic(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_deployment_process." + localName
 
@@ -53,6 +56,8 @@ func TestAccOctopusDeployDeploymentProcessBasic(t *testing.T) {
 }
 
 func TestAccOctopusDeployDeploymentProcessWithActionTemplate(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	internalTest.SkipCI(t, "Unsupported block type on `template` block")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_deployment_process." + localName
@@ -93,6 +98,8 @@ func TestAccOctopusDeployDeploymentProcessWithActionTemplate(t *testing.T) {
 }
 
 func TestAccOctopusDeployDeploymentProcessWithImpliedPrimaryPackage(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_deployment_process." + localName
 

@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -12,6 +13,8 @@ import (
 )
 
 func TestAccResourceBuiltInTrigger(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	localName := acctest.RandStringFromCharSet(50, acctest.CharSetAlpha)
 	prefix := fmt.Sprintf("octopusdeploy_built_in_trigger.%s", localName)
 

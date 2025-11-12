@@ -37,6 +37,8 @@ type projectResourceModel struct {
 	ServiceNowExtensionSettings            types.List   `tfsdk:"servicenow_extension_settings"`
 	IncludedLibraryVariableSets            types.List   `tfsdk:"included_library_variable_sets"`
 	AutoDeployReleaseOverrides             types.List   `tfsdk:"auto_deploy_release_overrides"`
+	DeprovisioningRunbookID                types.String `tfsdk:"deprovisioning_runbook_id"`
+	ProvisioningRunbookID                  types.String `tfsdk:"provisioning_runbook_id"`
 
 	schemas.ResourceModel
 }

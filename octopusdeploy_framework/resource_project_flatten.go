@@ -46,6 +46,8 @@ func flattenProject(ctx context.Context, project *projects.Project, state *proje
 		ReleaseNotesTemplate:            util.StringOrNull(project.ReleaseNotesTemplate),
 		Slug:                            types.StringValue(project.Slug),
 		ClonedFromProjectID:             util.StringOrNull(project.ClonedFromProjectID),
+		DeprovisioningRunbookID:         util.StringOrNull(project.DeprovisioningRunbookID),
+		ProvisioningRunbookID:           util.StringOrNull(project.ProvisioningRunbookID),
 	}
 
 	model.ID = types.StringValue(project.GetID())

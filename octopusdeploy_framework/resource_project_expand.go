@@ -36,6 +36,8 @@ func expandProject(ctx context.Context, model projectResourceModel) *projects.Pr
 	project.ReleaseNotesTemplate = model.ReleaseNotesTemplate.ValueString()
 	project.Slug = model.Slug.ValueString()
 	project.ClonedFromProjectID = model.ClonedFromProjectID.ValueString()
+	project.DeprovisioningRunbookID = model.DeprovisioningRunbookID.ValueString()
+	project.ProvisioningRunbookID = model.ProvisioningRunbookID.ValueString()
 
 	if !model.IncludedLibraryVariableSets.IsNull() {
 		var includedSets []string

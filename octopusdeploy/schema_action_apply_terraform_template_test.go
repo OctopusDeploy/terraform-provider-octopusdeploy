@@ -5,12 +5,15 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccOctopusDeployApplyTerraformAction(t *testing.T) {
+	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
+
 	allowPluginDownloads := acctest.RandIntRange(0, 2) == 0
 	applyParameters := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	initParameters := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
