@@ -3,12 +3,12 @@
 page_title: "octopusdeploy_space_default_lifecycle_release_retention_policy Resource - terraform-provider-octopusdeploy"
 subcategory: ""
 description: |-
-  Manages a space's default lifecycle release retention policy.
+  Manages a space's default retention policy for how releases are retained.
 ---
 
 # octopusdeploy_space_default_lifecycle_release_retention_policy (Resource)
 
-Manages a space's default lifecycle release retention policy.
+Manages a space's default retention policy for how releases are retained.
 
 
 
@@ -17,13 +17,15 @@ Manages a space's default lifecycle release retention policy.
 
 ### Required
 
-- `strategy` (String) The strategy for the retention policy.
+- `space_id` (String) The ID of the space.
+- `strategy` (String) How retention will be set. Valid strategies are `Forever`, and `Count`.
+  - `strategy = "Forever"`, is used if releases should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 
 ### Optional
 
-- `quantity_to_keep` (Number) The quantity of items to keep.
-- `space_id` (String) The space ID associated with this space default retention policy.
-- `unit` (String) The unit of time for the retention policy.
+- `quantity_to_keep` (Number) The number of days/releases to keep.
+- `unit` (String) The unit of quantity to keep. Valid Units are `Days` or `Items`.
 
 ### Read-Only
 
