@@ -21,10 +21,10 @@ func TestAccDataSourceSpaceDefaultRetentionPolicy(t *testing.T) {
 			{
 				Config: testAccDataSourceSpaceDefaultRetentionPolicyConfig(spaceName, retentionType),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceName, "retention_policy.id"),
-					resource.TestCheckResourceAttrSet(resourceName, "retention_policy.space_id"),
-					resource.TestCheckResourceAttr(resourceName, "retention_policy.retention_type", retentionType),
-					resource.TestCheckResourceAttrSet(resourceName, "retention_policy.strategy"),
+					resource.TestCheckResourceAttrSet(resourceName, "id"),
+					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
+					resource.TestCheckResourceAttr(resourceName, "retention_type", retentionType),
+					resource.TestCheckResourceAttrSet(resourceName, "strategy"),
 				),
 			},
 		},

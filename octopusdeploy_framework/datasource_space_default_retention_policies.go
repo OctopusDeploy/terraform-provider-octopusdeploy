@@ -2,12 +2,10 @@ package octopusdeploy_framework
 
 import (
 	"context"
-	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/retention"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -49,23 +47,18 @@ func (s *spaceDefaultRetentionPoliciesDataSource) Read(ctx context.Context, req 
 		return
 	}
 
-	util.DatasourceResultCount(ctx, "space_default_retention_policy", 1)
-	retentionPolicy, diag := types.ObjectValue(schemas.GetSpaceDefaultRetentionPolicyAttributes(), map[string]attr.Value{
-		"id":               types.StringValue(existingPolicy.GetID()),
-		"space_id":         types.StringValue(existingPolicy.GetSpaceID()),
-		"retention_type":   types.StringValue(string(existingPolicy.RetentionType)),
-		"strategy":         types.StringValue(string(existingPolicy.Strategy)),
-		"quantity_to_keep": types.Int64Value(int64(existingPolicy.QuantityToKeep)),
-		"unit":             types.StringValue(string(existingPolicy.Unit)),
-	})
-	data.RetentionPolicy = retentionPolicy
-	data.ID = types.StringValue("Space Default Retention Policy " + time.Now().UTC().String())
-	resp.Diagnostics.Append(diag...)
-
+	updateRetentionPolicyDatasourceModelFromResource(&data, existingPolicy)
 	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
 // Schema implements datasource.DataSource.
 func (s *spaceDefaultRetentionPoliciesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schemas.SpaceDefaultRetentionPolicySchema{}.GetDatasourceSchema()
+}
+
+func updateRetentionPolicyDatasourceModelFromResource(data *schemas.SpaceDefaultRetentionPoliciesDataSourceModel, resource *retention.SpaceDefaultRetentionPolicyResource) {
+	data.ID = types.StringValue(resource.GetID())
+	data.Strategy = types.StringValue(resource.Strategy)
+	data.QuantityToKeep = util.Ternary(resource.QuantityToKeep == 0, types.Int64Null(), types.Int64Value(int64(resource.QuantityToKeep)))
+	data.Unit = util.Ternary(resource.Unit == "", types.StringNull(), types.StringValue(resource.Unit))
 }
