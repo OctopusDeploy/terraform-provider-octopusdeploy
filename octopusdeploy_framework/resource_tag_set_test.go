@@ -3,13 +3,13 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
+	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tagsets"
@@ -177,3 +177,34 @@ func TestAccTagSetValidation(t *testing.T) {
 		},
 	})
 }
+
+// TODO: Uncomment this test when TagSet with Project scope is supported on Octopus docker image (2025.4)
+//func TestAccTagSetWithProjectScope(t *testing.T) {
+//	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
+//	tagSetDescription := "TagSet with Project scope"
+//
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+//		Steps: []resource.TestStep{
+//			{
+//				Config: fmt.Sprintf(`
+//					resource "octopusdeploy_tag_set" "%s" {
+//						name        = "%s"
+//						description = "%s"
+//						scopes      = ["Project"]
+//						type        = "SingleSelect"
+//					}`, tagSetName, tagSetName, tagSetDescription),
+//				Check: resource.ComposeTestCheckFunc(
+//					testTagSetExists(tagSetPrefix),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "name", tagSetName),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "description", tagSetDescription),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.#", "1"),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.0", "Project"),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "type", "SingleSelect"),
+//				),
+//			},
+//		},
+//	})
+//}

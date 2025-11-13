@@ -28,6 +28,7 @@ resource "octopusdeploy_project" "example" {
   project_group_id                     = "ProjectGroups-123"
   tenanted_deployment_participation    = "TenantedOrUntenanted"
   included_library_variable_sets       = [ "LibraryVariablesSets-456", "LibraryVariablesSets-789" ]
+  project_tags                         = ["TagSet1/Tag"]
 
 
   connectivity_policy {
@@ -91,6 +92,7 @@ resource "octopusdeploy_project" "example" {
 - `is_discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `is_version_controlled` (Boolean)
 - `jira_service_management_extension_settings` (Block List) Provides extension settings for the Jira Service Management (JSM) integration for this project. (see [below for nested schema](#nestedblock--jira_service_management_extension_settings))
+- `project_tags` (Set of String) A list of project tags associated with this resource.
 - `provisioning_runbook_id` (String) The ID of the runbook to run when provisioning an ephemeral environment for this project.
 - `release_creation_strategy` (Block List, Deprecated) (see [below for nested schema](#nestedblock--release_creation_strategy))
 - `release_notes_template` (String)

@@ -39,6 +39,7 @@ type projectResourceModel struct {
 	AutoDeployReleaseOverrides             types.List   `tfsdk:"auto_deploy_release_overrides"`
 	DeprovisioningRunbookID                types.String `tfsdk:"deprovisioning_runbook_id"`
 	ProvisioningRunbookID                  types.String `tfsdk:"provisioning_runbook_id"`
+	ProjectTags                            types.Set    `tfsdk:"project_tags"`
 
 	schemas.ResourceModel
 }
