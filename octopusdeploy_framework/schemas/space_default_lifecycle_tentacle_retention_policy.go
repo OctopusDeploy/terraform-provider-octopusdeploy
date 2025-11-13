@@ -14,21 +14,43 @@ type SpaceDefaultLifecycleTentacleRetentionPolicySchema struct{}
 
 // GetDatasourceSchema implements EntitySchema.
 func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetDatasourceSchema() ds.Schema {
-	return ds.Schema{}
+	return ds.Schema{
+		Description: "Manages a space's default retention policy for how files on tentacles are retained.",
+		Attributes: map[string]ds.Attribute{
+			// request
+			"space_id": ds.StringAttribute{
+				Description: "The ID of the space.",
+				Required:    true,
+			},
+
+			// response
+			"id": util.ResourceString().Description("The ID of the retention policy.").Computed().Build(),
+			"strategy": util.ResourceString().Description("How retention will be set. Valid strategies are `Forever`, and `Count`." +
+				"\n  - `strategy = \"Forever\"`, is used if files on tentacles should never be deleted." +
+				"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases files on tentacles should be kept for.").Computed().Build(),
+			"quantity_to_keep": util.ResourceInt64().Description("The number of days/releases to keep files on tentacles.").Computed().Build(),
+			"unit":             util.ResourceString().Description("The unit of quantity to keep. Valid Units are `Days` or `Items`").Computed().Build(),
+		},
+	}
 }
 
 var _ EntitySchema = SpaceDefaultLifecycleTentacleRetentionPolicySchema{}
 
 func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() rs.Schema {
 	return rs.Schema{
-		Description: "Manages a space's default lifecycle tentacle retention policy.",
+		Description: "Manages a space's default retention policy for how files on tentacles are retained.",
 		Attributes: map[string]rs.Attribute{
-			"id":       GetIdResourceSchema(),
-			"space_id": GetSpaceIdResourceSchema("space default retention policy"),
-			"strategy": util.ResourceString().Description("The strategy for the retention policy.").Required().Validators(stringvalidator.OneOf("Forever", "Count")).Build(),
+			"id": GetIdResourceSchema(),
+			"space_id": rs.StringAttribute{
+				Description: "The ID of the space.",
+				Required:    true,
+			},
+			"strategy": util.ResourceString().Description("How retention will be set. Valid strategies are `Forever`, and `Count`." +
+				"\n  - `strategy = \"Forever\"`, is used if files on tentacles should never be deleted." +
+				"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases files on tentacles should be kept for.").Required().Validators(stringvalidator.OneOf("Forever", "Count")).Build(),
 			// Optional
 			"quantity_to_keep": rs.Int64Attribute{
-				Description: "The quantity of items to keep.",
+				Description: "The number of days/releases to keep files on tentacles.",
 				Validators: []validator.Int64{
 					int64validator.AtLeast(1),
 					NewCountStrategyAttributeValidator(),
@@ -36,9 +58,9 @@ func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() 
 				Optional: true,
 			},
 			"unit": rs.StringAttribute{
-				Description: "The unit of time for the retention policy.",
+				Description: "The unit of quantity to keep. Valid Units are `Days` or `Items`.",
 				Validators: []validator.String{
-					stringvalidator.OneOf("Days", "Weeks", "Months", "Years"),
+					stringvalidator.OneOf("Days", "Items"),
 					NewCountStrategyAttributeValidator(),
 				},
 				Optional: true,
@@ -48,6 +70,14 @@ func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() 
 }
 
 type SpaceDefaultLifecycleTentacleRetentionPoliciesResourceModel struct {
+	ID             types.String `tfsdk:"id"`
+	SpaceID        types.String `tfsdk:"space_id"`
+	Strategy       types.String `tfsdk:"strategy"`
+	QuantityToKeep types.Int64  `tfsdk:"quantity_to_keep"`
+	Unit           types.String `tfsdk:"unit"`
+}
+
+type SpaceDefaultLifecycleTentacleRetentionPoliciesDataSourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	SpaceID        types.String `tfsdk:"space_id"`
 	Strategy       types.String `tfsdk:"strategy"`
