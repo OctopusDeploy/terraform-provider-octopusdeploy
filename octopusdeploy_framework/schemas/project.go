@@ -2,7 +2,9 @@ package schemas
 
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
@@ -35,9 +37,9 @@ func (p ProjectSchema) GetResourceSchema() resourceSchema.Schema {
 			"default_to_skip_if_already_installed": util.ResourceBool().Optional().Computed().PlanModifiers(boolplanmodifier.UseStateForUnknown()).Build(),
 			"deprovisioning_runbook_id":            util.ResourceString().Optional().Description("The ID of the runbook to run when deprovisioning an ephemeral environment for this project.").Build(),
 			"deployment_changes_template":          util.ResourceString().Optional().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
-			"discrete_channel_release":             util.ResourceBool().Optional().Computed().PlanModifiers(boolplanmodifier.UseStateForUnknown()).Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
+			"discrete_channel_release":             util.ResourceBool().Deprecated("use is_discrete_channel_release instead").Optional().Computed().PlanModifiers(boolplanmodifier.UseStateForUnknown()).Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
 			"is_disabled":                          util.ResourceBool().Optional().Computed().PlanModifiers(boolplanmodifier.UseStateForUnknown()).Build(),
-			"is_discrete_channel_release":          util.ResourceBool().Optional().Computed().PlanModifiers(boolplanmodifier.UseStateForUnknown()).Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
+			"is_discrete_channel_release":          util.ResourceBool().Optional().Computed().PlanModifiers(boolplanmodifier.UseStateForUnknown()).Validators(stringvalidator.ExactlyOneOf(path.Expressions{path.MatchRoot("discrete_channel_release")}...)).Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
 			"is_version_controlled":                util.ResourceBool().Optional().Computed().PlanModifiers(boolplanmodifier.UseStateForUnknown()).Build(),
 			"lifecycle_id":                         util.ResourceString().Required().Description("The lifecycle ID associated with this project.").Build(),
 			"project_group_id":                     util.ResourceString().Required().Description("The project group ID associated with this project.").Build(),
@@ -222,31 +224,31 @@ func getProjectsDataSourceAttribute() datasourceSchema.ListNestedAttribute {
 		Optional:    false,
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
-				"allow_deployments_to_no_targets":            util.DataSourceBool().Computed().Deprecated("Allow deployments to be created when there are no targets.").Build(),
-				"auto_create_release":                        util.DataSourceBool().Computed().Build(),
-				"auto_deploy_release_overrides":              getAutoDeployReleaseOverrides(),
-				"cloned_from_project_id":                     util.DataSourceString().Computed().Build(),
-				"default_guided_failure_mode":                util.DataSourceString().Computed().Build(),
-				"default_to_skip_if_already_installed":       util.DataSourceBool().Computed().Build(),
-				"deprovisioning_runbook_id":                  util.DataSourceString().Computed().Description("The ID of the runbook to run when deprovisioning an ephemeral environment for this project.").Build(),
-				"deployment_changes_template":                util.DataSourceString().Computed().Build(),
-				"deployment_process_id":                      util.DataSourceString().Computed().Build(),
-				"description":                                util.DataSourceString().Computed().Description("The description of this project").Build(),
-				"discrete_channel_release":                   util.DataSourceBool().Computed().Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
-				"id":                                         util.DataSourceString().Computed().Build(),
-				"included_library_variable_sets":             util.DataSourceList(types.StringType).Computed().Build(),
-				"is_disabled":                                util.DataSourceBool().Computed().Build(),
-				"is_discrete_channel_release":                util.DataSourceBool().Computed().Build(),
-				"is_version_controlled":                      util.DataSourceBool().Computed().Build(),
-				"lifecycle_id":                               util.DataSourceString().Computed().Description("The lifecycle ID associated with this project").Build(),
-				"name":                                       util.DataSourceString().Computed().Description("The name of the project in Octopus Deploy. This name must be unique.").Build(),
-				"project_group_id":                           util.DataSourceString().Computed().Description("The project group ID associated with this project.").Build(),
-				"provisioning_runbook_id":                    util.DataSourceString().Computed().Description("The ID of the runbook to run when provisioning an ephemeral environment for this project.").Build(),
-				"release_notes_template":                     util.DataSourceString().Computed().Description("The template to use for release notes.").Build(),
-				"slug":                                       util.DataSourceString().Computed().Description("A human-readable, unique identifier, used to identify a project.").Build(),
-				"space_id":                                   util.DataSourceString().Computed().Description("The space ID associated with this project.").Build(),
-				"tenanted_deployment_participation":          util.DataSourceString().Computed().Description("The tenanted deployment mode of the project.").Build(),
-				"variable_set_id":                            util.DataSourceString().Computed().Description("The ID of the variable set associated with this project.").Build(),
+				"allow_deployments_to_no_targets":      util.DataSourceBool().Computed().Deprecated("Allow deployments to be created when there are no targets.").Build(),
+				"auto_create_release":                  util.DataSourceBool().Computed().Build(),
+				"auto_deploy_release_overrides":        getAutoDeployReleaseOverrides(),
+				"cloned_from_project_id":               util.DataSourceString().Computed().Build(),
+				"default_guided_failure_mode":          util.DataSourceString().Computed().Build(),
+				"default_to_skip_if_already_installed": util.DataSourceBool().Computed().Build(),
+				"deprovisioning_runbook_id":            util.DataSourceString().Computed().Description("The ID of the runbook to run when deprovisioning an ephemeral environment for this project.").Build(),
+				"deployment_changes_template":          util.DataSourceString().Computed().Build(),
+				"deployment_process_id":                util.DataSourceString().Computed().Build(),
+				"description":                          util.DataSourceString().Computed().Description("The description of this project").Build(),
+				"discrete_channel_release":             util.DataSourceBool().Deprecated("use is_discrete_channel_release instead").Computed().Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
+				"id":                                   util.DataSourceString().Computed().Build(),
+				"included_library_variable_sets":       util.DataSourceList(types.StringType).Computed().Build(),
+				"is_disabled":                          util.DataSourceBool().Computed().Build(),
+				"is_discrete_channel_release":          util.DataSourceBool().Computed().Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
+				"is_version_controlled":                util.DataSourceBool().Computed().Build(),
+				"lifecycle_id":                         util.DataSourceString().Computed().Description("The lifecycle ID associated with this project").Build(),
+				"name":                                 util.DataSourceString().Computed().Description("The name of the project in Octopus Deploy. This name must be unique.").Build(),
+				"project_group_id":                     util.DataSourceString().Computed().Description("The project group ID associated with this project.").Build(),
+				"provisioning_runbook_id":              util.DataSourceString().Computed().Description("The ID of the runbook to run when provisioning an ephemeral environment for this project.").Build(),
+				"release_notes_template":               util.DataSourceString().Computed().Description("The template to use for release notes.").Build(),
+				"slug":                                 util.DataSourceString().Computed().Description("A human-readable, unique identifier, used to identify a project.").Build(),
+				"space_id":                             util.DataSourceString().Computed().Description("The space ID associated with this project.").Build(),
+				"tenanted_deployment_participation":    util.DataSourceString().Computed().Description("The tenanted deployment mode of the project.").Build(),
+				"variable_set_id":                      util.DataSourceString().Computed().Description("The ID of the variable set associated with this project.").Build(),
 				"project_tags": datasourceSchema.SetAttribute{
 					Computed:    true,
 					Description: "A list of project tags associated with this resource.",
