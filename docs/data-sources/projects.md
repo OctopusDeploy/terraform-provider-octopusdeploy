@@ -59,14 +59,14 @@ Read-Only:
 - `deployment_process_id` (String)
 - `deprovisioning_runbook_id` (String) The ID of the runbook to run when deprovisioning an ephemeral environment for this project.
 - `description` (String) The description of this project
-- `discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
+- `discrete_channel_release` (Boolean, Deprecated) Treats releases of different channels to the same environment as a separate deployment dimension
 - `git_anonymous_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using anonymous authentication. (see [below for nested schema](#nestedatt--projects--git_anonymous_persistence_settings))
 - `git_library_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using library authentication. (see [below for nested schema](#nestedatt--projects--git_library_persistence_settings))
 - `git_username_password_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using username_password authentication. (see [below for nested schema](#nestedatt--projects--git_username_password_persistence_settings))
 - `id` (String)
 - `included_library_variable_sets` (List of String)
 - `is_disabled` (Boolean)
-- `is_discrete_channel_release` (Boolean)
+- `is_discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `is_version_controlled` (Boolean)
 - `jira_service_management_extension_settings` (Attributes List) Extension settings for the Jira Service Management (JSM) integration. (see [below for nested schema](#nestedatt--projects--jira_service_management_extension_settings))
 - `lifecycle_id` (String) The lifecycle ID associated with this project
