@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tagsets"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -35,6 +36,9 @@ func (r *tagSetResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 func (r *tagSetResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var plan schemas.TagSetResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -53,6 +57,9 @@ func (r *tagSetResource) Create(ctx context.Context, req resource.CreateRequest,
 }
 
 func (r *tagSetResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var state schemas.TagSetResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -72,13 +79,25 @@ func (r *tagSetResource) Read(ctx context.Context, req resource.ReadRequest, res
 }
 
 func (r *tagSetResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var plan schemas.TagSetResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Fetch the current tagset to preserve existing tags
+	currentTagSet, err := tagsets.GetByID(r.Client, plan.SpaceID.ValueString(), plan.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Error fetching current tag set", err.Error())
+		return
+	}
+
 	tagSet := expandTagSet(ctx, plan)
+	tagSet.Tags = currentTagSet.Tags
+
 	updatedTagSet, err := tagsets.Update(r.Client, tagSet)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating tag set", err.Error())
@@ -90,6 +109,9 @@ func (r *tagSetResource) Update(ctx context.Context, req resource.UpdateRequest,
 }
 
 func (r *tagSetResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	internal.Mutex.Lock()
+	defer internal.Mutex.Unlock()
+
 	var state schemas.TagSetResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
