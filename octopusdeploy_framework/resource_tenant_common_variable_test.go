@@ -14,6 +14,7 @@ import (
 	internalTest "github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
 )
 
+// TestAccTenantCommonVariableBasic tests V1 API
 func TestAccTenantCommonVariableBasic(t *testing.T) {
 	//SkipCI(t, "A managed resource \"octopusdeploy_project_group\" \"ewtxiwplhaenzmhpaqyx\" has\n        not been declared in the root module.")
 	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -36,9 +37,11 @@ func TestAccTenantCommonVariableBasic(t *testing.T) {
 	newValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccTenantCommonVariableCheckDestroy,
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy: testAccTenantCommonVariableCheckDestroy,
+		PreCheck:     func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+			"CommonVariableScopingFeatureToggle": false,
+		}),
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -246,8 +249,7 @@ func testAccTenantCommonVariableCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-// TestAccTenantCommonVariableMigration tests adding scope to an existing variable
-// When V2 is available, variables are created with V2 API regardless of scope block presence
+// TestAccTenantCommonVariableMigration tests migration from V1 to V2 API
 func TestAccTenantCommonVariableMigration(t *testing.T) {
 	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -270,36 +272,68 @@ func TestAccTenantCommonVariableMigration(t *testing.T) {
 	finalValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccTenantCommonVariableCheckDestroy,
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy: testAccTenantCommonVariableCheckDestroy,
+		PreCheck:     func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				// Create with V1
+				// Step 1: Create with V1 API (force V2 API off)
+				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+					"CommonVariableScopingFeatureToggle": false,
+				}),
 				Check: resource.ComposeTestCheckFunc(
 					testTenantCommonVariableExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "value", value),
 					resource.TestCheckNoResourceAttr(resourceName, "scope.#"),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources[resourceName]
+						// Verify it's a V1 composite ID (has colons)
+						if !strings.Contains(rs.Primary.ID, ":") {
+							return fmt.Errorf("Expected V1 composite ID with colons, got: %s", rs.Primary.ID)
+						}
+						return nil
+					},
 				),
 				Config: testAccTenantCommonVariableMigrationV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, tenantVariablesLocalName, value),
 			},
 			{
-				// Add scope block
+				// Step 2: Migrate to V2 API by adding scope block (enable V2 API)
+				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+					"CommonVariableScopingFeatureToggle": true,
+				}),
 				Check: resource.ComposeTestCheckFunc(
 					testTenantCommonVariableExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "value", newValue),
 					resource.TestCheckResourceAttr(resourceName, "scope.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "scope.0.environment_ids.#", "2"),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources[resourceName]
+						// Verify it's a V2 real ID (no colons)
+						if strings.Contains(rs.Primary.ID, ":") {
+							return fmt.Errorf("Expected V2 real ID without colons, got: %s", rs.Primary.ID)
+						}
+						return nil
+					},
 				),
 				Config: testAccTenantCommonVariableMigrationV2(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, tenantVariablesLocalName, newValue),
 			},
 			{
-				// Update value again
+				// Step 3: Update value again to verify it works after migration
+				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+					"CommonVariableScopingFeatureToggle": true,
+				}),
 				Check: resource.ComposeTestCheckFunc(
 					testTenantCommonVariableExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "value", finalValue),
 					resource.TestCheckResourceAttr(resourceName, "scope.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "scope.0.environment_ids.#", "2"),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources[resourceName]
+						// Verify still using V2 ID
+						if strings.Contains(rs.Primary.ID, ":") {
+							return fmt.Errorf("Expected V2 real ID without colons, got: %s", rs.Primary.ID)
+						}
+						return nil
+					},
 				),
 				Config: testAccTenantCommonVariableMigrationV2(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, tenantVariablesLocalName, finalValue),
 			},

@@ -12,8 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// TestAccTenantProjectVariableBasic tests V1 API (environment_id, no scope block)
-// This test works on all Octopus server versions, including those without V2 feature flag support
+// TestAccTenantProjectVariableBasic tests V1 API
 func TestAccTenantProjectVariableBasic(t *testing.T) {
 	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -40,11 +39,14 @@ func TestAccTenantProjectVariableBasic(t *testing.T) {
 	newValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccTenantProjectVariableCheckDestroy,
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy: testAccTenantProjectVariableCheckDestroy,
+		PreCheck:     func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+			"CommonVariableScopingFeatureToggle": false,
+		}),
 		Steps: []resource.TestStep{
 			{
+
 				Check: resource.ComposeTestCheckFunc(
 					testTenantProjectVariableExists(primaryResourceName),
 					testTenantProjectVariableExists(secondaryResourceName),
@@ -274,8 +276,7 @@ func testAccTenantProjectVariableCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-// TestAccTenantProjectVariableMigration tests transitioning from environment_id to scope block
-// When V2 is available, variables are created with V2 API regardless of whether environment_id or scope is used
+// TestAccTenantProjectVariableMigration tests migration from V1 to V2 API
 func TestAccTenantProjectVariableMigration(t *testing.T) {
 	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -298,37 +299,71 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 	finalValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccTenantProjectVariableCheckDestroy,
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy: testAccTenantProjectVariableCheckDestroy,
+		PreCheck:     func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				// Step 1: Create with environment_id (auto-converted to scope when V2 available)
+				// Step 1: Create with V1 API
+				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+					"CommonVariableScopingFeatureToggle": false,
+				}),
 				Check: resource.ComposeTestCheckFunc(
 					testTenantProjectVariableExists(""),
 					resource.TestCheckResourceAttr(resourceName, "value", value),
+					resource.TestCheckResourceAttrSet(resourceName, "environment_id"),
+					resource.TestCheckNoResourceAttr(resourceName, "scope.#"),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources[resourceName]
+						// Verify it's a V1 composite ID (has colons)
+						if !strings.Contains(rs.Primary.ID, ":") {
+							return fmt.Errorf("Expected V1 composite ID with colons, got: %s", rs.Primary.ID)
+						}
+						return nil
+					},
 				),
 				Config: testAccTenantProjectVariableMigrationV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, variableLocalName, value),
 			},
 			{
-				// Step 2: Replace environment_id with scope block containing multiple environments
+				// Step 2: Migrate to V2 API replacing environment_id with scope block (enable V2 API)
+				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+					"CommonVariableScopingFeatureToggle": true,
+				}),
 				Check: resource.ComposeTestCheckFunc(
 					testTenantProjectVariableExists(""),
 					resource.TestCheckResourceAttr(resourceName, "value", newValue),
 					resource.TestCheckResourceAttr(resourceName, "scope.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "scope.0.environment_ids.#", "2"),
 					resource.TestCheckNoResourceAttr(resourceName, "environment_id"),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources[resourceName]
+						// Verify it's a V2 real ID (no colons)
+						if strings.Contains(rs.Primary.ID, ":") {
+							return fmt.Errorf("Expected V2 real ID without colons, got: %s", rs.Primary.ID)
+						}
+						return nil
+					},
 				),
 				Config: testAccTenantProjectVariableMigrationV2(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, variableLocalName, newValue),
 			},
 			{
-				// Step 3: Update value again
+				// Step 3: Update value again to verify it works after migration
+				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
+					"CommonVariableScopingFeatureToggle": true,
+				}),
 				Check: resource.ComposeTestCheckFunc(
 					testTenantProjectVariableExists(""),
 					resource.TestCheckResourceAttr(resourceName, "value", finalValue),
 					resource.TestCheckResourceAttr(resourceName, "scope.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "scope.0.environment_ids.#", "2"),
 					resource.TestCheckNoResourceAttr(resourceName, "environment_id"),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources[resourceName]
+						// Verify still using V2 ID
+						if strings.Contains(rs.Primary.ID, ":") {
+							return fmt.Errorf("Expected V2 real ID without colons, got: %s", rs.Primary.ID)
+						}
+						return nil
+					},
 				),
 				Config: testAccTenantProjectVariableMigrationV2(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, variableLocalName, finalValue),
 			},
@@ -435,7 +470,7 @@ func testAccTenantProjectVariableMigrationV2(lifecycleLocalName, lifecycleName, 
         }`, projectLocalName, lifecycleLocalName, projectName, projectGroupLocalName, tenantLocalName, tenantName, env1LocalName, env2LocalName, localName, value)
 }
 
-// TestAccTenantProjectVariableWithScope tests V2 API with multi-environment scoping
+// TestAccTenantProjectVariableWithScope tests V2 API with scoping
 func TestAccTenantProjectVariableWithScope(t *testing.T) {
 	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -520,7 +555,6 @@ func testTenantProjectVariableWithScope(localName, projectLocalName, tenantLocal
 	}`, localName, projectLocalName, tenantLocalName, projectLocalName, value, env1LocalName, env2LocalName, projectLocalName)
 }
 
-// testTenantProjectVariableExistsV2 checks if a V2 tenant project variable exists (uses real ID, not composite)
 func testTenantProjectVariableExistsV2(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -564,7 +598,6 @@ func testTenantProjectVariableExistsV2(resourceName string) resource.TestCheckFu
 	}
 }
 
-// testAccTenantProjectVariableCheckDestroyV2 checks that V2 tenant project variables are destroyed
 func testAccTenantProjectVariableCheckDestroyV2(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "octopusdeploy_tenant_project_variable" {
