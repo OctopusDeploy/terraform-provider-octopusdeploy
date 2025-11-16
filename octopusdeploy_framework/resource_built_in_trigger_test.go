@@ -2,9 +2,10 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
-	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
@@ -111,7 +112,6 @@ func configTestAccBuiltInTrigger(localName string, actionName string, packageRef
 		  default_guided_failure_mode          = "EnvironmentDefault"
 		  default_to_skip_if_already_installed = false
 		  description                          = "Project with Built-In Trigger"
-		  discrete_channel_release             = false
 		  is_disabled                          = false
 		  is_discrete_channel_release          = false
 		  is_version_controlled                = false
