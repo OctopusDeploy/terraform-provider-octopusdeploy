@@ -72,8 +72,8 @@ func (t TenantProjectVariableSchema) GetResourceSchema() schema.Schema {
 				Description("The ID of the project.").
 				Build(),
 			"environment_id": util.ResourceString().
-				Required().
-				Description("The ID of the environment.").
+				Optional().
+				Description("The ID of the environment. Use scope block for V2 API with multiple environments.").
 				Build(),
 			"template_id": util.ResourceString().
 				Required().
