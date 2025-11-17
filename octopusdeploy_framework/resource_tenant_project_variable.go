@@ -19,6 +19,7 @@ import (
 
 var _ resource.Resource = &tenantProjectVariableResource{}
 var _ resource.ResourceWithImportState = &tenantProjectVariableResource{}
+var _ resource.ResourceWithConfigValidators = &tenantProjectVariableResource{}
 
 type tenantProjectVariableResource struct {
 	*Config
@@ -54,6 +55,12 @@ func (t *tenantProjectVariableResource) Schema(_ context.Context, _ resource.Sch
 
 func (t *tenantProjectVariableResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	t.Config = ResourceConfiguration(req, resp)
+}
+
+func (t *tenantProjectVariableResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		TenantProjectVariableValidator(),
+	}
 }
 
 func (t *tenantProjectVariableResource) supportsV2() bool {
