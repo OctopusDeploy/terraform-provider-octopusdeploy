@@ -95,9 +95,6 @@ func (t *tenantCommonVariableResource) Create(ctx context.Context, req resource.
 		return
 	}
 
-	tflog.Debug(ctx, "Creating tenant common variable")
-
-	// Validate scope block usage
 	if len(plan.Scope) > 0 && !t.supportsV2() {
 		resp.Diagnostics.AddError(
 			"Scoped tenant variables are not supported",
@@ -131,9 +128,13 @@ func (t *tenantCommonVariableResource) Create(ctx context.Context, req resource.
 }
 
 func (t *tenantCommonVariableResource) createV1(ctx context.Context, plan *tenantCommonVariableResourceModel, tenant *tenants.Tenant, resp *resource.CreateResponse) {
-	tflog.Debug(ctx, "Using V1 API for tenant common variable")
-
 	id := fmt.Sprintf("%s:%s:%s", plan.TenantID.ValueString(), plan.LibraryVariableSetID.ValueString(), plan.TemplateID.ValueString())
+
+	tenant, err := tenants.GetByID(t.Client, plan.SpaceID.ValueString(), plan.TenantID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Error retrieving tenant", err.Error())
+		return
+	}
 
 	tenantVariables, err := t.Client.Tenants.GetVariables(tenant)
 	if err != nil {
@@ -187,7 +188,6 @@ func (t *tenantCommonVariableResource) createV2(ctx context.Context, plan *tenan
 		return
 	}
 
-	// Find the template to check if it's sensitive
 	isSensitive, found := findCommonVariableTemplateByLibrarySetAndTemplate(
 		getResp.Variables,
 		getResp.MissingVariables,
@@ -200,7 +200,6 @@ func (t *tenantCommonVariableResource) createV2(ctx context.Context, plan *tenan
 		return
 	}
 
-	// Convert scope from Terraform model
 	scope := variables.TenantVariableScope{}
 	if len(plan.Scope) > 0 {
 		envIDs, diags := util.SetToStringArray(ctx, plan.Scope[0].EnvironmentIDs)
@@ -211,10 +210,8 @@ func (t *tenantCommonVariableResource) createV2(ctx context.Context, plan *tenan
 		scope.EnvironmentIds = envIDs
 	}
 
-	// Build payloads for ALL existing variables plus the new one
 	var payloads []variables.TenantCommonVariablePayload
 
-	// Add all existing variables
 	for _, v := range getResp.Variables {
 		payloads = append(payloads, variables.TenantCommonVariablePayload{
 			ID:                   v.GetID(),
@@ -225,7 +222,6 @@ func (t *tenantCommonVariableResource) createV2(ctx context.Context, plan *tenan
 		})
 	}
 
-	// Add the new variable
 	newPayload := variables.TenantCommonVariablePayload{
 		LibraryVariableSetId: plan.LibraryVariableSetID.ValueString(),
 		TemplateID:           plan.TemplateID.ValueString(),
@@ -285,11 +281,11 @@ func (t *tenantCommonVariableResource) Read(ctx context.Context, req resource.Re
 	}
 
 	// Determine which API version to use based on ID format
-	useV1API := isCompositeID(state.ID.ValueString())
+	isV1ID := isCompositeID(state.ID.ValueString())
 
-	if useV1API && t.supportsV2() {
+	if isV1ID && t.supportsV2() {
 		t.migrateV1ToV2OnRead(ctx, &state, spaceID, resp)
-	} else if !useV1API {
+	} else if !isV1ID {
 		t.readV2(ctx, &state, spaceID, resp)
 	} else {
 		t.readV1(ctx, &state, tenant, resp)
@@ -344,11 +340,9 @@ func (t *tenantCommonVariableResource) readV2(ctx context.Context, state *tenant
 		return
 	}
 
-	// Find the variable by ID
 	var found bool
 	for _, v := range getResp.Variables {
 		if v.GetID() == state.ID.ValueString() {
-			// Update scope
 			if len(v.Scope.EnvironmentIds) > 0 {
 				envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
 				state.Scope = []tenantCommonVariableScopeModel{{EnvironmentIDs: envSet}}
@@ -356,7 +350,6 @@ func (t *tenantCommonVariableResource) readV2(ctx context.Context, state *tenant
 				state.Scope = nil
 			}
 
-			// Update value if not sensitive
 			isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
 			if !isSensitive {
 				state.Value = types.StringValue(v.Value.Value)
@@ -466,7 +459,6 @@ func (t *tenantCommonVariableResource) Update(ctx context.Context, req resource.
 func (t *tenantCommonVariableResource) updateV2(ctx context.Context, plan *tenantCommonVariableResourceModel, spaceID string, resp *resource.UpdateResponse) {
 	tflog.Debug(ctx, "Updating tenant common variable with V2 API")
 
-	// Get existing variables to check sensitive status and build complete set
 	query := variables.GetTenantCommonVariablesQuery{
 		TenantID:                plan.TenantID.ValueString(),
 		SpaceID:                 spaceID,
@@ -479,7 +471,6 @@ func (t *tenantCommonVariableResource) updateV2(ctx context.Context, plan *tenan
 		return
 	}
 
-	// Find the variable to check if it's sensitive
 	isSensitive, found := findCommonVariableByID(getResp.Variables, plan.ID.ValueString())
 
 	if !found {
@@ -509,7 +500,6 @@ func (t *tenantCommonVariableResource) updateV2(ctx context.Context, plan *tenan
 				Scope:                scope,
 			})
 		} else {
-			// Keep existing variable as-is
 			payloads = append(payloads, variables.TenantCommonVariablePayload{
 				ID:                   v.GetID(),
 				LibraryVariableSetId: v.LibraryVariableSetId,
@@ -763,18 +753,78 @@ func (t *tenantCommonVariableResource) deleteV2(ctx context.Context, state *tena
 func (t *tenantCommonVariableResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, ":")
 
-	if len(idParts) != 3 {
-		resp.Diagnostics.AddError(
-			"Incorrect Import Format",
-			"ID must be in the format: TenantID:LibraryVariableSetID:TemplateID (e.g. Tenants-123:LibraryVariableSets-456:6c9f2ba3-3ccd-407f-bbdf-6618e4fd0a0c)",
-		)
+	// V1 format: TenantID:LibraryVariableSetID:TemplateID
+	if len(idParts) == 3 {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tenant_id"), idParts[0])...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("library_variable_set_id"), idParts[1])...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("template_id"), idParts[2])...)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tenant_id"), idParts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("library_variable_set_id"), idParts[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("template_id"), idParts[2])...)
+	// V2 format: TenantID:VariableID
+	if len(idParts) == 2 {
+		tenantID := idParts[0]
+		variableID := idParts[1]
+
+		tenant, err := tenants.GetByID(t.Client, "", tenantID)
+		if err != nil {
+			resp.Diagnostics.AddError("Error retrieving tenant", err.Error())
+			return
+		}
+
+		query := variables.GetTenantCommonVariablesQuery{
+			TenantID:                tenantID,
+			SpaceID:                 tenant.SpaceID,
+			IncludeMissingVariables: false,
+		}
+
+		getResp, err := tenants.GetCommonVariables(t.Client, query)
+		if err != nil {
+			resp.Diagnostics.AddError("Error retrieving tenant common variables", err.Error())
+			return
+		}
+
+		var found bool
+		for _, v := range getResp.Variables {
+			if v.GetID() == variableID {
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), variableID)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tenant_id"), tenantID)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("library_variable_set_id"), v.LibraryVariableSetId)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("template_id"), v.TemplateID)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("space_id"), tenant.SpaceID)...)
+
+				if len(v.Scope.EnvironmentIds) > 0 {
+					envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
+					scopeModel := []tenantCommonVariableScopeModel{{EnvironmentIDs: envSet}}
+					resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("scope"), scopeModel)...)
+				}
+
+				isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
+				if !isSensitive {
+					resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("value"), v.Value.Value)...)
+				}
+
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			resp.Diagnostics.AddError(
+				"Variable not found",
+				fmt.Sprintf("Variable with ID %s not found for tenant %s", variableID, tenantID),
+			)
+		}
+		return
+	}
+
+	resp.Diagnostics.AddError(
+		"Incorrect Import Format",
+		"ID must be in one of these formats:\n"+
+			"  V1: TenantID:LibraryVariableSetID:TemplateID (e.g. Tenants-123:LibraryVariableSets-456:6c9f2ba3-3ccd-407f-bbdf-6618e4fd0a0c)\n"+
+			"  V2: TenantID:VariableID (e.g. Tenants-123:TenantVariables-456)",
+	)
 }
 
 func checkIfCommonVariableIsSensitive(tenantVariables *variables.TenantVariables, plan tenantCommonVariableResourceModel) (bool, error) {

@@ -856,19 +856,79 @@ func (t *tenantProjectVariableResource) deleteV1(ctx context.Context, state *ten
 func (t *tenantProjectVariableResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, ":")
 
-	if len(idParts) != 4 {
-		resp.Diagnostics.AddError(
-			"Incorrect Import Format",
-			"ID must be in the format: TenantID:ProjectID:EnvironmentID:TemplateID (e.g. Tenants-123:Projects-456:Environments-789:6c9f2ba3-3ccd-407f-bbdf-6618e4fd0a0c)",
-		)
+	// V1 format: TenantID:ProjectID:EnvironmentID:TemplateID
+	if len(idParts) == 4 {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tenant_id"), idParts[0])...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[1])...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), idParts[2])...)
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("template_id"), idParts[3])...)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tenant_id"), idParts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), idParts[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), idParts[2])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("template_id"), idParts[3])...)
+	// V2 format: TenantID:VariableID
+	if len(idParts) == 2 {
+		tenantID := idParts[0]
+		variableID := idParts[1]
+
+		tenant, err := tenants.GetByID(t.Client, "", tenantID)
+		if err != nil {
+			resp.Diagnostics.AddError("Error retrieving tenant", err.Error())
+			return
+		}
+
+		query := variables.GetTenantProjectVariablesQuery{
+			TenantID:                tenantID,
+			SpaceID:                 tenant.SpaceID,
+			IncludeMissingVariables: false,
+		}
+
+		getResp, err := tenants.GetProjectVariables(t.Client, query)
+		if err != nil {
+			resp.Diagnostics.AddError("Error retrieving tenant project variables", err.Error())
+			return
+		}
+
+		var found bool
+		for _, v := range getResp.Variables {
+			if v.GetID() == variableID {
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), variableID)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("tenant_id"), tenantID)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("project_id"), v.ProjectID)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("template_id"), v.TemplateID)...)
+				resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("space_id"), tenant.SpaceID)...)
+
+				if len(v.Scope.EnvironmentIds) > 0 {
+					envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
+					scopeModel := []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
+					resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("scope"), scopeModel)...)
+				}
+
+				isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
+				if !isSensitive {
+					resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("value"), v.Value.Value)...)
+				}
+
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			resp.Diagnostics.AddError(
+				"Variable not found",
+				fmt.Sprintf("Variable with ID %s not found for tenant %s", variableID, tenantID),
+			)
+		}
+		return
+	}
+
+	resp.Diagnostics.AddError(
+		"Incorrect Import Format",
+		"ID must be in one of these formats:\n"+
+			"  V1: TenantID:ProjectID:EnvironmentID:TemplateID (e.g. Tenants-123:Projects-456:Environments-789:6c9f2ba3-3ccd-407f-bbdf-6618e4fd0a0c)\n"+
+			"  V2: TenantID:VariableID (e.g. Tenants-123:TenantVariables-456)",
+	)
 }
 
 func checkIfTemplateExists(tenantVariables *variables.TenantVariables, plan tenantProjectVariableResourceModel) bool {
