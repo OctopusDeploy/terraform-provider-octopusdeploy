@@ -19,6 +19,8 @@ func TestTagSetAndTag(t *testing.T) {
 	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
 	tagSetDescription := "TagSet Description" + tagSetName
+	tagSetUpdatedName := tagSetName + "-updated"
+	tagSetUpdatedDescription := "Updated " + tagSetDescription
 
 	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagPrefix := "octopusdeploy_tag." + tagName
@@ -51,6 +53,17 @@ func TestTagSetAndTag(t *testing.T) {
 					resource.TestCheckResourceAttrPair(tagPrefix, "tag_set_id", tagSetPrefix, "id"),
 				),
 			},
+			{
+				Config: testTagSetAndTagConfigWithID(tagSetName, tagSetUpdatedName, tagSetUpdatedDescription, tagName, tagColor),
+				Check: resource.ComposeTestCheckFunc(
+					testTagSetExists(tagSetPrefix),
+					testTagExists(tagPrefix),
+					resource.TestCheckResourceAttr(tagSetPrefix, "name", tagSetUpdatedName),
+					resource.TestCheckResourceAttr(tagSetPrefix, "description", tagSetUpdatedDescription),
+					resource.TestCheckResourceAttr(tagPrefix, "name", tagName),
+					resource.TestCheckResourceAttr(tagPrefix, "color", tagColor),
+				),
+			},
 		},
 	})
 }
@@ -64,18 +77,22 @@ func testTagSetConfig(name, description string) string {
 }
 
 func testTagSetAndTagConfig(tagSetName, tagSetDescription, tagName, tagColor string) string {
+	return testTagSetAndTagConfigWithID(tagSetName, tagSetName, tagSetDescription, tagName, tagColor)
+}
+
+func testTagSetAndTagConfigWithID(tagSetResourceID, tagSetName, tagSetDescription, tagName, tagColor string) string {
 	var tfConfig = fmt.Sprintf(`
     resource "octopusdeploy_tag_set" "%s" {
       name        = "%s"
       description = "%s"
     }
-    
+
     resource "octopusdeploy_tag" "%s" {
       name        = "%s"
       color       = "%s"
       description = "Test tag"
       tag_set_id  = octopusdeploy_tag_set.%s.id
-    }`, tagSetName, tagSetName, tagSetDescription, tagName, tagName, tagColor, tagSetName)
+    }`, tagSetResourceID, tagSetName, tagSetDescription, tagName, tagName, tagColor, tagSetResourceID)
 	return tfConfig
 }
 
