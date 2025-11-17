@@ -90,6 +90,8 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 		NewServiceAccountOIDCIdentityDataSource,
 		NewWorkersDataSource,
 		NewDeploymentFreezeDataSource,
+		NewSpaceDefaultLifecycleReleaseRetentionPoliciesDataSource,
+		NewSpaceDefaultLifecycleTentacleRetentionPoliciesDataSource,
 	}
 }
 
@@ -155,6 +157,8 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewKubernetesMonitorResource,
 		NewTeamResource,
 		NewScopedUserRoleResource,
+		NewSpaceDefaultLifecycleReleaseRetentionPolicyResource,
+		NewSpaceDefaultLifecycleTentacleRetentionPolicyResource,
 	}
 }
 
