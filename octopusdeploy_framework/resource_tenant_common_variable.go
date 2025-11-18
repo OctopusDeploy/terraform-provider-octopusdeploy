@@ -11,6 +11,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -89,6 +90,55 @@ func isTemplateControlTypeSensitive(displaySettings map[string]string) bool {
 	return displaySettings["Octopus.ControlType"] == "Sensitive"
 }
 
+func (t *tenantCommonVariableResource) validateScopeSupport(planScope []tenantCommonVariableScopeModel, diags *diag.Diagnostics) bool {
+	if len(planScope) > 0 && !t.supportsV2() {
+		diags.AddError(
+			"Scope block is not supported",
+			"The 'scope' block requires V2 API support. Your Octopus Server does not support this feature.",
+		)
+		return false
+	}
+	return true
+}
+
+func commonVariableMatchesPlan(variable variables.TenantCommonVariable, planLibrarySetID, planTemplateID string, planScope []tenantCommonVariableScopeModel) bool {
+	if variable.LibraryVariableSetId != planLibrarySetID || variable.TemplateID != planTemplateID {
+		return false
+	}
+
+	if len(planScope) == 0 {
+		return len(variable.Scope.EnvironmentIds) == 0
+	}
+
+	return scopesMatch(planScope[0].EnvironmentIDs, variable.Scope.EnvironmentIds)
+}
+
+func scopesMatch(planEnvIDs types.Set, serverEnvIDs []string) bool {
+	if planEnvIDs.IsNull() || planEnvIDs.IsUnknown() {
+		return len(serverEnvIDs) == 0
+	}
+
+	planEnvironments := make([]types.String, 0, len(planEnvIDs.Elements()))
+	planEnvIDs.ElementsAs(context.Background(), &planEnvironments, false)
+
+	if len(planEnvironments) != len(serverEnvIDs) {
+		return false
+	}
+
+	planEnvSet := make(map[string]bool)
+	for _, e := range planEnvironments {
+		planEnvSet[e.ValueString()] = true
+	}
+
+	for _, serverEnv := range serverEnvIDs {
+		if !planEnvSet[serverEnv] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (t *tenantCommonVariableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan tenantCommonVariableResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -99,11 +149,7 @@ func (t *tenantCommonVariableResource) Create(ctx context.Context, req resource.
 	internal.KeyedMutex.Lock(plan.TenantID.ValueString())
 	defer internal.KeyedMutex.Unlock(plan.TenantID.ValueString())
 
-	if len(plan.Scope) > 0 && !t.supportsV2() {
-		resp.Diagnostics.AddError(
-			"Scoped tenant variables are not supported",
-			"The scope block requires V2 API support (CommonVariableScopingFeatureToggle). Your Octopus Server does not support this feature.",
-		)
+	if !t.validateScopeSupport(plan.Scope, &resp.Diagnostics) {
 		return
 	}
 
@@ -244,39 +290,11 @@ func (t *tenantCommonVariableResource) createV2(ctx context.Context, plan *tenan
 		return
 	}
 
-	// Find the created variable and get its ID
 	var createdID string
 	for _, v := range updateResp.Variables {
-		if v.LibraryVariableSetId == plan.LibraryVariableSetID.ValueString() && v.TemplateID == plan.TemplateID.ValueString() {
-			// Also match on scope to handle multiple variables with same template but different scopes
-			if len(plan.Scope) > 0 {
-				if len(v.Scope.EnvironmentIds) > 0 {
-					planEnvs := plan.Scope[0].EnvironmentIDs.Elements()
-					if len(planEnvs) == len(v.Scope.EnvironmentIds) {
-						match := true
-						planEnvSet := make(map[string]bool)
-						for _, e := range planEnvs {
-							planEnvSet[e.String()] = true
-						}
-						for _, serverEnv := range v.Scope.EnvironmentIds {
-							if !planEnvSet["\""+serverEnv+"\""] {
-								match = false
-								break
-							}
-						}
-						if match {
-							createdID = v.GetID()
-							break
-						}
-					}
-				}
-			} else {
-				// No scope in plan, match unscoped variable
-				if len(v.Scope.EnvironmentIds) == 0 {
-					createdID = v.GetID()
-					break
-				}
-			}
+		if commonVariableMatchesPlan(v, plan.LibraryVariableSetID.ValueString(), plan.TemplateID.ValueString(), plan.Scope) {
+			createdID = v.GetID()
+			break
 		}
 	}
 
@@ -314,9 +332,7 @@ func (t *tenantCommonVariableResource) Read(ctx context.Context, req resource.Re
 		spaceID = tenant.SpaceID
 	}
 
-	// Determine which API version to use based on ID format
 	isV1ID := isCompositeID(state.ID.ValueString())
-
 	if isV1ID && t.supportsV2() {
 		t.migrateV1ToV2OnRead(ctx, &state, spaceID, resp)
 	} else if !isV1ID {
@@ -415,14 +431,11 @@ func (t *tenantCommonVariableResource) migrateV1ToV2OnRead(ctx context.Context, 
 		return
 	}
 
-	// Find the variable
 	var found bool
 	for _, v := range getResp.Variables {
 		if v.LibraryVariableSetId == state.LibraryVariableSetID.ValueString() && v.TemplateID == state.TemplateID.ValueString() {
-			// Migrate to V2 ID
 			state.ID = types.StringValue(v.GetID())
 
-			// Update scope
 			if len(v.Scope.EnvironmentIds) > 0 {
 				envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
 				state.Scope = []tenantCommonVariableScopeModel{{EnvironmentIDs: envSet}}
@@ -430,7 +443,6 @@ func (t *tenantCommonVariableResource) migrateV1ToV2OnRead(ctx context.Context, 
 				state.Scope = nil
 			}
 
-			// Update value if not sensitive
 			isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
 			if !isSensitive {
 				state.Value = types.StringValue(v.Value.Value)
@@ -457,12 +469,7 @@ func (t *tenantCommonVariableResource) Update(ctx context.Context, req resource.
 	internal.KeyedMutex.Lock(plan.TenantID.ValueString())
 	defer internal.KeyedMutex.Unlock(plan.TenantID.ValueString())
 
-	// Validate scope block usage on unsupported servers
-	if len(plan.Scope) > 0 && !t.supportsV2() {
-		resp.Diagnostics.AddError(
-			"V2 API not supported",
-			"The 'scope' block requires V2 API support (CommonVariableScopingFeatureToggle). Your Octopus Server version does not support this feature. Please upgrade your server or remove the scope block.",
-		)
+	if !t.validateScopeSupport(plan.Scope, &resp.Diagnostics) {
 		return
 	}
 

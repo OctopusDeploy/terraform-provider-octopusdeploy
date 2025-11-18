@@ -11,6 +11,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -71,6 +72,17 @@ func (t *tenantProjectVariableResource) supportsV2() bool {
 	return t.Config.FeatureToggleEnabled("CommonVariableScopingFeatureToggle")
 }
 
+func (t *tenantProjectVariableResource) validateScopeSupport(planScope []tenantProjectVariableScopeModel, diags *diag.Diagnostics) bool {
+	if len(planScope) > 0 && !t.supportsV2() {
+		diags.AddError(
+			"Scope block is not supported",
+			"The 'scope' block requires V2 API support. Your Octopus Server does not support this feature.",
+		)
+		return false
+	}
+	return true
+}
+
 // findProjectVariableTemplateByProjectAndTemplate finds a project variable template and returns whether it's sensitive and its ID
 func findProjectVariableTemplateByProjectAndTemplate(variables []variables.TenantProjectVariable, missingVariables []variables.TenantProjectVariable, projectID, templateID string) (isSensitive bool, variableID string, found bool) {
 	for _, v := range append(variables, missingVariables...) {
@@ -91,6 +103,52 @@ func findProjectVariableByID(variables []variables.TenantProjectVariable, id str
 	return false, false
 }
 
+func projectVariableMatchesPlan(variable variables.TenantProjectVariable, planProjectID, planTemplateID string, planScope []tenantProjectVariableScopeModel, planEnvironmentID types.String) bool {
+	if variable.ProjectID != planProjectID || variable.TemplateID != planTemplateID {
+		return false
+	}
+
+	// Check if scope block matches
+	if len(planScope) > 0 {
+		return projectScopesMatch(planScope[0].EnvironmentIDs, variable.Scope.EnvironmentIds)
+	}
+
+	// Check if legacy environment_id matches
+	if !planEnvironmentID.IsNull() && planEnvironmentID.ValueString() != "" {
+		if len(variable.Scope.EnvironmentIds) == 1 && variable.Scope.EnvironmentIds[0] == planEnvironmentID.ValueString() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func projectScopesMatch(planEnvIDs types.Set, serverEnvIDs []string) bool {
+	if planEnvIDs.IsNull() || planEnvIDs.IsUnknown() {
+		return len(serverEnvIDs) == 0
+	}
+
+	planEnvironments := make([]types.String, 0, len(planEnvIDs.Elements()))
+	planEnvIDs.ElementsAs(context.Background(), &planEnvironments, false)
+
+	if len(planEnvironments) != len(serverEnvIDs) {
+		return false
+	}
+
+	planEnvSet := make(map[string]bool)
+	for _, e := range planEnvironments {
+		planEnvSet[e.ValueString()] = true
+	}
+
+	for _, serverEnv := range serverEnvIDs {
+		if !planEnvSet[serverEnv] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (t *tenantProjectVariableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan tenantProjectVariableResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
@@ -103,26 +161,9 @@ func (t *tenantProjectVariableResource) Create(ctx context.Context, req resource
 
 	tflog.Debug(ctx, "Creating tenant project variable")
 
-	// Validate that either environment_id or scope is provided, but not both
 	hasEnvironmentID := !plan.EnvironmentID.IsNull() && plan.EnvironmentID.ValueString() != ""
-	hasScope := len(plan.Scope) > 0
 
-	if hasEnvironmentID && hasScope {
-		resp.Diagnostics.AddError("Invalid configuration", "Cannot specify both environment_id and scope. Use environment_id for V1 API or scope for V2 API.")
-		return
-	}
-
-	if !hasEnvironmentID && !hasScope {
-		resp.Diagnostics.AddError("Invalid configuration", "Must specify either environment_id or scope block.")
-		return
-	}
-
-	// Validate scope block usage on unsupported servers
-	if hasScope && !t.supportsV2() {
-		resp.Diagnostics.AddError(
-			"V2 API not supported",
-			"The 'scope' block requires V2 API support (CommonVariableScopingFeatureToggle). Your Octopus Server version does not support this feature. Please upgrade your server or use environment_id instead.",
-		)
+	if !t.validateScopeSupport(plan.Scope, &resp.Diagnostics) {
 		return
 	}
 
@@ -194,7 +235,6 @@ func (t *tenantProjectVariableResource) createV1(ctx context.Context, plan *tena
 func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tenantProjectVariableResourceModel, tenant *tenants.Tenant, spaceID string, hasEnvironmentID bool, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Using V2 API for tenant project variable")
 
-	// Get existing variables to find sensitive status
 	query := variables.GetTenantProjectVariablesQuery{
 		TenantID:                plan.TenantID.ValueString(),
 		SpaceID:                 spaceID,
@@ -207,7 +247,6 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 		return
 	}
 
-	// Find the template to check if it's sensitive
 	isSensitive, _, found := findProjectVariableTemplateByProjectAndTemplate(
 		getResp.Variables,
 		getResp.MissingVariables,
@@ -220,7 +259,6 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 		return
 	}
 
-	// Convert scope from Terraform model
 	scope := variables.TenantVariableScope{}
 	if len(plan.Scope) > 0 {
 		envIDs, diags := util.SetToStringArray(ctx, plan.Scope[0].EnvironmentIDs)
@@ -230,14 +268,11 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 		}
 		scope.EnvironmentIds = envIDs
 	} else if hasEnvironmentID {
-		// Convert single environment_id to scope for V2 API
 		scope.EnvironmentIds = []string{plan.EnvironmentID.ValueString()}
 	}
 
-	// Build payloads for ALL existing variables plus the new one
 	payloads := []variables.TenantProjectVariablePayload{}
 
-	// Add all existing variables
 	for _, v := range getResp.Variables {
 		payloads = append(payloads, variables.TenantProjectVariablePayload{
 			ID:         v.GetID(),
@@ -248,7 +283,6 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 		})
 	}
 
-	// Add the new variable
 	newPayload := variables.TenantProjectVariablePayload{
 		ProjectID:  plan.ProjectID.ValueString(),
 		TemplateID: plan.TemplateID.ValueString(),
@@ -267,33 +301,11 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 		return
 	}
 
-	// Find the created variable and get its ID
 	var createdID string
 	for _, v := range updateResp.Variables {
-		if v.ProjectID == plan.ProjectID.ValueString() && v.TemplateID == plan.TemplateID.ValueString() {
-			// Also match on scope to handle multiple variables with same template but different scopes
-			if len(plan.Scope) > 0 {
-				if len(v.Scope.EnvironmentIds) > 0 {
-					planEnvs := plan.Scope[0].EnvironmentIDs.Elements()
-					if len(planEnvs) == len(v.Scope.EnvironmentIds) {
-						match := true
-						planEnvSet := make(map[string]bool)
-						for _, e := range planEnvs {
-							planEnvSet[e.String()] = true
-						}
-						for _, serverEnv := range v.Scope.EnvironmentIds {
-							if !planEnvSet["\""+serverEnv+"\""] {
-								match = false
-								break
-							}
-						}
-						if match {
-							createdID = v.GetID()
-							break
-						}
-					}
-				}
-			}
+		if projectVariableMatchesPlan(v, plan.ProjectID.ValueString(), plan.TemplateID.ValueString(), plan.Scope, plan.EnvironmentID) {
+			createdID = v.GetID()
+			break
 		}
 	}
 
@@ -304,13 +316,6 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 
 	plan.ID = types.StringValue(createdID)
 	plan.SpaceID = types.StringValue(tenant.SpaceID)
-
-	// If environment_id was provided, migrate to scope format in state
-	if hasEnvironmentID && len(plan.Scope) == 0 {
-		envSet := util.BuildStringSetOrEmpty([]string{plan.EnvironmentID.ValueString()})
-		plan.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
-		plan.EnvironmentID = types.StringNull()
-	}
 
 	tflog.Debug(ctx, "Tenant project variable created with V2 API", map[string]interface{}{
 		"id": plan.ID.ValueString(),
@@ -338,12 +343,10 @@ func (t *tenantProjectVariableResource) Read(ctx context.Context, req resource.R
 		spaceID = tenant.SpaceID
 	}
 
-	// Determine which API version to use based on ID format
-	useV1API := isCompositeID(state.ID.ValueString())
-
-	if useV1API && t.supportsV2() {
+	isV1ID := isCompositeID(state.ID.ValueString())
+	if isV1ID && t.supportsV2() {
 		t.migrateV1ToV2OnRead(ctx, &state, spaceID, resp)
-	} else if !useV1API {
+	} else if !isV1ID {
 		t.readV2(ctx, &state, spaceID, resp)
 	} else {
 		t.readV1(ctx, &state, tenant, resp)
@@ -354,50 +357,6 @@ func (t *tenantProjectVariableResource) Read(ctx context.Context, req resource.R
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
-}
-
-func (t *tenantProjectVariableResource) readV2(ctx context.Context, state *tenantProjectVariableResourceModel, spaceID string, resp *resource.ReadResponse) {
-	tflog.Debug(ctx, "Reading tenant project variable with V2 API")
-
-	query := variables.GetTenantProjectVariablesQuery{
-		TenantID:                state.TenantID.ValueString(),
-		SpaceID:                 spaceID,
-		IncludeMissingVariables: false,
-	}
-
-	getResp, err := tenants.GetProjectVariables(t.Client, query)
-	if err != nil {
-		resp.Diagnostics.AddError("Error retrieving tenant project variables", err.Error())
-		return
-	}
-
-	// Find the variable by ID
-	var found bool
-	for _, v := range getResp.Variables {
-		if v.GetID() == state.ID.ValueString() {
-			// Update scope
-			if len(v.Scope.EnvironmentIds) > 0 {
-				envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
-				state.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
-			} else {
-				state.Scope = nil
-			}
-
-			// Update value if not sensitive
-			isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
-			if !isSensitive {
-				state.Value = types.StringValue(v.Value.Value)
-			}
-
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		resp.State.RemoveResource(ctx)
-		return
-	}
 }
 
 func (t *tenantProjectVariableResource) readV1(ctx context.Context, state *tenantProjectVariableResourceModel, tenant *tenants.Tenant, resp *resource.ReadResponse) {
@@ -434,6 +393,47 @@ func (t *tenantProjectVariableResource) readV1(ctx context.Context, state *tenan
 	}
 }
 
+func (t *tenantProjectVariableResource) readV2(ctx context.Context, state *tenantProjectVariableResourceModel, spaceID string, resp *resource.ReadResponse) {
+	tflog.Debug(ctx, "Reading tenant project variable with V2 API")
+
+	query := variables.GetTenantProjectVariablesQuery{
+		TenantID:                state.TenantID.ValueString(),
+		SpaceID:                 spaceID,
+		IncludeMissingVariables: false,
+	}
+
+	getResp, err := tenants.GetProjectVariables(t.Client, query)
+	if err != nil {
+		resp.Diagnostics.AddError("Error retrieving tenant project variables", err.Error())
+		return
+	}
+
+	var found bool
+	for _, v := range getResp.Variables {
+		if v.GetID() == state.ID.ValueString() {
+			if len(v.Scope.EnvironmentIds) > 0 {
+				envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
+				state.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
+			} else {
+				state.Scope = nil
+			}
+
+			isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
+			if !isSensitive {
+				state.Value = types.StringValue(v.Value.Value)
+			}
+
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+}
+
 func (t *tenantProjectVariableResource) migrateV1ToV2OnRead(ctx context.Context, state *tenantProjectVariableResourceModel, spaceID string, resp *resource.ReadResponse) {
 	tflog.Debug(ctx, "Migrating tenant project variable from V1 to V2")
 
@@ -449,24 +449,19 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnRead(ctx context.Context,
 		return
 	}
 
-	// Find the variable
 	var found bool
 	for _, v := range getResp.Variables {
 		if v.ProjectID == state.ProjectID.ValueString() && v.TemplateID == state.TemplateID.ValueString() {
-			// Check if this variable matches the environment from V1
-			// In V1, we have a single environment_id. In V2, check if scope contains it
 			if len(v.Scope.EnvironmentIds) > 0 {
 				for _, envID := range v.Scope.EnvironmentIds {
 					if envID == state.EnvironmentID.ValueString() {
 						// Migrate to V2 ID
 						state.ID = types.StringValue(v.GetID())
 
-						// Update scope
 						envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
 						state.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
 						state.EnvironmentID = types.StringNull()
 
-						// Update value if not sensitive
 						isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
 						if !isSensitive {
 							state.Value = types.StringValue(v.Value.Value)
@@ -478,7 +473,6 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnRead(ctx context.Context,
 				}
 			} else {
 				// Variable exists but has no scope (applies to all environments)
-				// This might be a match if we're looking for a variable that was created without scope
 				state.ID = types.StringValue(v.GetID())
 				state.Scope = nil
 				state.EnvironmentID = types.StringNull()
@@ -513,25 +507,9 @@ func (t *tenantProjectVariableResource) Update(ctx context.Context, req resource
 	internal.KeyedMutex.Lock(plan.TenantID.ValueString())
 	defer internal.KeyedMutex.Unlock(plan.TenantID.ValueString())
 
-	// Validate that either environment_id or scope is provided, but not both
 	hasEnvironmentID := !plan.EnvironmentID.IsNull() && plan.EnvironmentID.ValueString() != ""
-	hasScope := len(plan.Scope) > 0
 
-	if hasEnvironmentID && hasScope {
-		resp.Diagnostics.AddError("Invalid configuration", "Cannot specify both environment_id and scope. Use environment_id for V1 API or scope for V2 API.")
-		return
-	}
-
-	if !hasEnvironmentID && !hasScope {
-		resp.Diagnostics.AddError("Invalid configuration", "Must specify either environment_id or scope block.")
-		return
-	}
-
-	if hasScope && !t.supportsV2() {
-		resp.Diagnostics.AddError(
-			"V2 API not supported",
-			"The 'scope' block requires V2 API support (CommonVariableScopingFeatureToggle). Your Octopus Server version does not support this feature. Please upgrade your server or use environment_id instead.",
-		)
+	if !t.validateScopeSupport(plan.Scope, &resp.Diagnostics) {
 		return
 	}
 
@@ -561,6 +539,33 @@ func (t *tenantProjectVariableResource) Update(ctx context.Context, req resource
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+}
+
+func (t *tenantProjectVariableResource) updateV1(ctx context.Context, plan *tenantProjectVariableResourceModel, tenant *tenants.Tenant, resp *resource.UpdateResponse) {
+	tflog.Debug(ctx, "Updating tenant project variable with V1 API")
+
+	tenantVariables, err := t.Client.Tenants.GetVariables(tenant)
+	if err != nil {
+		resp.Diagnostics.AddError("Error retrieving tenant variables", err.Error())
+		return
+	}
+
+	isSensitive, err := checkIfVariableIsSensitive(tenantVariables, *plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error checking if variable is sensitive", err.Error())
+		return
+	}
+
+	if err := updateTenantProjectVariable(tenantVariables, *plan, isSensitive); err != nil {
+		resp.Diagnostics.AddError("Error updating tenant project variable", err.Error())
+		return
+	}
+
+	_, err = t.Client.Tenants.UpdateVariables(tenant, tenantVariables)
+	if err != nil {
+		resp.Diagnostics.AddError("Error updating tenant variables", err.Error())
+		return
+	}
 }
 
 func (t *tenantProjectVariableResource) updateV2(ctx context.Context, plan *tenantProjectVariableResourceModel, spaceID string, hasEnvironmentID bool, resp *resource.UpdateResponse) {
@@ -626,40 +631,6 @@ func (t *tenantProjectVariableResource) updateV2(ctx context.Context, plan *tena
 	_, err = tenants.UpdateProjectVariables(t.Client, spaceID, plan.TenantID.ValueString(), cmd)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating tenant project variables", err.Error())
-		return
-	}
-
-	// If environment_id was provided, migrate to scope in state
-	if hasEnvironmentID && len(plan.Scope) == 0 {
-		envSet := util.BuildStringSetOrEmpty(scope.EnvironmentIds)
-		plan.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
-		plan.EnvironmentID = types.StringNull()
-	}
-}
-
-func (t *tenantProjectVariableResource) updateV1(ctx context.Context, plan *tenantProjectVariableResourceModel, tenant *tenants.Tenant, resp *resource.UpdateResponse) {
-	tflog.Debug(ctx, "Updating tenant project variable with V1 API")
-
-	tenantVariables, err := t.Client.Tenants.GetVariables(tenant)
-	if err != nil {
-		resp.Diagnostics.AddError("Error retrieving tenant variables", err.Error())
-		return
-	}
-
-	isSensitive, err := checkIfVariableIsSensitive(tenantVariables, *plan)
-	if err != nil {
-		resp.Diagnostics.AddError("Error checking if variable is sensitive", err.Error())
-		return
-	}
-
-	if err := updateTenantProjectVariable(tenantVariables, *plan, isSensitive); err != nil {
-		resp.Diagnostics.AddError("Error updating tenant project variable", err.Error())
-		return
-	}
-
-	_, err = t.Client.Tenants.UpdateVariables(tenant, tenantVariables)
-	if err != nil {
-		resp.Diagnostics.AddError("Error updating tenant variables", err.Error())
 		return
 	}
 }
@@ -746,13 +717,6 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnUpdate(ctx context.Contex
 		}
 	}
 
-	// If environment_id was provided, migrate to scope format in state
-	if hasEnvironmentID && len(plan.Scope) == 0 {
-		envSet := util.BuildStringSetOrEmpty(scope.EnvironmentIds)
-		plan.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
-	}
-	plan.EnvironmentID = types.StringNull()
-
 	tflog.Debug(ctx, "Tenant project variable migrated to V2", map[string]interface{}{
 		"new_id": plan.ID.ValueString(),
 	})
@@ -784,6 +748,38 @@ func (t *tenantProjectVariableResource) Delete(ctx context.Context, req resource
 		t.deleteV2(ctx, &state, spaceID, resp)
 	} else {
 		t.deleteV1(ctx, &state, tenant, resp)
+	}
+}
+
+func (t *tenantProjectVariableResource) deleteV1(ctx context.Context, state *tenantProjectVariableResourceModel, tenant *tenants.Tenant, resp *resource.DeleteResponse) {
+	tflog.Debug(ctx, "Deleting tenant project variable with V1 API")
+
+	tenantVariables, err := t.Client.Tenants.GetVariables(tenant)
+	if err != nil {
+		resp.Diagnostics.AddError("Error retrieving tenant variables", err.Error())
+		return
+	}
+
+	isSensitive, err := checkIfVariableIsSensitive(tenantVariables, *state)
+	if err != nil {
+		resp.Diagnostics.AddError("Error checking if variable is sensitive", err.Error())
+		return
+	}
+
+	if projectVariable, ok := tenantVariables.ProjectVariables[state.ProjectID.ValueString()]; ok {
+		if environment, ok := projectVariable.Variables[state.EnvironmentID.ValueString()]; ok {
+			if isSensitive {
+				environment[state.TemplateID.ValueString()] = core.PropertyValue{IsSensitive: true, SensitiveValue: &core.SensitiveValue{HasValue: false}}
+			} else {
+				delete(environment, state.TemplateID.ValueString())
+			}
+		}
+	}
+
+	_, err = t.Client.Tenants.UpdateVariables(tenant, tenantVariables)
+	if err != nil {
+		resp.Diagnostics.AddError("Error updating tenant variables", err.Error())
+		return
 	}
 }
 
@@ -839,38 +835,6 @@ func (t *tenantProjectVariableResource) deleteV2(ctx context.Context, state *ten
 	_, err = tenants.UpdateProjectVariables(t.Client, spaceID, state.TenantID.ValueString(), cmd)
 	if err != nil {
 		resp.Diagnostics.AddError("Error deleting tenant project variable", err.Error())
-		return
-	}
-}
-
-func (t *tenantProjectVariableResource) deleteV1(ctx context.Context, state *tenantProjectVariableResourceModel, tenant *tenants.Tenant, resp *resource.DeleteResponse) {
-	tflog.Debug(ctx, "Deleting tenant project variable with V1 API")
-
-	tenantVariables, err := t.Client.Tenants.GetVariables(tenant)
-	if err != nil {
-		resp.Diagnostics.AddError("Error retrieving tenant variables", err.Error())
-		return
-	}
-
-	isSensitive, err := checkIfVariableIsSensitive(tenantVariables, *state)
-	if err != nil {
-		resp.Diagnostics.AddError("Error checking if variable is sensitive", err.Error())
-		return
-	}
-
-	if projectVariable, ok := tenantVariables.ProjectVariables[state.ProjectID.ValueString()]; ok {
-		if environment, ok := projectVariable.Variables[state.EnvironmentID.ValueString()]; ok {
-			if isSensitive {
-				environment[state.TemplateID.ValueString()] = core.PropertyValue{IsSensitive: true, SensitiveValue: &core.SensitiveValue{HasValue: false}}
-			} else {
-				delete(environment, state.TemplateID.ValueString())
-			}
-		}
-	}
-
-	_, err = t.Client.Tenants.UpdateVariables(tenant, tenantVariables)
-	if err != nil {
-		resp.Diagnostics.AddError("Error updating tenant variables", err.Error())
 		return
 	}
 }

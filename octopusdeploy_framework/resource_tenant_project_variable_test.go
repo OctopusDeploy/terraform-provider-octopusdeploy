@@ -152,7 +152,6 @@ func testTenantProjectVariableExists(prefix string) resource.TestCheckFunc {
 			return fmt.Errorf("tenant project variable ID is not set")
 		}
 
-		// Check if this is a V2 ID (no colons) or V1 ID (has colons)
 		if !strings.Contains(resourceState.Primary.ID, ":") {
 			// V2 API - use real ID
 			tenantID := resourceState.Primary.Attributes["tenant_id"]
@@ -170,7 +169,6 @@ func testTenantProjectVariableExists(prefix string) resource.TestCheckFunc {
 				return fmt.Errorf("Error retrieving tenant project variables: %s", err.Error())
 			}
 
-			// Search for the variable by ID
 			for _, v := range getResp.Variables {
 				if v.GetID() == resourceState.Primary.ID {
 					return nil
@@ -180,7 +178,6 @@ func testTenantProjectVariableExists(prefix string) resource.TestCheckFunc {
 			return fmt.Errorf("Tenant project variable with ID %s not found via V2 API", resourceState.Primary.ID)
 		}
 
-		// V1 API - use composite ID
 		environmentID := resourceState.Primary.Attributes["environment_id"]
 		projectID := resourceState.Primary.Attributes["project_id"]
 		templateID := resourceState.Primary.Attributes["template_id"]
@@ -214,9 +211,7 @@ func testAccTenantProjectVariableCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		// Check if this is a V2 ID (no colons) or V1 ID (has colons)
 		if !strings.Contains(rs.Primary.ID, ":") {
-			// V2 API - use real ID
 			tenantID := rs.Primary.Attributes["tenant_id"]
 			spaceID := rs.Primary.Attributes["space_id"]
 
@@ -229,11 +224,9 @@ func testAccTenantProjectVariableCheckDestroy(s *terraform.State) error {
 
 			getResp, err := tenants.GetProjectVariables(client, query)
 			if err != nil {
-				// If we can't get the variables, assume they're gone
 				return nil
 			}
 
-			// Search for the variable by ID
 			for _, v := range getResp.Variables {
 				if v.GetID() == rs.Primary.ID {
 					return fmt.Errorf("Tenant project variable (%s) still exists", rs.Primary.ID)
@@ -243,7 +236,6 @@ func testAccTenantProjectVariableCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		// V1 API - use composite ID
 		importStrings := strings.Split(rs.Primary.ID, ":")
 		if len(importStrings) != 4 {
 			return fmt.Errorf("octopusdeploy_tenant_project_variable import must be in the form of TenantID:ProjectID:EnvironmentID:TemplateID (e.g. Tenants-123:Projects-456:Environments-789:6c9f2ba3-3ccd-407f-bbdf-6618e4fd0a0c")
@@ -303,7 +295,6 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 		PreCheck:     func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
-				// Step 1: Create with V1 API
 				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
 					"CommonVariableScopingFeatureToggle": false,
 				}),
@@ -314,7 +305,6 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceName, "scope.#"),
 					func(s *terraform.State) error {
 						rs := s.RootModule().Resources[resourceName]
-						// Verify it's a V1 composite ID (has colons)
 						if !strings.Contains(rs.Primary.ID, ":") {
 							return fmt.Errorf("Expected V1 composite ID with colons, got: %s", rs.Primary.ID)
 						}
@@ -324,7 +314,6 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 				Config: testAccTenantProjectVariableMigrationV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, variableLocalName, value),
 			},
 			{
-				// Step 2: Migrate to V2 API replacing environment_id with scope block (enable V2 API)
 				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
 					"CommonVariableScopingFeatureToggle": true,
 				}),
@@ -336,7 +325,6 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceName, "environment_id"),
 					func(s *terraform.State) error {
 						rs := s.RootModule().Resources[resourceName]
-						// Verify it's a V2 real ID (no colons)
 						if strings.Contains(rs.Primary.ID, ":") {
 							return fmt.Errorf("Expected V2 real ID without colons, got: %s", rs.Primary.ID)
 						}
@@ -346,7 +334,6 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 				Config: testAccTenantProjectVariableMigrationV2(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, variableLocalName, newValue),
 			},
 			{
-				// Step 3: Update value again to verify it works after migration
 				ProtoV6ProviderFactories: ProtoV6ProviderFactoriesWithFeatureToggleOverrides(map[string]bool{
 					"CommonVariableScopingFeatureToggle": true,
 				}),
@@ -358,7 +345,6 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceName, "environment_id"),
 					func(s *terraform.State) error {
 						rs := s.RootModule().Resources[resourceName]
-						// Verify still using V2 ID
 						if strings.Contains(rs.Primary.ID, ":") {
 							return fmt.Errorf("Expected V2 real ID without colons, got: %s", rs.Primary.ID)
 						}
@@ -497,7 +483,6 @@ func TestAccTenantProjectVariableWithScope(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				// Create with scope
 				Check: resource.ComposeTestCheckFunc(
 					testTenantProjectVariableExistsV2(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "value", value),
@@ -508,7 +493,6 @@ func TestAccTenantProjectVariableWithScope(t *testing.T) {
 				Config: testAccTenantProjectVariableWithScope(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, variableLocalName, value),
 			},
 			{
-				// Update value
 				Check: resource.ComposeTestCheckFunc(
 					testTenantProjectVariableExistsV2(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "value", newValue),
@@ -566,12 +550,10 @@ func testTenantProjectVariableExistsV2(resourceName string) resource.TestCheckFu
 			return fmt.Errorf("Tenant project variable ID is not set")
 		}
 
-		// V2 uses real IDs (e.g., TenantVariables-123), not composite IDs with colons
 		if strings.Contains(rs.Primary.ID, ":") {
 			return fmt.Errorf("Expected V2 ID (e.g., TenantVariables-123) but got V1 composite ID: %s", rs.Primary.ID)
 		}
 
-		// Use V2 API to verify the variable exists
 		tenantID := rs.Primary.Attributes["tenant_id"]
 		spaceID := rs.Primary.Attributes["space_id"]
 
@@ -587,7 +569,6 @@ func testTenantProjectVariableExistsV2(resourceName string) resource.TestCheckFu
 			return fmt.Errorf("Error retrieving tenant project variables: %s", err.Error())
 		}
 
-		// Search for the variable by ID
 		for _, v := range getResp.Variables {
 			if v.GetID() == rs.Primary.ID {
 				return nil
@@ -604,9 +585,7 @@ func testAccTenantProjectVariableCheckDestroyV2(s *terraform.State) error {
 			continue
 		}
 
-		// V2 uses real IDs, not composite IDs
 		if strings.Contains(rs.Primary.ID, ":") {
-			// This is a V1 ID, use V1 destroy check
 			continue
 		}
 
@@ -622,11 +601,9 @@ func testAccTenantProjectVariableCheckDestroyV2(s *terraform.State) error {
 
 		getResp, err := tenants.GetProjectVariables(client, query)
 		if err != nil {
-			// If we can't get the variables, assume they're gone
 			return nil
 		}
 
-		// Search for the variable by ID
 		for _, v := range getResp.Variables {
 			if v.GetID() == rs.Primary.ID {
 				return fmt.Errorf("Tenant project variable (%s) still exists", rs.Primary.ID)
