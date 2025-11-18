@@ -19,7 +19,6 @@ resource "octopusdeploy_project" "example" {
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   description                          = "The development project."
-  discrete_channel_release             = false
   is_disabled                          = false
   is_discrete_channel_release          = false
   is_version_controlled                = false
@@ -83,7 +82,7 @@ resource "octopusdeploy_project" "example" {
 - `deployment_changes_template` (String)
 - `deprovisioning_runbook_id` (String) The ID of the runbook to run when deprovisioning an ephemeral environment for this project.
 - `description` (String) The description of this project.
-- `discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
+- `discrete_channel_release` (Boolean, Deprecated) Treats releases of different channels to the same environment as a separate deployment dimension
 - `git_anonymous_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_anonymous_persistence_settings))
 - `git_library_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_library_persistence_settings))
 - `git_username_password_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_username_password_persistence_settings))
