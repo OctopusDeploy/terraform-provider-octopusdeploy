@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -94,6 +95,9 @@ func (t *tenantCommonVariableResource) Create(ctx context.Context, req resource.
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	internal.KeyedMutex.Lock(plan.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(plan.TenantID.ValueString())
 
 	if len(plan.Scope) > 0 && !t.supportsV2() {
 		resp.Diagnostics.AddError(
@@ -210,7 +214,7 @@ func (t *tenantCommonVariableResource) createV2(ctx context.Context, plan *tenan
 		scope.EnvironmentIds = envIDs
 	}
 
-	var payloads []variables.TenantCommonVariablePayload
+	payloads := []variables.TenantCommonVariablePayload{}
 
 	for _, v := range getResp.Variables {
 		payloads = append(payloads, variables.TenantCommonVariablePayload{
@@ -244,8 +248,35 @@ func (t *tenantCommonVariableResource) createV2(ctx context.Context, plan *tenan
 	var createdID string
 	for _, v := range updateResp.Variables {
 		if v.LibraryVariableSetId == plan.LibraryVariableSetID.ValueString() && v.TemplateID == plan.TemplateID.ValueString() {
-			createdID = v.GetID()
-			break
+			// Also match on scope to handle multiple variables with same template but different scopes
+			if len(plan.Scope) > 0 {
+				if len(v.Scope.EnvironmentIds) > 0 {
+					planEnvs := plan.Scope[0].EnvironmentIDs.Elements()
+					if len(planEnvs) == len(v.Scope.EnvironmentIds) {
+						match := true
+						planEnvSet := make(map[string]bool)
+						for _, e := range planEnvs {
+							planEnvSet[e.String()] = true
+						}
+						for _, serverEnv := range v.Scope.EnvironmentIds {
+							if !planEnvSet["\""+serverEnv+"\""] {
+								match = false
+								break
+							}
+						}
+						if match {
+							createdID = v.GetID()
+							break
+						}
+					}
+				}
+			} else {
+				// No scope in plan, match unscoped variable
+				if len(v.Scope.EnvironmentIds) == 0 {
+					createdID = v.GetID()
+					break
+				}
+			}
 		}
 	}
 
@@ -268,6 +299,9 @@ func (t *tenantCommonVariableResource) Read(ctx context.Context, req resource.Re
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	internal.KeyedMutex.Lock(state.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(state.TenantID.ValueString())
 
 	tenant, err := tenants.GetByID(t.Client, state.SpaceID.ValueString(), state.TenantID.ValueString())
 	if err != nil {
@@ -420,6 +454,9 @@ func (t *tenantCommonVariableResource) Update(ctx context.Context, req resource.
 		return
 	}
 
+	internal.KeyedMutex.Lock(plan.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(plan.TenantID.ValueString())
+
 	// Validate scope block usage on unsupported servers
 	if len(plan.Scope) > 0 && !t.supportsV2() {
 		resp.Diagnostics.AddError(
@@ -488,7 +525,7 @@ func (t *tenantCommonVariableResource) updateV2(ctx context.Context, plan *tenan
 		scope.EnvironmentIds = envIDs
 	}
 
-	var payloads []variables.TenantCommonVariablePayload
+	payloads := []variables.TenantCommonVariablePayload{}
 
 	for _, v := range getResp.Variables {
 		if v.GetID() == plan.ID.ValueString() {
@@ -585,7 +622,7 @@ func (t *tenantCommonVariableResource) migrateV1ToV2OnUpdate(ctx context.Context
 		scope.EnvironmentIds = envIDs
 	}
 
-	var payloads []variables.TenantCommonVariablePayload
+	payloads := []variables.TenantCommonVariablePayload{}
 
 	for _, v := range getResp.Variables {
 		if v.LibraryVariableSetId == plan.LibraryVariableSetID.ValueString() && v.TemplateID == plan.TemplateID.ValueString() {
@@ -644,6 +681,9 @@ func (t *tenantCommonVariableResource) Delete(ctx context.Context, req resource.
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	internal.KeyedMutex.Lock(state.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(state.TenantID.ValueString())
 
 	tenant, err := tenants.GetByID(t.Client, state.SpaceID.ValueString(), state.TenantID.ValueString())
 	if err != nil {
@@ -715,7 +755,7 @@ func (t *tenantCommonVariableResource) deleteV2(ctx context.Context, state *tena
 		return
 	}
 
-	var payloads []variables.TenantCommonVariablePayload
+	payloads := []variables.TenantCommonVariablePayload{}
 
 	for _, v := range getResp.Variables {
 		if v.GetID() == state.ID.ValueString() {

@@ -92,13 +92,14 @@ func findProjectVariableByID(variables []variables.TenantProjectVariable, id str
 }
 
 func (t *tenantProjectVariableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	internal.Mutex.Lock()
-	defer internal.Mutex.Unlock()
 	var plan tenantProjectVariableResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	internal.KeyedMutex.Lock(plan.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(plan.TenantID.ValueString())
 
 	tflog.Debug(ctx, "Creating tenant project variable")
 
@@ -149,6 +150,47 @@ func (t *tenantProjectVariableResource) Create(ctx context.Context, req resource
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
+func (t *tenantProjectVariableResource) createV1(ctx context.Context, plan *tenantProjectVariableResourceModel, tenant *tenants.Tenant, hasEnvironmentID bool, resp *resource.CreateResponse) {
+	tflog.Debug(ctx, "Using V1 API for tenant project variable")
+
+	if !hasEnvironmentID {
+		resp.Diagnostics.AddError("Invalid configuration", "environment_id is required for V1 API")
+		return
+	}
+
+	id := fmt.Sprintf("%s:%s:%s:%s", plan.TenantID.ValueString(), plan.ProjectID.ValueString(), plan.EnvironmentID.ValueString(), plan.TemplateID.ValueString())
+
+	tenantVariables, err := t.Client.Tenants.GetVariables(tenant)
+	if err != nil {
+		resp.Diagnostics.AddError("Error retrieving tenant variables", err.Error())
+		return
+	}
+
+	isSensitive, err := checkIfVariableIsSensitive(tenantVariables, *plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Error checking if variable is sensitive", err.Error())
+		return
+	}
+
+	if err := updateTenantProjectVariable(tenantVariables, *plan, isSensitive); err != nil {
+		resp.Diagnostics.AddError("Error updating tenant project variable", err.Error())
+		return
+	}
+
+	_, err = t.Client.Tenants.UpdateVariables(tenant, tenantVariables)
+	if err != nil {
+		resp.Diagnostics.AddError("Error updating tenant variables", err.Error())
+		return
+	}
+
+	plan.ID = types.StringValue(id)
+	plan.SpaceID = types.StringValue(tenant.SpaceID)
+
+	tflog.Debug(ctx, "Tenant project variable created with V1 API", map[string]interface{}{
+		"id": plan.ID.ValueString(),
+	})
+}
+
 func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tenantProjectVariableResourceModel, tenant *tenants.Tenant, spaceID string, hasEnvironmentID bool, resp *resource.CreateResponse) {
 	tflog.Debug(ctx, "Using V2 API for tenant project variable")
 
@@ -193,7 +235,7 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 	}
 
 	// Build payloads for ALL existing variables plus the new one
-	var payloads []variables.TenantProjectVariablePayload
+	payloads := []variables.TenantProjectVariablePayload{}
 
 	// Add all existing variables
 	for _, v := range getResp.Variables {
@@ -229,8 +271,29 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 	var createdID string
 	for _, v := range updateResp.Variables {
 		if v.ProjectID == plan.ProjectID.ValueString() && v.TemplateID == plan.TemplateID.ValueString() {
-			createdID = v.GetID()
-			break
+			// Also match on scope to handle multiple variables with same template but different scopes
+			if len(plan.Scope) > 0 {
+				if len(v.Scope.EnvironmentIds) > 0 {
+					planEnvs := plan.Scope[0].EnvironmentIDs.Elements()
+					if len(planEnvs) == len(v.Scope.EnvironmentIds) {
+						match := true
+						planEnvSet := make(map[string]bool)
+						for _, e := range planEnvs {
+							planEnvSet[e.String()] = true
+						}
+						for _, serverEnv := range v.Scope.EnvironmentIds {
+							if !planEnvSet["\""+serverEnv+"\""] {
+								match = false
+								break
+							}
+						}
+						if match {
+							createdID = v.GetID()
+							break
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -254,56 +317,15 @@ func (t *tenantProjectVariableResource) createV2(ctx context.Context, plan *tena
 	})
 }
 
-func (t *tenantProjectVariableResource) createV1(ctx context.Context, plan *tenantProjectVariableResourceModel, tenant *tenants.Tenant, hasEnvironmentID bool, resp *resource.CreateResponse) {
-	tflog.Debug(ctx, "Using V1 API for tenant project variable")
-
-	if !hasEnvironmentID {
-		resp.Diagnostics.AddError("Invalid configuration", "environment_id is required for V1 API")
-		return
-	}
-
-	id := fmt.Sprintf("%s:%s:%s:%s", plan.TenantID.ValueString(), plan.ProjectID.ValueString(), plan.EnvironmentID.ValueString(), plan.TemplateID.ValueString())
-
-	tenantVariables, err := t.Client.Tenants.GetVariables(tenant)
-	if err != nil {
-		resp.Diagnostics.AddError("Error retrieving tenant variables", err.Error())
-		return
-	}
-
-	isSensitive, err := checkIfVariableIsSensitive(tenantVariables, *plan)
-	if err != nil {
-		resp.Diagnostics.AddError("Error checking if variable is sensitive", err.Error())
-		return
-	}
-
-	if err := updateTenantProjectVariable(tenantVariables, *plan, isSensitive); err != nil {
-		resp.Diagnostics.AddError("Error updating tenant project variable", err.Error())
-		return
-	}
-
-	_, err = t.Client.Tenants.UpdateVariables(tenant, tenantVariables)
-	if err != nil {
-		resp.Diagnostics.AddError("Error updating tenant variables", err.Error())
-		return
-	}
-
-	plan.ID = types.StringValue(id)
-	plan.SpaceID = types.StringValue(tenant.SpaceID)
-
-	tflog.Debug(ctx, "Tenant project variable created with V1 API", map[string]interface{}{
-		"id": plan.ID.ValueString(),
-	})
-}
-
 func (t *tenantProjectVariableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	internal.Mutex.Lock()
-	defer internal.Mutex.Unlock()
-
 	var state tenantProjectVariableResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	internal.KeyedMutex.Lock(state.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(state.TenantID.ValueString())
 
 	tenant, err := tenants.GetByID(t.Client, state.SpaceID.ValueString(), state.TenantID.ValueString())
 	if err != nil {
@@ -482,14 +504,14 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnRead(ctx context.Context,
 }
 
 func (t *tenantProjectVariableResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	internal.Mutex.Lock()
-	defer internal.Mutex.Unlock()
-
 	var plan tenantProjectVariableResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	internal.KeyedMutex.Lock(plan.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(plan.TenantID.ValueString())
 
 	// Validate that either environment_id or scope is provided, but not both
 	hasEnvironmentID := !plan.EnvironmentID.IsNull() && plan.EnvironmentID.ValueString() != ""
@@ -575,7 +597,7 @@ func (t *tenantProjectVariableResource) updateV2(ctx context.Context, plan *tena
 		scope.EnvironmentIds = []string{plan.EnvironmentID.ValueString()}
 	}
 
-	var payloads []variables.TenantProjectVariablePayload
+	payloads := []variables.TenantProjectVariablePayload{}
 
 	for _, v := range getResp.Variables {
 		if v.GetID() == plan.ID.ValueString() {
@@ -676,7 +698,7 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnUpdate(ctx context.Contex
 		scope.EnvironmentIds = []string{plan.EnvironmentID.ValueString()}
 	}
 
-	var payloads []variables.TenantProjectVariablePayload
+	payloads := []variables.TenantProjectVariablePayload{}
 
 	for _, v := range getResp.Variables {
 		if v.ProjectID == plan.ProjectID.ValueString() && v.TemplateID == plan.TemplateID.ValueString() {
@@ -737,14 +759,14 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnUpdate(ctx context.Contex
 }
 
 func (t *tenantProjectVariableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	internal.Mutex.Lock()
-	defer internal.Mutex.Unlock()
-
 	var state tenantProjectVariableResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	internal.KeyedMutex.Lock(state.TenantID.ValueString())
+	defer internal.KeyedMutex.Unlock(state.TenantID.ValueString())
 
 	tenant, err := tenants.GetByID(t.Client, state.SpaceID.ValueString(), state.TenantID.ValueString())
 	if err != nil {
@@ -757,8 +779,8 @@ func (t *tenantProjectVariableResource) Delete(ctx context.Context, req resource
 		spaceID = tenant.SpaceID
 	}
 
-	useV1API := isCompositeID(state.ID.ValueString())
-	if !useV1API {
+	isV1ID := isCompositeID(state.ID.ValueString())
+	if !isV1ID {
 		t.deleteV2(ctx, &state, spaceID, resp)
 	} else {
 		t.deleteV1(ctx, &state, tenant, resp)
@@ -786,7 +808,7 @@ func (t *tenantProjectVariableResource) deleteV2(ctx context.Context, state *ten
 		return
 	}
 
-	var payloads []variables.TenantProjectVariablePayload
+	payloads := []variables.TenantProjectVariablePayload{}
 
 	for _, v := range getResp.Variables {
 		if v.GetID() == state.ID.ValueString() {
