@@ -23,11 +23,19 @@ Manages a tenant common variable in Octopus Deploy.
 
 ### Optional
 
+- `scope` (Block List) Sets the scope of the variable. (see [below for nested schema](#nestedblock--scope))
 - `space_id` (String) The space ID associated with this Tenant Common Variable.
 - `value` (String, Sensitive) The value of the variable.
 
 ### Read-Only
 
 - `id` (String) The unique ID for this resource.
+
+<a id="nestedblock--scope"></a>
+### Nested Schema for `scope`
+
+Optional:
+
+- `environment_ids` (Set of String) A set of environment IDs to scope this variable to.
 
 
