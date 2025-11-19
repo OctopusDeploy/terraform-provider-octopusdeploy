@@ -103,6 +103,23 @@ func findProjectVariableByID(variables []variables.TenantProjectVariable, id str
 	return false, false
 }
 
+// mapApiEnvironmentIdsToState sets either environment_id or the scope, to support backwards compatibility if users are using the environment_id field over scope
+func mapApiEnvironmentIdsToState(state *tenantProjectVariableResourceModel, environmentIds []string) {
+	stateUsesEnvironmentId := !state.EnvironmentID.IsNull() && state.EnvironmentID.ValueString() != ""
+
+	if len(environmentIds) > 0 {
+		if stateUsesEnvironmentId && len(environmentIds) == 1 && environmentIds[0] == state.EnvironmentID.ValueString() {
+			state.EnvironmentID = types.StringValue(environmentIds[0])
+		} else {
+			envSet := util.BuildStringSetOrEmpty(environmentIds)
+			state.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
+			state.EnvironmentID = types.StringNull()
+		}
+	} else {
+		state.EnvironmentID = types.StringNull()
+	}
+}
+
 func projectVariableMatchesPlan(variable variables.TenantProjectVariable, planProjectID, planTemplateID string, planScope []tenantProjectVariableScopeModel, planEnvironmentID types.String) bool {
 	if variable.ProjectID != planProjectID || variable.TemplateID != planTemplateID {
 		return false
@@ -411,12 +428,7 @@ func (t *tenantProjectVariableResource) readV2(ctx context.Context, state *tenan
 	var found bool
 	for _, v := range getResp.Variables {
 		if v.GetID() == state.ID.ValueString() {
-			if len(v.Scope.EnvironmentIds) > 0 {
-				envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
-				state.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
-			} else {
-				state.Scope = nil
-			}
+			mapApiEnvironmentIdsToState(state, v.Scope.EnvironmentIds)
 
 			isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
 			if !isSensitive {
@@ -455,12 +467,8 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnRead(ctx context.Context,
 			if len(v.Scope.EnvironmentIds) > 0 {
 				for _, envID := range v.Scope.EnvironmentIds {
 					if envID == state.EnvironmentID.ValueString() {
-						// Migrate to V2 ID
 						state.ID = types.StringValue(v.GetID())
-
-						envSet := util.BuildStringSetOrEmpty(v.Scope.EnvironmentIds)
-						state.Scope = []tenantProjectVariableScopeModel{{EnvironmentIDs: envSet}}
-						state.EnvironmentID = types.StringNull()
+						mapApiEnvironmentIdsToState(state, v.Scope.EnvironmentIds)
 
 						isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
 						if !isSensitive {
@@ -472,10 +480,8 @@ func (t *tenantProjectVariableResource) migrateV1ToV2OnRead(ctx context.Context,
 					}
 				}
 			} else {
-				// Variable exists but has no scope (applies to all environments)
 				state.ID = types.StringValue(v.GetID())
-				state.Scope = nil
-				state.EnvironmentID = types.StringNull()
+				mapApiEnvironmentIdsToState(state, v.Scope.EnvironmentIds)
 
 				isSensitive := isTemplateControlTypeSensitive(v.Template.DisplaySettings)
 				if !isSensitive {
