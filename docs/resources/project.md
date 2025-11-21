@@ -19,7 +19,6 @@ resource "octopusdeploy_project" "example" {
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   description                          = "The development project."
-  discrete_channel_release             = false
   is_disabled                          = false
   is_discrete_channel_release          = false
   is_version_controlled                = false
@@ -28,6 +27,7 @@ resource "octopusdeploy_project" "example" {
   project_group_id                     = "ProjectGroups-123"
   tenanted_deployment_participation    = "TenantedOrUntenanted"
   included_library_variable_sets       = [ "LibraryVariablesSets-456", "LibraryVariablesSets-789" ]
+  project_tags                         = ["TagSet1/Tag"]
 
 
   connectivity_policy {
@@ -82,7 +82,7 @@ resource "octopusdeploy_project" "example" {
 - `deployment_changes_template` (String)
 - `deprovisioning_runbook_id` (String) The ID of the runbook to run when deprovisioning an ephemeral environment for this project.
 - `description` (String) The description of this project.
-- `discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
+- `discrete_channel_release` (Boolean, Deprecated) Treats releases of different channels to the same environment as a separate deployment dimension
 - `git_anonymous_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_anonymous_persistence_settings))
 - `git_library_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_library_persistence_settings))
 - `git_username_password_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_username_password_persistence_settings))
@@ -91,6 +91,7 @@ resource "octopusdeploy_project" "example" {
 - `is_discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `is_version_controlled` (Boolean)
 - `jira_service_management_extension_settings` (Block List) Provides extension settings for the Jira Service Management (JSM) integration for this project. (see [below for nested schema](#nestedblock--jira_service_management_extension_settings))
+- `project_tags` (Set of String) A list of project tags associated with this resource.
 - `provisioning_runbook_id` (String) The ID of the runbook to run when provisioning an ephemeral environment for this project.
 - `release_creation_strategy` (Block List, Deprecated) (see [below for nested schema](#nestedblock--release_creation_strategy))
 - `release_notes_template` (String)

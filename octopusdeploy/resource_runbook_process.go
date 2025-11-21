@@ -59,6 +59,10 @@ func getRunbookProcessSchema() map[string]*schema.Schema {
 // resourceRunbookProcessCreate "creates" a new runbook deployment process. In reality every runbook has a deployment process
 // already, so this function retrieves the existing process and updates it.
 func resourceRunbookProcessCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_runbook_process", internal.DeprecationKeyProcess))
+	}
+
 	client := m.(*client.Client)
 	runbookProcess := expandRunbookProcess(ctx, d, client)
 
@@ -115,6 +119,10 @@ func resourceRunbookProcessCreate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceRunbookProcessDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_runbook_process", internal.DeprecationKeyProcess))
+	}
+
 	log.Printf("[INFO] deleting runbook process (%s)", d.Id())
 
 	// "Deleting" a runbook process just means to clear it out
@@ -161,6 +169,10 @@ func resourceRunbookProcessDelete(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceRunbookProcessRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_runbook_process", internal.DeprecationKeyProcess))
+	}
+
 	log.Printf("[INFO] reading runbook process (%s)", d.Id())
 
 	client := m.(*client.Client)
@@ -192,6 +204,10 @@ func resourceRunbookProcessRead(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceRunbookProcessUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	if !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyProcess) {
+		return diag.FromErr(internal.GetDeprecatedResourceError("octopusdeploy_runbook_process", internal.DeprecationKeyProcess))
+	}
+
 	log.Printf("[INFO] updating runbook process (%s)", d.Id())
 
 	client := m.(*client.Client)

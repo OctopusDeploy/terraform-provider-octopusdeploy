@@ -3,7 +3,6 @@ resource "octopusdeploy_project" "example" {
   default_guided_failure_mode          = "EnvironmentDefault"
   default_to_skip_if_already_installed = false
   description                          = "The development project."
-  discrete_channel_release             = false
   is_disabled                          = false
   is_discrete_channel_release          = false
   is_version_controlled                = false
@@ -12,6 +11,7 @@ resource "octopusdeploy_project" "example" {
   project_group_id                     = "ProjectGroups-123"
   tenanted_deployment_participation    = "TenantedOrUntenanted"
   included_library_variable_sets       = [ "LibraryVariablesSets-456", "LibraryVariablesSets-789" ]
+  project_tags                         = ["TagSet1/Tag"]
 
 
   connectivity_policy {

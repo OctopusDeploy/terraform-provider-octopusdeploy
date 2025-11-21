@@ -52,6 +52,15 @@ func (r *environmentTypeResource) Create(ctx context.Context, req resource.Creat
 	newEnvironment.AllowDynamicInfrastructure = data.AllowDynamicInfrastructure.ValueBool()
 	newEnvironment.UseGuidedFailure = data.UseGuidedFailure.ValueBool()
 	newEnvironment.SortOrder = util.GetNumber(data.SortOrder)
+
+	if !data.EnvironmentTags.IsNull() && !data.EnvironmentTags.IsUnknown() {
+		elements := data.EnvironmentTags.Elements()
+		environmentTags := make([]string, len(elements))
+		for i, elem := range elements {
+			environmentTags[i] = elem.(types.String).ValueString()
+		}
+		newEnvironment.EnvironmentTags = environmentTags
+	}
 	if len(data.JiraExtensionSettings.Elements()) > 0 {
 		jiraExtensionSettings := mapJiraExtensionSettings(data.JiraExtensionSettings)
 		if jiraExtensionSettings != nil {
@@ -124,6 +133,15 @@ func (r *environmentTypeResource) Update(ctx context.Context, req resource.Updat
 	updatedEnv.UseGuidedFailure = data.UseGuidedFailure.ValueBool()
 	updatedEnv.SortOrder = util.GetNumber(data.SortOrder)
 	updatedEnv.SpaceID = data.SpaceID.ValueString()
+
+	if !data.EnvironmentTags.IsNull() && !data.EnvironmentTags.IsUnknown() {
+		elements := data.EnvironmentTags.Elements()
+		environmentTags := make([]string, len(elements))
+		for i, elem := range elements {
+			environmentTags[i] = elem.(types.String).ValueString()
+		}
+		updatedEnv.EnvironmentTags = environmentTags
+	}
 	if len(data.JiraExtensionSettings.Elements()) > 0 {
 		jiraExtensionSettings := mapJiraExtensionSettings(data.JiraExtensionSettings)
 		if jiraExtensionSettings != nil {
@@ -180,6 +198,8 @@ func updateEnvironment(ctx context.Context, data *schemas.EnvironmentTypeResourc
 		data.UseGuidedFailure = types.BoolValue(environment.UseGuidedFailure)
 	}
 	data.SortOrder = types.Int64Value(int64(environment.SortOrder))
+
+	data.EnvironmentTags, _ = types.SetValueFrom(ctx, types.StringType, environment.EnvironmentTags)
 	if len(environment.ExtensionSettings) != 0 {
 		for _, extensionSettings := range environment.ExtensionSettings {
 			switch extensionSettings.ExtensionID() {

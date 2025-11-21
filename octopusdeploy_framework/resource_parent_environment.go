@@ -3,7 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments/parentenvironments"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments/v2/parentenvironments"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"

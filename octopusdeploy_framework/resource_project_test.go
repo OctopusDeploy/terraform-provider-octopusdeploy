@@ -173,3 +173,74 @@ func testAccProjectCheckExists() resource.TestCheckFunc {
 		return nil
 	}
 }
+
+// TODO: Uncomment this test when TagSet with Project scope is supported on Octopus docker image (2025.4)
+//func TestAccProjectWithTags(t *testing.T) {
+//	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	tagSetLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	tagLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	projectDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	prefix := "octopusdeploy_project." + projectLocalName
+//
+//	resource.Test(t, resource.TestCase{
+//		CheckDestroy: resource.ComposeTestCheckFunc(
+//			testAccProjectCheckDestroy,
+//			testAccProjectGroupCheckDestroy,
+//			testAccLifecycleCheckDestroy,
+//		),
+//		PreCheck:                 func() { TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+//		Steps: []resource.TestStep{
+//			{
+//				Check: resource.ComposeTestCheckFunc(
+//					testAccProjectCheckExists(),
+//					resource.TestCheckResourceAttr(prefix, "name", projectName),
+//					resource.TestCheckResourceAttr(prefix, "description", projectDescription),
+//					resource.TestCheckResourceAttr(prefix, "project_tags.#", "1"),
+//				),
+//				Config: testAccProjectWithTags(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName,
+//					tagSetLocalName, tagSetName, tagLocalName, tagName, projectLocalName, projectName, projectDescription),
+//			},
+//		},
+//	})
+//}
+
+func testAccProjectWithTags(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName,
+	tagSetLocalName, tagSetName, tagLocalName, tagName, projectLocalName, projectName, projectDescription string) string {
+	projectGroup := internaltest.NewProjectGroupTestOptions()
+	projectGroup.LocalName = projectGroupLocalName
+	projectGroup.Resource.Name = projectGroupName
+
+	return fmt.Sprintf(testAccLifecycle(lifecycleLocalName, lifecycleName)+"\n"+
+		internaltest.ProjectGroupConfiguration(projectGroup)+"\n"+
+		`resource "octopusdeploy_tag_set" "%s" {
+			name        = "%s"
+			description = "Tag set for project testing"
+			scopes      = ["Project"]
+		}
+
+		resource "octopusdeploy_tag" "%s" {
+			name        = "%s"
+			color       = "#6e6e6e"
+			description = "Test tag for project"
+			tag_set_id  = octopusdeploy_tag_set.%s.id
+		}
+
+		resource "octopusdeploy_project" "%s" {
+			name             = "%s"
+			description      = "%s"
+			lifecycle_id     = octopusdeploy_lifecycle.%s.id
+			project_group_id = octopusdeploy_project_group.%s.id
+			project_tags     = [octopusdeploy_tag.%s.canonical_tag_name]
+		}`,
+		tagSetLocalName, tagSetName,
+		tagLocalName, tagName, tagSetLocalName,
+		projectLocalName, projectName, projectDescription, lifecycleLocalName, projectGroupLocalName, tagLocalName)
+}

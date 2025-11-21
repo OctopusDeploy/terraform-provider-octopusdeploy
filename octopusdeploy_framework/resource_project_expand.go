@@ -143,6 +143,15 @@ func expandProject(ctx context.Context, model projectResourceModel) *projects.Pr
 		}
 	}
 
+	if !model.ProjectTags.IsNull() && !model.ProjectTags.IsUnknown() {
+		elements := model.ProjectTags.Elements()
+		projectTags := make([]string, len(elements))
+		for i, elem := range elements {
+			projectTags[i] = elem.(types.String).ValueString()
+		}
+		project.ProjectTags = projectTags
+	}
+
 	return project
 }
 

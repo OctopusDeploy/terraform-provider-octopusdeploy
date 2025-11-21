@@ -1,6 +1,7 @@
 package octopusdeploy_framework
 
 import (
+	"context"
 	"fmt"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -8,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
+	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tagsets"
@@ -17,6 +19,8 @@ func TestTagSetAndTag(t *testing.T) {
 	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
 	tagSetDescription := "TagSet Description" + tagSetName
+	tagSetUpdatedName := tagSetName + "-updated"
+	tagSetUpdatedDescription := "Updated " + tagSetDescription
 
 	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagPrefix := "octopusdeploy_tag." + tagName
@@ -49,6 +53,17 @@ func TestTagSetAndTag(t *testing.T) {
 					resource.TestCheckResourceAttrPair(tagPrefix, "tag_set_id", tagSetPrefix, "id"),
 				),
 			},
+			{
+				Config: testTagSetAndTagConfigWithID(tagSetName, tagSetUpdatedName, tagSetUpdatedDescription, tagName, tagColor),
+				Check: resource.ComposeTestCheckFunc(
+					testTagSetExists(tagSetPrefix),
+					testTagExists(tagPrefix),
+					resource.TestCheckResourceAttr(tagSetPrefix, "name", tagSetUpdatedName),
+					resource.TestCheckResourceAttr(tagSetPrefix, "description", tagSetUpdatedDescription),
+					resource.TestCheckResourceAttr(tagPrefix, "name", tagName),
+					resource.TestCheckResourceAttr(tagPrefix, "color", tagColor),
+				),
+			},
 		},
 	})
 }
@@ -62,18 +77,22 @@ func testTagSetConfig(name, description string) string {
 }
 
 func testTagSetAndTagConfig(tagSetName, tagSetDescription, tagName, tagColor string) string {
+	return testTagSetAndTagConfigWithID(tagSetName, tagSetName, tagSetDescription, tagName, tagColor)
+}
+
+func testTagSetAndTagConfigWithID(tagSetResourceID, tagSetName, tagSetDescription, tagName, tagColor string) string {
 	var tfConfig = fmt.Sprintf(`
     resource "octopusdeploy_tag_set" "%s" {
       name        = "%s"
       description = "%s"
     }
-    
+
     resource "octopusdeploy_tag" "%s" {
       name        = "%s"
       color       = "%s"
       description = "Test tag"
       tag_set_id  = octopusdeploy_tag_set.%s.id
-    }`, tagSetName, tagSetName, tagSetDescription, tagName, tagName, tagColor, tagSetName)
+    }`, tagSetResourceID, tagSetName, tagSetDescription, tagName, tagName, tagColor, tagSetResourceID)
 	return tfConfig
 }
 
@@ -130,6 +149,8 @@ func TestExpandTagSet(t *testing.T) {
 	sortOrder := int64(10)
 	spaceID := "Spaces-1"
 
+	ctx := context.Background()
+
 	tagSetModel := schemas.TagSetResourceModel{
 		Name:        types.StringValue(name),
 		Description: types.StringValue(description),
@@ -137,10 +158,70 @@ func TestExpandTagSet(t *testing.T) {
 		SpaceID:     types.StringValue(spaceID),
 	}
 
-	tagSet := expandTagSet(tagSetModel)
+	tagSet := expandTagSet(ctx, tagSetModel)
 
 	require.Equal(t, name, tagSet.Name)
 	require.Equal(t, description, tagSet.Description)
 	require.Equal(t, int32(sortOrder), tagSet.SortOrder)
 	require.Equal(t, spaceID, tagSet.SpaceID)
 }
+
+func TestAccTagSetValidation(t *testing.T) {
+	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name   = "%s"
+						scopes = ["InvalidScope"]
+					}`, tagSetName, tagSetName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name = "%s"
+						type = "InvalidType"
+					}`, tagSetName, tagSetName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+		},
+	})
+}
+
+// TODO: Uncomment this test when TagSet with Project scope is supported on Octopus docker image (2025.4)
+//func TestAccTagSetWithProjectScope(t *testing.T) {
+//	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+//	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
+//	tagSetDescription := "TagSet with Project scope"
+//
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+//		Steps: []resource.TestStep{
+//			{
+//				Config: fmt.Sprintf(`
+//					resource "octopusdeploy_tag_set" "%s" {
+//						name        = "%s"
+//						description = "%s"
+//						scopes      = ["Project"]
+//						type        = "SingleSelect"
+//					}`, tagSetName, tagSetName, tagSetDescription),
+//				Check: resource.ComposeTestCheckFunc(
+//					testTagSetExists(tagSetPrefix),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "name", tagSetName),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "description", tagSetDescription),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.#", "1"),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.0", "Project"),
+//					resource.TestCheckResourceAttr(tagSetPrefix, "type", "SingleSelect"),
+//				),
+//			},
+//		},
+//	})
+//}

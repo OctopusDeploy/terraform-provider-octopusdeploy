@@ -30,6 +30,11 @@ func TestMain(m *testing.M) {
 		log.Printf("Failed to set OCTOPUS_URL env: (%s)", err.Error())
 		return
 	}
+	err = os.Setenv("TF_OCTOPUS_DEPRECATION_REVERSALS", "Process_v1.0.0")
+	if err != nil {
+		log.Printf("Failed to set TF_OCTOPUS_DEPRECATION_REVERSALS env: (%s)", err.Error())
+		return
+	}
 	if *createSharedContainer {
 
 		testFramework := test.OctopusContainerTest{
