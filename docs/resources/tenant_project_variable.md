@@ -26,19 +26,27 @@ resource "octopusdeploy_tenant_project_variable" "example" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment.
 - `project_id` (String) The ID of the project.
 - `template_id` (String) The ID of the variable template.
 - `tenant_id` (String) The ID of the tenant.
 
 ### Optional
 
+- `environment_id` (String) The ID of the environment. Use scope block for V2 API with multiple environments.
+- `scope` (Block List) Sets the scope of the variable. (see [below for nested schema](#nestedblock--scope))
 - `space_id` (String) The space ID associated with this Tenant Project Variable.
 - `value` (String, Sensitive) The value of the variable.
 
 ### Read-Only
 
 - `id` (String) The unique ID for this resource.
+
+<a id="nestedblock--scope"></a>
+### Nested Schema for `scope`
+
+Optional:
+
+- `environment_ids` (Set of String) A set of environment IDs to scope this variable to.
 
 ## Import
 
