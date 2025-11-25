@@ -9,12 +9,14 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var _ resource.Resource = &platformHubGitCredentialResource{}
+var _ resource.ResourceWithImportState = &platformHubGitCredentialResource{}
 
 type platformHubGitCredentialResource struct {
 	*Config
@@ -46,6 +48,11 @@ func (g *platformHubGitCredentialResource) Schema(_ context.Context, _ resource.
 func (g *platformHubGitCredentialResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	g.Config = ResourceConfiguration(req, resp)
 }
+
+func (g *platformHubGitCredentialResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 func (g *platformHubGitCredentialResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan platformHubGitCredentialResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
