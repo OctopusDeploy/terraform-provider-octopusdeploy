@@ -21,8 +21,9 @@ resource "octopusdeploy_aws_openid_connect_account" "example" {
   tenants = ["tenants-123"]
   execution_subject_keys = ["space"]
   custom_claims = {
-    "custom_claim_1" = "value1"
-    "custom_claim_2" = "value2"
+    "claim1" = "value1"
+    "claim2" = "{\"nestedClaim1\":\"value2\",\"nestedClaim2\":\"value3\"}"
+    "claim3" = "[\"value4\",\"value5\",\"value6\"]"
   }
 }
 ```
@@ -38,7 +39,7 @@ resource "octopusdeploy_aws_openid_connect_account" "example" {
 ### Optional
 
 - `account_test_subject_keys` (List of String) Keys to include in an account test. Valid options are: `space`, `account`, `type`
-- `custom_claims` (Map of String) Additional custom claims.
+- `custom_claims` (Map of String) Additional custom claims to include in the OIDC token. Values are strings, but can contain JSON-encoded objects or arrays which will be automatically parsed (e.g., `{"nestedClaim1":"value1"}` or `["value1","value2"]`).
 - `description` (String) A user-friendly description of this AWS OIDC account.
 - `environments` (List of String) A list of environment IDs associated with this resource.
 - `execution_subject_keys` (List of String) Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`
