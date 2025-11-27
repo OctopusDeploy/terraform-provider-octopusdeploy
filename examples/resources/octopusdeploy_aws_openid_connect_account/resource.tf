@@ -6,4 +6,8 @@ resource "octopusdeploy_aws_openid_connect_account" "example" {
   environments = ["environment-123"]
   tenants = ["tenants-123"]
   execution_subject_keys = ["space"]
+  custom_claims = {
+    "custom_claim_1" = "value1"
+    "custom_claim_2" = "value2"
+  }
 }
