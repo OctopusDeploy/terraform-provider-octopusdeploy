@@ -526,7 +526,7 @@ func mapProcessStepActionToState(action *deployments.DeploymentAction, state *sc
 	state.PrimaryPackage, state.Packages = mapPackageReferencesToState(action.Packages)
 
 	diags := diag.Diagnostics{}
-	state.ExecutionProperties, diags = mapActionExecutionPropertiesToState(action.Properties)
+	state.ExecutionProperties, diags = mapActionExecutionPropertiesToState(action.Properties, state.ExecutionProperties)
 
 	return diags
 }
@@ -605,13 +605,32 @@ func mapPackageReferencesToState(references []*packages.PackageReference) (*sche
 	return primaryPackage, types.MapValueMust(schemas.ProcessStepPackageReferenceObjectType(), statePackages)
 }
 
-func mapActionExecutionPropertiesToState(properties map[string]core.PropertyValue) (types.Map, diag.Diagnostics) {
+func mapActionExecutionPropertiesToState(properties map[string]core.PropertyValue, currentState types.Map) (types.Map, diag.Diagnostics) {
+	// Extract current state values to preserve casing
+	currentStateValues := make(map[string]string)
+	if !currentState.IsNull() && !currentState.IsUnknown() {
+		for key, val := range currentState.Elements() {
+			if strVal, ok := val.(types.String); ok && !strVal.IsNull() {
+				currentStateValues[key] = strVal.ValueString()
+			}
+		}
+	}
+
 	attributeValues := make(map[string]attr.Value)
 	for key, value := range properties {
 		if schemas.IsReservedExecutionProperty(key) {
 			continue
 		}
-		attributeValues[key] = types.StringValue(value.Value)
+
+		apiValue := value.Value
+		// Preserve the user's original casing for boolean-like strings if they're semantically equivalent
+		if currentValue, exists := currentStateValues[key]; exists {
+			if strings.EqualFold(apiValue, currentValue) && isBooleanLikeString(apiValue) {
+				apiValue = currentValue
+			}
+		}
+
+		attributeValues[key] = types.StringValue(apiValue)
 	}
 
 	valuesMap, diags := types.MapValue(types.StringType, attributeValues)
@@ -620,4 +639,10 @@ func mapActionExecutionPropertiesToState(properties map[string]core.PropertyValu
 	}
 
 	return valuesMap, diags
+}
+
+// isBooleanLikeString checks if a string represents a boolean value
+func isBooleanLikeString(s string) bool {
+	lower := strings.ToLower(s)
+	return lower == "true" || lower == "false"
 }
