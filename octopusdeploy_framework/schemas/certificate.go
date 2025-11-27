@@ -57,7 +57,7 @@ func (c CertificateSchema) GetResourceSchema() resourceSchema.Schema {
 				Validators:  []validator.String{stringvalidator.LengthAtLeast(1)},
 			},
 			"certificate_data_format": getCertificateDataFormatResourceSchema(),
-			"environments":            getEnvironmentsResourceSchema(),
+			"environments":            getEnvironmentsResourceSchema("A set of environment IDs associated with this resource."),
 			"has_private_key": resourceSchema.BoolAttribute{
 				Description: "Indicates if the certificate has a private key.",
 				Computed:    true,
