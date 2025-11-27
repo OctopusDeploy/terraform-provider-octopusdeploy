@@ -7,7 +7,8 @@ resource "octopusdeploy_aws_openid_connect_account" "example" {
   tenants = ["tenants-123"]
   execution_subject_keys = ["space"]
   custom_claims = {
-    "custom_claim_1" = "value1"
-    "custom_claim_2" = "value2"
+    "claim1" = "value1"
+    "claim2" = "{\"nestedClaim1\":\"value2\",\"nestedClaim2\":\"value3\"}"
+    "claim3" = "[\"value4\",\"value5\",\"value6\"]"
   }
 }
