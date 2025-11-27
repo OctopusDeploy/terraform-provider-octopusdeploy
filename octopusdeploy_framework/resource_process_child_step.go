@@ -359,7 +359,7 @@ func mapProcessChildStepActionToState(process processWrapper, step *deployments.
 	state.PrimaryPackage, state.Packages = mapPackageReferencesToState(action.Packages)
 
 	diags := diag.Diagnostics{}
-	state.ExecutionProperties, diags = mapActionExecutionPropertiesToState(action.Properties)
+	state.ExecutionProperties, diags = mapActionExecutionPropertiesToState(action.Properties, state.ExecutionProperties)
 
 	return diags
 }

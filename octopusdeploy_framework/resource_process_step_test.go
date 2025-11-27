@@ -43,17 +43,18 @@ func testAccProcessStepRunScriptConfiguration(dependencies string, process strin
 	return fmt.Sprintf(`
 		%s
 		resource "octopusdeploy_process_step" "%s" {
-		  process_id  = octopusdeploy_process.%s.id
-		  name = "%s"
+		  process_id     = octopusdeploy_process.%s.id
+		  name           = "%s"
+		  type           = "Octopus.Script"
+		  worker_pool_id = data.octopusdeploy_worker_pools.default.worker_pools[0].id
 		  properties = {
 			"Octopus.Action.TargetRoles" = "role-one"
 		  }
-		  type = "Octopus.Script"
 		  execution_properties = {
-			"Octopus.Action.RunOnServer" = "True"
+			"Octopus.Action.RunOnServer"         = "True"
 			"Octopus.Action.Script.ScriptSource" = "Inline"
 			"Octopus.Action.Script.Syntax"       = "PowerShell"
-			"Octopus.Action.Script.ScriptBody" = "%s"
+			"Octopus.Action.Script.ScriptBody"   = "%s"
 		  }
 		}
 		`,
@@ -72,6 +73,7 @@ func testCheckResourceProcessStepRunScriptAttributes(step string, script string)
 		resource.TestCheckResourceAttr(qualifiedName, "name", step),
 		resource.TestCheckResourceAttrSet(qualifiedName, "action_id"),
 		resource.TestCheckResourceAttr(qualifiedName, "type", "Octopus.Script"),
+		resource.TestCheckResourceAttrSet(qualifiedName, "worker_pool_id"),
 		resource.TestCheckResourceAttr(qualifiedName, "properties.Octopus.Action.TargetRoles", "role-one"),
 		resource.TestCheckResourceAttr(qualifiedName, "execution_properties.Octopus.Action.RunOnServer", "True"),
 		resource.TestCheckResourceAttr(qualifiedName, "execution_properties.Octopus.Action.Script.ScriptSource", "Inline"),
@@ -96,6 +98,12 @@ func newProcessStepTestDependenciesConfiguration(scenario string) processStepTes
 		  skip         = 0
 		  take         = 1
 		}
+
+		data "octopusdeploy_worker_pools" "default" {
+		  partial_name = "Default Worker Pool"
+		  take         = 1
+		}
+
 		resource "octopusdeploy_project_group" "%s" {
 		  name        = "%s"
 		  description = "Test process step"
