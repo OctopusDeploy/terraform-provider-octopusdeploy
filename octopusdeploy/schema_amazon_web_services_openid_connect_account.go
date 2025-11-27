@@ -3,11 +3,12 @@ package octopusdeploy
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/accounts"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strconv"
 )
 
 func expandAmazonWebServicesOpenIDConnectAccount(d *schema.ResourceData) *accounts.AwsOIDCAccount {
@@ -57,6 +58,13 @@ func expandAmazonWebServicesOpenIDConnectAccount(d *schema.ResourceData) *accoun
 		account.SessionDuration = strconv.Itoa(v.(int))
 	}
 
+	if v, ok := d.GetOk("custom_claims"); ok {
+		account.CustomClaims = make(map[string]string)
+		for key, value := range v.(map[string]interface{}) {
+			account.CustomClaims[key] = value.(string)
+		}
+	}
+
 	return account
 }
 
@@ -92,6 +100,12 @@ func getAmazonWebServicesOpenIDConnectAccountSchema() map[string]*schema.Schema 
 			Optional:    true,
 			Type:        schema.TypeInt,
 		},
+		"custom_claims": {
+			Description: "Additional custom claims.",
+			Optional:    true,
+			Type:        schema.TypeMap,
+			Elem:        &schema.Schema{Type: schema.TypeString},
+		},
 	}
 }
 
@@ -125,6 +139,10 @@ func setAmazonWebServicesOpenIDConnectAccount(ctx context.Context, d *schema.Res
 
 	if err := d.Set("account_test_subject_keys", account.AccountTestSubjectKeys); err != nil {
 		return fmt.Errorf("error setting account_test_subject_keys: %s", err)
+	}
+
+	if err := d.Set("custom_claims", account.CustomClaims); err != nil {
+		return fmt.Errorf("error setting custom_claims: %s", err)
 	}
 
 	return nil

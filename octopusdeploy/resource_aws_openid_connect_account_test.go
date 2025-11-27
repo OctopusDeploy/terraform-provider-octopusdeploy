@@ -59,6 +59,17 @@ func TestAccAWSOIDCAccountBasic(t *testing.T) {
 				),
 				Config: testAwsOIDCAccountBasic(localName, name, description, roleArn, sessionDuration, tenantedDeploymentParticipation, executionKeys, healthKeys, accountKeys),
 			},
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccountExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "description", description),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "custom_claims.claim1", "value1"),
+					resource.TestCheckResourceAttr(prefix, "custom_claims.claim2", "{\"nestedClaim1\":\"value2\",\"nestedClaim2\":\"value3\"}"),
+					resource.TestCheckResourceAttr(prefix, "custom_claims.claim3", "[\"value4\",\"value5\",\"value6\"]"),
+				),
+				Config: testAwsOIDCAccountBasicWithCustomClaims(localName, name, description, roleArn, sessionDuration, tenantedDeploymentParticipation, executionKeys, healthKeys, accountKeys),
+			},
 		},
 	})
 }
@@ -75,6 +86,28 @@ func testAwsOIDCAccountBasic(localName string, name string, description string, 
 		session_duration = %s
 	}
 	
+	data "octopusdeploy_accounts" "test" {
+		ids = [octopusdeploy_aws_openid_connect_account.%s.id]
+	}`, localName, description, name, roleArn, tenantedDeploymentParticipation, StringArrayToTerraformArrayFormat(execution_subject_keys), StringArrayToTerraformArrayFormat(health_subject_keys), StringArrayToTerraformArrayFormat(account_test_subject_keys), sessionDuration, localName)
+}
+
+func testAwsOIDCAccountBasicWithCustomClaims(localName string, name string, description string, roleArn string, sessionDuration string, tenantedDeploymentParticipation core.TenantedDeploymentMode, execution_subject_keys []string, health_subject_keys []string, account_test_subject_keys []string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
+		description = "%s"
+		name = "%s"
+		role_arn = "%s"
+		tenanted_deployment_participation = "%s"
+		execution_subject_keys = %s
+		health_subject_keys = %s
+		account_test_subject_keys = %s
+		session_duration = %s
+		custom_claims = {
+			claim1 = "value1"
+			claim2 = "{\"nestedClaim1\":\"value2\",\"nestedClaim2\":\"value3\"}"
+			claim3 = "[\"value4\",\"value5\",\"value6\"]"
+		}
+	}
+
 	data "octopusdeploy_accounts" "test" {
 		ids = [octopusdeploy_aws_openid_connect_account.%s.id]
 	}`, localName, description, name, roleArn, tenantedDeploymentParticipation, StringArrayToTerraformArrayFormat(execution_subject_keys), StringArrayToTerraformArrayFormat(health_subject_keys), StringArrayToTerraformArrayFormat(account_test_subject_keys), sessionDuration, localName)
