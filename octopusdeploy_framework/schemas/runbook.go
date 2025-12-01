@@ -3,6 +3,7 @@ package schemas
 import (
 	"context"
 	"fmt"
+
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 
 	//datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -124,7 +125,7 @@ type RunbookTypeResourceModel struct {
 	ResourceModel
 }
 
-type RunbookRetentionPeriodModel struct {
+type RunbookRetentionPolicyModel struct {
 	QuantityToKeep    types.String `tfsdk:"quantity_to_keep"`
 	ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
 }
@@ -242,7 +243,7 @@ func (r RunbookSchema) GetResourceSchema() resourceSchema.Schema {
 			RunbookSchemaAttributeNames.RetentionPolicy: resourceSchema.ListNestedBlock{
 				Description: "Sets the runbook retention policy.",
 				NestedObject: resourceSchema.NestedBlockObject{
-					Attributes: getRunbookRetentionPeriodSchema(),
+					Attributes: getLegacyRunbookRetentionPolicySchema(),
 				},
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
@@ -288,8 +289,8 @@ func (data *RunbookTypeResourceModel) RefreshFromApiResponse(ctx context.Context
 	if !data.RunRetentionPolicy.IsNull() {
 		result, d := types.ListValueFrom(
 			ctx,
-			types.ObjectType{AttrTypes: GetRunbookRetentionPeriodObjectType()},
-			[]attr.Value{MapFromRunbookRetentionPeriod(runbook.RunRetentionPolicy)},
+			types.ObjectType{AttrTypes: GetLegacyRunbookRetentionPolicyObjectType()},
+			[]attr.Value{MapFromLegacyRunbookRetentionPolicy(runbook.RunRetentionPolicy)},
 		)
 		diags.Append(d...)
 		data.RunRetentionPolicy = result

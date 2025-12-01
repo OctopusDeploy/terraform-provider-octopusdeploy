@@ -62,7 +62,7 @@ func (r *runbookTypeResource) Create(ctx context.Context, req resource.CreateReq
 	runbook.EnvironmentScope = plan.EnvironmentScope.ValueString()
 	runbook.Environments = util.ExpandStringList(plan.Environments)
 	runbook.DefaultGuidedFailureMode = plan.DefaultGuidedFailureMode.ValueString()
-	runbook.RunRetentionPolicy = schemas.MapToRunbookRetentionPeriod(plan.RunRetentionPolicy)
+	runbook.RunRetentionPolicy = schemas.MapToLegacyRunbookRetentionPolicy(plan.RunRetentionPolicy)
 	runbook.ForcePackageDownload = plan.ForcePackageDownload.ValueBool()
 
 	util.Create(ctx, schemas.RunbookResourceDescription, plan)
@@ -177,7 +177,7 @@ func (r *runbookTypeResource) Update(ctx context.Context, req resource.UpdateReq
 	updatedRunbook.EnvironmentScope = plan.EnvironmentScope.ValueString()
 	updatedRunbook.Environments = util.ExpandStringList(plan.Environments)
 	updatedRunbook.DefaultGuidedFailureMode = plan.DefaultGuidedFailureMode.ValueString()
-	updatedRunbook.RunRetentionPolicy = schemas.MapToRunbookRetentionPeriod(plan.RunRetentionPolicy)
+	updatedRunbook.RunRetentionPolicy = schemas.MapToLegacyRunbookRetentionPolicy(plan.RunRetentionPolicy)
 	updatedRunbook.ForcePackageDownload = plan.ForcePackageDownload.ValueBool()
 
 	updatedRunbook, err = runbooks.Update(r.Config.Client, updatedRunbook)
