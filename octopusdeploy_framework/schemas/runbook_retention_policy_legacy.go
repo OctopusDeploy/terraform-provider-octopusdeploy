@@ -58,7 +58,7 @@ func MapFromLegacyRunbookRetentionPolicy(retentionPolicy *runbooks.RunbookRetent
 
 	attrs := map[string]attr.Value{
 		legacyRunbookRetentionPolicySchemeAttributeNames.QuantityToKeep:    types.Int64Value(int64(retentionPolicy.QuantityToKeep)),
-		legacyRunbookRetentionPolicySchemeAttributeNames.ShouldKeepForever: types.BoolValue(retentionPolicy.Strategy == runbooks.RunbookRetentionStrategyDefault),
+		legacyRunbookRetentionPolicySchemeAttributeNames.ShouldKeepForever: types.BoolValue(retentionPolicy.Strategy == runbooks.RunbookRetentionStrategyForever),
 	}
 
 	return types.ObjectValueMust(GetLegacyRunbookRetentionPolicyObjectType(), attrs)
