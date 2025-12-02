@@ -72,7 +72,7 @@ func TestAccOctopusDeployRunbookUpdate(t *testing.T) {
 	})
 }
 
-func TestAccOctopusDeployRunbookWithPolicies(t *testing.T) {
+func TestAccOctopusDeployRunbookWithConnectivityPolicy(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_runbook." + localName
 	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -93,15 +93,150 @@ func TestAccOctopusDeployRunbookWithPolicies(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "connectivity_policy.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "connectivity_policy.0.allow_deployments_to_no_targets", "true"),
 					resource.TestCheckResourceAttr(prefix, "connectivity_policy.0.exclude_unhealthy_targets", "true"),
-					resource.TestCheckResourceAttr(prefix, "retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(prefix, "retention_policy.0.quantity_to_keep", "10"),
 				),
-				Config: testAccRunbookWithPolicies(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookWithConnectivityPolicy(localName, projectLocalName, name, description, projectName),
 			},
 		},
 	})
 }
 
+func TestAccOctopusDeployRunbookWithLegacyCountRetentionPolicy(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_runbook." + localName
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccRunbookExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "description", description),
+					resource.TestCheckResourceAttr(prefix, "retention_policy.#", "1"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy.0.quantity_to_keep", "10"),
+				),
+				Config: testAccRunbookWithLegacyCountRetentionPolicy(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployRunbookWithLegacyForeverRetentionPolicy(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_runbook." + localName
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccRunbookExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "description", description),
+					resource.TestCheckResourceAttr(prefix, "retention_policy.#", "1"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy.0.quantity_to_keep", "0"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy.0.should_keep_forever", "true"),
+				),
+				Config: testAccRunbookWithLegacyForeverRetentionPolicy(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicy(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_runbook." + localName
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccRunbookExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "description", description),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.#", "1"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.strategy", "Count"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.quantity_to_keep", "10"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.unit", "Items"),
+				),
+				Config: testAccRunbookWithCountStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployRunbookWithForeverStrategyRetentionPolicy(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_runbook." + localName
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccRunbookExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "description", description),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.#", "1"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.strategy", "Forever"),
+				),
+				Config: testAccRunbookWithForeverStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployRunbookWithDefaultStrategyRetentionPolicy(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_runbook." + localName
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccRunbookExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "description", description),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.#", "1"),
+					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.strategy", "Default"),
+				),
+				Config: testAccRunbookWithDefaultStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
 func TestAccOctopusDeployRunbookImport(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_runbook." + localName
@@ -145,7 +280,7 @@ func testAccRunbookBasic(localName string, projectLocalName string, name string,
 	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
 }
 
-func testAccRunbookWithPolicies(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithConnectivityPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
@@ -164,9 +299,112 @@ func testAccRunbookWithPolicies(localName string, projectLocalName string, name 
 			allow_deployments_to_no_targets = true
 			exclude_unhealthy_targets        = true
 		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithLegacyCountRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
 		
 		retention_policy {
 			quantity_to_keep = 10
+		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithLegacyForeverRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
+		
+		retention_policy {
+			should_keep_forever = true
+		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithCountStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
+		
+		retention_policy_with_strategy {
+			strategy		= "Count"
+			quantity_to_keep = 10
+			unit 		 = "Items"
+		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithForeverStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
+		
+		retention_policy_with_strategy {
+			strategy		= "Forever"
+		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithDefaultStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
+		
+		retention_policy_with_strategy {
+			strategy		= "Default"
 		}
 	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
 }
