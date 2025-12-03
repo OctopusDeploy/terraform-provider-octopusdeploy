@@ -14,8 +14,8 @@ type spaceDefaultRunbookRetentionPolicyResource struct {
 	*Config
 }
 
-// NewSpaceDefaultRunbookRetentionPolicyResource creates a new resource for space default lifecycle tentacle retention policies.
-func NewSpaceDefaultLifecycleRunbookPolicyResource() resource.Resource {
+// NewSpaceDefaultRunbookRetentionPolicyResource creates a new resource for space default runbook retention policies.
+func NewSpaceDefaultRunbookRetentionPolicyResource() resource.Resource {
 	return &spaceDefaultRunbookRetentionPolicyResource{}
 }
 
@@ -31,7 +31,7 @@ func (s *spaceDefaultRunbookRetentionPolicyResource) Configure(_ context.Context
 
 // Metadata implements resource.Resource.
 func (s *spaceDefaultRunbookRetentionPolicyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = util.GetTypeName("space_default_lifecycle_tentacle_retention_policy")
+	resp.TypeName = util.GetTypeName("space_default_runbook_retention_policy")
 }
 
 // We cannot create via the API; they are created automatically when a space is created and deleted when a space is deleted.
