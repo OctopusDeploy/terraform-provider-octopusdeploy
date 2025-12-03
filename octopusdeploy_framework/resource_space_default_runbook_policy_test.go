@@ -70,7 +70,7 @@ func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_ModifiesBetweenStrat
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateCountWithMissingFields(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateCountWithMissingFields_HasException(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -89,7 +89,7 @@ func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateCountWithMissi
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateForeverWithCountAttributes(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateForeverWithCountAttributes_ThrowsException(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -108,7 +108,7 @@ func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateForeverWithCou
 	})
 }
 
-func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateCountWithInvalidQuantity(t *testing.T) {
+func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateCountWithInvalidQuantities_ThrowsException(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -121,6 +121,36 @@ func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateCountWithInval
 			},
 			{
 				Config:      spaceDefaultRunbookRetentionPolicy_Count(localName, 0, "Days"),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateCountWithInvalidUnits_ThrowsException(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		Steps: []resource.TestStep{
+			{
+				Config:      spaceDefaultRunbookRetentionPolicy_Count(localName, 1, "Years"),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeploySpaceDefaultRunbookRetentionPolicy_CreateWithInvalidStrategy_ThrowsException(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		Steps: []resource.TestStep{
+			{
+				Config:      spaceDefaultRunbookRetentionPolicy(localName, "deleteAtRandom", nil, nil),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
 			},
 		},
