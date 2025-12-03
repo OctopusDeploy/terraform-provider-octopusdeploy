@@ -28,7 +28,8 @@ This resource manages runbooks in Octopus Deploy.
 - `environments` (List of String) When environment_scope is set to "Specified", this is the list of environments the runbook can be run against.
 - `force_package_download` (Boolean) Whether to force packages to be re-downloaded or not.
 - `multi_tenancy_mode` (String) The tenanted deployment mode of the runbook. Valid modes are `Untenanted`, `TenantedOrUntenanted`, `Tenanted`
-- `retention_policy` (Block List) Sets the runbook retention policy. (see [below for nested schema](#nestedblock--retention_policy))
+- `retention_policy` (Block List, Deprecated) Sets the runbook retention policy. (see [below for nested schema](#nestedblock--retention_policy))
+- `retention_policy_with_strategy` (Block List) Sets the runbook retention policy with strategy. (see [below for nested schema](#nestedblock--retention_policy_with_strategy))
 - `space_id` (String) The space ID associated with this runbook.
 
 ### Read-Only
@@ -55,3 +56,16 @@ Optional:
 
 - `quantity_to_keep` (Number) How many runs to keep per environment.
 - `should_keep_forever` (Boolean) Indicates if items should never be deleted. The default value is `false`.
+
+
+<a id="nestedblock--retention_policy_with_strategy"></a>
+### Nested Schema for `retention_policy_with_strategy`
+
+Required:
+
+- `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever` and `Count`.
+
+Optional:
+
+- `quantity_to_keep` (Number) The number of runs or days of runs to keep, depending on the unit selected. Required when strategy is `Count`.
+- `unit` (String) The unit of the quantity to keep. Valid units are `Items` and `Days`. Required when strategy is `Count`.
