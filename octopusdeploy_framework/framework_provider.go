@@ -114,6 +114,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewStepTemplateResource,
 		NewCommunityStepTemplateResource,
 		NewGitCredentialResource,
+		NewPlatformHubGitCredentialResource,
 		NewHelmFeedResource,
 		NewArtifactoryGenericFeedResource,
 		NewGitHubRepositoryFeedResource,
@@ -159,6 +160,8 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewScopedUserRoleResource,
 		NewSpaceDefaultLifecycleReleaseRetentionPolicyResource,
 		NewSpaceDefaultLifecycleTentacleRetentionPolicyResource,
+		NewPlatformHubVersionControlUsernamePasswordSettingsResource,
+		NewPlatformHubVersionControlAnonymousSettingsResource,
 		NewSpaceDefaultRunbookRetentionPolicyResource,
 	}
 }
