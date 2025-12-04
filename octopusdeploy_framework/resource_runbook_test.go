@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/runbooks"
@@ -179,6 +180,66 @@ func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.unit", "Items"),
 				),
 				Config: testAccRunbookWithCountStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicyWithoutUnit(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				ExpectError: regexp.MustCompile("Missing Required Field"),
+				Config:      testAccRunbookWithCountStrategyRetentionPolicyWithoutUnit(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicyWithoutQuantity(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				ExpectError: regexp.MustCompile("Missing Required Field"),
+				Config:      testAccRunbookWithCountStrategyRetentionPolicyWithoutQuantity(localName, projectLocalName, name, description, projectName),
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeployRunbookWithForeverStrategyRetentionPolicyWithQuantity(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				ExpectError: regexp.MustCompile("Missing Required Field"),
+				Config:      testAccRunbookWithForeverStrategyRetentionPolicyWithQuantity(localName, projectLocalName, name, description, projectName),
 			},
 		},
 	})
@@ -363,6 +424,72 @@ func testAccRunbookWithCountStrategyRetentionPolicy(localName string, projectLoc
 			strategy		= "Count"
 			quantity_to_keep = 10
 			unit 		 = "Items"
+		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithCountStrategyRetentionPolicyWithoutUnit(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
+		
+		retention_policy_with_strategy {
+			strategy		= "Count"
+			quantity_to_keep = 10
+		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithCountStrategyRetentionPolicyWithoutQuantity(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
+		
+		retention_policy_with_strategy {
+			strategy		= "Count"
+			unit 		 	= "Items"
+		}
+	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+}
+
+func testAccRunbookWithForeverStrategyRetentionPolicyWithQuantity(localName string, projectLocalName string, name string, description string, projectName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name                                 = "%s"
+		lifecycle_id                         = "Lifecycles-1"
+		project_group_id                     = "ProjectGroups-1"
+		space_id                             = "Spaces-1"
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		project_id   = octopusdeploy_project.%s.id
+		name         = "%s"
+		description  = "%s"
+		space_id     = "Spaces-1"
+		
+		retention_policy_with_strategy {
+			strategy		 = "Forever"
+			quantity_to_keep = 10
 		}
 	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
 }

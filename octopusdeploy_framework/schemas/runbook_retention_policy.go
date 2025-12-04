@@ -42,6 +42,7 @@ func getRunbookRetentionPolicySchema() map[string]resourceSchema.Attribute {
 			Optional:    true,
 			Validators: []validator.Int64{
 				int64validator.AtLeast(1),
+				NewStrategyAttributeValidator("Count"),
 			},
 		},
 		runbookRetentionPolicySchemeAttributeNames.Unit: resourceSchema.StringAttribute{
@@ -49,6 +50,7 @@ func getRunbookRetentionPolicySchema() map[string]resourceSchema.Attribute {
 			Optional:    true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("Days", "Items"),
+				NewStrategyAttributeValidator("Count"),
 			},
 		},
 	}
