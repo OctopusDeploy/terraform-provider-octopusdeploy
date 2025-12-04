@@ -238,7 +238,7 @@ func TestAccOctopusDeployRunbookWithForeverStrategyRetentionPolicyWithQuantity(t
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				ExpectError: regexp.MustCompile("Missing Required Field"),
+				ExpectError: regexp.MustCompile("Invalid Field"),
 				Config:      testAccRunbookWithForeverStrategyRetentionPolicyWithQuantity(localName, projectLocalName, name, description, projectName),
 			},
 		},
