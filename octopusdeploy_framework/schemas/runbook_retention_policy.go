@@ -34,8 +34,11 @@ func GetRunbookRetentionPolicyObjectType() map[string]attr.Type {
 func getRunbookRetentionPolicySchema() map[string]resourceSchema.Attribute {
 	return map[string]resourceSchema.Attribute{
 		runbookRetentionPolicySchemeAttributeNames.Strategy: resourceSchema.StringAttribute{
-			Description: "How retention will be set. Valid strategies are `Default`, `Forever` and `Count`.",
-			Required:    true,
+			Description: "How retention will be set. Valid strategies are `Default`, `Forever` and `Count`." +
+				"\n  - `strategy = \"Forever\"`, is used if runbook runs should never be deleted." +
+				"\n  - `strategy = \"Count\"`, is used if a specific number of runs or days of runs should be kept." +
+				"\n - `strategy = \"Default\"`, is used if the space default runbook retention policy should be used.",
+			Required: true,
 		},
 		runbookRetentionPolicySchemeAttributeNames.QuantityToKeep: resourceSchema.Int64Attribute{
 			Description: "The number of runs or days of runs to keep, depending on the unit selected. Required when strategy is `Count`.",
