@@ -70,5 +70,5 @@ Required:
 
 Optional:
 
-- `quantity_to_keep` (Number) The number of runs or days of runs to keep, depending on the unit selected. Required when strategy is `Count`.
+- `quantity_to_keep` (Number) The number of runs per environment or days of runs to keep, depending on the unit selected. Required when strategy is `Count`.
 - `unit` (String) The unit of the quantity to keep. Valid units are `Items` and `Days`. Required when strategy is `Count`.

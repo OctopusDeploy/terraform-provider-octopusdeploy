@@ -87,7 +87,7 @@ func (r *strategyAttributeValidator) ValidateInt64(ctx context.Context, req vali
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
 			"Missing Required Field",
-			fmt.Sprintf("%s is required when the strategy is '%s'.", req.Path, r.strategy),
+			fmt.Sprintf("Attribute %s is required when the strategy is '%s'.", req.Path, r.strategy),
 		)
 		return
 	}
@@ -95,7 +95,7 @@ func (r *strategyAttributeValidator) ValidateInt64(ctx context.Context, req vali
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
 			"Invalid Field",
-			fmt.Sprintf("%s must not be set when the strategy is '%s'.", req.Path, strategy),
+			fmt.Sprintf("Attribute %s must not be set when the strategy is '%s'.", req.Path, strategy),
 		)
 		return
 	}

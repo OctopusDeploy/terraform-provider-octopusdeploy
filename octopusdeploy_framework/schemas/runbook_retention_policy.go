@@ -41,7 +41,7 @@ func getRunbookRetentionPolicySchema() map[string]resourceSchema.Attribute {
 			Required: true,
 		},
 		runbookRetentionPolicySchemeAttributeNames.QuantityToKeep: resourceSchema.Int64Attribute{
-			Description: "The number of runs or days of runs to keep, depending on the unit selected. Required when strategy is `Count`.",
+			Description: "The number of runs per environment or days of runs to keep, depending on the unit selected. Required when strategy is `Count`.",
 			Optional:    true,
 			Validators: []validator.Int64{
 				int64validator.AtLeast(1),
