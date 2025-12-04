@@ -64,6 +64,9 @@ Optional:
 Required:
 
 - `strategy` (String) How retention will be set. Valid strategies are `Default`, `Forever` and `Count`.
+  - `strategy = "Forever"`, is used if runbook runs should never be deleted.
+  - `strategy = "Count"`, is used if a specific number of runs or days of runs should be kept.
+ - `strategy = "Default"`, is used if the space default runbook retention policy should be used.
 
 Optional:
 
