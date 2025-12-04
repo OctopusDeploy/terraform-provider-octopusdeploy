@@ -19,6 +19,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/OctopusDeploy/go-octodiff v1.0.0 h1:U+ORg6azniwwYo+O44giOw6TiD5USk8S4VDhOQ0Ven0=
 github.com/OctopusDeploy/go-octodiff v1.0.0/go.mod h1:Mze0+EkOWTgTmi8++fyUc6r0aLZT7qD9gX+31t8MmIU=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.91.1 h1:WRNM8hPEfAzLfc6UkQa2yDcLap7vDVL2LAUkLd11wm0=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.91.1/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.92.0 h1:MzVh2R+nMv5ez+ww3lHyEg3b3cFILd020IK/YRyeniw=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.92.0/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2 h1:960T/UryMsoc2ZOnoLEg7rM9QpxWIdkdB9sR5gsUFAQ=
