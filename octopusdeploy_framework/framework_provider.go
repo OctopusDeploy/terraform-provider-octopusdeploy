@@ -163,7 +163,6 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewSpaceDefaultRunbookRetentionPolicyResource,
 		NewPlatformHubVersionControlUsernamePasswordSettingsResource,
 		NewPlatformHubVersionControlAnonymousSettingsResource,
-		NewSpaceDefaultRunbookRetentionPolicyResource,
 	}
 }
 
