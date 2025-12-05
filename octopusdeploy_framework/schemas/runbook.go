@@ -3,7 +3,9 @@ package schemas
 import (
 	"context"
 	"fmt"
+
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 
 	//datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"regexp"
@@ -27,35 +29,37 @@ import (
 const RunbookResourceDescription = "runbook"
 
 var RunbookSchemaAttributeNames = struct {
-	ID                         string
-	Name                       string
-	Description                string
-	ProjectID                  string
-	RunbookProcessID           string
-	PublishedRunbookSnapshotID string
-	SpaceID                    string
-	MultiTenancyMode           string
-	ConnectivityPolicy         string
-	EnvironmentScope           string
-	Environments               string
-	DefaultGuidedFailureMode   string
-	RetentionPolicy            string
-	ForcePackageDownload       string
+	ID                          string
+	Name                        string
+	Description                 string
+	ProjectID                   string
+	RunbookProcessID            string
+	PublishedRunbookSnapshotID  string
+	SpaceID                     string
+	MultiTenancyMode            string
+	ConnectivityPolicy          string
+	EnvironmentScope            string
+	Environments                string
+	DefaultGuidedFailureMode    string
+	RetentionPolicy             string
+	RetentionPolicyWithStrategy string
+	ForcePackageDownload        string
 }{
-	ID:                         "id",
-	Name:                       "name",
-	Description:                "description",
-	ProjectID:                  "project_id",
-	RunbookProcessID:           "runbook_process_id",
-	PublishedRunbookSnapshotID: "published_runbook_snapshot_id",
-	SpaceID:                    "space_id",
-	MultiTenancyMode:           "multi_tenancy_mode",
-	ConnectivityPolicy:         "connectivity_policy",
-	EnvironmentScope:           "environment_scope",
-	Environments:               "environments",
-	DefaultGuidedFailureMode:   "default_guided_failure_mode",
-	RetentionPolicy:            "retention_policy",
-	ForcePackageDownload:       "force_package_download",
+	ID:                          "id",
+	Name:                        "name",
+	Description:                 "description",
+	ProjectID:                   "project_id",
+	RunbookProcessID:            "runbook_process_id",
+	PublishedRunbookSnapshotID:  "published_runbook_snapshot_id",
+	SpaceID:                     "space_id",
+	MultiTenancyMode:            "multi_tenancy_mode",
+	ConnectivityPolicy:          "connectivity_policy",
+	EnvironmentScope:            "environment_scope",
+	Environments:                "environments",
+	DefaultGuidedFailureMode:    "default_guided_failure_mode",
+	RetentionPolicy:             "retention_policy",
+	RetentionPolicyWithStrategy: "retention_policy_with_strategy",
+	ForcePackageDownload:        "force_package_download",
 }
 
 var tenantedDeploymentModeNames = struct {
@@ -107,26 +111,22 @@ var defaultGuidedFailureModes = []string{
 }
 
 type RunbookTypeResourceModel struct {
-	Name                       types.String `tfsdk:"name"`
-	ProjectID                  types.String `tfsdk:"project_id"`
-	Description                types.String `tfsdk:"description"`
-	RunbookProcessID           types.String `tfsdk:"runbook_process_id"`
-	PublishedRunbookSnapshotID types.String `tfsdk:"published_runbook_snapshot_id"`
-	SpaceID                    types.String `tfsdk:"space_id"`
-	MultiTenancyMode           types.String `tfsdk:"multi_tenancy_mode"`
-	ConnectivityPolicy         types.List   `tfsdk:"connectivity_policy"`
-	EnvironmentScope           types.String `tfsdk:"environment_scope"`
-	Environments               types.List   `tfsdk:"environments"`
-	DefaultGuidedFailureMode   types.String `tfsdk:"default_guided_failure_mode"`
-	RunRetentionPolicy         types.List   `tfsdk:"retention_policy"`
-	ForcePackageDownload       types.Bool   `tfsdk:"force_package_download"`
+	Name                           types.String `tfsdk:"name"`
+	ProjectID                      types.String `tfsdk:"project_id"`
+	Description                    types.String `tfsdk:"description"`
+	RunbookProcessID               types.String `tfsdk:"runbook_process_id"`
+	PublishedRunbookSnapshotID     types.String `tfsdk:"published_runbook_snapshot_id"`
+	SpaceID                        types.String `tfsdk:"space_id"`
+	MultiTenancyMode               types.String `tfsdk:"multi_tenancy_mode"`
+	ConnectivityPolicy             types.List   `tfsdk:"connectivity_policy"`
+	EnvironmentScope               types.String `tfsdk:"environment_scope"`
+	Environments                   types.List   `tfsdk:"environments"`
+	DefaultGuidedFailureMode       types.String `tfsdk:"default_guided_failure_mode"`
+	RunRetentionPolicy             types.List   `tfsdk:"retention_policy"`
+	RunRetentionPolicyWithStrategy types.List   `tfsdk:"retention_policy_with_strategy"`
+	ForcePackageDownload           types.Bool   `tfsdk:"force_package_download"`
 
 	ResourceModel
-}
-
-type RunbookRetentionPeriodModel struct {
-	QuantityToKeep    types.String `tfsdk:"quantity_to_keep"`
-	ShouldKeepForever types.Bool   `tfsdk:"should_keep_forever"`
 }
 
 type RunbookConnectivityPolicyModel struct {
@@ -240,12 +240,23 @@ func (r RunbookSchema) GetResourceSchema() resourceSchema.Schema {
 				},
 			},
 			RunbookSchemaAttributeNames.RetentionPolicy: resourceSchema.ListNestedBlock{
-				Description: "Sets the runbook retention policy.",
+				Description:        "Sets the runbook retention policy.",
+				DeprecationMessage: "Runbook Retention Policies will soon require strategy",
 				NestedObject: resourceSchema.NestedBlockObject{
-					Attributes: getRunbookRetentionPeriodSchema(),
+					Attributes: getLegacyRunbookRetentionPolicySchema(),
 				},
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
+				},
+			},
+			RunbookSchemaAttributeNames.RetentionPolicyWithStrategy: resourceSchema.ListNestedBlock{
+				Description: "Sets the runbook retention policy with strategy.",
+				NestedObject: resourceSchema.NestedBlockObject{
+					Attributes: getRunbookRetentionPolicySchema(),
+				},
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+					listvalidator.ConflictsWith(path.MatchRoot(RunbookSchemaAttributeNames.RetentionPolicy)),
 				},
 			},
 		},
@@ -288,8 +299,8 @@ func (data *RunbookTypeResourceModel) RefreshFromApiResponse(ctx context.Context
 	if !data.RunRetentionPolicy.IsNull() {
 		result, d := types.ListValueFrom(
 			ctx,
-			types.ObjectType{AttrTypes: GetRunbookRetentionPeriodObjectType()},
-			[]attr.Value{MapFromRunbookRetentionPeriod(runbook.RunRetentionPolicy)},
+			types.ObjectType{AttrTypes: GetLegacyRunbookRetentionPolicyObjectType()},
+			[]attr.Value{MapFromLegacyRunbookRetentionPolicy(runbook.RunRetentionPolicy)},
 		)
 		diags.Append(d...)
 		data.RunRetentionPolicy = result
