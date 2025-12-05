@@ -53,7 +53,7 @@ func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() 
 				Description: "The number of days/releases to keep files on tentacles.",
 				Validators: []validator.Int64{
 					int64validator.AtLeast(1),
-					NewCountStrategyAttributeValidator(),
+					NewStrategyAttributeValidator("Count"),
 				},
 				Optional: true,
 			},
@@ -61,7 +61,7 @@ func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() 
 				Description: "The unit of quantity to keep. Valid Units are `Days` or `Items`.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("Days", "Items"),
-					NewCountStrategyAttributeValidator(),
+					NewStrategyAttributeValidator("Count"),
 				},
 				Optional: true,
 			},
