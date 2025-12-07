@@ -92,6 +92,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 		NewDeploymentFreezeDataSource,
 		NewSpaceDefaultLifecycleReleaseRetentionPoliciesDataSource,
 		NewSpaceDefaultLifecycleTentacleRetentionPoliciesDataSource,
+		NewRootDataSource,
 	}
 }
 
