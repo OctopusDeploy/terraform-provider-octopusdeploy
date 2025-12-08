@@ -39,7 +39,7 @@ Runbook resources **without** explicit retention settings:
 
 ### Timeline
 
-Migration will be required no earlier than 21 Oct 2026
+Migration will be required no earlier than 05 Dec 2026
 
 | Date        | What we'll do                                                        | What you need to do                                                      |
 | ----------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
