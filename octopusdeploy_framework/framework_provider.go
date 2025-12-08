@@ -115,6 +115,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewCommunityStepTemplateResource,
 		NewGitCredentialResource,
 		NewPlatformHubGitCredentialResource,
+		NewPlatformHubAwsAccountResource,
 		NewHelmFeedResource,
 		NewArtifactoryGenericFeedResource,
 		NewGitHubRepositoryFeedResource,
