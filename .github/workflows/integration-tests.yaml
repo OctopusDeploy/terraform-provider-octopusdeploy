@@ -137,7 +137,7 @@ jobs:
           OCTOTESTSKIPINIT: true
           GOMAXPROCS: 4
           OCTOTESTVERSION: latest
-          OCTOTESTIMAGEURL: octopusdeploy/octopusdeploy
+          OCTOTESTIMAGEURL: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
           OCTOTESTRETRYCOUNT: 0
       - name: Upload test artifacts
         if: always()
