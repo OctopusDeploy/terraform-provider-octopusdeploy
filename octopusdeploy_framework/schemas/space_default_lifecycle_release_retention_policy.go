@@ -52,7 +52,7 @@ func (s SpaceDefaultLifecycleReleaseRetentionPolicySchema) GetResourceSchema() r
 				Description: "The number of days/releases to keep.",
 				Validators: []validator.Int64{
 					int64validator.AtLeast(1),
-					NewCountStrategyAttributeValidator(),
+					NewStrategyAttributeValidator("Count"),
 				},
 				Optional: true,
 			},
@@ -60,7 +60,7 @@ func (s SpaceDefaultLifecycleReleaseRetentionPolicySchema) GetResourceSchema() r
 				Description: "The unit of quantity to keep. Valid Units are `Days` or `Items`.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("Days", "Items"),
-					NewCountStrategyAttributeValidator(),
+					NewStrategyAttributeValidator("Count"),
 				},
 				Optional: true,
 			},
