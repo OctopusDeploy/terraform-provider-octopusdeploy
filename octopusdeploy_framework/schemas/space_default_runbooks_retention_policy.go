@@ -37,7 +37,7 @@ var _ EntitySchema = SpaceDefaultRunbookRetentionPolicySchema{}
 
 func (s SpaceDefaultRunbookRetentionPolicySchema) GetResourceSchema() rs.Schema {
 	return rs.Schema{
-		Description: "Manages a space's default retention policy for how runbooks are retained.",
+		Description: "Manages a space's default retention policy for runbook runs.",
 		Attributes: map[string]rs.Attribute{
 			"id": GetIdResourceSchema(),
 			"space_id": rs.StringAttribute{
