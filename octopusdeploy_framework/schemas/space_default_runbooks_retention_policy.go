@@ -49,7 +49,7 @@ func (s SpaceDefaultRunbookRetentionPolicySchema) GetResourceSchema() rs.Schema 
 				"\n  - `strategy = \"Count\"`, is used if a specific number of days/runbooks should be kept.").Required().Validators(stringvalidator.OneOf("Forever", "Count")).Build(),
 			// Optional
 			"quantity_to_keep": rs.Int64Attribute{
-				Description: "The number of days/runbooks to keep.",
+				Description: "The number of days/runbook runs to keep.",
 				Validators: []validator.Int64{
 					int64validator.AtLeast(1),
 					NewStrategyAttributeValidator("Count"),
