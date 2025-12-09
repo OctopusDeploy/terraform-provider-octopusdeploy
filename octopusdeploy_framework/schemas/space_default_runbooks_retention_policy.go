@@ -10,12 +10,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type SpaceDefaultLifecycleTentacleRetentionPolicySchema struct{}
+type SpaceDefaultRunbookRetentionPolicySchema struct{}
 
-// GetDatasourceSchema implements EntitySchema.
-func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetDatasourceSchema() ds.Schema {
+func (s SpaceDefaultRunbookRetentionPolicySchema) GetDatasourceSchema() ds.Schema {
 	return ds.Schema{
-		Description: "Manages a space's default retention policy for how files on tentacles are retained.",
+		Description: "Manages a space's default retention policy for how runbooks are retained.",
 		Attributes: map[string]ds.Attribute{
 			// request
 			"space_id": ds.StringAttribute{
@@ -26,19 +25,19 @@ func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetDatasourceSchema(
 			// response
 			"id": util.ResourceString().Description("The ID of the retention policy.").Computed().Build(),
 			"strategy": util.ResourceString().Description("How retention will be set. Valid strategies are `Forever`, and `Count`." +
-				"\n  - `strategy = \"Forever\"`, is used if files on tentacles should never be deleted." +
-				"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases files on tentacles should be kept for.").Computed().Build(),
-			"quantity_to_keep": util.ResourceInt64().Description("The number of days/releases to keep files on tentacles.").Computed().Build(),
+				"\n  - `strategy = \"Forever\"`, is used if runbooks should never be deleted." +
+				"\n  - `strategy = \"Count\"`, is used if a specific number of days/runbooks should be kept.").Computed().Build(),
+			"quantity_to_keep": util.ResourceInt64().Description("The number of days/runbooks to keep.").Computed().Build(),
 			"unit":             util.ResourceString().Description("The unit of quantity to keep. Valid Units are `Days` or `Items`").Computed().Build(),
 		},
 	}
 }
 
-var _ EntitySchema = SpaceDefaultLifecycleTentacleRetentionPolicySchema{}
+var _ EntitySchema = SpaceDefaultRunbookRetentionPolicySchema{}
 
-func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() rs.Schema {
+func (s SpaceDefaultRunbookRetentionPolicySchema) GetResourceSchema() rs.Schema {
 	return rs.Schema{
-		Description: "Manages a space's default retention policy for how files on tentacles are retained.",
+		Description: "Manages a space's default retention policy for runbook runs.",
 		Attributes: map[string]rs.Attribute{
 			"id": GetIdResourceSchema(),
 			"space_id": rs.StringAttribute{
@@ -46,11 +45,11 @@ func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() 
 				Required:    true,
 			},
 			"strategy": util.ResourceString().Description("How retention will be set. Valid strategies are `Forever`, and `Count`." +
-				"\n  - `strategy = \"Forever\"`, is used if files on tentacles should never be deleted." +
-				"\n  - `strategy = \"Count\"`, is used if a specific number of days/releases files on tentacles should be kept for.").Required().Validators(stringvalidator.OneOf("Forever", "Count")).Build(),
+				"\n  - `strategy = \"Forever\"`, is used if runbooks should never be deleted." +
+				"\n  - `strategy = \"Count\"`, is used if a specific number of days/runbooks should be kept.").Required().Validators(stringvalidator.OneOf("Forever", "Count")).Build(),
 			// Optional
 			"quantity_to_keep": rs.Int64Attribute{
-				Description: "The number of days/releases to keep files on tentacles.",
+				Description: "The number of days/runbook runs to keep per environment.",
 				Validators: []validator.Int64{
 					int64validator.AtLeast(1),
 					NewStrategyAttributeValidator("Count"),
@@ -69,7 +68,7 @@ func (s SpaceDefaultLifecycleTentacleRetentionPolicySchema) GetResourceSchema() 
 	}
 }
 
-type SpaceDefaultLifecycleTentacleRetentionPoliciesResourceModel struct {
+type SpaceDefaultRunbookRetentionPoliciesResourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	SpaceID        types.String `tfsdk:"space_id"`
 	Strategy       types.String `tfsdk:"strategy"`
@@ -77,7 +76,7 @@ type SpaceDefaultLifecycleTentacleRetentionPoliciesResourceModel struct {
 	Unit           types.String `tfsdk:"unit"`
 }
 
-type SpaceDefaultLifecycleTentacleRetentionPoliciesDataSourceModel struct {
+type SpaceDefaultRunbookRetentionPoliciesDataSourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	SpaceID        types.String `tfsdk:"space_id"`
 	Strategy       types.String `tfsdk:"strategy"`
