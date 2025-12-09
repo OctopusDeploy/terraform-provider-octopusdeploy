@@ -3,12 +3,12 @@
 page_title: "octopusdeploy_space_default_runbook_retention_policy Resource - terraform-provider-octopusdeploy"
 subcategory: ""
 description: |-
-  Manages a space's default retention policy for how runbooks are retained.
+  Manages a space's default retention policy for runbook runs.
 ---
 
 # octopusdeploy_space_default_runbook_retention_policy (Resource)
 
-Manages a space's default retention policy for how runbooks are retained.
+Manages a space's default retention policy for runbook runs.
 
 
 
@@ -24,7 +24,7 @@ Manages a space's default retention policy for how runbooks are retained.
 
 ### Optional
 
-- `quantity_to_keep` (Number) The number of days/runbooks to keep.
+- `quantity_to_keep` (Number) The number of days/runbook runs to keep per environment.
 - `unit` (String) The unit of quantity to keep. Valid Units are `Days` or `Items`.
 
 ### Read-Only
