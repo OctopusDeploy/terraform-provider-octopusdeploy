@@ -34,6 +34,34 @@ Without a defined Step Order, the Steps will be added to the process in the orde
 ### Runbook Process
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-runbook.tf") }}
 
+### Using Process Templates
+Process Templates can be consumed in your process using `octopusdeploy_process_step` with `type = "Octopus.ProcessTemplate"`. Process template parameters are configured through `execution_properties`.
+
+Process template specific properties of `"Octopus.Action.ProcessTemplate.Reference.Slug"` and `"Octopus.Action.ProcessTemplate.Reference.VersionMask"` are required to be set within `execution_properties` to specify which process template and version to use.
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-process-template-usage.tf") }}
+
+#### Required Parameter Validation
+~> When a new required parameter is added to a process template, any modifications to the process will fail validation until that parameter is configured - even if you're only modifying unrelated steps.
+
+This typically occurs when your process template usage is set to auto-accept minor or patch version updates and a new required parameter gets added. While this goes against recommended practices (adding required parameters should be a major version change), you may encounter validation errors like:
+
+```
+╷
+│ Error: unable to update process step
+│
+│   with octopusdeploy_process_step.deploy_microservice,
+│   on example.tf line 10, in resource "octopusdeploy_process_step" "deploy_microservice":
+│   10: resource "octopusdeploy_process_step" "deploy_microservice" {
+│
+│ Octopus API error: There was a problem with your request. [Parameter 'NewRequiredParam' in step 'Run process template - microservice template' is required]
+╵
+```
+
+To resolve this error, you'll need to add the missing required parameter to your process template step's `execution_properties`, even if you weren't intending to modify that step.
+
+For more information on process template versioning best practices, see the [Octopus Deploy Process Templates documentation](https://octopus.com/docs/platform-hub/process-templates/best-practices).
+
 {{ .SchemaMarkdown | trimspace }}
 
 {{ if .HasImport -}}
