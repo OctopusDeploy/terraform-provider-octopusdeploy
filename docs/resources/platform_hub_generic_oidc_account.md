@@ -31,7 +31,7 @@ resource "octopusdeploy_platform_hub_generic_oidc_account" "example" {
 
 - `audience` (String) The audience associated with this account.
 - `description` (String) The description of this Generic OIDC account.
-- `execution_subject_keys` (List of String) Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`.
+- `execution_subject_keys` (Set of String) Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`.
 
 ### Read-Only
 

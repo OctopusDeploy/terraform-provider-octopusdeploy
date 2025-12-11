@@ -221,15 +221,15 @@ func setPlatformHubAzureOidcAccount(ctx context.Context, model *schemas.Platform
 	model.TenantID = types.StringValue(account.TenantID)
 
 	if account.ExecutionSubjectKeys != nil {
-		executionSubjectKeys, _ := types.ListValueFrom(ctx, types.StringType, account.ExecutionSubjectKeys)
+		executionSubjectKeys, _ := types.SetValueFrom(ctx, types.StringType, account.ExecutionSubjectKeys)
 		model.ExecutionSubjectKeys = executionSubjectKeys
 	}
 	if account.HealthSubjectKeys != nil {
-		healthSubjectKeys, _ := types.ListValueFrom(ctx, types.StringType, account.HealthSubjectKeys)
+		healthSubjectKeys, _ := types.SetValueFrom(ctx, types.StringType, account.HealthSubjectKeys)
 		model.HealthSubjectKeys = healthSubjectKeys
 	}
 	if account.AccountTestSubjectKeys != nil {
-		accountTestSubjectKeys, _ := types.ListValueFrom(ctx, types.StringType, account.AccountTestSubjectKeys)
+		accountTestSubjectKeys, _ := types.SetValueFrom(ctx, types.StringType, account.AccountTestSubjectKeys)
 		model.AccountTestSubjectKeys = accountTestSubjectKeys
 	}
 

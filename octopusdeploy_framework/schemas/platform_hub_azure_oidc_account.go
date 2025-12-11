@@ -23,9 +23,9 @@ type PlatformHubAzureOidcAccountModel struct {
 	SubscriptionID             types.String `tfsdk:"subscription_id"`
 	ApplicationID              types.String `tfsdk:"application_id"`
 	TenantID                   types.String `tfsdk:"tenant_id"`
-	ExecutionSubjectKeys       types.List   `tfsdk:"execution_subject_keys"`
-	HealthSubjectKeys          types.List   `tfsdk:"health_subject_keys"`
-	AccountTestSubjectKeys     types.List   `tfsdk:"account_test_subject_keys"`
+	ExecutionSubjectKeys       types.Set    `tfsdk:"execution_subject_keys"`
+	HealthSubjectKeys          types.Set    `tfsdk:"health_subject_keys"`
+	AccountTestSubjectKeys     types.Set    `tfsdk:"account_test_subject_keys"`
 	Audience                   types.String `tfsdk:"audience"`
 	AzureEnvironment           types.String `tfsdk:"azure_environment"`
 	AuthenticationEndpoint     types.String `tfsdk:"authentication_endpoint"`
@@ -56,17 +56,17 @@ func (a PlatformHubAzureOidcAccountSchema) GetResourceSchema() resourceSchema.Sc
 				Description("The Azure tenant ID.").
 				Validators(stringvalidator.LengthAtLeast(1)).
 				Build(),
-			"execution_subject_keys": util.ResourceList(types.StringType).
+			"execution_subject_keys": util.ResourceSet(types.StringType).
 				Optional().
 				Computed().
 				Description("Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`.").
 				Build(),
-			"health_subject_keys": util.ResourceList(types.StringType).
+			"health_subject_keys": util.ResourceSet(types.StringType).
 				Optional().
 				Computed().
 				Description("Keys to include in a health check. Valid options are `space`, `account`, `target`, `type`.").
 				Build(),
-			"account_test_subject_keys": util.ResourceList(types.StringType).
+			"account_test_subject_keys": util.ResourceSet(types.StringType).
 				Optional().
 				Computed().
 				Description("Keys to include in an account test. Valid options are `space`, `account`, `type`.").
@@ -123,9 +123,9 @@ func GetPlatformHubAzureOidcAccountDatasourceAttributes() map[string]datasourceS
 		"subscription_id":              util.DataSourceString().Computed().Description("The Azure subscription ID.").Build(),
 		"application_id":               util.DataSourceString().Computed().Description("The Azure application ID (client ID).").Build(),
 		"tenant_id":                    util.DataSourceString().Computed().Description("The Azure tenant ID.").Build(),
-		"execution_subject_keys":       util.DataSourceList(types.StringType).Computed().Description("Keys to include in a deployment or runbook.").Build(),
-		"health_subject_keys":          util.DataSourceList(types.StringType).Computed().Description("Keys to include in a health check.").Build(),
-		"account_test_subject_keys":    util.DataSourceList(types.StringType).Computed().Description("Keys to include in an account test.").Build(),
+		"execution_subject_keys":       util.DataSourceSet(types.StringType).Computed().Description("Keys to include in a deployment or runbook.").Build(),
+		"health_subject_keys":          util.DataSourceSet(types.StringType).Computed().Description("Keys to include in a health check.").Build(),
+		"account_test_subject_keys":    util.DataSourceSet(types.StringType).Computed().Description("Keys to include in an account test.").Build(),
 		"audience":                     util.DataSourceString().Computed().Description("The audience for the Azure OIDC account.").Build(),
 		"azure_environment":            util.DataSourceString().Computed().Description("The Azure environment.").Build(),
 		"authentication_endpoint":      util.DataSourceString().Computed().Description("The Active Directory endpoint base URI.").Build(),

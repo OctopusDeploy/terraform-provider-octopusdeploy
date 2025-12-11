@@ -40,13 +40,13 @@ resource "octopusdeploy_platform_hub_azure_oidc_account" "example" {
 
 ### Optional
 
-- `account_test_subject_keys` (List of String) Keys to include in an account test. Valid options are `space`, `account`, `type`.
+- `account_test_subject_keys` (Set of String) Keys to include in an account test. Valid options are `space`, `account`, `type`.
 - `audience` (String) The audience for the Azure OIDC account.
 - `authentication_endpoint` (String) The Active Directory endpoint base URI.
 - `azure_environment` (String) The Azure environment. Valid values are `AzureCloud`, `AzureChinaCloud`, `AzureGermanCloud`, `AzureUSGovernment`.
 - `description` (String) The description of this Azure OpenID Connect account.
-- `execution_subject_keys` (List of String) Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`.
-- `health_subject_keys` (List of String) Keys to include in a health check. Valid options are `space`, `account`, `target`, `type`.
+- `execution_subject_keys` (Set of String) Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`.
+- `health_subject_keys` (Set of String) Keys to include in a health check. Valid options are `space`, `account`, `target`, `type`.
 - `resource_management_endpoint` (String) The Azure Resource Management endpoint base URI.
 
 ### Read-Only

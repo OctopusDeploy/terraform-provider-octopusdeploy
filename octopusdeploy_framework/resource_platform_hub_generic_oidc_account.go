@@ -199,7 +199,7 @@ func setPlatformHubGenericOidcAccount(ctx context.Context, model *schemas.Platfo
 	model.Description = types.StringValue(account.GetDescription())
 
 	if account.ExecutionSubjectKeys != nil {
-		executionSubjectKeys, _ := types.ListValueFrom(ctx, types.StringType, account.ExecutionSubjectKeys)
+		executionSubjectKeys, _ := types.SetValueFrom(ctx, types.StringType, account.ExecutionSubjectKeys)
 		model.ExecutionSubjectKeys = executionSubjectKeys
 	}
 

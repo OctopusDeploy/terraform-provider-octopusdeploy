@@ -19,7 +19,7 @@ var _ EntitySchema = PlatformHubGenericOidcAccountSchema{}
 type PlatformHubGenericOidcAccountModel struct {
 	Name                 types.String `tfsdk:"name"`
 	Description          types.String `tfsdk:"description"`
-	ExecutionSubjectKeys types.List   `tfsdk:"execution_subject_keys"`
+	ExecutionSubjectKeys types.Set    `tfsdk:"execution_subject_keys"`
 	Audience             types.String `tfsdk:"audience"`
 
 	ResourceModel
@@ -32,7 +32,7 @@ func (a PlatformHubGenericOidcAccountSchema) GetResourceSchema() resourceSchema.
 			"id":          GetIdResourceSchema(),
 			"name":        util.ResourceString().Required().Description("The name of this Generic OIDC account.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this Generic OIDC account.").Build(),
-			"execution_subject_keys": util.ResourceList(types.StringType).
+			"execution_subject_keys": util.ResourceSet(types.StringType).
 				Optional().
 				Computed().
 				Description("Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`.").
@@ -71,7 +71,7 @@ func GetPlatformHubGenericOidcAccountDatasourceAttributes() map[string]datasourc
 		"id":                     util.DataSourceString().Computed().Description("The unique ID for this resource.").Build(),
 		"name":                   util.DataSourceString().Computed().Description("The name of this Generic OIDC account.").Build(),
 		"description":            util.DataSourceString().Computed().Description("The description of this Generic OIDC account.").Build(),
-		"execution_subject_keys": util.DataSourceList(types.StringType).Computed().Description("Keys to include in a deployment or runbook.").Build(),
+		"execution_subject_keys": util.DataSourceSet(types.StringType).Computed().Description("Keys to include in a deployment or runbook.").Build(),
 		"audience":               util.DataSourceString().Computed().Description("The audience associated with this account.").Build(),
 	}
 }
