@@ -10,8 +10,6 @@ import (
 )
 
 func TestAccPlatformHubGenericOidcAccountCreate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub Generic OIDC account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_generic_oidc_account." + localName
 
@@ -39,8 +37,6 @@ func TestAccPlatformHubGenericOidcAccountCreate(t *testing.T) {
 }
 
 func TestAccPlatformHubGenericOidcAccountUpdate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub Generic OIDC account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_generic_oidc_account." + localName
 
@@ -80,8 +76,6 @@ func TestAccPlatformHubGenericOidcAccountUpdate(t *testing.T) {
 }
 
 func TestAccPlatformHubGenericOidcAccountImport(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub Generic OIDC account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_generic_oidc_account." + localName
 

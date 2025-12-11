@@ -174,43 +174,42 @@ func testAccProjectCheckExists() resource.TestCheckFunc {
 	}
 }
 
-// TODO: Uncomment this test when TagSet with Project scope is supported on Octopus docker image (2025.4)
-//func TestAccProjectWithTags(t *testing.T) {
-//	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	tagSetLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	tagLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	projectDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-//	prefix := "octopusdeploy_project." + projectLocalName
-//
-//	resource.Test(t, resource.TestCase{
-//		CheckDestroy: resource.ComposeTestCheckFunc(
-//			testAccProjectCheckDestroy,
-//			testAccProjectGroupCheckDestroy,
-//			testAccLifecycleCheckDestroy,
-//		),
-//		PreCheck:                 func() { TestAccPreCheck(t) },
-//		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-//		Steps: []resource.TestStep{
-//			{
-//				Check: resource.ComposeTestCheckFunc(
-//					testAccProjectCheckExists(),
-//					resource.TestCheckResourceAttr(prefix, "name", projectName),
-//					resource.TestCheckResourceAttr(prefix, "description", projectDescription),
-//					resource.TestCheckResourceAttr(prefix, "project_tags.#", "1"),
-//				),
-//				Config: testAccProjectWithTags(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName,
-//					tagSetLocalName, tagSetName, tagLocalName, tagName, projectLocalName, projectName, projectDescription),
-//			},
-//		},
-//	})
-//}
+func TestAccProjectWithTags(t *testing.T) {
+	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagSetLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_project." + projectLocalName
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccProjectCheckDestroy,
+			testAccProjectGroupCheckDestroy,
+			testAccLifecycleCheckDestroy,
+		),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectCheckExists(),
+					resource.TestCheckResourceAttr(prefix, "name", projectName),
+					resource.TestCheckResourceAttr(prefix, "description", projectDescription),
+					resource.TestCheckResourceAttr(prefix, "project_tags.#", "1"),
+				),
+				Config: testAccProjectWithTags(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName,
+					tagSetLocalName, tagSetName, tagLocalName, tagName, projectLocalName, projectName, projectDescription),
+			},
+		},
+	})
+}
 
 func testAccProjectWithTags(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName,
 	tagSetLocalName, tagSetName, tagLocalName, tagName, projectLocalName, projectName, projectDescription string) string {

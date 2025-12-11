@@ -12,7 +12,6 @@ import (
 )
 
 func TestAccOctopusDeployDynamicWorkerPoolBasic(t *testing.T) {
-	internalTest.SkipCI(t, "[The worker image specified does not exist.] ")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_dynamic_worker_pool." + localName
 

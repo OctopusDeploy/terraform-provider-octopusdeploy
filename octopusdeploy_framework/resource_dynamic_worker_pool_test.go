@@ -12,7 +12,6 @@ import (
 )
 
 func TestAccOctopusDeployDynamicWorkerPoolBasic(t *testing.T) {
-	t.Skip("Skipping dynamic worker pool test - worker images do not exist in CI environment")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_dynamic_worker_pool." + localName
 
@@ -46,7 +45,6 @@ func TestAccOctopusDeployDynamicWorkerPoolBasic(t *testing.T) {
 }
 
 func TestAccOctopusDeployDynamicWorkerPoolUpdate(t *testing.T) {
-	t.Skip("Skipping dynamic worker pool test - worker images do not exist in CI environment")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_dynamic_worker_pool." + localName
 
@@ -87,7 +85,6 @@ func TestAccOctopusDeployDynamicWorkerPoolUpdate(t *testing.T) {
 }
 
 func TestAccOctopusDeployDynamicWorkerPoolMinimal(t *testing.T) {
-	t.Skip("Skipping dynamic worker pool test - worker images do not exist in CI environment")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_dynamic_worker_pool." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -112,7 +109,6 @@ func TestAccOctopusDeployDynamicWorkerPoolMinimal(t *testing.T) {
 }
 
 func TestAccOctopusDeployDynamicWorkerPoolImport(t *testing.T) {
-	t.Skip("Skipping dynamic worker pool test - worker images do not exist in CI environment")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_dynamic_worker_pool." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
