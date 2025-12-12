@@ -10,8 +10,6 @@ import (
 )
 
 func TestAccPlatformHubGcpAccountCreate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub GCP account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_gcp_account." + localName
 
@@ -38,8 +36,6 @@ func TestAccPlatformHubGcpAccountCreate(t *testing.T) {
 }
 
 func TestAccPlatformHubGcpAccountUpdate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub GCP account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_gcp_account." + localName
 
@@ -77,8 +73,6 @@ func TestAccPlatformHubGcpAccountUpdate(t *testing.T) {
 }
 
 func TestAccPlatformHubGcpAccountImport(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub GCP account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_gcp_account." + localName
 

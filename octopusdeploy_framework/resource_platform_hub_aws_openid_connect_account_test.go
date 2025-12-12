@@ -10,8 +10,6 @@ import (
 )
 
 func TestAccPlatformHubAwsOpenIDConnectAccountCreate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub AWS OIDC account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_aws_openid_connect_account." + localName
 
@@ -40,8 +38,6 @@ func TestAccPlatformHubAwsOpenIDConnectAccountCreate(t *testing.T) {
 }
 
 func TestAccPlatformHubAwsOpenIDConnectAccountUpdate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub AWS OIDC account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_aws_openid_connect_account." + localName
 
@@ -81,8 +77,6 @@ func TestAccPlatformHubAwsOpenIDConnectAccountUpdate(t *testing.T) {
 }
 
 func TestAccPlatformHubAwsOpenIDConnectAccountImport(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub AWS OIDC account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_aws_openid_connect_account." + localName
 

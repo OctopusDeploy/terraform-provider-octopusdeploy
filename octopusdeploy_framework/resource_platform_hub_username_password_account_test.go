@@ -10,8 +10,6 @@ import (
 )
 
 func TestAccPlatformHubUsernamePasswordAccountCreate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub Username-Password account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_username_password_account." + localName
 
@@ -39,8 +37,6 @@ func TestAccPlatformHubUsernamePasswordAccountCreate(t *testing.T) {
 }
 
 func TestAccPlatformHubUsernamePasswordAccountUpdate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub Username-Password account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_username_password_account." + localName
 
@@ -80,8 +76,6 @@ func TestAccPlatformHubUsernamePasswordAccountUpdate(t *testing.T) {
 }
 
 func TestAccPlatformHubUsernamePasswordAccountImport(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub Username-Password account API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_username_password_account." + localName
 
