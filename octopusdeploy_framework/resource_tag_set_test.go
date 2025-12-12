@@ -195,10 +195,10 @@ func TestAccTagSetValidation(t *testing.T) {
 	})
 }
 
-func TestAccTagSetWithProjectScope(t *testing.T) {
+func TestAccTagSetWithTenantScope(t *testing.T) {
 	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
-	tagSetDescription := "TagSet with Project scope"
+	tagSetDescription := "TagSet with Tenant scope"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -209,7 +209,7 @@ func TestAccTagSetWithProjectScope(t *testing.T) {
 					resource "octopusdeploy_tag_set" "%s" {
 						name        = "%s"
 						description = "%s"
-						scopes      = ["Project"]
+						scopes      = ["Tenant"]
 						type        = "SingleSelect"
 					}`, tagSetName, tagSetName, tagSetDescription),
 				Check: resource.ComposeTestCheckFunc(
@@ -217,7 +217,7 @@ func TestAccTagSetWithProjectScope(t *testing.T) {
 					resource.TestCheckResourceAttr(tagSetPrefix, "name", tagSetName),
 					resource.TestCheckResourceAttr(tagSetPrefix, "description", tagSetDescription),
 					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.#", "1"),
-					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.0", "Project"),
+					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.0", "Tenant"),
 					resource.TestCheckResourceAttr(tagSetPrefix, "type", "SingleSelect"),
 				),
 			},

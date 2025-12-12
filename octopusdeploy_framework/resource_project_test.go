@@ -222,7 +222,7 @@ func testAccProjectWithTags(lifecycleLocalName, lifecycleName, projectGroupLocal
 		`resource "octopusdeploy_tag_set" "%s" {
 			name        = "%s"
 			description = "Tag set for project testing"
-			scopes      = ["Project"]
+			scopes      = ["Tenant"]
 		}
 
 		resource "octopusdeploy_tag" "%s" {
