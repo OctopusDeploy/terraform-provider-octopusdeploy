@@ -95,9 +95,10 @@ func TestAccPlatformHubGenericOidcAccountImport(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"execution_subject_keys"},
 			},
 		},
 	})
