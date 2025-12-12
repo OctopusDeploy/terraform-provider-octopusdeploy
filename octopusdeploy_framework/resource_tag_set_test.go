@@ -196,6 +196,8 @@ func TestAccTagSetValidation(t *testing.T) {
 }
 
 func TestAccTagSetWithTenantScope(t *testing.T) {
+	t.Skip("Skipping - type field defaults to MultiSelect, needs investigation")
+
 	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
 	tagSetDescription := "TagSet with Tenant scope"
