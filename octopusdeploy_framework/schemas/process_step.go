@@ -289,11 +289,12 @@ func resourceActionPackageReferenceAttributes() map[string]resourceSchema.Attrib
 }
 
 type ProcessStepGitDependencyResourceModel struct {
-	RepositoryUri     types.String `tfsdk:"repository_uri"`
-	DefaultBranch     types.String `tfsdk:"default_branch"`
-	GitCredentialType types.String `tfsdk:"git_credential_type"`
-	FilePathFilters   types.Set    `tfsdk:"file_path_filters"`
-	GitCredentialID   types.String `tfsdk:"git_credential_id"`
+	RepositoryUri      types.String `tfsdk:"repository_uri"`
+	DefaultBranch      types.String `tfsdk:"default_branch"`
+	GitCredentialType  types.String `tfsdk:"git_credential_type"`
+	FilePathFilters    types.Set    `tfsdk:"file_path_filters"`
+	GitCredentialID    types.String `tfsdk:"git_credential_id"`
+	GitHubConnectionID types.String `tfsdk:"github_connection_id"`
 }
 
 func ProcessStepGitDependencyObjectType() types.ObjectType {
@@ -304,11 +305,12 @@ func ProcessStepGitDependencyObjectType() types.ObjectType {
 
 func ProcessStepGitDependencyAttributeTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"repository_uri":      types.StringType,
-		"default_branch":      types.StringType,
-		"git_credential_type": types.StringType,
-		"file_path_filters":   types.SetType{ElemType: types.StringType},
-		"git_credential_id":   types.StringType,
+		"repository_uri":       types.StringType,
+		"default_branch":       types.StringType,
+		"git_credential_type":  types.StringType,
+		"file_path_filters":    types.SetType{ElemType: types.StringType},
+		"git_credential_id":    types.StringType,
+		"github_connection_id": types.StringType,
 	}
 }
 
@@ -348,6 +350,10 @@ func resourceActionGitDependencyNestedAttribute() resourceSchema.NestedAttribute
 				Optional().
 				Computed().
 				Default("").
+				Build(),
+			"github_connection_id": util.ResourceString().
+				Description("ID of an existing GitHub App connection. Used when git_credential_type is GitHub").
+				Optional().
 				Build(),
 		},
 	}
