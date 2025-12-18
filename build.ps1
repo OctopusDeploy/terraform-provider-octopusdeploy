@@ -4,7 +4,7 @@ $BINARY = "terraform-provider-octopusdeploy.exe"
 $HOSTNAME = "octopus.com"
 $NAMESPACE = "com"
 $NAME = "octopusdeploy"
-$OS_ARCH = "windows_amd64"
+$OS_ARCH = "windows_386"
 
 # Build the provider
 go build -o $BINARY
