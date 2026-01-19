@@ -35,11 +35,6 @@ func (*runbookTypeResource) Schema(ctx context.Context, req resource.SchemaReque
 
 func (r *runbookTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	r.Config = ResourceConfiguration(req, resp)
-
-	if r.Config != nil {
-		diags := r.Config.EnsureResourceCompatibilityByVersion("octopusdeploy_runbook with runbook_tags", "2026.1")
-		resp.Diagnostics.Append(diags...)
-	}
 }
 
 func (r *runbookTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
