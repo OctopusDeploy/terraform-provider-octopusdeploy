@@ -92,6 +92,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 		NewDeploymentFreezeDataSource,
 		NewSpaceDefaultLifecycleReleaseRetentionPoliciesDataSource,
 		NewSpaceDefaultLifecycleTentacleRetentionPoliciesDataSource,
+		NewSpaceDefaultRunbookRetentionPoliciesDataSource,
 	}
 }
 
@@ -116,6 +117,12 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewGitCredentialResource,
 		NewPlatformHubGitCredentialResource,
 		NewPlatformHubAwsAccountResource,
+		NewPlatformHubAwsOpenIDConnectAccountResource,
+		NewPlatformHubAzureOidcAccountResource,
+		NewPlatformHubAzureServicePrincipalAccountResource,
+		NewPlatformHubGcpAccountResource,
+		NewPlatformHubGenericOidcAccountResource,
+		NewPlatformHubUsernamePasswordAccountResource,
 		NewHelmFeedResource,
 		NewArtifactoryGenericFeedResource,
 		NewGitHubRepositoryFeedResource,
@@ -161,6 +168,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewScopedUserRoleResource,
 		NewSpaceDefaultLifecycleReleaseRetentionPolicyResource,
 		NewSpaceDefaultLifecycleTentacleRetentionPolicyResource,
+		NewSpaceDefaultRunbookRetentionPolicyResource,
 		NewPlatformHubVersionControlUsernamePasswordSettingsResource,
 		NewPlatformHubVersionControlAnonymousSettingsResource,
 	}
