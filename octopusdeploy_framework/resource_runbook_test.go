@@ -324,6 +324,32 @@ func TestAccOctopusDeployRunbookImport(t *testing.T) {
 	})
 }
 
+func TestAccOctopusDeployRunbookWithTags(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_runbook." + localName
+
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy:             testAccRunbookCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRunbookWithTags(localName, projectLocalName, projectName, name, tagSetName, tagName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "runbook_tags.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccRunbookBasic(localName string, projectLocalName string, name string, description string, projectName string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
@@ -570,4 +596,31 @@ func testAccRunbookImportStateIdFunc(resourceName string) resource.ImportStateId
 
 		return rs.Primary.ID, nil
 	}
+}
+
+func testAccRunbookWithTags(localName string, projectLocalName string, projectName string, name string, tagSetName string, tagName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_project" "%s" {
+		name             = "%s"
+		lifecycle_id     = "Lifecycles-1"
+		project_group_id = "ProjectGroups-1"
+		space_id         = "Spaces-1"
+	}
+
+	resource "octopusdeploy_tag_set" "%s" {
+		name   = "%s"
+		scopes = ["Runbook"]
+	}
+
+	resource "octopusdeploy_tag" "%s" {
+		name       = "%s"
+		color      = "#ff0000"
+		tag_set_id = octopusdeploy_tag_set.%s.id
+	}
+
+	resource "octopusdeploy_runbook" "%s" {
+		name         = "%s"
+		project_id   = octopusdeploy_project.%s.id
+		runbook_tags = [octopusdeploy_tag.%s.canonical_tag_name]
+	}`, projectLocalName, projectName, tagSetName, tagSetName, tagName, tagName, tagSetName, localName, name, projectLocalName, tagName)
 }
