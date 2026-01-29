@@ -10,6 +10,8 @@ import (
 )
 
 func TestAccOctopusDeployNpmFeed(t *testing.T) {
+	t.Skip("Skipping until server is updated with NPM feed support")
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_npm_feed." + localName
 
