@@ -27,7 +27,7 @@ data "octopusdeploy_feeds" "example" {
 
 ### Optional
 
-- `feed_type` (String) A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.
+- `feed_type` (String) A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `Npm`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.
 - `ids` (List of String) A filter to search by a list of IDs.
 - `name` (String) The name of this resource.
 - `partial_name` (String) A filter to search by a partial name.
@@ -51,7 +51,7 @@ Read-Only:
 - `delete_unreleased_packages_after_days` (Number) Sets the package retention in days. Set delete_packages_associated_with_releases to choose which packages are kept.
 - `download_attempts` (Number) The number of times a deployment should attempt to download a package from this feed before failing.
 - `download_retry_backoff_seconds` (Number) The number of seconds to apply as a linear back off between download attempts.
-- `feed_type` (String) A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.
+- `feed_type` (String) A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `Npm`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.
 - `feed_uri` (String)
 - `id` (String) The unique ID for this resource.
 - `is_enhanced_mode` (Boolean)
