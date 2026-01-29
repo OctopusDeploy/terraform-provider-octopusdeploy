@@ -165,6 +165,7 @@ Optional:
 
 - `file_path_filters` (Set of String) List of file path filters used to narrow down the directory where files are to be sourced from. Supports glob patten syntax.
 - `git_credential_id` (String) ID of an existing Git credential.
+- `github_connection_id` (String) ID of an existing GitHub App connection. Used when git_credential_type is GitHub
 
 
 <a id="nestedatt--packages"></a>

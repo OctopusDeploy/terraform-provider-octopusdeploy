@@ -73,7 +73,8 @@ func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
 					"file_path_filters": types.SetValueMust(types.StringType, []attr.Value{
 						types.StringValue("directory-a"),
 					}),
-					"git_credential_id": types.StringValue("GitCredentials-1"),
+					"git_credential_id":    types.StringValue("GitCredentials-1"),
+					"github_connection_id": types.StringValue("GitHubConnections-1"),
 				},
 			),
 		}),
@@ -133,12 +134,13 @@ func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
 				},
 				GitDependencies: []*gitdependencies.GitDependency{
 					{
-						Name:              "script-folder",
-						RepositoryUri:     "git://test.repository.fi",
-						DefaultBranch:     "main",
-						GitCredentialType: "UsernamePassword",
-						FilePathFilters:   []string{"directory-a"},
-						GitCredentialId:   "GitCredentials-1",
+						Name:               "script-folder",
+						RepositoryUri:      "git://test.repository.fi",
+						DefaultBranch:      "main",
+						GitCredentialType:  "UsernamePassword",
+						FilePathFilters:    []string{"directory-a"},
+						GitCredentialId:    "GitCredentials-1",
+						GitHubConnectionId: "GitHubConnections-1",
 					},
 				},
 				Packages: []*packages.PackageReference{
@@ -257,12 +259,13 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 		AcquisitionLocation: "Server",
 	}
 	gitDependency := &gitdependencies.GitDependency{
-		Name:              "this-dependency",
-		RepositoryUri:     "git://test.repository.co.nz",
-		DefaultBranch:     "default",
-		GitCredentialType: "NotSpecified",
-		FilePathFilters:   []string{"directory-b"},
-		GitCredentialId:   "GitCredential-2",
+		Name:               "this-dependency",
+		RepositoryUri:      "git://test.repository.co.nz",
+		DefaultBranch:      "default",
+		GitCredentialType:  "NotSpecified",
+		FilePathFilters:    []string{"directory-b"},
+		GitCredentialId:    "GitCredential-2",
+		GitHubConnectionId: "GitHubConnections-2",
 	}
 
 	action := deployments.NewDeploymentAction("Step One", "Octopus.Script")
@@ -369,10 +372,11 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 			gitDependency.Name: types.ObjectValueMust(
 				schemas.ProcessStepGitDependencyAttributeTypes(),
 				map[string]attr.Value{
-					"repository_uri":      types.StringValue(gitDependency.RepositoryUri),
-					"default_branch":      types.StringValue(gitDependency.DefaultBranch),
-					"git_credential_type": types.StringValue(gitDependency.GitCredentialType),
-					"git_credential_id":   types.StringValue(gitDependency.GitCredentialId),
+					"repository_uri":       types.StringValue(gitDependency.RepositoryUri),
+					"default_branch":       types.StringValue(gitDependency.DefaultBranch),
+					"git_credential_type":  types.StringValue(gitDependency.GitCredentialType),
+					"git_credential_id":    types.StringValue(gitDependency.GitCredentialId),
+					"github_connection_id": types.StringValue(gitDependency.GitHubConnectionId),
 					"file_path_filters": types.SetValueMust(types.StringType, []attr.Value{
 						types.StringValue("directory-b"),
 					}),
@@ -422,12 +426,13 @@ func TestAccMapProcessStepToStateWithAllAttributesForRunbook(t *testing.T) {
 		AcquisitionLocation: "Server",
 	}
 	gitDependency := &gitdependencies.GitDependency{
-		Name:              "this-dependency",
-		RepositoryUri:     "git://test.repository.co.nz",
-		DefaultBranch:     "default",
-		GitCredentialType: "NotSpecified",
-		FilePathFilters:   []string{"directory-b"},
-		GitCredentialId:   "GitCredential-2",
+		Name:               "this-dependency",
+		RepositoryUri:      "git://test.repository.co.nz",
+		DefaultBranch:      "default",
+		GitCredentialType:  "NotSpecified",
+		FilePathFilters:    []string{"directory-b"},
+		GitCredentialId:    "GitCredential-2",
+		GitHubConnectionId: "GitHubConnections-2",
 	}
 
 	action := deployments.NewDeploymentAction("Step One", "Octopus.Script")
@@ -535,10 +540,11 @@ func TestAccMapProcessStepToStateWithAllAttributesForRunbook(t *testing.T) {
 			gitDependency.Name: types.ObjectValueMust(
 				schemas.ProcessStepGitDependencyAttributeTypes(),
 				map[string]attr.Value{
-					"repository_uri":      types.StringValue(gitDependency.RepositoryUri),
-					"default_branch":      types.StringValue(gitDependency.DefaultBranch),
-					"git_credential_type": types.StringValue(gitDependency.GitCredentialType),
-					"git_credential_id":   types.StringValue(gitDependency.GitCredentialId),
+					"repository_uri":       types.StringValue(gitDependency.RepositoryUri),
+					"default_branch":       types.StringValue(gitDependency.DefaultBranch),
+					"git_credential_type":  types.StringValue(gitDependency.GitCredentialType),
+					"git_credential_id":    types.StringValue(gitDependency.GitCredentialId),
+					"github_connection_id": types.StringValue(gitDependency.GitHubConnectionId),
 					"file_path_filters": types.SetValueMust(types.StringType, []attr.Value{
 						types.StringValue("directory-b"),
 					}),
