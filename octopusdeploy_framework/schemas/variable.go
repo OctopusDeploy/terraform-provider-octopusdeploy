@@ -62,6 +62,7 @@ var VariableTypeNames = struct {
 	Sensitive                string
 	String                   string
 	WorkerPool               string
+	GenericOidcAccount       string
 }{
 	AmazonWebServicesAccount: "AmazonWebServicesAccount",
 	AzureAccount:             "AzureAccount",
@@ -71,6 +72,7 @@ var VariableTypeNames = struct {
 	Sensitive:                "Sensitive",
 	String:                   "String",
 	WorkerPool:               "WorkerPool",
+	GenericOidcAccount:       "GenericOidcAccount",
 }
 
 var VariableTypes = []string{
@@ -82,6 +84,7 @@ var VariableTypes = []string{
 	VariableTypeNames.Sensitive,
 	VariableTypeNames.String,
 	VariableTypeNames.WorkerPool,
+	VariableTypeNames.GenericOidcAccount,
 }
 
 type VariableSchema struct{}
