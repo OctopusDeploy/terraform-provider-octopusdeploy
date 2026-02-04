@@ -19,7 +19,7 @@ Provides information about existing tag sets.
 
 - `ids` (List of String) A filter to search by a list of IDs.
 - `partial_name` (String) A filter to search by the partial match of a name.
-- `scopes` (List of String) A filter to search by scopes. Valid values are `"Tenant"`, `"Environment"`, `"Project"`.
+- `scopes` (List of String) A filter to search by scopes. Valid values are `"Tenant"`, `"Environment"`, `"Project"`, `"Target"`.
 - `skip` (Number) A filter to specify the number of items to skip in the response.
 - `space_id` (String) The space ID associated with this resource.
 - `take` (Number) A filter to specify the number of items to take (or return) in the response.
@@ -37,7 +37,7 @@ Read-Only:
 - `description` (String) The description of this tag set.
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
-- `scopes` (List of String) The resource scopes this tag set applies to. Valid values are `"Tenant"`, `"Environment"`, `"Project"`.
+- `scopes` (List of String) The resource scopes this tag set applies to. Valid values are `"Tenant"`, `"Environment"`, `"Project"`, `"Target"`.
 - `sort_order` (Number) The sort order associated with this resource.
 - `space_id` (String) The space ID associated with this resource.
 - `tags` (Attributes List) The tags associated with this tag set. (see [below for nested schema](#nestedatt--tag_sets--tags))
