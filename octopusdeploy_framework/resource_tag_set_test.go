@@ -226,3 +226,58 @@ func TestAccTagSetWithTenantScope(t *testing.T) {
 		},
 	})
 }
+
+func TestAccTagSetWithTargetScope(t *testing.T) {
+	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
+	tagSetDescription := "TagSet with Target scope"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name        = "%s"
+						description = "%s"
+						scopes      = ["Target"]
+						type        = "MultiSelect"
+					}`, tagSetName, tagSetName, tagSetDescription),
+				Check: resource.ComposeTestCheckFunc(
+					testTagSetExists(tagSetPrefix),
+					resource.TestCheckResourceAttr(tagSetPrefix, "name", tagSetName),
+					resource.TestCheckResourceAttr(tagSetPrefix, "description", tagSetDescription),
+					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.#", "1"),
+					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.0", "Target"),
+					resource.TestCheckResourceAttr(tagSetPrefix, "type", "MultiSelect"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccTagSetWithMultipleScopes(t *testing.T) {
+	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tagSetPrefix := "octopusdeploy_tag_set." + tagSetName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "octopusdeploy_tag_set" "%s" {
+						name   = "%s"
+						scopes = ["Environment", "Target"]
+						type   = "SingleSelect"
+					}`, tagSetName, tagSetName),
+				Check: resource.ComposeTestCheckFunc(
+					testTagSetExists(tagSetPrefix),
+					resource.TestCheckResourceAttr(tagSetPrefix, "scopes.#", "2"),
+					resource.TestCheckResourceAttr(tagSetPrefix, "type", "SingleSelect"),
+				),
+			},
+		},
+	})
+}
