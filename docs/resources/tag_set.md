@@ -45,7 +45,7 @@ resource "octopusdeploy_tag" "beta" {
 ### Optional
 
 - `description` (String) The description of this tag set.
-- `scopes` (List of String) The resource scopes this tag set applies to. Valid values are `"Tenant"`, `"Environment"`, `"Project"`.
+- `scopes` (List of String) The resource scopes this tag set applies to. Valid values are `"Tenant"`, `"Environment"`, `"Project"`, `"Target"`.
 - `sort_order` (Number) The sort order associated with this resource.
 - `space_id` (String) The space ID associated with this resource.
 - `type` (String) The type of this tag set. Valid values are `"SingleSelect"`, `"MultiSelect"`, `"FreeText"`.
