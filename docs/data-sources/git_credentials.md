@@ -47,3 +47,5 @@ Read-Only:
 
 - `allowed_repositories` (Set of String) Set of allowed repository URL's.
 - `enabled` (Boolean) Whether repository restrictions are enabled.
+
+

@@ -92,3 +92,5 @@ Read-Only:
 - `environment_id` (String) The environment ID
 - `project_id` (String) The project ID
 - `tenant_id` (String) The tenant ID
+
+

@@ -37,3 +37,5 @@ Manages a tenant common variable in Octopus Deploy.
 Optional:
 
 - `environment_ids` (Set of String) A set of environment IDs to scope this variable to.
+
+
