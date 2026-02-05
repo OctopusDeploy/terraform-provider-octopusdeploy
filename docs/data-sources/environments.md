@@ -79,5 +79,3 @@ Read-Only:
 Read-Only:
 
 - `is_enabled` (Boolean)
-
-

@@ -54,5 +54,3 @@ Read-Only:
 - `id` (String) The unique ID for this tag.
 - `name` (String) The name of this tag.
 - `sort_order` (Number) The sort order associated with this tag.
-
-

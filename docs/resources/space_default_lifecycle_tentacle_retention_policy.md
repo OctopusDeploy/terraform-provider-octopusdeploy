@@ -30,5 +30,3 @@ Manages a space's default retention policy for how files on tentacles are retain
 ### Read-Only
 
 - `id` (String) The unique ID for this resource.
-
-
