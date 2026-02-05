@@ -80,7 +80,7 @@ jobs:
           cat <<EOT >> ~/.terraformrc
           provider_installation {
               dev_overrides {
-                "octopusdeploylabs/octopusdeploy" = "${{ github.workspace }}"
+                "octopusdeploy/octopusdeploy" = "${{ github.workspace }}"
             }
             direct {}
           }
