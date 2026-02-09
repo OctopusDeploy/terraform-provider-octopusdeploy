@@ -38,7 +38,7 @@ data "octopusdeploy_variables" "example" {
 - `is_sensitive` (Boolean) Indicates whether or not this resource is considered sensitive and should be kept secret.
 - `prompt` (Attributes List) (see [below for nested schema](#nestedatt--prompt))
 - `sensitive_value` (String, Sensitive)
-- `type` (String) The type of variable represented by this resource. Valid types are `AmazonWebServicesAccount`, `AzureAccount`, `GoogleCloudAccount`, `UsernamePasswordAccount`, `Certificate`, `Sensitive`, `String`, `WorkerPool`.
+- `type` (String) The type of variable represented by this resource. Valid types are `AmazonWebServicesAccount`, `AzureAccount`, `GoogleCloudAccount`, `UsernamePasswordAccount`, `Certificate`, `Sensitive`, `String`, `WorkerPool`, `GenericOidcAccount`.
 - `value` (String)
 
 <a id="nestedatt--scope"></a>

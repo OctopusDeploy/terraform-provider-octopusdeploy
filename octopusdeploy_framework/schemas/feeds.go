@@ -21,7 +21,7 @@ func (f FeedsSchema) GetDatasourceSchema() datasourceSchema.Schema {
 		Description: "Provides information about existing feeds.",
 		Attributes: map[string]datasourceSchema.Attribute{
 			"feed_type": datasourceSchema.StringAttribute{
-				Description: "A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.",
+				Description: "A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `Npm`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.",
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -31,6 +31,7 @@ func (f FeedsSchema) GetDatasourceSchema() datasourceSchema.Schema {
 						"GitHub",
 						"Helm",
 						"Maven",
+						"Npm",
 						"NuGet",
 						"S3",
 						"OciRegistry",
@@ -52,7 +53,7 @@ func (f FeedsSchema) GetDatasourceSchema() datasourceSchema.Schema {
 				NestedObject: datasourceSchema.NestedAttributeObject{
 					Attributes: map[string]datasourceSchema.Attribute{
 						"feed_type": datasourceSchema.StringAttribute{
-							Description: "A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.",
+							Description: "A filter to search by feed type. Valid feed types are `AwsElasticContainerRegistry`, `BuiltIn`, `Docker`, `GitHub`, `Helm`, `Maven`, `Npm`, `NuGet`, `S3`, `OciRegistry` or `OctopusProject`.",
 							Computed:    true,
 							Validators: []validator.String{
 								stringvalidator.OneOf(
@@ -62,6 +63,7 @@ func (f FeedsSchema) GetDatasourceSchema() datasourceSchema.Schema {
 									"GitHub",
 									"Helm",
 									"Maven",
+									"Npm",
 									"NuGet",
 									"S3",
 									"OciRegistry",

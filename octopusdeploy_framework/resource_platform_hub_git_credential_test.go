@@ -11,8 +11,6 @@ import (
 
 // TestAccPlatformHubGitCredentialCreate tests resource creation
 func TestAccPlatformHubGitCredentialCreate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub git credential API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_git_credential." + localName
 
@@ -41,8 +39,6 @@ func TestAccPlatformHubGitCredentialCreate(t *testing.T) {
 }
 
 func TestAccPlatformHubGitCredentialUpdate(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub git credential API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_git_credential." + localName
 
@@ -77,8 +73,6 @@ func TestAccPlatformHubGitCredentialUpdate(t *testing.T) {
 }
 
 func TestAccPlatformHubGitCredentialImport(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub git credential API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_git_credential." + localName
 
@@ -107,8 +101,6 @@ func TestAccPlatformHubGitCredentialImport(t *testing.T) {
 }
 
 func TestAccPlatformHubGitCredentialRepositoryRestrictions(t *testing.T) {
-	t.Skip("Skipping test - Platform Hub git credential API not available on test server")
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_platform_hub_git_credential." + localName
 

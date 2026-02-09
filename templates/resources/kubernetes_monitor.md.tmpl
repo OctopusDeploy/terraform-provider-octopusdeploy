@@ -33,14 +33,13 @@ data "octopusdeploy_teams" "everyone" {
 }
 
 resource "octopusdeploy_space" "monitoring" {
-  name                 = "Kubernetes Monitoring"
-  description          = "Space for Kubernetes observability"
+  name                 = "Kubernetes Terraform Examples"
+  description          = "Terraform created examples"
   space_managers_teams = [data.octopusdeploy_teams.everyone.teams[0].id]
 }
 
 resource "octopusdeploy_environment" "example" {
   name        = "Example"
-  description = "Example Kubernetes clusters"
   space_id    = octopusdeploy_space.monitoring.id
 }
 
@@ -49,15 +48,13 @@ resource "octopusdeploy_tentacle_certificate" "agent_cert" {}
 
 # Create the Kubernetes agent deployment target
 resource "octopusdeploy_kubernetes_agent_deployment_target" "example" {
-  name         = "Example Kubernetes Cluster"
+  name         = "Example Kubernetes Agent"
   space_id     = octopusdeploy_space.monitoring.id
   environments = [octopusdeploy_environment.example.id]
-  roles        = ["k8s-example", "monitoring-enabled"]
+  roles        = ["k8s-agent-example"]
 
   thumbprint = octopusdeploy_tentacle_certificate.agent_cert.thumbprint
   uri        = octopusdeploy_polling_subscription_id.agent_subscription_id.polling_uri
-
-  default_namespace = "octopus-system"
 }
 
 # Generate a unique installation ID for the monitor
@@ -71,99 +68,91 @@ resource "octopusdeploy_kubernetes_monitor" "example" {
 }
 
 # Install the Kubernetes agent and monitor via Helm
-resource "helm_release" "kubernetes_agent1" {
-  name             = "octopus-agent-release"
+resource "helm_release" "kubernetes_agent" {
+  name             = "example-kubernetes-agent"
   repository       = "oci://registry-1.docker.io"
   chart            = "octopusdeploy/kubernetes-agent"
   version          = "2.*.*"
   atomic           = true
   create_namespace = true
-  namespace        = "octopus-agent-target1"
+  namespace        = "octopus-agent-example"
 
-  set {
-    name  = "agent.acceptEula"
-    value = "Y"
-  }
+  set = [
+    {
+      name  = "agent.acceptEula"
+      value = "Y"
+    },
+    {
+      name  = "agent.name"
+      value = octopusdeploy_kubernetes_agent_deployment_target.example.name
+    },
+    {
+      name  = "agent.serverUrl"
+      value = local.octopus_address
+    },
+    {
+      name  = "agent.serverCommsAddress"
+      value = local.octopus_polling_address
+    },
+    {
+      name  = "agent.serverSubscriptionId"
+      value = octopusdeploy_polling_subscription_id.agent_subscription_id.polling_uri
+    },
+    {
+      name  = "agent.space"
+      value = octopusdeploy_space.monitoring.name
+    },
+    {
+      name  = "agent.deploymentTarget.enabled"
+      value = "true"
+    },
+    {
+      name  = "agent.targetName"
+      value = octopusdeploy_kubernetes_agent_deployment_target.example.name
+    },
+    {
+      name  = "kubernetesMonitor.enabled"
+      value = "true"
+    },
+    {
+      name  = "kubernetesMonitor.registration.register"
+      value = "false"
+    },
+    {
+      name  = "kubernetesMonitor.monitor.serverGrpcUrl"
+      value = local.octopus_grpc_address
+    },
+    {
+      name  = "kubernetesMonitor.monitor.installationId"
+      value = octopusdeploy_kubernetes_monitor.example.installation_id
+    }
+  ]
 
-  set {
-    name  = "agent.name"
-    value = octopusdeploy_kubernetes_agent_deployment_target.example.name
-  }
+  set_sensitive = [
+    {
+      name  = "agent.serverApiKey"
+      value = local.octopus_api_key
+    },
+    {
+      name  = "agent.certificate"
+      value = octopusdeploy_tentacle_certificate.agent_cert.base64
+    },
+    {
+      name  = "kubernetesMonitor.monitor.authenticationToken"
+      value = octopusdeploy_kubernetes_monitor.example.authentication_token
+    }
+  ]
 
-  set_sensitive {
-    name  = "agent.serverApiKey"
-    value = local.octopus_api_key
-  }
-
-  set {
-    name  = "agent.serverUrl"
-    value = local.octopus_address
-  }
-
-  set {
-    name  = "agent.serverCommsAddress"
-    value = local.octopus_polling_address
-  }
-
-  set {
-    name  = "agent.serverSubscriptionId"
-    value = octopusdeploy_polling_subscription_id.agent_subscription_id.polling_uri
-  }
-
-  set_sensitive {
-    name  = "agent.certificate"
-    value = octopusdeploy_tentacle_certificate.agent_cert.base64
-  }
-
-  set {
-    name  = "agent.space"
-    value = octopusdeploy_space.monitoring.name
-  }
-
-  set {
-    name  = "agent.deploymentTarget.enabled"
-    value = "true"
-  }
-
-  set_list {
-    name  = "agent.deploymentTarget.initial.environments"
-    value = octopusdeploy_kubernetes_agent_deployment_target.example.environments
-  }
-
-  set_list {
-    name  = "agent.deploymentTarget.initial.tags"
-    value = octopusdeploy_kubernetes_agent_deployment_target.example.roles
-  }
-
-  set {
-    name  = "agent.targetName"
-    value = octopusdeploy_kubernetes_agent_deployment_target.example.name
-  }
-
-  set {
-    name  = "kubernetesMonitor.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "kubernetesMonitor.registration.register"
-    value = "false"
-  }
-
-  set {
-    name  = "kubernetesMonitor.monitor.serverGrpcUrl"
-    value = local.octopus_grpc_address
-  }
-
-  set_sensitive {
-    name  = "kubernetesMonitor.monitor.authenticationToken"
-    value = octopusdeploy_kubernetes_monitor.example.authentication_token
-  }
-
-  set {
-    name  = "kubernetesMonitor.monitor.installationId"
-    value = octopusdeploy_kubernetes_monitor.example.installation_id
-  }
+  set_list = [
+    {
+      name  = "agent.deploymentTarget.initial.environments"
+      value = octopusdeploy_kubernetes_agent_deployment_target.example.environments
+    },
+    {
+      name  = "agent.deploymentTarget.initial.tags"
+      value = octopusdeploy_kubernetes_agent_deployment_target.example.roles
+    }
+  ]
 }
 ```
 {{ .SchemaMarkdown | trimspace }}

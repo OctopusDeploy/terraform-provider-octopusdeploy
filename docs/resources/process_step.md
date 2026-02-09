@@ -23,6 +23,8 @@ This resource also contains a concept that doesn't exist in the Octopus Deploy d
 
 For more information on how to discover step properties read the *How to Find Step Properties* under the guides section of the documentation.
 
+~> For more information on how to configure Process Template Usage Steps (`Octopus.ProcessTemplate` type), see the *Using Process Templates* section in the `octopusdeploy_process` documentation.
+
 ## Example Usage
 
 ```terraform
@@ -162,6 +164,7 @@ Optional:
 
 - `file_path_filters` (Set of String) List of file path filters used to narrow down the directory where files are to be sourced from. Supports glob patten syntax.
 - `git_credential_id` (String) ID of an existing Git credential.
+- `github_connection_id` (String) ID of an existing GitHub App connection. Used when git_credential_type is GitHub
 
 
 <a id="nestedatt--packages"></a>
