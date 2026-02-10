@@ -165,6 +165,8 @@ func createGcsStorageResourceFromData(data *schemas.GcsStorageFeedTypeResourceMo
 	feed.ID = data.ID.ValueString()
 	feed.SpaceID = data.SpaceID.ValueString()
 	feed.OidcAuthentication = oidc
+	feed.DownloadAttempts = int(data.DownloadAttempts.ValueInt64())
+	feed.DownloadRetryBackoffSeconds = int(data.DownloadRetryBackoffSeconds.ValueInt64())
 
 	return feed, nil
 }
@@ -179,6 +181,8 @@ func updateDataFromGcsStorageFeed(data *schemas.GcsStorageFeedTypeResourceModel,
 	}
 
 	data.ID = types.StringValue(feed.ID)
+	data.DownloadAttempts = types.Int64Value(int64(feed.DownloadAttempts))
+	data.DownloadRetryBackoffSeconds = types.Int64Value(int64(feed.DownloadRetryBackoffSeconds))
 
 	if feed.OidcAuthentication != nil {
 		data.OidcAuthentication = &schemas.GoogleContainerRegistryOidcAuthenticationResourceModel{

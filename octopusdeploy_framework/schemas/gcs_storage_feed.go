@@ -46,6 +46,8 @@ func (g GcsStorageFeedSchema) GetResourceSchema() resourceSchema.Schema {
 					"subject_keys": GetOidcSubjectKeysSchema("Keys to include in a deployment or runbook. Valid options are space, feed.", false),
 				},
 			},
+			"download_attempts":              GetDownloadAttemptsSchema(false),
+			"download_retry_backoff_seconds": GetDownloadRetryBackoffSecondsSchema(false),
 		},
 	}
 }
@@ -55,12 +57,14 @@ func (g GcsStorageFeedSchema) GetDatasourceSchema() datasourceSchema.Schema {
 }
 
 type GcsStorageFeedTypeResourceModel struct {
-	Name                  types.String                                            `tfsdk:"name"`
-	SpaceID               types.String                                            `tfsdk:"space_id"`
-	UseServiceAccountKey  types.Bool                                              `tfsdk:"use_service_account_key"`
-	ServiceAccountJsonKey types.String                                            `tfsdk:"service_account_json_key"`
-	Project               types.String                                            `tfsdk:"project"`
-	OidcAuthentication    *GoogleContainerRegistryOidcAuthenticationResourceModel `tfsdk:"oidc_authentication"`
+	Name                        types.String                                            `tfsdk:"name"`
+	SpaceID                     types.String                                            `tfsdk:"space_id"`
+	UseServiceAccountKey        types.Bool                                              `tfsdk:"use_service_account_key"`
+	ServiceAccountJsonKey       types.String                                            `tfsdk:"service_account_json_key"`
+	Project                     types.String                                            `tfsdk:"project"`
+	OidcAuthentication          *GoogleContainerRegistryOidcAuthenticationResourceModel `tfsdk:"oidc_authentication"`
+	DownloadAttempts            types.Int64                                             `tfsdk:"download_attempts"`
+	DownloadRetryBackoffSeconds types.Int64                                             `tfsdk:"download_retry_backoff_seconds"`
 
 	ResourceModel
 }
