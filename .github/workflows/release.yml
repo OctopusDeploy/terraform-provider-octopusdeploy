@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+     
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
@@ -20,10 +22,10 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
-          
+
       - uses: goreleaser/goreleaser-action@v3
         with:
-          args: release --clean
+          args: release --clean --skip-publish
           version: latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
