@@ -46,8 +46,8 @@ func (g GcsStorageFeedSchema) GetResourceSchema() resourceSchema.Schema {
 					"subject_keys": GetOidcSubjectKeysSchema("Keys to include in a deployment or runbook. Valid options are space, feed.", false),
 				},
 			},
-			"download_attempts":              GetDownloadAttemptsSchema(false),
-			"download_retry_backoff_seconds": GetDownloadRetryBackoffSecondsSchema(false),
+			"download_attempts":              GetDownloadAttemptsResourceSchema(),
+			"download_retry_backoff_seconds": GetDownloadRetryBackoffSecondsResourceSchema(),
 		},
 	}
 }
