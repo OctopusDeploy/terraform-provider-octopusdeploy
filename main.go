@@ -41,7 +41,7 @@ func main() {
 
 	opts := []tf6server.ServeOpt{}
 
-	var providerName = "registry.terraform.io/OctopusDeployLabs/octopusdeploy"
+	var providerName = "registry.terraform.io/OctopusDeploy/octopusdeploy"
 	if debugMode {
 		opts = append(opts, tf6server.WithManagedDebug())
 		providerName = "octopus.com/com/octopusdeploy"
