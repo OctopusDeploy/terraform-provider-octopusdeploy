@@ -38,6 +38,8 @@ signs:
         "loopback",
         "-u",
         "{{ .Env.GPG_FINGERPRINT }}",
+        "--passphrase",
+        "{{ .Env.PASSPHRASE }}",
         "--output",
         "${signature}",
         "--detach-sign",
