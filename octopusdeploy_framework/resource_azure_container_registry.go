@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/feeds"
@@ -160,6 +161,8 @@ func createContainerRegistryFeedResourceFromAzureData(data *schemas.AzureContain
 			Audience:    data.OidcAuthentication.Audience.ValueString(),
 			SubjectKeys: util.ExpandStringList(data.OidcAuthentication.SubjectKey),
 		}
+	} else {
+		oidc = nil
 	}
 
 	feed, err := feeds.NewAzureContainerRegistry(
@@ -211,13 +214,15 @@ func updateDataFromAzureContainerRegistryFeed(data *schemas.AzureContainerRegist
 
 	data.ID = types.StringValue(feed.ID)
 
-	if feed.OidcAuthentication != nil {
+	if feed.OidcAuthentication != nil && (feed.OidcAuthentication.Audience != "" || len(feed.OidcAuthentication.SubjectKeys) > 0 || feed.OidcAuthentication.TenantId != "" || feed.OidcAuthentication.ClientId != "") {
 		data.OidcAuthentication = &schemas.AzureContainerRegistryOidcAuthenticationResourceModel{
 			ClientId:   types.StringValue(feed.OidcAuthentication.ClientId),
 			TenantId:   types.StringValue(feed.OidcAuthentication.TenantId),
 			Audience:   types.StringValue(feed.OidcAuthentication.Audience),
 			SubjectKey: util.FlattenStringList(feed.OidcAuthentication.SubjectKeys),
 		}
+	} else {
+		data.OidcAuthentication = nil
 	}
 }
 
