@@ -19,10 +19,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/OctopusDeploy/go-octodiff v1.0.0 h1:U+ORg6azniwwYo+O44giOw6TiD5USk8S4VDhOQ0Ven0=
 github.com/OctopusDeploy/go-octodiff v1.0.0/go.mod h1:Mze0+EkOWTgTmi8++fyUc6r0aLZT7qD9gX+31t8MmIU=
-github.com/OctopusDeploy/go-octopusdeploy/v2 v2.100.0 h1:MCFgH9warYsiMxJEvHKY1DVXuJfeR6oIY0FtD5/sWm4=
-github.com/OctopusDeploy/go-octopusdeploy/v2 v2.100.0/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
-github.com/OctopusDeploy/go-octopusdeploy/v2 v2.100.1 h1:wfC42qIemA1cTFVwCpsOccbj/WOazXNvdoP+yRDZ8Bk=
-github.com/OctopusDeploy/go-octopusdeploy/v2 v2.100.1/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.102.0 h1:OW8QyRNSQykUGkoHNbI7dytplwWAx4MROhpbD6T4lm0=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.102.0/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2 h1:960T/UryMsoc2ZOnoLEg7rM9QpxWIdkdB9sR5gsUFAQ=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2/go.mod h1:kllISYzQ8N3P6+3rScVhyW/KWnPWQbwzm8pFcMInSRM=
 github.com/ProtonMail/go-crypto v1.1.6 h1:ZcV+Ropw6Qn0AX9brlQLAUXfqLBc7Bl+f/DmNxpLfdw=
