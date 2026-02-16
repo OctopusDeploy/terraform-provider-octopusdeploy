@@ -10,7 +10,7 @@ import (
 )
 
 func TestAccOctopusDeployGcsStorageFeed(t *testing.T) {
-	t.Skip("Skipping until go-octopusdeploy client is updated with GCS storage feed support")
+	t.Skip("Skipping until server is updated with GCS storage feed support")
 
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_gcs_storage_feed." + localName
@@ -42,7 +42,7 @@ func TestAccOctopusDeployGcsStorageFeed(t *testing.T) {
 }
 
 func TestAccOctopusDeployGcsStorageFeedWithOIDC(t *testing.T) {
-	t.Skip("Skipping until go-octopusdeploy client is updated with GCS storage feed support")
+	t.Skip("Skipping until server is updated with GCS storage feed support")
 
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_gcs_storage_feed." + localName
