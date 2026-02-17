@@ -41,7 +41,7 @@ data "octopusdeploy_spaces" "spaces" {
 
 Optional:
 
-- `name` (String) The name of this resource, no more than 20 characters long
+- `name` (String) The name of this resource
 
 Read-Only:
 
