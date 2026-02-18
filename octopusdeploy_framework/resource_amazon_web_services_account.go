@@ -160,7 +160,11 @@ func flattenAmazonWebServicesAccount(ctx context.Context, account *accounts.Amaz
 	model.Description = types.StringValue(account.GetDescription())
 	model.Environments = flattenStringList(account.GetEnvironmentIDs(), model.Environments)
 	model.Name = types.StringValue(account.GetName())
-	model.Region = types.StringValue(account.Region)
+	if account.Region == "" {
+		model.Region = types.StringNull()
+	} else {
+		model.Region = types.StringValue(account.Region)
+	}
 	model.SpaceId = types.StringValue(account.GetSpaceID())
 	model.TenantedDeploymentParticipation = types.StringValue(string(account.GetTenantedDeploymentMode()))
 	model.Tenants = flattenStringList(account.GetTenantIDs(), model.Tenants)
