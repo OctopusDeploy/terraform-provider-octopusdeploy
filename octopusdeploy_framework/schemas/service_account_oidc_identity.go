@@ -33,6 +33,10 @@ func (d ServiceAccountOIDCIdentitySchema) GetResourceSchema() resourceSchema.Sch
 				Description("OIDC subject claims").
 				Required().
 				Build(),
+			"audience": util.ResourceString().
+				Description("OIDC audience").
+				Optional().
+				Build(),
 		},
 		Description: "This resource manages manages OIDC service account for the associated user",
 	}
@@ -59,6 +63,10 @@ func (d ServiceAccountOIDCIdentitySchema) GetDatasourceSchema() datasourceSchema
 				Description("OIDC subject claims").
 				Computed().
 				Build(),
+			"audience": util.DataSourceString().
+				Description("OIDC audience").
+				Computed().
+				Build(),
 		},
 	}
 }
@@ -68,6 +76,7 @@ type OIDCServiceAccountSchemaModel struct {
 	Name             types.String `tfsdk:"name"`
 	Issuer           types.String `tfsdk:"issuer"`
 	Subject          types.String `tfsdk:"subject"`
+	Audience         types.String `tfsdk:"audience"`
 
 	ResourceModel
 }
@@ -78,4 +87,5 @@ type OIDCServiceAccountDatasourceSchemaModel struct {
 	Name             types.String `tfsdk:"name"`
 	Issuer           types.String `tfsdk:"issuer"`
 	Subject          types.String `tfsdk:"subject"`
+	Audience         types.String `tfsdk:"audience"`
 }

@@ -22,6 +22,10 @@ This resource manages manages OIDC service account for the associated user
 - `service_account_id` (String) ID of the user to associate this identity to
 - `subject` (String) OIDC subject claims
 
+### Optional
+
+- `audience` (String) OIDC audience
+
 ### Read-Only
 
 - `id` (String) The unique ID for this resource.

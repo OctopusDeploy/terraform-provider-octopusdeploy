@@ -27,6 +27,7 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 		ServiceAccountID: userPrefix + ".id",
 		Issuer:           "https://token.actions.githubusercontent.com",
 		Subject:          "repo:test/test:environment:test",
+		Audience:         "oidc-machine-user-" + acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -40,6 +41,7 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", data.Name),
 					resource.TestCheckResourceAttr(prefix, "issuer", data.Issuer),
 					resource.TestCheckResourceAttr(prefix, "subject", data.Subject),
+					resource.TestCheckResourceAttr(prefix, "audience", data.Audience),
 				),
 			},
 			{
@@ -49,6 +51,7 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", data.Name+"-updated"),
 					resource.TestCheckResourceAttr(prefix, "issuer", data.Issuer),
 					resource.TestCheckResourceAttr(prefix, "subject", data.Subject),
+					resource.TestCheckResourceAttr(prefix, "audience", data.Audience),
 				),
 			},
 		},
@@ -69,6 +72,7 @@ func testServiceAccountIdentityConfig(localName string, localUserName string, da
 		service_account_id = %s
 		issuer = "%s"
 		subject = "%s"
+		audience = "%s"
 	}`,
 		localUserName,
 		userData.DisplayName,
@@ -78,7 +82,8 @@ func testServiceAccountIdentityConfig(localName string, localUserName string, da
 		data.Name,
 		data.ServiceAccountID,
 		data.Issuer,
-		data.Subject)
+		data.Subject,
+		data.Audience)
 }
 
 func testServiceAccountIdentityUpdate(localName string, localUserName string, data serviceaccounts.OIDCIdentity, userData users.User) string {

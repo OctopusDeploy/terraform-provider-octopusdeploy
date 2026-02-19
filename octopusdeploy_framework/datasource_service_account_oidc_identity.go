@@ -54,4 +54,10 @@ func updateServiceAccountOIDCDataModel(request *serviceaccounts.OIDCIdentity, mo
 	model.Subject = types.StringValue(request.Subject)
 	model.ID = types.StringValue(request.ID)
 	model.ServiceAccountID = types.StringValue(request.ServiceAccountID)
+
+	if request.Audience == "" {
+		model.Audience = types.StringNull()
+	} else {
+		model.Audience = types.StringValue(request.Audience)
+	}
 }
