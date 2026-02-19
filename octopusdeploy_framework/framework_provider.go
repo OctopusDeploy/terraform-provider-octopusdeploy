@@ -128,6 +128,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewGitHubRepositoryFeedResource,
 		NewAwsElasticContainerRegistryFeedResource,
 		NewNugetFeedResource,
+		NewGcsStorageFeedResource,
 		NewNpmFeedResource,
 		NewTenantProjectResource,
 		NewTenantProjectVariableResource,

@@ -17,6 +17,7 @@ type AmazonWebServicesAccountModel struct {
 	Description                     types.String `tfsdk:"description"`
 	Environments                    types.List   `tfsdk:"environments"`
 	Name                            types.String `tfsdk:"name"`
+	Region                          types.String `tfsdk:"region"`
 	SecretKey                       types.String `tfsdk:"secret_key"`
 	SpaceId                         types.String `tfsdk:"space_id"`
 	TenantedDeploymentParticipation types.String `tfsdk:"tenanted_deployment_participation"`
@@ -42,6 +43,10 @@ func (a AmazonWebServicesAccountSchema) GetResourceSchema() resourceSchema.Schem
 				ElementType: types.StringType,
 			},
 			"name": GetNameResourceSchema(true),
+			"region": resourceSchema.StringAttribute{
+				Description: "The AWS region for this account.",
+				Optional:    true,
+			},
 			"secret_key": resourceSchema.StringAttribute{
 				Description: "The secret key associated with this AWS account.",
 				Sensitive:   true,

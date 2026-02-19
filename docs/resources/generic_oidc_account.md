@@ -30,6 +30,7 @@ resource "octopusdeploy_generic_oidc_account" "example" {
 ### Optional
 
 - `audience` (String) The audience associated with this resource.
+- `custom_claims` (Map of String) Custom claims to be included in the OIDC token.
 - `description` (String) The description of this generic oidc account.
 - `environments` (List of String) A list of environment IDs associated with this resource.
 - `execution_subject_keys` (List of String) Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`.

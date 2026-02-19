@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/feeds"
@@ -159,6 +160,8 @@ func createContainerRegistryFeedResourceFromGoogleData(data *schemas.GoogleConta
 			Audience:    data.OidcAuthentication.Audience.ValueString(),
 			SubjectKeys: util.ExpandStringList(data.OidcAuthentication.SubjectKey),
 		}
+	} else {
+		oidc = nil
 	}
 
 	feed, err := feeds.NewGoogleContainerRegistry(data.Name.ValueString(), data.Username.ValueString(), core.NewSensitiveValue(data.Password.ValueString()), oidc)
@@ -206,11 +209,13 @@ func updateGoogleDataFromDockerContainerRegistryFeed(data *schemas.GoogleContain
 
 	data.ID = types.StringValue(feed.ID)
 
-	if feed.OidcAuthentication != nil {
+	if feed.OidcAuthentication != nil && (feed.OidcAuthentication.Audience != "" || len(feed.OidcAuthentication.SubjectKeys) > 0) {
 		data.OidcAuthentication = &schemas.GoogleContainerRegistryOidcAuthenticationResourceModel{
 			Audience:   types.StringValue(feed.OidcAuthentication.Audience),
 			SubjectKey: util.FlattenStringList(feed.OidcAuthentication.SubjectKeys),
 		}
+	} else {
+		data.OidcAuthentication = nil
 	}
 }
 
