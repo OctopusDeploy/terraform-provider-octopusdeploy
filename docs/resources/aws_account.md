@@ -31,7 +31,7 @@ resource "octopusdeploy_aws_account" "example" {
 
 - `description` (String) The description of this AWS account.
 - `environments` (List of String) A list of environment IDs associated with this AWS account.
-- `region` (String) The AWS region for this account. If not provided, the global STS endpoint will be used.
+- `region` (String) The AWS region for this account.
 - `space_id` (String) The space ID associated with this AWS account.
 - `tenant_tags` (List of String) A list of tenant tags associated with this AWS account.
 - `tenanted_deployment_participation` (String) The tenanted deployment mode of the resource. Valid account types are `Untenanted`, `TenantedOrUntenanted`, or `Tenanted`.

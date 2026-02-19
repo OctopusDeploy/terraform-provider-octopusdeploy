@@ -44,7 +44,7 @@ func (a AmazonWebServicesAccountSchema) GetResourceSchema() resourceSchema.Schem
 			},
 			"name": GetNameResourceSchema(true),
 			"region": resourceSchema.StringAttribute{
-				Description: "The AWS region for this account. If not provided, the global STS endpoint will be used.",
+				Description: "The AWS region for this account.",
 				Optional:    true,
 			},
 			"secret_key": resourceSchema.StringAttribute{

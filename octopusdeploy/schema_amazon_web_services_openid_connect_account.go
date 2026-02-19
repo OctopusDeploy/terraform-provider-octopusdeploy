@@ -94,7 +94,7 @@ func getAmazonWebServicesOpenIDConnectAccountSchema() map[string]*schema.Schema 
 		"health_subject_keys":               getSubjectKeysSchema(SchemaSubjectKeysDescriptionHealth),
 		"account_test_subject_keys":         getSubjectKeysSchema(SchemaSubjectKeysDescriptionAccountTest),
 		"region": {
-			Description: "The AWS region for this account. If not provided, the global STS endpoint will be used.",
+			Description: "The AWS region for this account.",
 			Optional:    true,
 			Type:        schema.TypeString,
 		},
