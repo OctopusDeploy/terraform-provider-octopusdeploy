@@ -115,6 +115,10 @@ func mapServiceAccountOIDCModelToRequest(model *schemas.OIDCServiceAccountSchema
 	identity.ID = model.ID.ValueString()
 	identity.Name = model.Name.ValueString()
 
+	if !model.Audience.IsNull() {
+		identity.Audience = model.Audience.ValueString()
+	}
+
 	return identity
 }
 
@@ -124,4 +128,10 @@ func updateServiceAccountOIDCModel(request *serviceaccounts.OIDCIdentity, model 
 	model.Subject = types.StringValue(request.Subject)
 	model.ID = types.StringValue(request.ID)
 	model.ServiceAccountID = types.StringValue(request.ServiceAccountID)
+
+	if request.Audience == "" {
+		model.Audience = types.StringNull()
+	} else {
+		model.Audience = types.StringValue(request.Audience)
+	}
 }
