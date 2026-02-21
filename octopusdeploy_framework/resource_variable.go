@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
@@ -90,15 +91,29 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 
 	tflog.Info(ctx, fmt.Sprintf("creating variable: %#v", newVariable))
 
-	variableSet, err := variables.AddSingle(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString(), newVariable)
-	if err != nil {
-		resp.Diagnostics.AddError("create variable failed", err.Error())
-		return
-	}
+	// Start of OctoAI patch
+	// Retry logic to address the issue documented at https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/29
+	var validateError error
+	for i := 0; i < 10; i++ {
+		variableSet, err := variables.AddSingle(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString(), newVariable)
+		if err != nil {
+			resp.Diagnostics.AddError("create variable failed", err.Error())
+			return
+		}
 
-	err = validateVariable(&variableSet, newVariable, variableOwnerId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("create variable failed", err.Error())
+		validateError = validateVariable(&variableSet, newVariable, variableOwnerId.ValueString())
+
+		if validateError == nil {
+			break
+		}
+
+		tflog.Info(ctx, "retrying to create variable "+newVariable.Name+": "+fmt.Sprint(i))
+		time.Sleep(time.Second)
+	}
+	// End of OctoAI patch
+
+	if validateError != nil {
+		resp.Diagnostics.AddError("create variable failed", validateError.Error())
 		return
 	}
 
