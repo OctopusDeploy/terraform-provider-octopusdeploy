@@ -29,6 +29,7 @@ func UserObjectType() map[string]attr.Type {
 		"is_active":              types.BoolType,
 		"is_requestor":           types.BoolType,
 		"is_service":             types.BoolType,
+		"external_id":            types.StringType,
 		"identity": types.SetType{
 			ElemType: types.ObjectType{AttrTypes: IdentityObjectType()},
 		},
@@ -69,6 +70,10 @@ func (u UserSchema) GetDatasourceSchemaAttributes() map[string]datasourceSchema.
 		"is_active":              GetBooleanDatasourceAttribute("Specifies whether or not the user is active.", true),
 		"is_requestor":           GetBooleanDatasourceAttribute("Specifies whether or not the user is the requestor.", true),
 		"is_service":             GetBooleanDatasourceAttribute("Specifies whether or not the user is a service account.", true),
+		"external_id": datasourceSchema.StringAttribute{
+			Description: "The external ID (GUID) for this service account, used for OIDC authentication.",
+			Computed:    true,
+		},
 		"identity": datasourceSchema.SetNestedAttribute{
 			Description: "The identities associated with the user.",
 			Optional:    true,
@@ -168,6 +173,10 @@ func (u UserSchema) GetResourceSchema() resourceSchema.Schema {
 			"is_active":              GetOptionalBooleanResourceAttribute("Specifies whether or not the user is active.", true),
 			"is_requestor":           GetReadonlyBooleanResourceAttribute("Specifies whether or not the user is the requestor."),
 			"is_service":             GetOptionalBooleanResourceAttribute("Specifies whether or not the user is a service account.", false),
+			"external_id": resourceSchema.StringAttribute{
+				Description: "The external ID (GUID) for this service account, used for OIDC authentication.",
+				Computed:    true,
+			},
 		},
 		Blocks: map[string]resourceSchema.Block{
 			"identity": resourceSchema.SetNestedBlock{
@@ -265,6 +274,7 @@ func MapToUserDatasourceModel(u *users.User) UserTypeDatasourceModel {
 	user.IsActive = types.BoolValue(u.IsActive)
 	user.IsRequestor = types.BoolValue(u.IsRequestor)
 	user.IsService = types.BoolValue(u.IsService)
+	user.ExternalId = types.StringNull() // Will be set separately for service accounts
 	user.Identity = types.SetValueMust(types.ObjectType{AttrTypes: IdentityObjectType()}, MapIdentities(u.Identities))
 
 	return user
@@ -278,6 +288,7 @@ type UserTypeDatasourceModel struct {
 	IsActive            types.Bool   `tfsdk:"is_active"`
 	IsRequestor         types.Bool   `tfsdk:"is_requestor"`
 	IsService           types.Bool   `tfsdk:"is_service"`
+	ExternalId          types.String `tfsdk:"external_id"`
 	Identity            types.Set    `tfsdk:"identity"`
 
 	ResourceModel

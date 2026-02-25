@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/serviceaccounts"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/users"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
@@ -65,6 +66,13 @@ func (r *userTypeResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	updateUser(&data, user)
+
+	if user.IsService {
+		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, user.ID, serviceaccounts.OIDCIdentityQuery{}); err == nil && oidcData != nil {
+			data.ExternalId = types.StringValue(oidcData.ExternalId)
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -84,6 +92,13 @@ func (r *userTypeResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 
 	updateUser(&data, user)
+
+	if user.IsService {
+		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, user.ID, serviceaccounts.OIDCIdentityQuery{}); err == nil && oidcData != nil {
+			data.ExternalId = types.StringValue(oidcData.ExternalId)
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -120,6 +135,13 @@ func (r *userTypeResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	updateUser(&data, updatedUser)
+
+	if updatedUser.IsService {
+		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, updatedUser.ID, serviceaccounts.OIDCIdentityQuery{}); err == nil && oidcData != nil {
+			data.ExternalId = types.StringValue(oidcData.ExternalId)
+		}
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -147,6 +169,7 @@ func updateUser(data *schemas.UserTypeResourceModel, user *users.User) {
 	data.IsRequestor = types.BoolValue(user.IsRequestor)
 	data.IsActive = types.BoolValue(user.IsActive)
 	data.IsService = types.BoolValue(user.IsService)
+	data.ExternalId = types.StringNull() // Will be set separately for service accounts
 	data.Identity = types.SetValueMust(types.ObjectType{AttrTypes: schemas.IdentityObjectType()}, schemas.MapIdentities(user.Identities))
 }
 
