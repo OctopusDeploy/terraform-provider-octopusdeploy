@@ -31,6 +31,7 @@ type projectResourceModel struct {
 	ReleaseCreationStrategy                types.List   `tfsdk:"release_creation_strategy"`
 	Template                               types.List   `tfsdk:"template"`
 	GitAnonymousPersistenceSettings        types.List   `tfsdk:"git_anonymous_persistence_settings"`
+	GitGitHubAppPersistenceSettings        types.List   `tfsdk:"git_github_app_persistence_settings"`
 	GitLibraryPersistenceSettings          types.List   `tfsdk:"git_library_persistence_settings"`
 	GitUsernamePasswordPersistenceSettings types.List   `tfsdk:"git_username_password_persistence_settings"`
 	JiraServiceManagementExtensionSettings types.List   `tfsdk:"jira_service_management_extension_settings"`
@@ -116,4 +117,12 @@ type gitAnonymousPersistenceSettingsModel struct {
 	BasePath          types.String `tfsdk:"base_path"`
 	DefaultBranch     types.String `tfsdk:"default_branch"`
 	ProtectedBranches types.Set    `tfsdk:"protected_branches"`
+}
+
+type gitGitHubAppPersistenceSettingsModel struct {
+	GitHubConnectionID types.String `tfsdk:"github_connection_id"`
+	URL                types.String `tfsdk:"url"`
+	BasePath           types.String `tfsdk:"base_path"`
+	DefaultBranch      types.String `tfsdk:"default_branch"`
+	ProtectedBranches  types.Set    `tfsdk:"protected_branches"`
 }

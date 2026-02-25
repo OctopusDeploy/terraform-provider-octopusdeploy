@@ -82,6 +82,16 @@ func flattenProject(ctx context.Context, project *projects.Project, state *proje
 		return model, diags
 	}
 
+	if !state.GitUsernamePasswordPersistenceSettings.IsNull() && !model.GitUsernamePasswordPersistenceSettings.IsNull() {
+		var stateList, modelList []gitUsernamePasswordPersistenceSettingsModel
+		if d := state.GitUsernamePasswordPersistenceSettings.ElementsAs(ctx, &stateList, false); !d.HasError() && len(stateList) > 0 {
+			if d := model.GitUsernamePasswordPersistenceSettings.ElementsAs(ctx, &modelList, false); !d.HasError() && len(modelList) > 0 {
+				modelList[0].Password = stateList[0].Password
+				model.GitUsernamePasswordPersistenceSettings, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: getGitUsernamePasswordPersistenceSettingsAttrTypes()}, modelList)
+			}
+		}
+	}
+
 	// Extension Settings
 	model.JiraServiceManagementExtensionSettings = flattenJiraServiceManagementExtensionSettings(nil)
 	model.ServiceNowExtensionSettings = flattenServiceNowExtensionSettings(nil)
@@ -107,31 +117,45 @@ func processPersistenceSettings(ctx context.Context, project *projects.Project, 
 	if project.PersistenceSettings != nil {
 		if project.PersistenceSettings.Type() == projects.PersistenceSettingsTypeVersionControlled {
 			gitSettings := project.PersistenceSettings.(projects.GitPersistenceSettings)
-			gitCredentialType := gitSettings.Credential().Type()
 			model.IsVersionControlled = types.BoolValue(true)
-			switch gitCredentialType {
+			cred := gitSettings.Credential()
+			if cred == nil {
+				diags.AddError("Unsupported Git Credential Type", "The project uses a Git credential type that is not supported by this provider version.")
+				return diags
+			}
+			switch cred.Type() {
 			case credentials.GitCredentialTypeReference:
 				model.GitLibraryPersistenceSettings, diags = flattenGitPersistenceSettings(ctx, gitSettings)
 				model.GitUsernamePasswordPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitUsernamePasswordPersistenceSettingsAttrTypes()})
 				model.GitAnonymousPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitAnonymousPersistenceSettingsAttrTypes()})
+				model.GitGitHubAppPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitGitHubAppPersistenceSettingsAttrTypes()})
 			case credentials.GitCredentialTypeUsernamePassword:
 				model.GitLibraryPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitLibraryPersistenceSettingsAttrTypes()})
 				model.GitUsernamePasswordPersistenceSettings, diags = flattenGitPersistenceSettings(ctx, gitSettings)
 				model.GitAnonymousPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitAnonymousPersistenceSettingsAttrTypes()})
+				model.GitGitHubAppPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitGitHubAppPersistenceSettingsAttrTypes()})
 			case credentials.GitCredentialTypeAnonymous:
 				model.GitLibraryPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitLibraryPersistenceSettingsAttrTypes()})
 				model.GitUsernamePasswordPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitUsernamePasswordPersistenceSettingsAttrTypes()})
 				model.GitAnonymousPersistenceSettings, diags = flattenGitPersistenceSettings(ctx, gitSettings)
+				model.GitGitHubAppPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitGitHubAppPersistenceSettingsAttrTypes()})
+			case credentials.GitCredentialTypeGitHubApp:
+				model.GitLibraryPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitLibraryPersistenceSettingsAttrTypes()})
+				model.GitUsernamePasswordPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitUsernamePasswordPersistenceSettingsAttrTypes()})
+				model.GitAnonymousPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitAnonymousPersistenceSettingsAttrTypes()})
+				model.GitGitHubAppPersistenceSettings, diags = flattenGitPersistenceSettings(ctx, gitSettings)
 			}
 		} else {
 			model.GitLibraryPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitLibraryPersistenceSettingsAttrTypes()})
 			model.GitUsernamePasswordPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitUsernamePasswordPersistenceSettingsAttrTypes()})
 			model.GitAnonymousPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitAnonymousPersistenceSettingsAttrTypes()})
+			model.GitGitHubAppPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitGitHubAppPersistenceSettingsAttrTypes()})
 		}
 	} else {
 		model.GitLibraryPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitLibraryPersistenceSettingsAttrTypes()})
 		model.GitUsernamePasswordPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitUsernamePasswordPersistenceSettingsAttrTypes()})
 		model.GitAnonymousPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitAnonymousPersistenceSettingsAttrTypes()})
+		model.GitGitHubAppPersistenceSettings = types.ListNull(types.ObjectType{AttrTypes: getGitGitHubAppPersistenceSettingsAttrTypes()})
 		model.IsVersionControlled = types.BoolValue(false)
 	}
 	return diags
@@ -197,10 +221,18 @@ func flattenGitPersistenceSettings(ctx context.Context, persistenceSettings proj
 		attrTypes = getGitUsernamePasswordPersistenceSettingsAttrTypes()
 		attrValues = baseAttrValues
 		attrValues["username"] = types.StringValue(credential.(*credentials.UsernamePassword).Username)
-		attrValues["password"] = types.StringValue(*credential.(*credentials.UsernamePassword).Password.NewValue)
+		password := ""
+		if p := credential.(*credentials.UsernamePassword).Password; p != nil && p.NewValue != nil {
+			password = *p.NewValue
+		}
+		attrValues["password"] = types.StringValue(password)
 	case credentials.GitCredentialTypeAnonymous:
 		attrTypes = getGitAnonymousPersistenceSettingsAttrTypes()
 		attrValues = baseAttrValues
+	case credentials.GitCredentialTypeGitHubApp:
+		attrTypes = getGitGitHubAppPersistenceSettingsAttrTypes()
+		attrValues = baseAttrValues
+		attrValues["github_connection_id"] = types.StringValue(credential.(*credentials.GitHubApp).ID)
 	default:
 		return types.ListNull(types.ObjectType{}), diag.Diagnostics{
 			diag.NewErrorDiagnostic(
@@ -382,6 +414,16 @@ func getGitAnonymousPersistenceSettingsAttrTypes() map[string]attr.Type {
 		"base_path":          types.StringType,
 		"default_branch":     types.StringType,
 		"protected_branches": types.SetType{ElemType: types.StringType},
+	}
+}
+
+func getGitGitHubAppPersistenceSettingsAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"github_connection_id": types.StringType,
+		"url":                  types.StringType,
+		"base_path":            types.StringType,
+		"default_branch":       types.StringType,
+		"protected_branches":   types.SetType{ElemType: types.StringType},
 	}
 }
 

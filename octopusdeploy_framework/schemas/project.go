@@ -95,6 +95,18 @@ func (p ProjectSchema) GetResourceSchema() resourceSchema.Schema {
 				},
 				Description: "Provides Git-related persistence settings for a version-controlled project.",
 			},
+			"git_github_app_persistence_settings": resourceSchema.ListNestedBlock{
+				NestedObject: resourceSchema.NestedBlockObject{
+					Attributes: map[string]resourceSchema.Attribute{
+						"github_connection_id": util.ResourceString().Required().Description("The ID of the GitHub App connection to use for authenticating with the Git repository.").Build(),
+						"url":                  util.ResourceString().Required().Description("The URL associated with these version control settings.").Build(),
+						"base_path":            util.ResourceString().Optional().Computed().Default(".octopus").Description("The base path associated with these version control settings.").Build(),
+						"default_branch":       util.ResourceString().Optional().Description("The default branch associated with these version control settings.").Build(),
+						"protected_branches":   util.ResourceSet(types.StringType).Optional().Computed().PlanModifiers(setplanmodifier.UseStateForUnknown()).Description("A list of protected branch patterns.").Build(),
+					},
+				},
+				Description: "Provides Git-related persistence settings for a version-controlled project, authenticating via a GitHub App connection.",
+			},
 			"git_library_persistence_settings": resourceSchema.ListNestedBlock{
 				NestedObject: resourceSchema.NestedBlockObject{
 					Attributes: map[string]resourceSchema.Attribute{
@@ -258,6 +270,7 @@ func getProjectsDataSourceAttribute() datasourceSchema.ListNestedAttribute {
 				"git_library_persistence_settings":           getDataSourceGitPersistenceSettingsAttribute("library"),
 				"git_username_password_persistence_settings": getDataSourceGitPersistenceSettingsAttribute("username_password"),
 				"git_anonymous_persistence_settings":         getDataSourceGitPersistenceSettingsAttribute("anonymous"),
+				"git_github_app_persistence_settings":        getDataSourceGitPersistenceSettingsAttribute("github_app"),
 				"jira_service_management_extension_settings": getDataSourceJSMExtensionSettingsAttribute(),
 				"servicenow_extension_settings":              getDataSourceServiceNowExtensionSettingsAttribute(),
 				"versioning_strategy":                        getDataSourceVersioningStrategyAttribute(),
@@ -312,6 +325,8 @@ func getDataSourceGitPersistenceSettingsAttribute(settingType string) datasource
 		attributes["password"] = util.DataSourceString().Computed().Sensitive().Description("The password for the Git credential.").Build()
 	case "anonymous":
 		// No additional attributes for anonymous
+	case "github_app":
+		attributes["github_connection_id"] = util.DataSourceString().Computed().Description("The ID of the GitHub App connection used for authenticating with the Git repository.").Build()
 	}
 
 	return datasourceSchema.ListNestedAttribute{
