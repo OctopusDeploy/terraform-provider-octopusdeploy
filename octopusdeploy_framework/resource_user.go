@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/serviceaccounts"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/users"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -68,7 +69,7 @@ func (r *userTypeResource) Create(ctx context.Context, req resource.CreateReques
 	updateUser(&data, user)
 
 	if user.IsService {
-		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, user.ID, serviceaccounts.OIDCIdentityQuery{}); err == nil && oidcData != nil {
+		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, serviceaccounts.OIDCIdentityQuery{ServiceAccountId: user.ID, Skip: 0, Take: 0}); err == nil && oidcData != nil {
 			data.ExternalId = types.StringValue(oidcData.ExternalId)
 		}
 	}
@@ -94,7 +95,7 @@ func (r *userTypeResource) Read(ctx context.Context, req resource.ReadRequest, r
 	updateUser(&data, user)
 
 	if user.IsService {
-		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, user.ID, serviceaccounts.OIDCIdentityQuery{}); err == nil && oidcData != nil {
+		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, serviceaccounts.OIDCIdentityQuery{ServiceAccountId: user.ID, Skip: 0, Take: 0}); err == nil && oidcData != nil {
 			data.ExternalId = types.StringValue(oidcData.ExternalId)
 		}
 	}
@@ -137,7 +138,7 @@ func (r *userTypeResource) Update(ctx context.Context, req resource.UpdateReques
 	updateUser(&data, updatedUser)
 
 	if updatedUser.IsService {
-		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, updatedUser.ID, serviceaccounts.OIDCIdentityQuery{}); err == nil && oidcData != nil {
+		if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(r.Config.Client, serviceaccounts.OIDCIdentityQuery{ServiceAccountId: updatedUser.ID, Skip: 0, Take: 0}); err == nil && oidcData != nil {
 			data.ExternalId = types.StringValue(oidcData.ExternalId)
 		}
 	}
