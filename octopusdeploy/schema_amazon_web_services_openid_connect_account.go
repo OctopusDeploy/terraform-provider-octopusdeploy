@@ -54,6 +54,10 @@ func expandAmazonWebServicesOpenIDConnectAccount(d *schema.ResourceData) *accoun
 		account.AccountTestSubjectKeys = getSliceFromTerraformTypeList(v)
 	}
 
+	if v, ok := d.GetOk("region"); ok {
+		account.Region = v.(string)
+	}
+
 	if v, ok := d.GetOk("session_duration"); ok {
 		account.SessionDuration = strconv.Itoa(v.(int))
 	}
@@ -89,6 +93,11 @@ func getAmazonWebServicesOpenIDConnectAccountSchema() map[string]*schema.Schema 
 		"execution_subject_keys":            getSubjectKeysSchema(SchemaSubjectKeysDescriptionExecution),
 		"health_subject_keys":               getSubjectKeysSchema(SchemaSubjectKeysDescriptionHealth),
 		"account_test_subject_keys":         getSubjectKeysSchema(SchemaSubjectKeysDescriptionAccountTest),
+		"region": {
+			Description: "The AWS region for this account.",
+			Optional:    true,
+			Type:        schema.TypeString,
+		},
 		"role_arn": {
 			Description: "The Amazon Resource Name (ARN) of the role that the caller is assuming.",
 			Required:    true,
@@ -112,6 +121,7 @@ func getAmazonWebServicesOpenIDConnectAccountSchema() map[string]*schema.Schema 
 func setAmazonWebServicesOpenIDConnectAccount(ctx context.Context, d *schema.ResourceData, account *accounts.AwsOIDCAccount) error {
 	d.Set("description", account.GetDescription())
 	d.Set("name", account.GetName())
+	d.Set("region", account.Region)
 	d.Set("space_id", account.GetSpaceID())
 	d.Set("tenanted_deployment_participation", account.GetTenantedDeploymentMode())
 	d.Set("role_arn", account.RoleArn)

@@ -67,6 +67,10 @@ func (a GenericOidcAccountSchema) GetResourceSchema() resourceSchema.Schema {
 				Optional().
 				Description("The audience associated with this resource.").
 				Build(),
+			"custom_claims": util.ResourceMap(types.StringType).
+				Optional().
+				Description("Custom claims to be included in the OIDC token.").
+				Build(),
 		},
 	}
 }
@@ -81,6 +85,7 @@ type GenericOidcAccountResourceModel struct {
 	TenantTags                      types.List   `tfsdk:"tenant_tags"`
 	ExecutionSubjectKeys            types.List   `tfsdk:"execution_subject_keys"`
 	Audience                        types.String `tfsdk:"audience"`
+	CustomClaims                    types.Map    `tfsdk:"custom_claims"`
 
 	ResourceModel
 }

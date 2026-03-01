@@ -24,8 +24,8 @@ To test the output and see some resources that were created, the terminal will s
 terraform {
     required_providers {
         octopusdeploy = {
-            source = "octopus.com/com/octopusdeploy"
-            version = ">= 0.7.64"
+            source = "OctopusDeploy/octopusdeploy"
+            version = ">1.8.0"
         }
     }
 }

@@ -35,8 +35,8 @@ The following is an example Terraform config file that creates a new `Project Gr
 terraform {
     required_providers {
         octopusdeploy = {
-            source  = OctopusDeployLabs/octopusdeploy
-            version = ">= 0.7.64"
+            source  = OctopusDeploy/octopusdeploy
+            version = ">= 1.8.0"
         }
     }
 }

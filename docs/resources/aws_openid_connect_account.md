@@ -44,6 +44,7 @@ resource "octopusdeploy_aws_openid_connect_account" "example" {
 - `environments` (List of String) A list of environment IDs associated with this resource.
 - `execution_subject_keys` (List of String) Keys to include in a deployment or runbook. Valid options are `space`, `environment`, `project`, `tenant`, `runbook`, `account`, `type`
 - `health_subject_keys` (List of String) Keys to include in a health check. Valid options are `space`, `account`, `target`, `type`
+- `region` (String) The AWS region for this account.
 - `session_duration` (Number) The duration, in seconds, of the role session.
 - `space_id` (String) The space ID associated with this resource.
 - `tenant_tags` (List of String) A list of tenant tags associated with this resource.
