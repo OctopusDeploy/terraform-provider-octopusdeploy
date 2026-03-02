@@ -24,7 +24,7 @@ builds:
       - "7"
     binary: "{{ .ProjectName }}_v{{ .Version }}"
 archives:
-  - format: zip
+  - formats: ["zip"]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
@@ -34,8 +34,12 @@ signs:
     args:
       [
         "--batch",
+        "--pinentry-mode",
+        "loopback",
         "-u",
         "{{ .Env.GPG_FINGERPRINT }}",
+        "--passphrase",
+        "{{ .Env.PASSPHRASE }}",
         "--output",
         "${signature}",
         "--detach-sign",

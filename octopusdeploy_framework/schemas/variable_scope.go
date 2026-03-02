@@ -5,11 +5,13 @@ import (
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas/planmodifiers"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -125,6 +127,9 @@ func getVariableScopeFieldResourceSchema(scopeDescription string) resourceSchema
 		Description: fmt.Sprintf("A list of %s that are scoped to this variable value.", strings.ReplaceAll(scopeDescription, "_", " ")),
 		Optional:    true,
 		ElementType: basetypes.StringType{},
+		PlanModifiers: []planmodifier.List{
+			planmodifiers.OrderInsensitiveList(),
+		},
 	}
 }
 

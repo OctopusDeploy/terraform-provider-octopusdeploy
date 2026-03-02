@@ -1,7 +1,6 @@
 package schemas
 
 import (
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -72,9 +71,9 @@ func (s SpaceSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"id":          GetIdDatasourceSchema(true),
 			"description": GetReadonlyDescriptionDatasourceSchema(spaceDescription),
 			"name": datasourceSchema.StringAttribute{
-				Description: fmt.Sprintf("The name of this resource, no more than %d characters long", 20),
+				Description: "The name of this resource",
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(1, 20),
+					stringvalidator.LengthAtLeast(1),
 				},
 				Computed: true,
 				Optional: true,

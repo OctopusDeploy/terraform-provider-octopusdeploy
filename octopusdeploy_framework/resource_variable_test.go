@@ -3,7 +3,6 @@ package octopusdeploy_framework
 import (
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
-	internalTest "github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -11,7 +10,6 @@ import (
 )
 
 func TestAccOctopusDeployVariableBasic(t *testing.T) {
-	internalTest.SkipCI(t, "After applying this test step, the refresh plan was not empty. scope.tenant_tags")
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_variable." + localName
 
@@ -67,7 +65,7 @@ func TestAccOctopusDeployVariableBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "type", variableType),
 					resource.TestCheckResourceAttr(prefix, "value", newValue),
 					resource.TestCheckResourceAttr(prefix, "scope.#", "1"),
-					resource.TestCheckResourceAttr(prefix, "scope.0.%", "6"),
+					resource.TestCheckResourceAttr(prefix, "scope.0.%", "7"),
 					resource.TestCheckResourceAttr(prefix, "scope.0.environments.#", "1"),
 				),
 				Config: testVariableBasic(spaceID, spaceName, environmentLocalName, environmentName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, channelLocalName, channelName, localName, name, description, isSensitive, newValue, variableType),
@@ -81,7 +79,7 @@ func TestAccOctopusDeployVariableBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "type", accountVariableType),
 					resource.TestCheckResourceAttr(prefix, "value", accountValue),
 					resource.TestCheckResourceAttr(prefix, "scope.#", "1"),
-					resource.TestCheckResourceAttr(prefix, "scope.0.%", "6"),
+					resource.TestCheckResourceAttr(prefix, "scope.0.%", "7"),
 					resource.TestCheckResourceAttr(prefix, "scope.0.environments.#", "1"),
 				),
 				Config: fmt.Sprintf(`%s
@@ -120,7 +118,6 @@ func testVariableBasic(spaceID string, spaceName string, environmentLocalName st
 		  scope {
 			channels     = [octopusdeploy_channel.%s.id]
 		    environments = [octopusdeploy_environment.%s.id]
-			tenant_tags  = []
 		  }
           space_id = octopusdeploy_space.%s.id
 		}`,
@@ -244,4 +241,113 @@ func testVariableDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func TestAccOctopusDeployVariableGenericOidcAccount(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_variable." + localName
+	accountLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	variableType := "GenericOidcAccount"
+
+	accountName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	accountDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	spaceID := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testVariableDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testVariableGenericOidcAccount(
+					spaceID, spaceName,
+					environmentLocalName, environmentName,
+					lifecycleLocalName, lifecycleName,
+					projectGroupLocalName, projectGroupName,
+					projectLocalName, projectName,
+					accountLocalName, accountName, accountDescription,
+					localName, name, description, variableType,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVariableExists(),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "description", description),
+					resource.TestCheckResourceAttrSet(prefix, "owner_id"),
+					resource.TestCheckResourceAttr(prefix, "type", variableType),
+					resource.TestCheckResourceAttrSet(prefix, "value"),
+				),
+			},
+		},
+	})
+}
+
+func testVariableGenericOidcAccount(
+	spaceID, spaceName string,
+	environmentLocalName, environmentName string,
+	lifecycleLocalName, lifecycleName string,
+	projectGroupLocalName, projectGroupName string,
+	projectLocalName, projectName string,
+	accountLocalName, accountName, accountDescription string,
+	variableLocalName, variableName, variableDescription, variableType string,
+) string {
+	return fmt.Sprintf(`
+		%s
+
+		%s
+
+		%s
+
+		%s
+
+		%s
+
+		resource "octopusdeploy_generic_oidc_account" "%s" {
+			name                   = "%s"
+			description            = "%s"
+			execution_subject_keys = ["space", "project"]
+			audience               = "api://default"
+			space_id               = octopusdeploy_space.%s.id
+		}
+
+		resource "octopusdeploy_variable" "%s" {
+			description  = "%s"
+			is_sensitive = false
+			name         = "%s"
+			owner_id     = octopusdeploy_project.%s.id
+			type         = "%s"
+			value        = octopusdeploy_generic_oidc_account.%s.id
+			space_id     = octopusdeploy_space.%s.id
+
+			scope {
+				environments = [octopusdeploy_environment.%s.id]
+			}
+		}`,
+		createSpace(spaceID, spaceName),
+		createEnvironment(spaceID, environmentLocalName, environmentName),
+		createLifecycle(spaceID, lifecycleLocalName, lifecycleName),
+		createProjectGroup(spaceID, projectGroupLocalName, projectGroupName),
+		createProject(spaceID, projectLocalName, projectName, lifecycleLocalName, projectGroupLocalName),
+		accountLocalName, accountName, accountDescription, spaceID,
+		variableLocalName,
+		variableDescription,
+		variableName,
+		projectLocalName,
+		variableType,
+		accountLocalName,
+		spaceID,
+		environmentLocalName,
+	)
 }

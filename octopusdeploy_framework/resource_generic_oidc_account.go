@@ -140,6 +140,14 @@ func (r *genericOidcAccountResource) ImportState(ctx context.Context, req resour
 		ExecutionSubjectKeys:            flattenStringList(genericOidcAccount.DeploymentSubjectKeys, types.ListNull(types.StringType)),
 		Audience:                        types.StringValue(genericOidcAccount.Audience),
 	}
+
+	if genericOidcAccount.CustomClaims != nil && len(genericOidcAccount.CustomClaims) > 0 {
+		customClaimsMapValue, _ := types.MapValue(types.StringType, util.ConvertMapStringToMapAttrValue(genericOidcAccount.CustomClaims))
+		state.CustomClaims = customClaimsMapValue
+	} else {
+		state.CustomClaims = types.MapNull(types.StringType)
+	}
+
 	state.ID = types.StringValue(genericOidcAccount.ID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -157,6 +165,9 @@ func expandGenericOidcAccountResource(ctx context.Context, model schemas.Generic
 	account.SetTenantTags(util.ExpandStringList(model.TenantTags))
 	account.DeploymentSubjectKeys = util.ExpandStringList(model.ExecutionSubjectKeys)
 	account.Audience = model.Audience.ValueString()
+	if !model.CustomClaims.IsNull() && !model.CustomClaims.IsUnknown() {
+		account.CustomClaims = util.ConvertAttrStringMapToStringMap(model.CustomClaims.Elements())
+	}
 
 	return account
 }
@@ -174,6 +185,13 @@ func flattenGenericOidcAccountResource(ctx context.Context, account *accounts.Ge
 
 	model.ExecutionSubjectKeys = util.FlattenStringList(account.DeploymentSubjectKeys)
 	model.Audience = types.StringValue(account.Audience)
+
+	if account.CustomClaims != nil && len(account.CustomClaims) > 0 {
+		customClaimsMapValue, _ := types.MapValue(types.StringType, util.ConvertMapStringToMapAttrValue(account.CustomClaims))
+		model.CustomClaims = customClaimsMapValue
+	} else {
+		model.CustomClaims = types.MapNull(types.StringType)
+	}
 
 	return model
 }

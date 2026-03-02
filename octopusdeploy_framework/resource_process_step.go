@@ -351,11 +351,12 @@ func mapProcessStepActionGitDependenciesFromState(ctx context.Context, dependenc
 		}
 
 		gitDependency := &gitdependencies.GitDependency{
-			Name:              key,
-			RepositoryUri:     dependencyState.RepositoryUri.ValueString(),
-			DefaultBranch:     dependencyState.DefaultBranch.ValueString(),
-			GitCredentialType: dependencyState.GitCredentialType.ValueString(),
-			GitCredentialId:   dependencyState.GitCredentialID.ValueString(),
+			Name:               key,
+			RepositoryUri:      dependencyState.RepositoryUri.ValueString(),
+			DefaultBranch:      dependencyState.DefaultBranch.ValueString(),
+			GitCredentialType:  dependencyState.GitCredentialType.ValueString(),
+			GitCredentialId:    dependencyState.GitCredentialID.ValueString(),
+			GitHubConnectionId: dependencyState.GitHubConnectionID.ValueString(),
 		}
 
 		if dependencyState.FilePathFilters.IsNull() {
@@ -541,11 +542,12 @@ func mapGitDependenciesToState(dependencies []*gitdependencies.GitDependency) ty
 		stateDependency := types.ObjectValueMust(
 			schemas.ProcessStepGitDependencyAttributeTypes(),
 			map[string]attr.Value{
-				"repository_uri":      types.StringValue(dependency.RepositoryUri),
-				"default_branch":      types.StringValue(dependency.DefaultBranch),
-				"git_credential_type": types.StringValue(dependency.GitCredentialType),
-				"file_path_filters":   types.SetValueMust(types.StringType, util.ToValueSlice(dependency.FilePathFilters)),
-				"git_credential_id":   types.StringValue(dependency.GitCredentialId),
+				"repository_uri":       types.StringValue(dependency.RepositoryUri),
+				"default_branch":       types.StringValue(dependency.DefaultBranch),
+				"git_credential_type":  types.StringValue(dependency.GitCredentialType),
+				"file_path_filters":    types.SetValueMust(types.StringType, util.ToValueSlice(dependency.FilePathFilters)),
+				"git_credential_id":    types.StringValue(dependency.GitCredentialId),
+				"github_connection_id": types.StringValue(dependency.GitHubConnectionId),
 			},
 		)
 

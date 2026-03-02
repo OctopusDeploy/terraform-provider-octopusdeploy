@@ -516,6 +516,14 @@ func convertAttributeStepTemplatePackageProperty(prop map[string]attr.Value) map
 func validateStepTemplateParameters(ctx context.Context, data *schemas.StepTemplateTypeResourceModel) diag.Diagnostics {
 	diags := diag.Diagnostics{}
 
+	if data.Parameters.IsUnknown() {
+        return diags
+    }
+
+	if data.Parameters.IsNull() {
+        return diags
+    }
+
 	parameters := make([]schemas.StepTemplateParameterType, 0, len(data.Parameters.Elements()))
 	appendDiags := data.Parameters.ElementsAs(ctx, &parameters, false)
 	diags.Append(appendDiags...)
