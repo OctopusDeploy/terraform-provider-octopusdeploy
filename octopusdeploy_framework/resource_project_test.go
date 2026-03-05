@@ -1,13 +1,22 @@
 package octopusdeploy_framework
 
 import (
+	"context"
 	"fmt"
+	"net/url"
+	"testing"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/credentials"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	internaltest "github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"testing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccProjectBasic(t *testing.T) {
@@ -244,4 +253,134 @@ func testAccProjectWithTags(lifecycleLocalName, lifecycleName, projectGroupLocal
 		tagSetLocalName, tagSetName,
 		tagLocalName, tagName, tagSetLocalName,
 		projectLocalName, projectName, projectDescription, lifecycleLocalName, projectGroupLocalName, tagLocalName)
+}
+
+func TestProcessPersistenceSettings_GitHubApp(t *testing.T) {
+	ctx := context.Background()
+
+	connectionID := "GitHubAppConnections-1"
+	repoURL, _ := url.Parse("https://github.com/example/repo")
+
+	project := projects.NewProject("test", "lifecycle-1", "group-1")
+	project.PersistenceSettings = projects.NewGitPersistenceSettings(
+		".octopus",
+		credentials.NewGitHubApp(connectionID),
+		"main",
+		[]string{},
+		repoURL,
+	)
+
+	model := &projectResourceModel{}
+	diags := processPersistenceSettings(ctx, project, model)
+
+	require.False(t, diags.HasError())
+	assert.True(t, model.IsVersionControlled.ValueBool())
+
+	assert.False(t, model.GitGitHubAppPersistenceSettings.IsNull())
+	assert.True(t, model.GitLibraryPersistenceSettings.IsNull())
+	assert.True(t, model.GitUsernamePasswordPersistenceSettings.IsNull())
+	assert.True(t, model.GitAnonymousPersistenceSettings.IsNull())
+
+	var appSettings []gitGitHubAppPersistenceSettingsModel
+	diags = model.GitGitHubAppPersistenceSettings.ElementsAs(ctx, &appSettings, false)
+	require.False(t, diags.HasError())
+	require.Len(t, appSettings, 1)
+	assert.Equal(t, connectionID, appSettings[0].GitHubConnectionID.ValueString())
+	assert.Equal(t, "https://github.com/example/repo", appSettings[0].URL.ValueString())
+	assert.Equal(t, ".octopus", appSettings[0].BasePath.ValueString())
+	assert.Equal(t, "main", appSettings[0].DefaultBranch.ValueString())
+}
+
+func TestExpandGitGitHubAppPersistenceSettings(t *testing.T) {
+	ctx := context.Background()
+
+	connectionID := "GitHubAppConnections-1"
+
+	model := gitGitHubAppPersistenceSettingsModel{
+		GitHubConnectionID: types.StringValue(connectionID),
+		URL:                types.StringValue("https://github.com/example/repo"),
+		BasePath:           types.StringValue(".octopus"),
+		DefaultBranch:      types.StringValue("main"),
+		ProtectedBranches:  types.SetValueMust(types.StringType, []attr.Value{}),
+	}
+
+	settings := expandGitGitHubAppPersistenceSettings(ctx, model)
+
+	assert.Equal(t, ".octopus", settings.BasePath())
+	assert.Equal(t, "main", settings.DefaultBranch())
+	assert.Equal(t, "https://github.com/example/repo", settings.URL().String())
+
+	cred := settings.Credential()
+	require.NotNil(t, cred)
+	assert.Equal(t, credentials.GitCredentialTypeGitHubApp, cred.Type())
+
+	gitHubAppCred, ok := cred.(*credentials.GitHubApp)
+	require.True(t, ok)
+	assert.Equal(t, connectionID, gitHubAppCred.ID)
+}
+
+func TestProcessPersistenceSettings_UsernamePassword(t *testing.T) {
+	ctx := context.Background()
+
+	repoURL, _ := url.Parse("https://github.com/example/repo")
+
+	project := projects.NewProject("test", "lifecycle-1", "group-1")
+	project.PersistenceSettings = projects.NewGitPersistenceSettings(
+		".octopus",
+		credentials.NewUsernamePassword("git-user", core.NewSensitiveValue("secret")),
+		"main",
+		[]string{},
+		repoURL,
+	)
+
+	model := &projectResourceModel{}
+	diags := processPersistenceSettings(ctx, project, model)
+
+	require.False(t, diags.HasError())
+	assert.True(t, model.IsVersionControlled.ValueBool())
+
+	assert.True(t, model.GitGitHubAppPersistenceSettings.IsNull())
+	assert.True(t, model.GitLibraryPersistenceSettings.IsNull())
+	assert.False(t, model.GitUsernamePasswordPersistenceSettings.IsNull())
+	assert.True(t, model.GitAnonymousPersistenceSettings.IsNull())
+
+	var settings []gitUsernamePasswordPersistenceSettingsModel
+	diags = model.GitUsernamePasswordPersistenceSettings.ElementsAs(ctx, &settings, false)
+	require.False(t, diags.HasError())
+	require.Len(t, settings, 1)
+	assert.Equal(t, "git-user", settings[0].Username.ValueString())
+	assert.Equal(t, "secret", settings[0].Password.ValueString())
+	assert.Equal(t, "https://github.com/example/repo", settings[0].URL.ValueString())
+	assert.Equal(t, ".octopus", settings[0].BasePath.ValueString())
+	assert.Equal(t, "main", settings[0].DefaultBranch.ValueString())
+}
+
+func TestExpandGitUsernamePasswordPersistenceSettings(t *testing.T) {
+	ctx := context.Background()
+
+	model := gitUsernamePasswordPersistenceSettingsModel{
+		URL:               types.StringValue("https://github.com/example/repo"),
+		Username:          types.StringValue("git-user"),
+		Password:          types.StringValue("secret"),
+		BasePath:          types.StringValue(".octopus"),
+		DefaultBranch:     types.StringValue("main"),
+		ProtectedBranches: types.SetValueMust(types.StringType, []attr.Value{}),
+	}
+
+	settings := expandGitUsernamePasswordPersistenceSettings(ctx, model)
+
+	assert.Equal(t, ".octopus", settings.BasePath())
+	assert.Equal(t, "main", settings.DefaultBranch())
+	assert.Equal(t, "https://github.com/example/repo", settings.URL().String())
+
+	cred := settings.Credential()
+	require.NotNil(t, cred)
+	assert.Equal(t, credentials.GitCredentialTypeUsernamePassword, cred.Type())
+
+	upCred, ok := cred.(*credentials.UsernamePassword)
+	require.True(t, ok)
+	assert.Equal(t, "git-user", upCred.Username)
+	require.NotNil(t, upCred.Password)
+	require.NotNil(t, upCred.Password.NewValue)
+	assert.Equal(t, "secret", *upCred.Password.NewValue)
 }

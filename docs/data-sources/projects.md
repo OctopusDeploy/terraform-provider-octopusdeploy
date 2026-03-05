@@ -61,6 +61,7 @@ Read-Only:
 - `description` (String) The description of this project
 - `discrete_channel_release` (Boolean, Deprecated) Treats releases of different channels to the same environment as a separate deployment dimension
 - `git_anonymous_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using anonymous authentication. (see [below for nested schema](#nestedatt--projects--git_anonymous_persistence_settings))
+- `git_github_app_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using github_app authentication. (see [below for nested schema](#nestedatt--projects--git_github_app_persistence_settings))
 - `git_library_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using library authentication. (see [below for nested schema](#nestedatt--projects--git_library_persistence_settings))
 - `git_username_password_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using username_password authentication. (see [below for nested schema](#nestedatt--projects--git_username_password_persistence_settings))
 - `id` (String)
@@ -112,6 +113,18 @@ Read-Only:
 
 - `base_path` (String) The base path associated with these version control settings.
 - `default_branch` (String) The default branch associated with these version control settings.
+- `protected_branches` (Set of String) A list of protected branch patterns.
+- `url` (String) The URL associated with these version control settings.
+
+
+<a id="nestedatt--projects--git_github_app_persistence_settings"></a>
+### Nested Schema for `projects.git_github_app_persistence_settings`
+
+Read-Only:
+
+- `base_path` (String) The base path associated with these version control settings.
+- `default_branch` (String) The default branch associated with these version control settings.
+- `github_connection_id` (String) The ID of the GitHub App connection used for authenticating with the Git repository.
 - `protected_branches` (Set of String) A list of protected branch patterns.
 - `url` (String) The URL associated with these version control settings.
 
