@@ -3,13 +3,15 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/serviceaccounts"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/users"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"time"
 )
 
 type userDataSource struct {
@@ -68,7 +70,15 @@ func (u *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	mappedUsers := []schemas.UserTypeDatasourceModel{}
 	tflog.Debug(ctx, fmt.Sprintf("users returned from API: %#v", existingUsers))
 	for _, user := range existingUsers.Items {
-		mappedUsers = append(mappedUsers, schemas.MapToUserDatasourceModel(user))
+		mappedUser := schemas.MapToUserDatasourceModel(user)
+
+		if user.IsService {
+			if oidcData, err := serviceaccounts.GetServiceAccountOIDCData(u.Client, serviceaccounts.OIDCIdentityQuery{ServiceAccountId: user.ID, Skip: 0, Take: 0}); err == nil && oidcData != nil {
+				mappedUser.ExternalId = types.StringValue(oidcData.ExternalId)
+			}
+		}
+
+		mappedUsers = append(mappedUsers, mappedUser)
 	}
 
 	util.DatasourceResultCount(ctx, "users", len(mappedUsers))

@@ -55,6 +55,7 @@ Optional:
 
 Read-Only:
 
+- `external_id` (String) The external ID (GUID) for this service account, used for OIDC authentication.
 - `id` (String) The unique ID for this resource.
 
 <a id="nestedatt--users--identity"></a>

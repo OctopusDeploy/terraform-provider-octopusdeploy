@@ -2,11 +2,12 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/serviceaccounts"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/users"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"testing"
 )
 
 func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
@@ -42,6 +43,7 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "issuer", data.Issuer),
 					resource.TestCheckResourceAttr(prefix, "subject", data.Subject),
 					resource.TestCheckResourceAttr(prefix, "audience", data.Audience),
+					resource.TestCheckResourceAttrSet("octopusdeploy_user."+localUserName, "external_id"),
 				),
 			},
 			{
@@ -52,6 +54,7 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "issuer", data.Issuer),
 					resource.TestCheckResourceAttr(prefix, "subject", data.Subject),
 					resource.TestCheckResourceAttr(prefix, "audience", data.Audience),
+					resource.TestCheckResourceAttrSet("octopusdeploy_user."+localUserName, "external_id"),
 				),
 			},
 		},

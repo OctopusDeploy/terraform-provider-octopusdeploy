@@ -56,6 +56,7 @@ resource "octopusdeploy_user" "example" {
 ### Read-Only
 
 - `can_password_be_edited` (Boolean) Specifies whether or not the password can be edited.
+- `external_id` (String) The external ID (GUID) for this service account, used for OIDC authentication.
 - `id` (String) The unique ID for this resource.
 - `is_requestor` (Boolean) Specifies whether or not the user is the requestor.
 
