@@ -44,6 +44,7 @@ var RunbookSchemaAttributeNames = struct {
 	RetentionPolicy             string
 	RetentionPolicyWithStrategy string
 	ForcePackageDownload        string
+	RunbookTags                 string
 }{
 	ID:                          "id",
 	Name:                        "name",
@@ -60,6 +61,7 @@ var RunbookSchemaAttributeNames = struct {
 	RetentionPolicy:             "retention_policy",
 	RetentionPolicyWithStrategy: "retention_policy_with_strategy",
 	ForcePackageDownload:        "force_package_download",
+	RunbookTags:                 "runbook_tags",
 }
 
 var tenantedDeploymentModeNames = struct {
@@ -125,6 +127,7 @@ type RunbookTypeResourceModel struct {
 	RunRetentionPolicy             types.List   `tfsdk:"retention_policy"`
 	RunRetentionPolicyWithStrategy types.List   `tfsdk:"retention_policy_with_strategy"`
 	ForcePackageDownload           types.Bool   `tfsdk:"force_package_download"`
+	RunbookTags                    types.Set    `tfsdk:"runbook_tags"`
 
 	ResourceModel
 }
@@ -229,6 +232,12 @@ func (r RunbookSchema) GetResourceSchema() resourceSchema.Schema {
 					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
+			RunbookSchemaAttributeNames.RunbookTags: resourceSchema.SetAttribute{
+				Description: "A list of tags associated with this runbook. Valid tags must be defined in a tag set with the 'Runbook' scope enabled.",
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+			},
 		},
 		Blocks: map[string]resourceSchema.Block{
 			RunbookSchemaAttributeNames.ConnectivityPolicy: resourceSchema.ListNestedBlock{
@@ -305,6 +314,8 @@ func (data *RunbookTypeResourceModel) RefreshFromApiResponse(ctx context.Context
 		diags.Append(d...)
 		data.RunRetentionPolicy = result
 	}
+
+	data.RunbookTags, _ = types.SetValueFrom(ctx, types.StringType, runbook.RunbookTags)
 
 	return diags
 }

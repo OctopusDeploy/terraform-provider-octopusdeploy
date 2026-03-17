@@ -2,11 +2,12 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/serviceaccounts"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/users"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"testing"
 )
 
 func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
@@ -27,6 +28,7 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 		ServiceAccountID: userPrefix + ".id",
 		Issuer:           "https://token.actions.githubusercontent.com",
 		Subject:          "repo:test/test:environment:test",
+		Audience:         "oidc-machine-user-" + acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -40,6 +42,8 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", data.Name),
 					resource.TestCheckResourceAttr(prefix, "issuer", data.Issuer),
 					resource.TestCheckResourceAttr(prefix, "subject", data.Subject),
+					resource.TestCheckResourceAttr(prefix, "audience", data.Audience),
+					resource.TestCheckResourceAttrSet("octopusdeploy_user."+localUserName, "external_id"),
 				),
 			},
 			{
@@ -49,6 +53,8 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", data.Name+"-updated"),
 					resource.TestCheckResourceAttr(prefix, "issuer", data.Issuer),
 					resource.TestCheckResourceAttr(prefix, "subject", data.Subject),
+					resource.TestCheckResourceAttr(prefix, "audience", data.Audience),
+					resource.TestCheckResourceAttrSet("octopusdeploy_user."+localUserName, "external_id"),
 				),
 			},
 		},
@@ -69,6 +75,7 @@ func testServiceAccountIdentityConfig(localName string, localUserName string, da
 		service_account_id = %s
 		issuer = "%s"
 		subject = "%s"
+		audience = "%s"
 	}`,
 		localUserName,
 		userData.DisplayName,
@@ -78,7 +85,8 @@ func testServiceAccountIdentityConfig(localName string, localUserName string, da
 		data.Name,
 		data.ServiceAccountID,
 		data.Issuer,
-		data.Subject)
+		data.Subject,
+		data.Audience)
 }
 
 func testServiceAccountIdentityUpdate(localName string, localUserName string, data serviceaccounts.OIDCIdentity, userData users.User) string {

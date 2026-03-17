@@ -30,6 +30,7 @@ This resource manages runbooks in Octopus Deploy.
 - `multi_tenancy_mode` (String) The tenanted deployment mode of the runbook. Valid modes are `Untenanted`, `TenantedOrUntenanted`, `Tenanted`
 - `retention_policy` (Block List, Deprecated) Sets the runbook retention policy. (see [below for nested schema](#nestedblock--retention_policy))
 - `retention_policy_with_strategy` (Block List) Sets the runbook retention policy with strategy. (see [below for nested schema](#nestedblock--retention_policy_with_strategy))
+- `runbook_tags` (Set of String) A list of tags associated with this runbook. Valid tags must be defined in a tag set with the 'Runbook' scope enabled.
 - `space_id` (String) The space ID associated with this runbook.
 
 ### Read-Only

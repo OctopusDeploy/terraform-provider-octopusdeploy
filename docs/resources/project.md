@@ -84,6 +84,7 @@ resource "octopusdeploy_project" "example" {
 - `description` (String) The description of this project.
 - `discrete_channel_release` (Boolean, Deprecated) Treats releases of different channels to the same environment as a separate deployment dimension
 - `git_anonymous_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_anonymous_persistence_settings))
+- `git_github_app_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project, authenticating via a GitHub App connection. (see [below for nested schema](#nestedblock--git_github_app_persistence_settings))
 - `git_library_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_library_persistence_settings))
 - `git_username_password_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_username_password_persistence_settings))
 - `included_library_variable_sets` (List of String) The list of included library variable set IDs.
@@ -134,6 +135,21 @@ Optional:
 
 Required:
 
+- `url` (String) The URL associated with these version control settings.
+
+Optional:
+
+- `base_path` (String) The base path associated with these version control settings.
+- `default_branch` (String) The default branch associated with these version control settings.
+- `protected_branches` (Set of String) A list of protected branch patterns.
+
+
+<a id="nestedblock--git_github_app_persistence_settings"></a>
+### Nested Schema for `git_github_app_persistence_settings`
+
+Required:
+
+- `github_connection_id` (String) The ID of the GitHub App connection to use for authenticating with the Git repository.
 - `url` (String) The URL associated with these version control settings.
 
 Optional:

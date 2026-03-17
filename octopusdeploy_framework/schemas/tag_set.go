@@ -18,6 +18,8 @@ var tagSetScopes = []string{
 	"Tenant",
 	"Environment",
 	"Project",
+	"Runbook",
+	"Target",
 }
 
 var tagSetTypes = []string{
@@ -47,7 +49,7 @@ func (t TagSetSchema) GetResourceSchema() resourceSchema.Schema {
 			"scopes": util.ResourceList(types.StringType).
 				Optional().
 				Computed().
-				Description("The resource scopes this tag set applies to. Valid values are `\"Tenant\"`, `\"Environment\"`, `\"Project\"`.").
+				Description("The resource scopes this tag set applies to. Valid values are `\"Tenant\"`, `\"Environment\"`, `\"Project\"`, `\"Runbook\"`, `\"Target\"`.").
 				Validators(listvalidator.ValueStringsAre(stringvalidator.OneOf(tagSetScopes...))).
 				Build(),
 			"sort_order": util.ResourceInt64().
@@ -93,7 +95,7 @@ func (t TagSetSchema) GetDatasourceSchema() datasourceSchema.Schema {
 				Build(),
 			"scopes": util.DataSourceList(types.StringType).
 				Optional().
-				Description("A filter to search by scopes. Valid values are `\"Tenant\"`, `\"Environment\"`, `\"Project\"`.").
+				Description("A filter to search by scopes. Valid values are `\"Tenant\"`, `\"Environment\"`, `\"Project\"`, `\"Runbook\"`, `\"Target\"`.").
 				Build(),
 			"skip": util.DataSourceInt64().
 				Optional().
@@ -123,7 +125,7 @@ func (t TagSetSchema) GetDatasourceSchema() datasourceSchema.Schema {
 							Build(),
 						"scopes": util.DataSourceList(types.StringType).
 							Computed().
-							Description("The resource scopes this tag set applies to. Valid values are `\"Tenant\"`, `\"Environment\"`, `\"Project\"`.").
+							Description("The resource scopes this tag set applies to. Valid values are `\"Tenant\"`, `\"Environment\"`, `\"Project\"`, `\"Runbook\"`, `\"Target\"`.").
 							Build(),
 						"sort_order": util.DataSourceInt64().
 							Computed().

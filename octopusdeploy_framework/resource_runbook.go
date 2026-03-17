@@ -12,6 +12,7 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var _ resource.ResourceWithImportState = &runbookTypeResource{}
@@ -81,6 +82,15 @@ func (r *runbookTypeResource) Create(ctx context.Context, req resource.CreateReq
 		runbook.RunRetentionPolicy = policy
 	}
 	runbook.ForcePackageDownload = plan.ForcePackageDownload.ValueBool()
+
+	if !plan.RunbookTags.IsNull() && !plan.RunbookTags.IsUnknown() {
+		elements := plan.RunbookTags.Elements()
+		runbookTags := make([]string, len(elements))
+		for i, elem := range elements {
+			runbookTags[i] = elem.(types.String).ValueString()
+		}
+		runbook.RunbookTags = runbookTags
+	}
 
 	util.Create(ctx, schemas.RunbookResourceDescription, plan)
 
@@ -213,6 +223,15 @@ func (r *runbookTypeResource) Update(ctx context.Context, req resource.UpdateReq
 		updatedRunbook.RunRetentionPolicy = policy
 	}
 	updatedRunbook.ForcePackageDownload = plan.ForcePackageDownload.ValueBool()
+
+	if !plan.RunbookTags.IsNull() && !plan.RunbookTags.IsUnknown() {
+		elements := plan.RunbookTags.Elements()
+		runbookTags := make([]string, len(elements))
+		for i, elem := range elements {
+			runbookTags[i] = elem.(types.String).ValueString()
+		}
+		updatedRunbook.RunbookTags = runbookTags
+	}
 
 	updatedRunbook, err = runbooks.Update(r.Config.Client, updatedRunbook)
 	if err != nil {

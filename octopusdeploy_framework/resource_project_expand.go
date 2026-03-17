@@ -85,6 +85,18 @@ func expandProject(ctx context.Context, model projectResourceModel) *projects.Pr
 				project.IsVersionControlled = true
 			}
 		}
+	} else if !model.GitGitHubAppPersistenceSettings.IsNull() {
+		var gitGitHubAppSettingsList []gitGitHubAppPersistenceSettingsModel
+		diags := model.GitGitHubAppPersistenceSettings.ElementsAs(ctx, &gitGitHubAppSettingsList, false)
+		if diags.HasError() {
+			tflog.Error(ctx, fmt.Sprintf("Error converting Git GitHub App persistence settings: %v\n", diags))
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Number of Git GitHub App persistence settings: %d\n", len(gitGitHubAppSettingsList)))
+			if len(gitGitHubAppSettingsList) > 0 {
+				project.PersistenceSettings = expandGitGitHubAppPersistenceSettings(ctx, gitGitHubAppSettingsList[0])
+				project.IsVersionControlled = true
+			}
+		}
 	}
 
 	if !model.JiraServiceManagementExtensionSettings.IsNull() {
@@ -206,6 +218,24 @@ func expandGitAnonymousPersistenceSettings(ctx context.Context, model gitAnonymo
 	return projects.NewGitPersistenceSettings(
 		model.BasePath.ValueString(),
 		credentials.NewAnonymous(),
+		model.DefaultBranch.ValueString(),
+		protectedBranches,
+		gitUrl,
+	)
+}
+
+func expandGitGitHubAppPersistenceSettings(ctx context.Context, model gitGitHubAppPersistenceSettingsModel) projects.GitPersistenceSettings {
+	gitUrl, _ := url.Parse(model.URL.ValueString())
+	var protectedBranches []string
+	model.ProtectedBranches.ElementsAs(ctx, &protectedBranches, false)
+
+	if protectedBranches == nil {
+		protectedBranches = []string{}
+	}
+
+	return projects.NewGitPersistenceSettings(
+		model.BasePath.ValueString(),
+		credentials.NewGitHubApp(model.GitHubConnectionID.ValueString()),
 		model.DefaultBranch.ValueString(),
 		protectedBranches,
 		gitUrl,
