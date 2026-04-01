@@ -87,7 +87,7 @@ resource "octopusdeploy_project" "example" {
 - `git_github_app_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project, authenticating via a GitHub App connection. (see [below for nested schema](#nestedblock--git_github_app_persistence_settings))
 - `git_library_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_library_persistence_settings))
 - `git_username_password_persistence_settings` (Block List) Provides Git-related persistence settings for a version-controlled project. (see [below for nested schema](#nestedblock--git_username_password_persistence_settings))
-- `included_library_variable_sets` (List of String) The list of included library variable set IDs.
+- `included_library_variable_sets` (Set of String) The list of included library variable set IDs.
 - `is_disabled` (Boolean)
 - `is_discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `is_version_controlled` (Boolean)
