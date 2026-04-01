@@ -50,14 +50,14 @@ func ExpandStringList(list types.List) []string {
 }
 
 func SetToStringArray(ctx context.Context, set types.Set) ([]string, diag.Diagnostics) {
-	teams := make([]types.String, 0, len(set.Elements()))
+	items := make([]types.String, 0, len(set.Elements()))
 	diags := diag.Diagnostics{}
-	diags.Append(set.ElementsAs(ctx, &teams, true)...)
+	diags.Append(set.ElementsAs(ctx, &items, true)...)
 	if diags.HasError() {
 		return nil, diags
 	}
 	convertedSet := make([]string, 0)
-	for _, t := range teams {
+	for _, t := range items {
 		convertedSet = append(convertedSet, t.ValueString())
 	}
 	return convertedSet, diags

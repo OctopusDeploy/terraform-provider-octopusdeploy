@@ -36,7 +36,7 @@ type projectResourceModel struct {
 	GitUsernamePasswordPersistenceSettings types.List   `tfsdk:"git_username_password_persistence_settings"`
 	JiraServiceManagementExtensionSettings types.List   `tfsdk:"jira_service_management_extension_settings"`
 	ServiceNowExtensionSettings            types.List   `tfsdk:"servicenow_extension_settings"`
-	IncludedLibraryVariableSets            types.List   `tfsdk:"included_library_variable_sets"`
+	IncludedLibraryVariableSets            types.Set    `tfsdk:"included_library_variable_sets"`
 	AutoDeployReleaseOverrides             types.List   `tfsdk:"auto_deploy_release_overrides"`
 	DeprovisioningRunbookID                types.String `tfsdk:"deprovisioning_runbook_id"`
 	ProvisioningRunbookID                  types.String `tfsdk:"provisioning_runbook_id"`
