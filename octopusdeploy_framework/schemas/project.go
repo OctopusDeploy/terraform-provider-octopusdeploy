@@ -45,7 +45,7 @@ func (p ProjectSchema) GetResourceSchema() resourceSchema.Schema {
 			"project_group_id":                     util.ResourceString().Required().Description("The project group ID associated with this project.").Build(),
 			"provisioning_runbook_id":              util.ResourceString().Optional().Description("The ID of the runbook to run when provisioning an ephemeral environment for this project.").Build(),
 			"tenanted_deployment_participation":    util.ResourceString().Optional().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Description("The tenanted deployment mode of the resource. Valid account types are `Untenanted`, `TenantedOrUntenanted`, or `Tenanted`.").Build(),
-			"included_library_variable_sets":       util.ResourceList(types.StringType).Optional().Computed().PlanModifiers(listplanmodifier.UseStateForUnknown()).Description("The list of included library variable set IDs.").Build(),
+			"included_library_variable_sets":       util.ResourceSet(types.StringType).Optional().Computed().PlanModifiers(setplanmodifier.UseStateForUnknown()).Description("The list of included library variable set IDs.").Build(),
 			"release_notes_template":               util.ResourceString().Optional().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
 			"slug":                                 util.ResourceString().Optional().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Description("A human-readable, unique identifier, used to identify a project.").Build(),
 			"deployment_process_id":                util.ResourceString().Computed().PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),

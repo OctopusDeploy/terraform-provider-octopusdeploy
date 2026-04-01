@@ -52,7 +52,7 @@ func flattenProject(ctx context.Context, project *projects.Project, state *proje
 
 	model.ID = types.StringValue(project.GetID())
 
-	model.IncludedLibraryVariableSets = util.FlattenStringList(project.IncludedLibraryVariableSets)
+	model.IncludedLibraryVariableSets = util.BuildStringSetOrEmpty(project.IncludedLibraryVariableSets)
 	model.AutoDeployReleaseOverrides = flattenAutoDeployReleaseOverrides(project.AutoDeployReleaseOverrides)
 	model.ProjectTags, _ = types.SetValueFrom(ctx, types.StringType, project.ProjectTags)
 
