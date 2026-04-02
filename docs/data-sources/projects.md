@@ -65,7 +65,7 @@ Read-Only:
 - `git_library_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using library authentication. (see [below for nested schema](#nestedatt--projects--git_library_persistence_settings))
 - `git_username_password_persistence_settings` (Attributes List) Git-related persistence settings for a version-controlled project using username_password authentication. (see [below for nested schema](#nestedatt--projects--git_username_password_persistence_settings))
 - `id` (String)
-- `included_library_variable_sets` (List of String)
+- `included_library_variable_sets` (Set of String)
 - `is_disabled` (Boolean)
 - `is_discrete_channel_release` (Boolean) Treats releases of different channels to the same environment as a separate deployment dimension
 - `is_version_controlled` (Boolean)

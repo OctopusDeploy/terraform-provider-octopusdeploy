@@ -24,7 +24,11 @@ func TestAccProjectIncludedLibraryVariableSets(t *testing.T) {
 			},
 			{
 				Config: testAccProjectWithVariableSetsConfiguration(localName, []string{"set_d", "set_a", "set_b", "set_c"}),
-				Check:  testCheckProjectWithIncludedVariableSets(localName, []string{"set_a", "set_b", "set_c", "set_d"}),
+				Check:  testCheckProjectWithIncludedVariableSets(localName, []string{"set_d", "set_a", "set_b", "set_c"}),
+			},
+			{
+				Config: testAccProjectWithVariableSetsAndDataSource(localName, []string{"set_d", "set_a", "set_b", "set_c"}),
+				Check:  testCheckProjectDataSourceWithVariableSets(localName, []string{"set_d", "set_a", "set_b", "set_c"}),
 			},
 		},
 	})
@@ -81,6 +85,22 @@ func testAccProjectWithVariableSetsConfiguration(localName string, includedVaria
 	)
 }
 
+func testAccProjectWithVariableSetsAndDataSource(localName string, includedVariableSets []string) string {
+	projectConfiguration := testAccProjectWithVariableSetsConfiguration(localName, includedVariableSets)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+		data "octopusdeploy_projects" "all_%[2]s" {
+		  name = "%[2]s"
+		  depends_on = [octopusdeploy_project.%[2]s]
+		}
+		`,
+		projectConfiguration,
+		localName,
+	)
+}
+
 func testCheckProjectWithIncludedVariableSets(localName string, expectedVariableSets []string) resource.TestCheckFunc {
 	projectQualifiedName := fmt.Sprintf("octopusdeploy_project.%s", localName)
 	expectedCount := len(expectedVariableSets)
@@ -97,4 +117,14 @@ func testCheckProjectWithIncludedVariableSets(localName string, expectedVariable
 	}
 
 	return resource.ComposeTestCheckFunc(assertions...)
+}
+
+func testCheckProjectDataSourceWithVariableSets(localName string, expectedVariableSets []string) resource.TestCheckFunc {
+	projectsQualifiedName := fmt.Sprintf("data.octopusdeploy_projects.all_%s", localName)
+	expectedCount := len(expectedVariableSets)
+
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(projectsQualifiedName, "projects.#", "1"),
+		resource.TestCheckResourceAttr(projectsQualifiedName, "projects.0.included_library_variable_sets.#", strconv.Itoa(expectedCount)),
+	)
 }
