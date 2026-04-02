@@ -29,6 +29,7 @@ resource "octopusdeploy_channel" "example" {
 
 ### Optional
 
+- `custom_field_definitions` (Attributes List) A list of custom field definitions for this channel. Maximum of 10. (see [below for nested schema](#nestedatt--custom_field_definitions))
 - `description` (String) The description of this channel.
 - `ephemeral_environment_name_template` (String) The name template for ephemeral environments created from this channel.
 - `is_default` (Boolean) Indicates whether this is the default channel for the associated project.
@@ -42,6 +43,15 @@ resource "octopusdeploy_channel" "example" {
 ### Read-Only
 
 - `id` (String) The unique ID for this resource.
+
+<a id="nestedatt--custom_field_definitions"></a>
+### Nested Schema for `custom_field_definitions`
+
+Required:
+
+- `description` (String) The description of the custom field.
+- `field_name` (String) The name of the custom field.
+
 
 <a id="nestedblock--rule"></a>
 ### Nested Schema for `rule`
