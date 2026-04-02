@@ -248,7 +248,7 @@ func getProjectsDataSourceAttribute() datasourceSchema.ListNestedAttribute {
 				"description":                          util.DataSourceString().Computed().Description("The description of this project").Build(),
 				"discrete_channel_release":             util.DataSourceBool().Deprecated("use is_discrete_channel_release instead").Computed().Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
 				"id":                                   util.DataSourceString().Computed().Build(),
-				"included_library_variable_sets":       util.DataSourceList(types.StringType).Computed().Build(),
+				"included_library_variable_sets":       util.DataSourceSet(types.StringType).Computed().Build(),
 				"is_disabled":                          util.DataSourceBool().Computed().Build(),
 				"is_discrete_channel_release":          util.DataSourceBool().Computed().Description("Treats releases of different channels to the same environment as a separate deployment dimension").Build(),
 				"is_version_controlled":                util.DataSourceBool().Computed().Build(),
