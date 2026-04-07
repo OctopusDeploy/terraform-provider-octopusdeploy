@@ -1,10 +1,10 @@
 # Set variables
-$VERSION = "1.2.100"
+$VERSION = "1.3.100"
 $BINARY = "terraform-provider-octopusdeploy.exe"
 $HOSTNAME = "octopus.com"
 $NAMESPACE = "com"
 $NAME = "octopusdeploy"
-$OS_ARCH = "windows_386"
+$OS_ARCH = "windows_amd64"
 
 # Build the provider
 go build -o $BINARY
