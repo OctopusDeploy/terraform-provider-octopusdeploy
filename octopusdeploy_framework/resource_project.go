@@ -159,12 +159,12 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 		updatedProject.ReleaseCreationStrategy = existingProject.ReleaseCreationStrategy
 	}
 
-	// For VCS projects, the server rejects these deployment settings fields on the
+	// For CaC projects, the server rejects these deployment settings fields on the
 	// base project endpoint. Clear them here; they get updated separately via
 	// PUT /projects/{id}/{gitRef}/deploymentsettings after the project update.
-	isVCS := existingProject.IsVersionControlled ||
+	isCaC := existingProject.IsVersionControlled ||
 		(existingProject.PersistenceSettings != nil && existingProject.PersistenceSettings.Type() == projects.PersistenceSettingsTypeVersionControlled)
-	if isVCS {
+	if isCaC {
 		updatedProject.DefaultGuidedFailureMode = "EnvironmentDefault"
 		updatedProject.DeploymentChangesTemplate = ""
 		updatedProject.ReleaseNotesTemplate = ""
@@ -182,9 +182,9 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 		updatedProject.PersistenceSettings = persistenceSettings
 	}
 
-	if isVCS {
-		if err := r.updateDeploymentSettingsForVCS(ctx, updatedProject, plan); err != nil {
-			resp.Diagnostics.AddError("Error updating deployment settings for VCS project", err.Error())
+	if isCaC {
+		if err := r.updateDeploymentSettingsForCaC(ctx, updatedProject, plan); err != nil {
+			resp.Diagnostics.AddError("Error updating deployment settings for CaC project", err.Error())
 			return
 		}
 	}
@@ -258,7 +258,7 @@ func (r *projectResource) updateStateWithDeploymentSettings(project *projects.Pr
 	return diags
 }
 
-func (r *projectResource) updateDeploymentSettingsForVCS(ctx context.Context, project *projects.Project, plan projectResourceModel) error {
+func (r *projectResource) updateDeploymentSettingsForCaC(ctx context.Context, project *projects.Project, plan projectResourceModel) error {
 	gitRef := ""
 	if gitSettings, ok := project.PersistenceSettings.(projects.GitPersistenceSettings); ok {
 		gitRef = gitSettings.DefaultBranch()

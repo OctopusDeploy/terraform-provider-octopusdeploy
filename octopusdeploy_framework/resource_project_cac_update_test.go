@@ -9,16 +9,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-// TestAccProjectVCSUpdate verifies that updating a VCS-backed project (e.g. adding
-// a library variable set or changing deployment settings) does not fail with the
-// "Cannot update deployment settings for a version controlled project" error.
+// TestAccProjectCaCUpdate verifies that updating a CaC (Config as Code) project
+// (e.g. adding a library variable set or changing deployment settings) does not
+// fail with the "Cannot update deployment settings" error.
 // Requires GIT_URL, GIT_USERNAME, GIT_PASSWORD env vars.
-func TestAccProjectVCSUpdate(t *testing.T) {
+func TestAccProjectCaCUpdate(t *testing.T) {
 	gitURL := os.Getenv("GIT_URL")
 	gitUsername := os.Getenv("GIT_USERNAME")
 	gitPassword := os.Getenv("GIT_PASSWORD")
 	if gitURL == "" || gitUsername == "" || gitPassword == "" {
-		t.Skip("Skipping VCS project update test: GIT_URL, GIT_USERNAME, GIT_PASSWORD must be set")
+		t.Skip("Skipping CaC project update test: GIT_URL, GIT_USERNAME, GIT_PASSWORD must be set")
 	}
 
 	localName := acctest.RandStringFromCharSet(8, acctest.CharSetAlpha)
@@ -31,7 +31,7 @@ func TestAccProjectVCSUpdate(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVCSProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, "Off", false),
+				Config: testAccCaCProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, "Off", false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectCheckExists(),
 					resource.TestCheckResourceAttr(projectPrefix, "is_version_controlled", "true"),
@@ -40,7 +40,7 @@ func TestAccProjectVCSUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccVCSProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, "On", true),
+				Config: testAccCaCProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, "On", true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectCheckExists(),
 					resource.TestCheckResourceAttr(projectPrefix, "default_guided_failure_mode", "On"),
@@ -51,7 +51,7 @@ func TestAccProjectVCSUpdate(t *testing.T) {
 	})
 }
 
-func testAccVCSProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode string, includeLibVarSet bool) string {
+func testAccCaCProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode string, includeLibVarSet bool) string {
 	includedSets := "included_library_variable_sets = []"
 	if includeLibVarSet {
 		includedSets = fmt.Sprintf("included_library_variable_sets = [octopusdeploy_library_variable_set.%s.id]", localName)
