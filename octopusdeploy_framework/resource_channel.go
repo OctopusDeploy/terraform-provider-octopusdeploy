@@ -337,11 +337,10 @@ func getChannelRuleDeploymentActionPackageAttrTypes() map[string]attr.Type {
 }
 
 func expandChannelCustomFieldDefinitions(defs types.List) *[]channels.ChannelCustomFieldDefinition {
-	if defs.IsNull() {
-		return nil // omitted from JSON → server leaves field unchanged
+	result := make([]channels.ChannelCustomFieldDefinition, 0)
+	if defs.IsNull() || defs.IsUnknown() {
+		return &result // sends [] → clears when omitted from config
 	}
-
-	result := make([]channels.ChannelCustomFieldDefinition, 0, len(defs.Elements()))
 	for _, elem := range defs.Elements() {
 		obj := elem.(types.Object)
 		attrs := obj.Attributes()
@@ -355,19 +354,15 @@ func expandChannelCustomFieldDefinitions(defs types.List) *[]channels.ChannelCus
 		}
 		result = append(result, def)
 	}
-	return &result // empty slice → sends [] to API (clears); populated → sets definitions
+	return &result
 }
 
 func flattenChannelCustomFieldDefinitions(defs *[]channels.ChannelCustomFieldDefinition, current types.List) types.List {
 	attrTypes := getChannelCustomFieldDefinitionAttrTypes()
-	if defs == nil {
-		// API omitted the field — preserve whatever the plan specified
+	if defs == nil || len(*defs) == 0 {
 		if current.IsNull() {
 			return types.ListNull(types.ObjectType{AttrTypes: attrTypes})
 		}
-		return types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, []attr.Value{})
-	}
-	if len(*defs) == 0 {
 		return types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, []attr.Value{})
 	}
 
