@@ -253,7 +253,7 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 	model.Name = types.StringValue(channel.Name)
 	model.ProjectId = types.StringValue(channel.ProjectID)
 
-	model.CustomFieldDefinitions = flattenChannelCustomFieldDefinitions(channel.CustomFieldDefinitions)
+	model.CustomFieldDefinitions = flattenChannelCustomFieldDefinitions(channel.CustomFieldDefinitions, model.CustomFieldDefinitions)
 	model.Rule = flattenChannelRules(channel.Rules, model.Rule)
 
 	if channel.SpaceID == "" && model.SpaceId.IsNull() {
@@ -336,9 +336,9 @@ func getChannelRuleDeploymentActionPackageAttrTypes() map[string]attr.Type {
 	}
 }
 
-func expandChannelCustomFieldDefinitions(defs types.List) []channels.ChannelCustomFieldDefinition {
-	if defs.IsNull() || defs.IsUnknown() || len(defs.Elements()) == 0 {
-		return []channels.ChannelCustomFieldDefinition{}
+func expandChannelCustomFieldDefinitions(defs types.List) *[]channels.ChannelCustomFieldDefinition {
+	if defs.IsNull() {
+		return nil // omitted from JSON → server leaves field unchanged
 	}
 
 	result := make([]channels.ChannelCustomFieldDefinition, 0, len(defs.Elements()))
@@ -355,22 +355,30 @@ func expandChannelCustomFieldDefinitions(defs types.List) []channels.ChannelCust
 		}
 		result = append(result, def)
 	}
-	return result
+	return &result // empty slice → sends [] to API (clears); populated → sets definitions
 }
 
-func flattenChannelCustomFieldDefinitions(defs []channels.ChannelCustomFieldDefinition) types.List {
-	if len(defs) == 0 {
-		return types.ListNull(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()})
+func flattenChannelCustomFieldDefinitions(defs *[]channels.ChannelCustomFieldDefinition, current types.List) types.List {
+	attrTypes := getChannelCustomFieldDefinitionAttrTypes()
+	if defs == nil {
+		// API omitted the field — preserve whatever the plan specified
+		if current.IsNull() {
+			return types.ListNull(types.ObjectType{AttrTypes: attrTypes})
+		}
+		return types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, []attr.Value{})
+	}
+	if len(*defs) == 0 {
+		return types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, []attr.Value{})
 	}
 
-	elems := make([]attr.Value, 0, len(defs))
-	for _, def := range defs {
-		elems = append(elems, types.ObjectValueMust(getChannelCustomFieldDefinitionAttrTypes(), map[string]attr.Value{
+	elems := make([]attr.Value, 0, len(*defs))
+	for _, def := range *defs {
+		elems = append(elems, types.ObjectValueMust(attrTypes, map[string]attr.Value{
 			"field_name":  types.StringValue(def.FieldName),
 			"description": types.StringValue(def.Description),
 		}))
 	}
-	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()}, elems)
+	return types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, elems)
 }
 
 func getChannelCustomFieldDefinitionAttrTypes() map[string]attr.Type {

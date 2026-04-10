@@ -25,6 +25,8 @@ github.com/OctopusDeploy/go-octopusdeploy/v2 v2.103.0 h1:yGQxxqm3lXgEFITtdhXC7FQ
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.103.0/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.105.0 h1:KfQngSy4tnjRfHJldIcxxE+DKeiMsJHu/1PTub/kKc8=
 github.com/OctopusDeploy/go-octopusdeploy/v2 v2.105.0/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.105.1-0.20260410024644-845b3652cb8c h1:6102d7f5d46u8pNkwSDQOrZSh8ACSRYOBmnOFTa7anc=
+github.com/OctopusDeploy/go-octopusdeploy/v2 v2.105.1-0.20260410024644-845b3652cb8c/go.mod h1:VkTXDoIPbwGFi5+goo1VSwFNdMVo784cVtJdKIEvfus=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2 h1:960T/UryMsoc2ZOnoLEg7rM9QpxWIdkdB9sR5gsUFAQ=
 github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework v1.0.2/go.mod h1:kllISYzQ8N3P6+3rScVhyW/KWnPWQbwzm8pFcMInSRM=
 github.com/ProtonMail/go-crypto v1.1.6 h1:ZcV+Ropw6Qn0AX9brlQLAUXfqLBc7Bl+f/DmNxpLfdw=
