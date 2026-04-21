@@ -22,6 +22,7 @@ func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
 		PackageID:           types.StringValue("Packages-0"),
 		FeedID:              types.StringValue("Feeds-0"),
 		AcquisitionLocation: types.StringValue("ExecutionTarget"),
+		Version:             types.StringValue("1.2.3"),
 		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
 			"Extract": types.StringValue("True"),
 		}),
@@ -87,6 +88,7 @@ func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
 					"package_id":           types.StringValue("Package-1"),
 					"feed_id":              types.StringValue("Feeds-2"),
 					"acquisition_location": types.StringValue("#{LocationVariable}"),
+					"version":              types.StringValue("1.2.3"),
 					"properties": types.MapValueMust(types.StringType, map[string]attr.Value{
 						"Octopus.Package.IsPrimary": types.StringValue("True"),
 					}),
@@ -150,6 +152,7 @@ func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
 						PackageID:           "Packages-0",
 						FeedID:              "Feeds-0",
 						AcquisitionLocation: "ExecutionTarget",
+						Version:             "1.2.3",
 						Properties: map[string]string{
 							"Extract": "True",
 						},
@@ -160,6 +163,7 @@ func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
 						PackageID:           "Package-1",
 						FeedID:              "Feeds-2",
 						AcquisitionLocation: "#{LocationVariable}",
+						Version:             "1.2.3",
 						Properties: map[string]string{
 							"Octopus.Package.IsPrimary": "True",
 						},
@@ -247,6 +251,7 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 		PackageID:           "Package-1",
 		FeedID:              "Feeds-1",
 		AcquisitionLocation: "ExecutionTarget",
+		Version:             "2.0.0",
 		Properties: map[string]string{
 			"Octopus.Package.IsPrimary": "True",
 		},
@@ -257,6 +262,7 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 		PackageID:           "Package-2",
 		FeedID:              "feeds-builtin",
 		AcquisitionLocation: "Server",
+		Version:             "2.0.0",
 	}
 	gitDependency := &gitdependencies.GitDependency{
 		Name:               "this-dependency",
@@ -326,6 +332,7 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 		PackageID:           types.StringValue(primaryPackage.PackageID),
 		FeedID:              types.StringValue(primaryPackage.FeedID),
 		AcquisitionLocation: types.StringValue(primaryPackage.AcquisitionLocation),
+		Version:             types.StringValue("2.0.0"),
 		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
 			"Octopus.Package.IsPrimary": types.StringValue("True"),
 		}),
@@ -392,6 +399,7 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 					"package_id":           types.StringValue(additionalPackage.PackageID),
 					"feed_id":              types.StringValue(additionalPackage.FeedID),
 					"acquisition_location": types.StringValue(additionalPackage.AcquisitionLocation),
+					"version":              types.StringValue("2.0.0"),
 					"properties":           types.MapValueMust(types.StringType, map[string]attr.Value{}),
 				},
 			),
@@ -494,6 +502,7 @@ func TestAccMapProcessStepToStateWithAllAttributesForRunbook(t *testing.T) {
 		PackageID:           types.StringValue(primaryPackage.PackageID),
 		FeedID:              types.StringValue(primaryPackage.FeedID),
 		AcquisitionLocation: types.StringValue(primaryPackage.AcquisitionLocation),
+		Version:             types.StringValue(""),
 		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
 			"Octopus.Package.Test": types.StringValue("Dummy"),
 		}),
@@ -560,6 +569,7 @@ func TestAccMapProcessStepToStateWithAllAttributesForRunbook(t *testing.T) {
 					"package_id":           types.StringValue(additionalPackage.PackageID),
 					"feed_id":              types.StringValue(additionalPackage.FeedID),
 					"acquisition_location": types.StringValue(additionalPackage.AcquisitionLocation),
+					"version":              types.StringValue(""),
 					"properties":           types.MapValueMust(types.StringType, map[string]attr.Value{}),
 				},
 			),
