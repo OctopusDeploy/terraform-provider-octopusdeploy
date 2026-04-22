@@ -81,6 +81,7 @@ func TestAccMapProcessChildStepFromStateWithAllAttributes(t *testing.T) {
 					"id":                   types.StringValue("00000000-0000-0000-0000-000000000001"),
 					"package_id":           types.StringValue("Package-1"),
 					"feed_id":              types.StringValue("Feeds-2"),
+					"version":              types.StringValue(""),
 					"acquisition_location": types.StringValue("#{LocationVariable}"),
 					"properties": types.MapValueMust(types.StringType, map[string]attr.Value{
 						"Octopus.Package.IsPrimary": types.StringValue("True"),
@@ -169,6 +170,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 		Name:                "",
 		PackageID:           "Package-1",
 		FeedID:              "Feeds-1",
+		Version:             "",
 		AcquisitionLocation: "ExecutionTarget",
 		Properties: map[string]string{
 			"Octopus.Package.IsPrimary": "True",
@@ -179,6 +181,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 		Name:                "unique-name",
 		PackageID:           "Package-2",
 		FeedID:              "feeds-builtin",
+		Version:             "",
 		AcquisitionLocation: "Server",
 	}
 	gitDependency := &gitdependencies.GitDependency{
@@ -246,6 +249,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 	expectedPrimaryPackage := &schemas.ProcessStepPackageReferenceResourceModel{
 		PackageID:           types.StringValue(primaryPackage.PackageID),
 		FeedID:              types.StringValue(primaryPackage.FeedID),
+		Version:             types.StringValue(primaryPackage.Version),
 		AcquisitionLocation: types.StringValue(primaryPackage.AcquisitionLocation),
 		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
 			"Octopus.Package.IsPrimary": types.StringValue("True"),
@@ -307,6 +311,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 					"id":                   types.StringValue(additionalPackage.ID),
 					"package_id":           types.StringValue(additionalPackage.PackageID),
 					"feed_id":              types.StringValue(additionalPackage.FeedID),
+					"version":              types.StringValue(additionalPackage.Version),
 					"acquisition_location": types.StringValue(additionalPackage.AcquisitionLocation),
 					"properties":           types.MapValueMust(types.StringType, map[string]attr.Value{}),
 				},
