@@ -2,6 +2,7 @@ package octopusdeploy
 
 import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/filters"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/triggers"
@@ -26,6 +27,18 @@ func flattenProjectWebhookTrigger(projectWebhookTrigger *triggers.ProjectTrigger
 			"target_environment_ids": runRunbookAction.Environments,
 		},
 	}
+	webhookFilter := projectWebhookTrigger.Filter.(*filters.WebhookTriggerFilter)
+	secret := ""
+	if webhookFilter.Secret.NewValue != nil {
+		secret = *webhookFilter.Secret.NewValue
+	}
+	flattenedProjectWebhookTrigger["webhook_trigger_filter"] = []map[string]interface{}{
+		{
+			"webhook_id": webhookFilter.WebhookId,
+			"secret":     secret,
+		},
+	}
+
 	return flattenedProjectWebhookTrigger
 }
 
@@ -37,8 +50,8 @@ func expandProjectWebhookTrigger(projectWebhookTrigger *schema.ResourceData, pro
 	var action actions.ITriggerAction = nil
 	var filter filters.ITriggerFilter = nil
 
-	if attr, ok := projectWebhookTrigger.GetOk("run_runbook_action"); ok {
-		runRunbookActionList := attr.(*schema.Set).List()
+	if attributes, ok := projectWebhookTrigger.GetOk("run_runbook_action"); ok {
+		runRunbookActionList := attributes.(*schema.Set).List()
 		runRunbookActionMap := runRunbookActionList[0].(map[string]interface{})
 		deploymentAction := actions.NewRunRunbookAction()
 
@@ -48,10 +61,16 @@ func expandProjectWebhookTrigger(projectWebhookTrigger *schema.ResourceData, pro
 		action = deploymentAction
 	}
 
-	// Filter configuration
-	//password configuration
+	if attributes, ok := projectWebhookTrigger.GetOk("webhook_trigger_filter"); ok {
+		webhookFilterList := attributes.(*schema.Set).List()
+		webhookFilterMap := webhookFilterList[0].(map[string]interface{})
+		secret := *core.NewSensitiveValue(webhookFilterMap["secret"].(string))
 
-	// if NewProjectTrigger doesn't actually use the description value
+		webhookFilter := filters.NewWebhookTriggerFilter(secret)
+		webhookFilter.WebhookId = webhookFilterMap["webhook_id"].(string)
+		filter = webhookFilter
+
+	}
 	projectTriggerToCreate := triggers.NewProjectTrigger(name, description, isDisabled, project, action, filter)
 	projectTriggerToCreate.Description = description
 
@@ -97,6 +116,29 @@ func getProjectWebhookTriggerSchema() map[string]*schema.Schema {
 			Description: "Indicates whether the trigger is disabled.",
 			Optional:    true,
 			Type:        schema.TypeBool,
+		},
+		"webhook_trigger_filter": {
+			Description: "Allows access to the webhook",
+			Required:    true,
+			Type:        schema.TypeSet,
+			Elem:        &schema.Resource{Schema: getWebhookDetailsSchema()},
+			MaxItems:    1,
+		},
+	}
+}
+
+func getWebhookDetailsSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"webhook_id": {
+			Description: "The ID of the webhook.",
+			Type:        schema.TypeString,
+			Computed:    true,
+		},
+		"secret": {
+			Description: "The password used to gain access to the webhook.",
+			Type:        schema.TypeString,
+			Sensitive:   true,
+			Required:    true,
 		},
 	}
 }
