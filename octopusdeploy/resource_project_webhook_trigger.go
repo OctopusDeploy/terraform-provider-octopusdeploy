@@ -24,15 +24,15 @@ func resourceProjectWebhookTrigger() *schema.Resource {
 	}
 }
 
-func resourceProjectWebhookTriggerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceProjectWebhookTriggerRead(ctx context.Context, data *schema.ResourceData, m interface{}) diag.Diagnostics {
 	octopusClient := m.(*client.Client)
-	spaceId := d.Get("space_id").(string)
+	spaceId := data.Get("space_id").(string)
 	spaceId = util.Ternary(len(spaceId) > 0, spaceId, octopusClient.GetSpaceID())
 
-	webhookTrigger, err := triggers.GetById(octopusClient, spaceId, d.Id())
+	webhookTrigger, err := triggers.GetById(octopusClient, spaceId, data.Id())
 
 	if webhookTrigger == nil {
-		d.SetId("")
+		data.SetId("")
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -42,7 +42,7 @@ func resourceProjectWebhookTriggerRead(ctx context.Context, d *schema.ResourceDa
 
 	flattenedWebhookTrigger := flattenProjectWebhookTrigger(webhookTrigger)
 	for key, value := range flattenedWebhookTrigger {
-		err := d.Set(key, value)
+		err := data.Set(key, value)
 		if err != nil {
 			return nil
 		}
@@ -81,22 +81,22 @@ func resourceProjectWebhookTriggerCreate(ctx context.Context, data *schema.Resou
 	return nil
 }
 
-func resourceProjectWebhookTriggerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceProjectWebhookTriggerUpdate(ctx context.Context, data *schema.ResourceData, m interface{}) diag.Diagnostics {
 	octopusClient := m.(*client.Client)
-	projectId := d.Get("project_id").(string)
-	spaceId := d.Get("space_id").(string)
+	projectId := data.Get("project_id").(string)
+	spaceId := data.Get("space_id").(string)
 	project, err := projects.GetByID(octopusClient, spaceId, projectId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	expandedWebhookTrigger, err := expandProjectWebhookTrigger(d, project)
+	expandedWebhookTrigger, err := expandProjectWebhookTrigger(data, project)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	expandedWebhookTrigger.ID = d.Id()
+	expandedWebhookTrigger.ID = data.Id()
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -107,20 +107,20 @@ func resourceProjectWebhookTriggerUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 
-	d.SetId(webhookTrigger.GetID())
+	data.SetId(webhookTrigger.GetID())
 
 	return nil
 }
 
-func resourceProjectWebhookTriggerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceProjectWebhookTriggerDelete(ctx context.Context, data *schema.ResourceData, m interface{}) diag.Diagnostics {
 	octopusClient := m.(*client.Client)
-	spaceId := d.Get("space_id").(string)
-	err := triggers.DeleteById(octopusClient, spaceId, d.Id())
+	spaceId := data.Get("space_id").(string)
+	err := triggers.DeleteById(octopusClient, spaceId, data.Id())
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId("")
+	data.SetId("")
 	return nil
 }
