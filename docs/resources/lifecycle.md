@@ -4,10 +4,9 @@ subcategory: ""
 description: |-
   This resource manages lifecycles in Octopus Deploy.
   Lifecycle retention is set using either the retention_policy and retention_with_strategy blocks.
-  - When using an octopus version prior to 2025.3
-      - the release_retention_policy and tentacle_retention_policy blocks are to be used
-  - when using an octopus version 2025.3 or later
-      - the release_retention_with_strategy and tentacle_retention_with_strategy blocks are reccommended for use
+  When using an octopus version prior to 2025.3
+  the release_retention_policy and tentacle_retention_policy blocks are to be usedwhen using an octopus version 2025.3 or later
+  the release_retention_with_strategy and tentacle_retention_with_strategy blocks are reccommended for use
 ---
 
 # octopusdeploy_lifecycle (Resource)

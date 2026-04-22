@@ -29,5 +29,3 @@ description: |-
 - `issuer` (String) OIDC issuer url
 - `name` (String) Name of the user associated to this identity
 - `subject` (String) OIDC subject claims
-
-
