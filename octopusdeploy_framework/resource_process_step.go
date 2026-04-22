@@ -449,6 +449,7 @@ func mapPackageReferenceFromState(ctx context.Context, state *schemas.ProcessSte
 		PackageID:           state.PackageID.ValueString(),
 		FeedID:              state.FeedID.ValueString(),
 		AcquisitionLocation: state.AcquisitionLocation.ValueString(),
+		Version:             state.Version.ValueString(),
 		Properties:          packageProperties,
 	}
 
@@ -599,6 +600,7 @@ func mapPackageReferencesToState(references []*packages.PackageReference) (*sche
 				PackageID:           types.StringValue(packageReference.PackageID),
 				FeedID:              types.StringValue(packageReference.FeedID),
 				AcquisitionLocation: types.StringValue(packageReference.AcquisitionLocation),
+				Version:             types.StringValue(packageReference.Version),
 				Properties:          types.MapValueMust(types.StringType, packageProperties),
 			}
 			primaryPackage.ID = types.StringValue(packageReference.ID)
@@ -612,6 +614,7 @@ func mapPackageReferencesToState(references []*packages.PackageReference) (*sche
 				"package_id":           types.StringValue(packageReference.PackageID),
 				"feed_id":              types.StringValue(packageReference.FeedID),
 				"acquisition_location": types.StringValue(packageReference.AcquisitionLocation),
+				"version":              types.StringValue(packageReference.Version),
 				"properties":           types.MapValueMust(types.StringType, packageProperties),
 			},
 		)
