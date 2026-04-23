@@ -41,6 +41,18 @@ func resourceProjectWebhookTriggerRead(ctx context.Context, data *schema.Resourc
 	}
 
 	flattenedWebhookTrigger := flattenProjectWebhookTrigger(webhookTrigger)
+
+	// The API never returns the secret value, so preserve it from state to avoid a perpetual diff.
+	if values, ok := data.GetOk("webhook_trigger_filter"); ok {
+		existingFilters := values.(*schema.Set).List()
+		if len(existingFilters) > 0 {
+			existingFilter := existingFilters[0].(map[string]interface{})
+			if filters, ok := flattenedWebhookTrigger["webhook_trigger_filter"].([]map[string]interface{}); ok && len(filters) > 0 {
+				filters[0]["secret"] = existingFilter["secret"]
+			}
+		}
+	}
+
 	for key, value := range flattenedWebhookTrigger {
 		err := data.Set(key, value)
 		if err != nil {

@@ -12,7 +12,6 @@ import (
 
 func flattenProjectWebhookTrigger(projectWebhookTrigger *triggers.ProjectTrigger) map[string]interface{} {
 	flattenedProjectWebhookTrigger := map[string]interface{}{}
-	flattenedProjectWebhookTrigger["id"] = projectWebhookTrigger.GetID()
 	flattenedProjectWebhookTrigger["name"] = projectWebhookTrigger.Name
 	flattenedProjectWebhookTrigger["description"] = projectWebhookTrigger.Description
 	flattenedProjectWebhookTrigger["project_id"] = projectWebhookTrigger.ProjectID
