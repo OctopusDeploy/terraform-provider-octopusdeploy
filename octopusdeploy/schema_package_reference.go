@@ -51,6 +51,7 @@ func flattenPackageReference(packageReference *packages.PackageReference) map[st
 		"name":                 packageReference.Name,
 		"package_id":           packageReference.PackageID,
 		"properties":           packageReference.Properties,
+		"version":              packageReference.Version,
 	}
 
 	// primary packages have no name and always extract during deployment; therefore, this
@@ -96,6 +97,12 @@ func getPackageSchema(required bool) *schema.Schema {
 					Optional:    true,
 					Type:        schema.TypeMap,
 				},
+				"version": {
+					Default:     "",
+					Description: "Package version, or a variable expression. Leave empty to select at release creation time.",
+					Optional:    true,
+					Type:        schema.TypeString,
+				},
 			},
 		},
 		Optional: !required,
@@ -111,6 +118,7 @@ func expandPackageReference(tfPkg map[string]interface{}) *packages.PackageRefer
 		Name:                getStringOrEmpty(tfPkg["name"]),
 		PackageID:           tfPkg["package_id"].(string),
 		Properties:          map[string]string{},
+		Version:             getStringOrEmpty(tfPkg["version"]),
 	}
 
 	if id, ok := tfPkg["id"]; ok {
