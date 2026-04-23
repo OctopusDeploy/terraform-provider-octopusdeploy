@@ -23,8 +23,23 @@ func TestAccProjectWebhookTrigger_basic(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{ // 1 create project webhook trigger
-				Config: createProjectWebhookTrigger(projectWebhookTriggerName, projectName, environmentName, runbookName),
-				Check:  testWebhookTriggerExists(projectWebhookTriggerResource),
+				Config: projectWebhookTrigger(projectWebhookTriggerName, "Description1", projectName, environmentName, runbookName),
+				Check: resource.ComposeTestCheckFunc(
+					testWebhookTriggerExists(projectWebhookTriggerResource),
+					resource.TestCheckResourceAttr(projectWebhookTriggerResource, "name", projectWebhookTriggerName),
+					resource.TestCheckResourceAttr(projectWebhookTriggerResource, "description", "Description1"),
+					resource.TestCheckResourceAttr(projectWebhookTriggerResource, "webhook_trigger_filter.0.secret", "Password01!"),
+				),
+			},
+			//2 update project webhook trigger description
+			{
+				Config: projectWebhookTrigger(projectWebhookTriggerName, "Description2", projectName, environmentName, runbookName),
+				Check: resource.ComposeTestCheckFunc(
+					testWebhookTriggerExists(projectWebhookTriggerResource),
+					resource.TestCheckResourceAttr(projectWebhookTriggerResource, "name", projectWebhookTriggerName),
+					resource.TestCheckResourceAttr(projectWebhookTriggerResource, "description", "Description2"),
+					resource.TestCheckResourceAttr(projectWebhookTriggerResource, "webhook_trigger_filter.0.secret", "Password01!"),
+				),
 			},
 		},
 	})
@@ -72,14 +87,14 @@ func testWebhookTriggerExists(projectWebhookTriggerName string) resource.TestChe
 	}
 }
 
-func createProjectWebhookTrigger(projectWebhookTriggerName string, projectName string, environmentName string, runbookName string) string {
+func projectWebhookTrigger(projectWebhookTriggerName string, projectWebhookTriggerDescription string, projectName string, environmentName string, runbookName string) string {
 	setupAboveTrigger := setupForProjectWebhookTrigger(projectName, environmentName, runbookName)
 	return fmt.Sprintf(`
 	%s
 
 	resource "octopusdeploy_project_webhook_trigger" "%s" {
   		name        = "%s"
-  		description = "a description"
+  		description = "%s"
   		project_id  = octopusdeploy_project.%s.id
         space_id    = "Spaces-1"
   		run_runbook_action {
@@ -90,7 +105,7 @@ func createProjectWebhookTrigger(projectWebhookTriggerName string, projectName s
     		secret = "Password01!"
   		}
 	}
-`, setupAboveTrigger, projectWebhookTriggerName, projectWebhookTriggerName, projectName, environmentName, runbookName)
+`, setupAboveTrigger, projectWebhookTriggerName, projectWebhookTriggerName, projectWebhookTriggerDescription, projectName, environmentName, runbookName)
 }
 
 func setupForProjectWebhookTrigger(projectName string, environmentName string, runbookName string) string {
