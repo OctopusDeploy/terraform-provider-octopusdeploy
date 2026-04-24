@@ -143,6 +143,7 @@ Optional:
 - `feed_id` (String) The feed ID associated with this package reference.
 - `id` (String) The unique ID for this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--action--primary_package"></a>
@@ -159,6 +160,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 
@@ -311,6 +313,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--apply_terraform_template_action--primary_package"></a>
@@ -327,6 +330,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--apply_terraform_template_action--template"></a>
@@ -429,6 +433,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 
@@ -479,6 +484,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--deploy_package_action--action_template"></a>
@@ -532,6 +538,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--deploy_package_action--windows_service"></a>
@@ -613,6 +620,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--deploy_windows_service_action--action_template"></a>
@@ -666,6 +674,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 
@@ -754,6 +763,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 
@@ -851,6 +861,7 @@ Optional:
 - `feed_id` (String) The feed ID associated with this package reference.
 - `id` (String) The unique ID for this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--run_kubectl_script_action--primary_package"></a>
@@ -867,6 +878,7 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 
@@ -963,6 +975,7 @@ Optional:
 - `feed_id` (String) The feed ID associated with this package reference.
 - `id` (String) The unique ID for this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
 
 
 <a id="nestedblock--step--run_script_action--primary_package"></a>
@@ -979,3 +992,4 @@ Optional:
 - `id` (String) The unique ID for this resource.
 - `name` (String) The name of this resource.
 - `properties` (Map of String) A list of properties associated with this package.
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time.
