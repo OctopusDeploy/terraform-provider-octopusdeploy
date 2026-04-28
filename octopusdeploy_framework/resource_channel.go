@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/newclient"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -97,12 +98,15 @@ func (r *channelResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	channel := expandChannel(ctx, plan)
-	updatedChannel, err := channels.Update(r.Client, channel)
+	updateReq := newclient.NewUpdateRequest(channel)
+	if plan.CustomFieldDefinitions.IsNull() || len(plan.CustomFieldDefinitions.Elements()) == 0 {
+		updateReq.Clear("CustomFieldDefinitions")
+	}
+	updatedChannel, err := channels.UpdateChannel(r.Client, updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating channel", err.Error())
 		return
 	}
-
 	state := flattenChannel(ctx, updatedChannel, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	return
