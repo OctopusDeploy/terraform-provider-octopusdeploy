@@ -245,6 +245,15 @@ func removeInitialRetentionDeprecated(data *lifecycleTypeResourceModelDeprecated
 	}
 }
 
+func removeInitialRetention(data *lifecycleTypeResourceModel, isReleaseRetentionDefined bool, isTentacleRetentionDefined bool, initialRetentionSetting types.List) {
+	if !isReleaseRetentionDefined && data.ReleaseRetention.Equal(initialRetentionSetting) {
+		data.ReleaseRetention = ListNullRetention
+	}
+	if !isTentacleRetentionDefined && data.TentacleRetention.Equal(initialRetentionSetting) {
+		data.TentacleRetention = ListNullRetention
+	}
+}
+
 func setInitialRetentionWithoutStrategyBlock(data *lifecycleTypeResourceModelDeprecated, initialRetentionSettingForWithoutStrategyBlock types.List) (bool, bool) {
 	hasUserDefinedReleaseRetentionWithoutStrategy := attributeIsUsed(data.ReleaseRetentionWithoutStrategy)
 	hasUserDefinedTentacleRetentionWithoutStrategy := attributeIsUsed(data.TentacleRetentionWithoutStrategy)
