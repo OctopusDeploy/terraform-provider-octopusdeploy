@@ -34,7 +34,9 @@ func AllowDeprecatedRetention() bool {
 	return false
 }
 
-type LifecycleSchema struct{}
+type LifecycleSchema struct {
+	AllowDeprecatedRetention bool
+}
 
 // RESOURCE SCHEMA
 
@@ -52,11 +54,11 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 			"name":        util.ResourceString().Required().Description("The name of this resource.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
-		Blocks: getResourceSchemaBlocks(true),
+		Blocks: getResourceSchemaBlocks(l.AllowDeprecatedRetention, true),
 	}
 }
 
-func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
+func getResourceSchemaPhaseBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines a phase in the lifecycle.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -96,21 +98,24 @@ func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
 					PlanModifiers(boolplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
-			Blocks: getResourceSchemaBlocks(false),
+			Blocks: getResourceSchemaBlocks(allowDeprecatedRetention, false),
 		},
 	}
 }
 
-func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
+func getResourceSchemaBlocks(allowDeprecatedRetention bool, includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
 		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(includesPhaseBlock),
 		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(includesPhaseBlock),
-		"release_retention_policy":         getResourceSchemaRetentionBlockDEPRECATED(),
-		"tentacle_retention_policy":        getResourceSchemaRetentionBlockDEPRECATED(),
 	}
 	if includesPhaseBlock {
-		blocks["phase"] = getResourceSchemaPhaseBlock()
+		blocks["phase"] = getResourceSchemaPhaseBlock(allowDeprecatedRetention)
 	}
+	if allowDeprecatedRetention {
+		blocks["release_retention_policy"] = getResourceSchemaRetentionBlockDEPRECATED()
+		blocks["tentacle_retention_policy"] = getResourceSchemaRetentionBlockDEPRECATED()
+	}
+
 	return blocks
 }
 
