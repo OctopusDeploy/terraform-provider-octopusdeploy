@@ -34,7 +34,7 @@ func TestExpandLifecycle_usingNewRetentionBlock(t *testing.T) {
 	tentacleRetention := core.CountBasedRetentionPeriod(2, "Items")
 	retentionAttributeTypes := getResourceRetentionAttrTypes()
 
-	data := &lifecycleTypeResourceModel{
+	data := &lifecycleTypeResourceModelDeprecated{
 		Description: types.StringValue(description),
 		Name:        types.StringValue(name),
 		SpaceID:     types.StringValue(spaceID),
@@ -87,7 +87,7 @@ func TestExpandLifecycle_usingRetentionWithoutStrategyBlock(t *testing.T) {
 	tentacleRetention := core.CountBasedRetentionPeriod(2, "Items")
 	retentionAttributeTypes := getResourceRetentionWithoutStrategyAttrTypes()
 
-	data := &lifecycleTypeResourceModel{
+	data := &lifecycleTypeResourceModelDeprecated{
 		Description: types.StringValue(description),
 		Name:        types.StringValue(name),
 		SpaceID:     types.StringValue(spaceID),
