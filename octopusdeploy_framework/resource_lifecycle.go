@@ -40,6 +40,17 @@ type lifecycleTypeResourceModelDeprecated struct {
 	schemas.ResourceModel
 }
 
+type lifecycleTypeResourceModel struct {
+	SpaceID           types.String `tfsdk:"space_id"`
+	Name              types.String `tfsdk:"name"`
+	Description       types.String `tfsdk:"description"`
+	Phase             types.List   `tfsdk:"phase"`
+	ReleaseRetention  types.List   `tfsdk:"release_retention_with_strategy"`
+	TentacleRetention types.List   `tfsdk:"tentacle_retention_with_strategy"`
+
+	schemas.ResourceModel
+}
+
 func NewLifecycleResource() resource.Resource {
 	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
 	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
