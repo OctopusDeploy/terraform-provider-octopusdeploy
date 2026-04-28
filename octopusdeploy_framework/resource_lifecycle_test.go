@@ -17,11 +17,11 @@ import (
 
 // unit tests
 func TestExpandLifecycleWithNil_usingNewRetentionBlock(t *testing.T) {
-	lifecycle := expandLifecycle(nil, false)
+	lifecycle := expandLifecycleDeprecated(nil, false)
 	require.Nil(t, lifecycle)
 }
 func TestExpanDLifecycleWithNil_usingRetentionWithoutStrategyBlock(t *testing.T) {
-	lifecycle := expandLifecycle(nil, true)
+	lifecycle := expandLifecycleDeprecated(nil, true)
 	require.Nil(t, lifecycle)
 }
 
@@ -67,7 +67,7 @@ func TestExpandLifecycle_usingNewRetentionBlock(t *testing.T) {
 	}
 	data.ID = types.StringValue(Id)
 
-	lifecycle := expandLifecycle(data, false)
+	lifecycle := expandLifecycleDeprecated(data, false)
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
 	require.NotNil(t, lifecycle.Links)
@@ -120,7 +120,7 @@ func TestExpandLifecycle_usingRetentionWithoutStrategyBlock(t *testing.T) {
 	}
 	data.ID = types.StringValue(Id)
 
-	lifecycle := expandLifecycle(data, true)
+	lifecycle := expandLifecycleDeprecated(data, true)
 	require.Equal(t, description, lifecycle.Description)
 	require.NotEmpty(t, lifecycle.ID)
 	require.NotNil(t, lifecycle.Links)
@@ -133,29 +133,29 @@ func TestExpandLifecycle_usingRetentionWithoutStrategyBlock(t *testing.T) {
 }
 
 func TestExpandPhasesWithEmptyInput(t *testing.T) {
-	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()}, []attr.Value{})
-	phases := expandPhases(emptyList)
+	emptyList := types.ListValueMust(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDeprecated()}, []attr.Value{})
+	phases := expandPhasesDeprecated(emptyList)
 	require.Nil(t, phases)
 }
 func TestExpandPhasesWithNullInput(t *testing.T) {
-	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
-	phases := expandPhases(nullList)
+	nullList := types.ListNull(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDeprecated()})
+	phases := expandPhasesDeprecated(nullList)
 	require.Nil(t, phases)
 }
 func TestExpandPhasesWithUnknownInput(t *testing.T) {
-	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypes()})
-	phases := expandPhases(unknownList)
+	unknownList := types.ListUnknown(types.ObjectType{AttrTypes: getResourcePhaseAttrTypesDeprecated()})
+	phases := expandPhasesDeprecated(unknownList)
 	require.Nil(t, phases)
 }
 
 func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlock(t *testing.T) {
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
-	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase}, false)
+	flattenedPhases := flattenResourcePhasesDeprecated([]*lifecycles.Phase{phase}, false)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhases(flattenedPhases)
+	expandedPhases := expandPhasesDeprecated(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 1)
 
@@ -172,11 +172,11 @@ func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingNewRetentionBlock(t *te
 func TestExpandAndFlattenPhasesWithSensibleDefaults_UsingRetentionWithoutStrategyBlock(t *testing.T) {
 	phase := createTestPhase("TestPhase", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 
-	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase}, true)
+	flattenedPhases := flattenResourcePhasesDeprecated([]*lifecycles.Phase{phase}, true)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 1, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhases(flattenedPhases)
+	expandedPhases := expandPhasesDeprecated(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 1)
 
@@ -194,11 +194,11 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingNewRetentionBlo
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
-	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase1, phase2}, false)
+	flattenedPhases := flattenResourcePhasesDeprecated([]*lifecycles.Phase{phase1, phase2}, false)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhases(flattenedPhases)
+	expandedPhases := expandPhasesDeprecated(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 2)
 
@@ -223,11 +223,11 @@ func TestExpandAndFlattenMultiplePhasesWithSensibleDefaults_UsingRetentionWithou
 	phase1 := createTestPhase("Phase1", []string{"AutoTarget1", "AutoTarget2"}, true, 5)
 	phase2 := createTestPhase("Phase2", []string{"AutoTarget3", "AutoTarget4"}, false, 3)
 
-	flattenedPhases := flattenResourcePhases([]*lifecycles.Phase{phase1, phase2}, true)
+	flattenedPhases := flattenResourcePhasesDeprecated([]*lifecycles.Phase{phase1, phase2}, true)
 	require.NotNil(t, flattenedPhases)
 	require.Equal(t, 2, len(flattenedPhases.Elements()))
 
-	expandedPhases := expandPhases(flattenedPhases)
+	expandedPhases := expandPhasesDeprecated(flattenedPhases)
 	require.NotNil(t, expandedPhases)
 	require.Len(t, expandedPhases, 2)
 
