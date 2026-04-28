@@ -45,7 +45,7 @@ func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy." +
 			"\n\nLifecycle retention is set using `retention_with_strategy` by default." +
 			"\n- When using an octopus version prior to `2025.3`" +
-			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks can be used with the feature toggle `octopusdeploy_lifecycles.retention_policy` enabled",
+			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks can be used by adding the environmental variable `\"TF_OCTOPUS_DEPRECATION_REVERSALS=octopusdeploy_lifecycles.retention_policy\"`",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":          GetIdResourceSchema(),
 			"space_id":    util.ResourceString().Optional().Computed().Description("The space ID associated with this resource.").PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
