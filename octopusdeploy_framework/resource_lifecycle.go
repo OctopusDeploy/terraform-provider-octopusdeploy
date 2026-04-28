@@ -21,6 +21,7 @@ import (
 type lifecycleTypeResource struct {
 	*Config
 	newRetentionNotSupported bool
+	allowDeprecatedRetention bool
 }
 
 var _ resource.Resource = &lifecycleTypeResource{}
@@ -40,7 +41,8 @@ type lifecycleTypeResourceModel struct {
 }
 
 func NewLifecycleResource() resource.Resource {
-	return &lifecycleTypeResource{}
+	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
+	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
 }
 
 func (r *lifecycleTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
