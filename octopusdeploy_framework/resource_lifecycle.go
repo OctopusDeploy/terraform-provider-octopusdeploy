@@ -115,6 +115,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 
 		if r.newRetentionNotSupported {
 			resp.Diagnostics.AddError("Octopus Server Upgrade Required.", "retention_with_strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later")
+			return
 		}
 		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
 		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(data, initialRetentionSetting)
@@ -226,6 +227,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 
 		if r.newRetentionNotSupported {
 			resp.Diagnostics.AddError("Octopus Server Upgrade Required.", "retention_with_strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later")
+			return
 		}
 		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
 		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(data, initialRetentionSetting)
