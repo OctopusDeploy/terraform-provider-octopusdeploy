@@ -148,6 +148,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewListeningTentacleWorkerResource,
 		NewSSHConnectionWorkerResource,
 		NewScriptModuleResource,
+		NewSubscriptionResource,
 		NewUserResource,
 		NewDeploymentFreezeResource,
 		NewDeploymentFreezeProjectResource,
