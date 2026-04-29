@@ -297,6 +297,7 @@ func (v retentionWithoutStrategyValidator) ValidateObject(ctx context.Context, r
 // DATASOURCE SCHEMA
 
 func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
+
 	return datasourceSchema.Schema{
 		Description: "Provides information about existing lifecycles.",
 		Attributes: map[string]datasourceSchema.Attribute{
@@ -306,7 +307,7 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
 			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
 			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
-			"lifecycles":   getDatasourceSchemaLifecyclesDEPRECATED(),
+			"lifecycles":   util.Ternary(l.AllowDeprecatedRetention, getDatasourceSchemaLifecyclesDEPRECATED(), getDatasourceSchemaLifecycles()),
 		},
 	}
 }
@@ -321,6 +322,7 @@ func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 				"space_id":                         util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
 				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
 				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
+				"phase":                            getDatasourceSchemaPhases(),
 				"release_retention_with_strategy":  getDatasourceSchemaRetention(),
 				"tentacle_retention_with_strategy": getDatasourceSchemaRetention(),
 			},
