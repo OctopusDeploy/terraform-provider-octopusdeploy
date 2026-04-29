@@ -9,7 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccLifecycleRetentionUpdates(t *testing.T) {
+func TestAccLifecycleRetentionUpdatesDeprecated(t *testing.T) {
+	t.Setenv("TF_OCTOPUS_DEPRECATION_REVERSALS", "octopusdeploy_lifecycles.retention_policy")
+
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
 
@@ -225,8 +227,8 @@ func TestAccLifecycleRetentionUpdates(t *testing.T) {
 	})
 }
 
-func TestAccRetentionAttributeValidation(t *testing.T) {
-
+func TestAccRetentionAttributeValidationDeprecated(t *testing.T) {
+	t.Setenv("TF_OCTOPUS_DEPRECATION_REVERSALS", "octopusdeploy_lifecycles.retention_policy")
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -311,8 +313,8 @@ func TestAccRetentionAttributeValidation(t *testing.T) {
 	})
 }
 
-func TestAccLifecycleWithPhaseInheritingRetentions(t *testing.T) {
-
+func TestAccLifecycleWithPhaseInheritingRetentionsDeprecated(t *testing.T) {
+	t.Setenv("TF_OCTOPUS_DEPRECATION_REVERSALS", "octopusdeploy_lifecycles.retention_policy")
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	phaseName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
@@ -383,21 +385,6 @@ func lifecycle_retentionWithoutStrategy_defaultNotUsingQuantityToKeep(lifecycleN
 }`, lifecycleName, lifecycleName)
 }
 
-func lifecycle_noRetention(lifecycleName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-}`, lifecycleName, lifecycleName)
-}
-
-func lifecycle_phaseAndNoRetention(lifecycleName string, phaseName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-  		phase {
-    		name = "%s"
-  		}
-	}`, lifecycleName, lifecycleName, phaseName)
-}
-
 func lifecycle_retentionWithoutStrategy(lifecycleName string, quantityToKeep string, unit string, shouldKeepForever string) string {
 	var quantityToKeepAttribute string
 	if quantityToKeep != "" {
@@ -451,76 +438,6 @@ func lifecycle_ReleaseRetentionWithoutStrategy(lifecycleName string, quantityToK
   		}
 
 	}`, lifecycleName, lifecycleName, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute)
-
-	return resource
-}
-
-func lifecycle_newRetention(lifecycleName string, strategy string, quantityToKeep string, unit string, shouldKeepForever string) string {
-	var strategyAttribute string
-	if strategy != "" {
-		strategyAttribute = fmt.Sprintf(`strategy = "%s"`, strategy)
-	}
-
-	var quantityToKeepAttribute string
-	if quantityToKeep != "" {
-		quantityToKeepAttribute = fmt.Sprintf(`quantity_to_keep = "%s"`, quantityToKeep)
-	}
-	var shouldKeepForeverAttribute string
-	if shouldKeepForever != "" {
-		shouldKeepForeverAttribute = fmt.Sprintf(`should_keep_forever = "%s"`, shouldKeepForever)
-	}
-	var unitAttribute string
-	if unit != "" {
-		unitAttribute = fmt.Sprintf(`unit = "%s"`, unit)
-	}
-	resource := fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-    	release_retention_with_strategy {
-			%s
-    		%s
-			%s
-			%s
-  		}
-		tentacle_retention_with_strategy {
-			%s
-    		%s
-			%s	
-			%s
-  		}
-
-	}`, lifecycleName, lifecycleName, strategyAttribute, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute, strategyAttribute, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute)
-
-	return resource
-}
-
-func lifecycle_newReleaseRetention(lifecycleName string, strategy string, quantityToKeep string, unit string, shouldKeepForever string) string {
-	var strategyAttribute string
-	if strategy != "" {
-		strategyAttribute = fmt.Sprintf(`strategy = "%s"`, strategy)
-	}
-
-	var quantityToKeepAttribute string
-	if quantityToKeep != "" {
-		quantityToKeepAttribute = fmt.Sprintf(`quantity_to_keep = "%s"`, quantityToKeep)
-	}
-	var shouldKeepForeverAttribute string
-	if shouldKeepForever != "" {
-		shouldKeepForeverAttribute = fmt.Sprintf(`should_keep_forever = "%s"`, shouldKeepForever)
-	}
-	var unitAttribute string
-	if unit != "" {
-		unitAttribute = fmt.Sprintf(`unit = "%s"`, unit)
-	}
-	resource := fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-    	release_retention_with_strategy {
-			%s
-    		%s
-			%s
-			%s
-  		}
-
-	}`, lifecycleName, lifecycleName, strategyAttribute, quantityToKeepAttribute, unitAttribute, shouldKeepForeverAttribute)
 
 	return resource
 }
