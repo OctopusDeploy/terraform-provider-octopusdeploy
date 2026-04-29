@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/newclient"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -97,12 +98,15 @@ func (r *channelResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	channel := expandChannel(ctx, plan)
-	updatedChannel, err := channels.Update(r.Client, channel)
+	updateReq := newclient.NewUpdateRequest(channel)
+	if plan.CustomFieldDefinitions.IsNull() || len(plan.CustomFieldDefinitions.Elements()) == 0 {
+		updateReq.Clear("CustomFieldDefinitions")
+	}
+	updatedChannel, err := channels.UpdateChannel(r.Client, updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating channel", err.Error())
 		return
 	}
-
 	state := flattenChannel(ctx, updatedChannel, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	return
@@ -139,6 +143,7 @@ func expandChannel(ctx context.Context, model schemas.ChannelModel) *channels.Ch
 	channel.Description = model.Description.ValueString()
 	channel.IsDefault = model.IsDefault.ValueBool()
 	channel.LifecycleID = model.LifecycleId.ValueString()
+	channel.CustomFieldDefinitions = expandChannelCustomFieldDefinitions(model.CustomFieldDefinitions)
 	channel.Rules = expandChannelRules(model.Rule)
 	channel.SpaceID = model.SpaceId.ValueString()
 	channel.TenantTags = util.ExpandStringSet(model.TenantTags)
@@ -252,6 +257,7 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 	model.Name = types.StringValue(channel.Name)
 	model.ProjectId = types.StringValue(channel.ProjectID)
 
+	model.CustomFieldDefinitions = flattenChannelCustomFieldDefinitions(channel.CustomFieldDefinitions)
 	model.Rule = flattenChannelRules(channel.Rules, model.Rule)
 
 	if channel.SpaceID == "" && model.SpaceId.IsNull() {
@@ -331,5 +337,49 @@ func getChannelRuleDeploymentActionPackageAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"deployment_action": types.StringType,
 		"package_reference": types.StringType,
+	}
+}
+
+func expandChannelCustomFieldDefinitions(defs types.List) []channels.ChannelCustomFieldDefinition {
+	if defs.IsNull() || defs.IsUnknown() || len(defs.Elements()) == 0 {
+		return []channels.ChannelCustomFieldDefinition{}
+	}
+
+	result := make([]channels.ChannelCustomFieldDefinition, 0, len(defs.Elements()))
+	for _, elem := range defs.Elements() {
+		obj := elem.(types.Object)
+		attrs := obj.Attributes()
+
+		var def channels.ChannelCustomFieldDefinition
+		if v, ok := attrs["field_name"].(types.String); ok && !v.IsNull() {
+			def.FieldName = v.ValueString()
+		}
+		if v, ok := attrs["description"].(types.String); ok && !v.IsNull() {
+			def.Description = v.ValueString()
+		}
+		result = append(result, def)
+	}
+	return result
+}
+
+func flattenChannelCustomFieldDefinitions(defs []channels.ChannelCustomFieldDefinition) types.List {
+	if len(defs) == 0 {
+		return types.ListNull(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()})
+	}
+
+	elems := make([]attr.Value, 0, len(defs))
+	for _, def := range defs {
+		elems = append(elems, types.ObjectValueMust(getChannelCustomFieldDefinitionAttrTypes(), map[string]attr.Value{
+			"field_name":  types.StringValue(def.FieldName),
+			"description": types.StringValue(def.Description),
+		}))
+	}
+	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()}, elems)
+}
+
+func getChannelCustomFieldDefinitionAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"field_name":  types.StringType,
+		"description": types.StringType,
 	}
 }
