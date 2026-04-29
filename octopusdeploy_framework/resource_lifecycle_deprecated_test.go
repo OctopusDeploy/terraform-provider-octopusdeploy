@@ -230,7 +230,7 @@ func TestAccLifecycleWithUpdateDeprecated(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "phase.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.name", phaseName),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_with_strategy.0.strategy", "Default"),
+					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_with_strategy.0.strategy", "Default"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.release_retention_policy.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "phase.0.tentacle_retention_policy.#", "0"),
 				),
