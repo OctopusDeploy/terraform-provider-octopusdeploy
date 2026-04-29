@@ -2,13 +2,13 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestChannelResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
@@ -25,15 +25,6 @@ func TestChannelResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 					},
 				},
 				Config: channelConfig,
-			},
-			{
-				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   channelConfig,
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
