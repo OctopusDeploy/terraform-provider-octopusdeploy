@@ -302,6 +302,16 @@ func TestAccLifecycleComplex_usingNewRetention(t *testing.T) {
 }
 
 // Setup for testing
+func testAccLifecycleWithPhase(localName string, name string, description string, phaseName string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+		name = "%s"
+        description = "%s"
+		phase {
+			name = "%s"
+		}
+	}`, localName, name, description, phaseName)
+}
+
 func createTestPhase(name string, autoTargets []string, isOptional bool, minEnvs int32) *lifecycles.Phase {
 	phase := lifecycles.NewPhase(name)
 	phase.AutomaticDeploymentTargets = autoTargets

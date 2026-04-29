@@ -297,17 +297,6 @@ func TestAccLifecycleComplex_usingRetentionWithoutStrategy(t *testing.T) {
 }
 
 // Setup for testing
-
-func testAccLifecycleWithPhase(localName string, name string, description string, phaseName string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
-        description = "%s"
-		phase {
-			name = "%s"
-		}
-	}`, localName, name, description, phaseName)
-}
-
 func testAccLifecycleWithPhase_AndPhaseRetentionWithoutStrategy(localName string, name string, description string, phaseName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
 		name = "%s"
