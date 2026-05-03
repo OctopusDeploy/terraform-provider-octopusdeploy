@@ -35,7 +35,7 @@ data "octopusdeploy_lifecycles" "example" {
 ### Read-Only
 
 - `id` (String) The ID of the lifecycle.
-- `lifecycles` (Attributes List) (see [below for nested schema](#nestedatt--lifecycles))
+- `lifecycles` (Attributes List) Displays a lifecycle (see [below for nested schema](#nestedatt--lifecycles))
 
 <a id="nestedatt--lifecycles"></a>
 ### Nested Schema for `lifecycles`
