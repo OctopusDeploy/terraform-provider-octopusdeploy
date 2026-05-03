@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"context"
+	"os"
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -25,29 +26,37 @@ import (
 
 var _ EntitySchema = LifecycleSchema{}
 
-type LifecycleSchema struct{}
+func AllowDeprecatedRetention() bool {
+	deprecationReversals := strings.TrimSpace(os.Getenv("TF_OCTOPUS_DEPRECATION_REVERSALS"))
+	if strings.EqualFold(deprecationReversals, "octopusdeploy_lifecycles.retention_policy") {
+		return true
+	}
+	return false
+}
+
+type LifecycleSchema struct {
+	AllowDeprecatedRetention bool
+}
 
 // RESOURCE SCHEMA
 
 func (l LifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
 		MarkdownDescription: "This resource manages lifecycles in Octopus Deploy." +
-			"\n\nLifecycle retention is set using either the `retention_policy` and `retention_with_strategy` blocks." +
+			"\n\nLifecycle retention is set using `retention_with_strategy` by default." +
 			"\n- When using an octopus version prior to `2025.3`" +
-			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks are to be used" +
-			"\n- when using an octopus version `2025.3` or later" +
-			"\n	- the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks are reccommended for use",
+			"\n	- the `release_retention_policy` and `tentacle_retention_policy` blocks can be used by adding the environmental variable `\"TF_OCTOPUS_DEPRECATION_REVERSALS=octopusdeploy_lifecycles.retention_policy\"`",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":          GetIdResourceSchema(),
 			"space_id":    util.ResourceString().Optional().Computed().Description("The space ID associated with this resource.").PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
 			"name":        util.ResourceString().Required().Description("The name of this resource.").Build(),
 			"description": util.ResourceString().Optional().Computed().Default("").Description("The description of this lifecycle.").Build(),
 		},
-		Blocks: getResourceSchemaBlocks(true),
+		Blocks: getResourceSchemaBlocks(l.AllowDeprecatedRetention, true),
 	}
 }
 
-func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
+func getResourceSchemaPhaseBlock(allowDeprecatedRetention bool) resourceSchema.ListNestedBlock {
 	return resourceSchema.ListNestedBlock{
 		Description: "Defines a phase in the lifecycle.",
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -87,27 +96,30 @@ func getResourceSchemaPhaseBlock() resourceSchema.ListNestedBlock {
 					PlanModifiers(boolplanmodifier.UseStateForUnknown()).
 					Build(),
 			},
-			Blocks: getResourceSchemaBlocks(false),
+			Blocks: getResourceSchemaBlocks(allowDeprecatedRetention, false),
 		},
 	}
 }
 
-func getResourceSchemaBlocks(includesPhaseBlock bool) map[string]resourceSchema.Block {
+func getResourceSchemaBlocks(allowDeprecatedRetention bool, includesPhaseBlock bool) map[string]resourceSchema.Block {
 	blocks := map[string]resourceSchema.Block{
 		"release_retention_with_strategy":  getResourceSchemaRetentionBlock(includesPhaseBlock),
 		"tentacle_retention_with_strategy": getResourceSchemaRetentionBlock(includesPhaseBlock),
-		"release_retention_policy":         getResourceSchemaRetentionBlockDEPRECATED(),
-		"tentacle_retention_policy":        getResourceSchemaRetentionBlockDEPRECATED(),
 	}
 	if includesPhaseBlock {
-		blocks["phase"] = getResourceSchemaPhaseBlock()
+		blocks["phase"] = getResourceSchemaPhaseBlock(allowDeprecatedRetention)
 	}
+	if allowDeprecatedRetention {
+		blocks["release_retention_policy"] = getResourceSchemaRetentionBlockDEPRECATED()
+		blocks["tentacle_retention_policy"] = getResourceSchemaRetentionBlockDEPRECATED()
+	}
+
 	return blocks
 }
 
 func getResourceSchemaRetentionBlock(includesPhaseBlock bool) resourceSchema.ListNestedBlock {
-	descriptionForLifecycleRetention := "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- This block may only be used on Octopus server 2025.3 or later."
-	descriptionForPhaseRetention := "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the phase inherits the retention from the lifecycle \n 	- This block may only be used on Octopus server 2025.3 or later."
+	descriptionForLifecycleRetention := "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the space-wide \"Default\" retention policy is used. \n 	- Compatible with 2025.3 and later"
+	descriptionForPhaseRetention := "Defines the retention policy for releases or tentacles.\n	- When this block is not included, the phase inherits the retention from the lifecycle \n 	- Compatible with 2025.3 and later"
 	return resourceSchema.ListNestedBlock{
 		Description: util.Ternary(includesPhaseBlock, descriptionForLifecycleRetention, descriptionForPhaseRetention),
 		NestedObject: resourceSchema.NestedBlockObject{
@@ -285,6 +297,7 @@ func (v retentionWithoutStrategyValidator) ValidateObject(ctx context.Context, r
 // DATASOURCE SCHEMA
 
 func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
+
 	return datasourceSchema.Schema{
 		Description: "Provides information about existing lifecycles.",
 		Attributes: map[string]datasourceSchema.Attribute{
@@ -294,21 +307,23 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"partial_name": util.DataSourceString().Optional().Description("A partial name to filter lifecycles by.").Build(),
 			"skip":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to skip in the response.").Build(),
 			"take":         util.DataSourceInt64().Optional().Description("A filter to specify the number of items to take (or return) in the response.").Build(),
-			"lifecycles":   getDatasourceSchemaLifecyclesDEPRECATED(),
+			"lifecycles":   util.Ternary(l.AllowDeprecatedRetention, getDatasourceSchemaLifecyclesDEPRECATED(), getDatasourceSchemaLifecycles()),
 		},
 	}
 }
 
 func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
-		Computed: true,
-		Optional: false,
+		Computed:    true,
+		Optional:    false,
+		Description: "Displays a lifecycle",
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
 				"id":                               util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
 				"space_id":                         util.DataSourceString().Computed().Description("The space ID associated with this lifecycle.").Build(),
 				"name":                             util.DataSourceString().Computed().Description("The name of the lifecycle.").Build(),
 				"description":                      util.DataSourceString().Computed().Description("The description of the lifecycle.").Build(),
+				"phase":                            getDatasourceSchemaPhases(),
 				"release_retention_with_strategy":  getDatasourceSchemaRetention(),
 				"tentacle_retention_with_strategy": getDatasourceSchemaRetention(),
 			},
@@ -321,9 +336,10 @@ func getDatasourceSchemaLifecyclesDEPRECATED() datasourceSchema.ListNestedAttrib
 	attributes["release_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategy()
 	attributes["tentacle_retention_policy"] = getDatasourceSchemaRetentionWithoutStrategy()
 	return datasourceSchema.ListNestedAttribute{
-		Computed:    true,
-		Optional:    false,
-		Description: "Displays a lifecycle",
+		Computed:           true,
+		Optional:           false,
+		DeprecationMessage: "After upgrading to octopus 2025.3 or higher, please use the `release_retention_with_strategy` and `tentacle_retention_with_strategy` blocks instead.",
+		Description:        "Displays a lifecycle",
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: attributes,
 		},

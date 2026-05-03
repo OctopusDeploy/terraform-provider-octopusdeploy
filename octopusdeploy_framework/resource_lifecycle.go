@@ -21,12 +21,13 @@ import (
 type lifecycleTypeResource struct {
 	*Config
 	newRetentionNotSupported bool
+	allowDeprecatedRetention bool
 }
 
 var _ resource.Resource = &lifecycleTypeResource{}
 var _ resource.ResourceWithImportState = &lifecycleTypeResource{}
 
-type lifecycleTypeResourceModel struct {
+type lifecycleTypeResourceModelDeprecated struct {
 	SpaceID                          types.String `tfsdk:"space_id"`
 	Name                             types.String `tfsdk:"name"`
 	Description                      types.String `tfsdk:"description"`
@@ -39,8 +40,20 @@ type lifecycleTypeResourceModel struct {
 	schemas.ResourceModel
 }
 
+type lifecycleTypeResourceModel struct {
+	SpaceID           types.String `tfsdk:"space_id"`
+	Name              types.String `tfsdk:"name"`
+	Description       types.String `tfsdk:"description"`
+	Phase             types.List   `tfsdk:"phase"`
+	ReleaseRetention  types.List   `tfsdk:"release_retention_with_strategy"`
+	TentacleRetention types.List   `tfsdk:"tentacle_retention_with_strategy"`
+
+	schemas.ResourceModel
+}
+
 func NewLifecycleResource() resource.Resource {
-	return &lifecycleTypeResource{}
+	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
+	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
 }
 
 func (r *lifecycleTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -55,7 +68,7 @@ func (r *lifecycleTypeResource) Metadata(_ context.Context, req resource.Metadat
 }
 
 func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schemas.LifecycleSchema{}.GetResourceSchema()
+	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: r.allowDeprecatedRetention}.GetResourceSchema()
 }
 
 func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -69,99 +82,197 @@ func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.Conf
 
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 
-	var data *lifecycleTypeResourceModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
+	if r.allowDeprecatedRetention {
+		var data *lifecycleTypeResourceModelDeprecated
+		resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		validateRetentionDeprecated(data, &resp.Diagnostics, r.newRetentionNotSupported)
+		retentionWithoutStratUsed := isRetentionWithoutStratUsed(data)
+		isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfigDeprecated(data)
+		initialRetentionSettingForNewBlock, initialRetentionSettingForRetentionWithoutStrategyBlock := setInitialRetentionDeprecated(data, retentionWithoutStratUsed)
+
+		lifecycleSentToGo := expandLifecycleDeprecated(data, retentionWithoutStratUsed)
+		lifecycleFromGo, err := lifecycles.Add(r.Config.Client, lifecycleSentToGo)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
+			return
+		}
+
+		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
+		data = flattenResourceLifecycleDeprecated(lifecycleFromGo, retentionWithoutStratUsed)
+		removeInitialRetentionDeprecated(data, isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionSettingForNewBlock, initialRetentionSettingForRetentionWithoutStrategyBlock)
+
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	} else {
+		var data *lifecycleTypeResourceModel
+		resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if r.newRetentionNotSupported {
+			resp.Diagnostics.AddError("Octopus Server Upgrade Required.", "retention_with_strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later")
+			return
+		}
+		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
+		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(data, initialRetentionSetting)
+
+		lifecycleSentToGo := expandLifecycle(data)
+		lifecycleFromGo, err := lifecycles.Add(r.Config.Client, lifecycleSentToGo)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
+			return
+		}
+
+		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
+		data = flattenResourceLifecycle(lifecycleFromGo)
+		removeInitialRetention(data, isReleaseRetentionDefined, isTentacleRetentionDefined, initialRetentionSetting)
+
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 	}
 
-	validateRetentionBlocksInConfig(data, &resp.Diagnostics, r.newRetentionNotSupported)
-	onlyRetentionWithoutStrategyWillBeUsed := isRetentionWithoutStrategyToBeUsedForLifecycle(data)
-	isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfig(data)
-	initialRetentionSettingForNewBlock, initialRetentionSettingForRetentionWithoutStrategyBlock := setInitialRetention(data, onlyRetentionWithoutStrategyWillBeUsed)
-
-	lifecycleSentToGo := expandLifecycle(data, onlyRetentionWithoutStrategyWillBeUsed)
-	lifecycleFromGo, err := lifecycles.Add(r.Config.Client, lifecycleSentToGo)
-	if err != nil {
-		resp.Diagnostics.AddError("unable to create lifecycle", err.Error())
-		return
-	}
-
-	handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
-	data = flattenResourceLifecycle(lifecycleFromGo, onlyRetentionWithoutStrategyWillBeUsed)
-	removeInitialRetention(data, isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionSettingForNewBlock, initialRetentionSettingForRetentionWithoutStrategyBlock)
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *lifecycleTypeResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	validateRetentionBlocksInConfig(data, &resp.Diagnostics, r.newRetentionNotSupported)
-	onlyRetentionWithoutStrategyWillBeUsed := isRetentionWithoutStrategyToBeUsedForLifecycle(data)
-	isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfig(data)
-	initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock := setInitialRetention(data, onlyRetentionWithoutStrategyWillBeUsed)
-
-	lifecycleFromGo, err := lifecycles.GetByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString())
-	if err != nil {
-		if err := errors.ProcessApiErrorV2(ctx, resp, data, err, "lifecycle"); err != nil {
-			resp.Diagnostics.AddError("unable to load lifecycle", err.Error())
+	if r.allowDeprecatedRetention {
+		var data *lifecycleTypeResourceModelDeprecated
+		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+		if resp.Diagnostics.HasError() {
+			return
 		}
-		return
+
+		validateRetentionDeprecated(data, &resp.Diagnostics, r.newRetentionNotSupported)
+		retentionWithoutStratUsed := isRetentionWithoutStratUsed(data)
+		isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfigDeprecated(data)
+		initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock := setInitialRetentionDeprecated(data, retentionWithoutStratUsed)
+
+		lifecycleFromGo, err := lifecycles.GetByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString())
+		if err != nil {
+			if err := errors.ProcessApiErrorV2(ctx, resp, data, err, "lifecycle"); err != nil {
+				resp.Diagnostics.AddError("unable to load lifecycle", err.Error())
+			}
+			return
+		}
+
+		handleUnitCasing(lifecycleFromGo, expandLifecycleDeprecated(data, retentionWithoutStratUsed))
+		data = flattenResourceLifecycleDeprecated(lifecycleFromGo, retentionWithoutStratUsed)
+
+		removeInitialRetentionDeprecated(data, isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	} else {
+
+		var data *lifecycleTypeResourceModel
+		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
+		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(data, initialRetentionSetting)
+
+		lifecycle, err := lifecycles.GetByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString())
+		if err != nil {
+			if err := errors.ProcessApiErrorV2(ctx, resp, data, err, "lifecycle"); err != nil {
+				resp.Diagnostics.AddError("unable to load lifecycle", err.Error())
+			}
+			return
+		}
+		data = flattenResourceLifecycle(lifecycle)
+
+		removeInitialRetention(data, isReleaseRetentionDefined, isTentacleRetentionDefined, initialRetentionSetting)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	}
 
-	handleUnitCasing(lifecycleFromGo, expandLifecycle(data, onlyRetentionWithoutStrategyWillBeUsed))
-	data = flattenResourceLifecycle(lifecycleFromGo, onlyRetentionWithoutStrategyWillBeUsed)
-
-	removeInitialRetention(data, isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	if r.allowDeprecatedRetention {
+		var data, state *lifecycleTypeResourceModelDeprecated
+		resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
-	var data, state *lifecycleTypeResourceModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-	if resp.Diagnostics.HasError() {
-		return
+		validateRetentionDeprecated(data, &resp.Diagnostics, r.newRetentionNotSupported)
+		retentionWithoutStratUsed := isRetentionWithoutStratUsed(data)
+		isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfigDeprecated(data)
+		initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock := setInitialRetentionDeprecated(data, retentionWithoutStratUsed)
+
+		tflog.Debug(ctx, fmt.Sprintf("updating lifecycle '%s'", data.ID.ValueString()))
+		lifecycleSentToGo := expandLifecycleDeprecated(data, retentionWithoutStratUsed)
+		lifecycleSentToGo.ID = state.ID.ValueString()
+		lifecycleFromGo, err := lifecycles.Update(r.Config.Client, lifecycleSentToGo)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to update lifecycle", err.Error())
+			return
+		}
+
+		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
+		data = flattenResourceLifecycleDeprecated(lifecycleFromGo, retentionWithoutStratUsed)
+
+		removeInitialRetentionDeprecated(data, isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	} else {
+		var data, state *lifecycleTypeResourceModel
+		resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if r.newRetentionNotSupported {
+			resp.Diagnostics.AddError("Octopus Server Upgrade Required.", "retention_with_strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later")
+			return
+		}
+		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
+		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(data, initialRetentionSetting)
+
+		tflog.Debug(ctx, fmt.Sprintf("updating lifecycle '%s'", data.ID.ValueString()))
+		lifecycleSentToGo := expandLifecycle(data)
+		lifecycleSentToGo.ID = state.ID.ValueString()
+		lifecycleFromGo, err := lifecycles.Update(r.Config.Client, lifecycleSentToGo)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to update lifecycle", err.Error())
+			return
+		}
+
+		handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
+		data = flattenResourceLifecycle(lifecycleFromGo)
+
+		removeInitialRetention(data, isReleaseRetentionDefined, isTentacleRetentionDefined, initialRetentionSetting)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	}
-
-	validateRetentionBlocksInConfig(data, &resp.Diagnostics, r.newRetentionNotSupported)
-	onlyRetentionWithoutStrategyWillBeUsed := isRetentionWithoutStrategyToBeUsedForLifecycle(data)
-	isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfig(data)
-	initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock := setInitialRetention(data, onlyRetentionWithoutStrategyWillBeUsed)
-
-	tflog.Debug(ctx, fmt.Sprintf("updating lifecycle '%s'", data.ID.ValueString()))
-	lifecycleSentToGo := expandLifecycle(data, onlyRetentionWithoutStrategyWillBeUsed)
-	lifecycleSentToGo.ID = state.ID.ValueString()
-	lifecycleFromGo, err := lifecycles.Update(r.Config.Client, lifecycleSentToGo)
-	if err != nil {
-		resp.Diagnostics.AddError("unable to update lifecycle", err.Error())
-		return
-	}
-
-	handleUnitCasing(lifecycleFromGo, lifecycleSentToGo)
-	data = flattenResourceLifecycle(lifecycleFromGo, onlyRetentionWithoutStrategyWillBeUsed)
-
-	removeInitialRetention(data, isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet, initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	if r.allowDeprecatedRetention {
+		var data lifecycleTypeResourceModelDeprecated
+		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
-	var data lifecycleTypeResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+		if err := lifecycles.DeleteByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString()); err != nil {
+			resp.Diagnostics.AddError("unable to delete lifecycle", err.Error())
+			return
+		}
+	} else {
+		var data lifecycleTypeResourceModel
 
-	if err := lifecycles.DeleteByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString()); err != nil {
-		resp.Diagnostics.AddError("unable to delete lifecycle", err.Error())
-		return
+		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if err := lifecycles.DeleteByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString()); err != nil {
+			resp.Diagnostics.AddError("unable to delete lifecycle", err.Error())
+			return
+		}
 	}
 
 }
@@ -200,7 +311,7 @@ func updateUnitsFromGoToMatchStateCasing(retentionPeriodFromGo *core.RetentionPe
 	return retentionPeriodFromGo
 }
 
-func removeInitialRetention(data *lifecycleTypeResourceModel, isNewReleaseRetentionSet bool, isTentacleRetentionDefined bool, isReleaseRetentionWithoutStrategySet bool, isTentacleRetentionWithoutStrategySet bool, initialRetentionSettingForNewBlock types.List, initialRetentionSettingForWithoutStrategyBlock types.List) {
+func removeInitialRetentionDeprecated(data *lifecycleTypeResourceModelDeprecated, isNewReleaseRetentionSet bool, isTentacleRetentionDefined bool, isReleaseRetentionWithoutStrategySet bool, isTentacleRetentionWithoutStrategySet bool, initialRetentionSettingForNewBlock types.List, initialRetentionSettingForWithoutStrategyBlock types.List) {
 	if !isNewReleaseRetentionSet && (data.ReleaseRetention.Equal(initialRetentionSettingForNewBlock) || data.ReleaseRetention.IsNull()) {
 		data.ReleaseRetention = ListNullRetention
 	}
@@ -217,7 +328,16 @@ func removeInitialRetention(data *lifecycleTypeResourceModel, isNewReleaseRetent
 	}
 }
 
-func setInitialRetentionWithoutStrategyBlock(data *lifecycleTypeResourceModel, initialRetentionSettingForWithoutStrategyBlock types.List) (bool, bool) {
+func removeInitialRetention(data *lifecycleTypeResourceModel, isReleaseRetentionDefined bool, isTentacleRetentionDefined bool, initialRetentionSetting types.List) {
+	if !isReleaseRetentionDefined && data.ReleaseRetention.Equal(initialRetentionSetting) {
+		data.ReleaseRetention = ListNullRetention
+	}
+	if !isTentacleRetentionDefined && data.TentacleRetention.Equal(initialRetentionSetting) {
+		data.TentacleRetention = ListNullRetention
+	}
+}
+
+func setInitialRetentionWithoutStrategyBlock(data *lifecycleTypeResourceModelDeprecated, initialRetentionSettingForWithoutStrategyBlock types.List) (bool, bool) {
 	hasUserDefinedReleaseRetentionWithoutStrategy := attributeIsUsed(data.ReleaseRetentionWithoutStrategy)
 	hasUserDefinedTentacleRetentionWithoutStrategy := attributeIsUsed(data.TentacleRetentionWithoutStrategy)
 	if !hasUserDefinedReleaseRetentionWithoutStrategy {
@@ -229,7 +349,7 @@ func setInitialRetentionWithoutStrategyBlock(data *lifecycleTypeResourceModel, i
 
 	return hasUserDefinedReleaseRetentionWithoutStrategy, hasUserDefinedTentacleRetentionWithoutStrategy
 }
-func setInitialRetentionNewBlock(data *lifecycleTypeResourceModel, initialRetentionSettingForNewBlock types.List) (bool, bool) {
+func setInitialRetentionNewBlock(data *lifecycleTypeResourceModelDeprecated, initialRetentionSettingForNewBlock types.List) (bool, bool) {
 	hasUserDefinedReleaseRetention := attributeIsUsed(data.ReleaseRetention)
 	hasUserDefinedTentacleRetention := attributeIsUsed(data.TentacleRetention)
 	if !hasUserDefinedReleaseRetention {
@@ -240,11 +360,11 @@ func setInitialRetentionNewBlock(data *lifecycleTypeResourceModel, initialRetent
 	}
 	return hasUserDefinedReleaseRetention, hasUserDefinedTentacleRetention
 }
-func setInitialRetention(data *lifecycleTypeResourceModel, onlyRetentionWithoutStrategyWillBeUsed bool) (types.List, types.List) {
+func setInitialRetentionDeprecated(data *lifecycleTypeResourceModelDeprecated, retentionWithoutStratUsed bool) (types.List, types.List) {
 	var initialRetentionSettingForWithoutStrategyBlock types.List
 	var initialRetentionSettingForNewBlock types.List
 
-	if onlyRetentionWithoutStrategyWillBeUsed {
+	if retentionWithoutStratUsed {
 		initialRetentionSettingForWithoutStrategyBlock = flattenResourceRetentionWithoutStrategy(core.CountBasedRetentionPeriod(30, "Days"))
 		initialRetentionSettingForNewBlock = ListNullRetention
 		setInitialRetentionWithoutStrategyBlock(data, initialRetentionSettingForWithoutStrategyBlock)
@@ -254,6 +374,20 @@ func setInitialRetention(data *lifecycleTypeResourceModel, onlyRetentionWithoutS
 		setInitialRetentionNewBlock(data, initialRetentionSettingForNewBlock)
 	}
 	return initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock
+}
+
+func setInitialRetention(data *lifecycleTypeResourceModel, initialRetentionSetting types.List) (bool, bool) {
+	isReleaseRetentionDefined := attributeIsUsed(data.ReleaseRetention)
+	isTentacleRetentionDefined := attributeIsUsed(data.TentacleRetention)
+
+	if !isReleaseRetentionDefined {
+		data.ReleaseRetention = initialRetentionSetting
+	}
+	if !isTentacleRetentionDefined {
+		data.TentacleRetention = initialRetentionSetting
+	}
+
+	return isReleaseRetentionDefined, isTentacleRetentionDefined
 }
 
 func attributeIsUsed(attribute types.List) bool {
@@ -280,15 +414,15 @@ func resourceConfiguration(req resource.ConfigureRequest, resp *resource.Configu
 	return p
 }
 
-func flattenResourceLifecycle(lifecycle *lifecycles.Lifecycle, onlyRetentionWithoutStrategyWillBeUsed bool) *lifecycleTypeResourceModel {
-	var flattenedLifecycle *lifecycleTypeResourceModel
-	flattenedLifecycle = &lifecycleTypeResourceModel{
+func flattenResourceLifecycleDeprecated(lifecycle *lifecycles.Lifecycle, retentionWithoutStratUsed bool) *lifecycleTypeResourceModelDeprecated {
+	var flattenedLifecycle *lifecycleTypeResourceModelDeprecated
+	flattenedLifecycle = &lifecycleTypeResourceModelDeprecated{
 		SpaceID:     types.StringValue(lifecycle.SpaceID),
 		Name:        types.StringValue(lifecycle.Name),
 		Description: types.StringValue(lifecycle.Description),
-		Phase:       flattenResourcePhases(lifecycle.Phases, onlyRetentionWithoutStrategyWillBeUsed),
+		Phase:       flattenResourcePhasesDeprecated(lifecycle.Phases, retentionWithoutStratUsed),
 	}
-	if onlyRetentionWithoutStrategyWillBeUsed {
+	if retentionWithoutStratUsed {
 		flattenedLifecycle.ReleaseRetentionWithoutStrategy = flattenResourceRetentionWithoutStrategy(lifecycle.ReleaseRetentionPolicy)
 		flattenedLifecycle.TentacleRetentionWithoutStrategy = flattenResourceRetentionWithoutStrategy(lifecycle.TentacleRetentionPolicy)
 	} else {
@@ -300,8 +434,24 @@ func flattenResourceLifecycle(lifecycle *lifecycles.Lifecycle, onlyRetentionWith
 	return flattenedLifecycle
 }
 
-func flattenResourcePhases(phasesFromGo []*lifecycles.Phase, onlyRetentionWithoutStrategyWillBeUsed bool) types.List {
-	var phaseAttrTypes = getResourcePhaseAttrTypes()
+func flattenResourceLifecycle(lifecycle *lifecycles.Lifecycle) *lifecycleTypeResourceModel {
+	var flattenedLifecycle *lifecycleTypeResourceModel
+	flattenedLifecycle = &lifecycleTypeResourceModel{
+		SpaceID:     types.StringValue(lifecycle.SpaceID),
+		Name:        types.StringValue(lifecycle.Name),
+		Description: types.StringValue(lifecycle.Description),
+		Phase:       flattenResourcePhases(lifecycle.Phases),
+	}
+
+	flattenedLifecycle.ReleaseRetention = flattenResourceRetention(lifecycle.ReleaseRetentionPolicy)
+	flattenedLifecycle.TentacleRetention = flattenResourceRetention(lifecycle.TentacleRetentionPolicy)
+
+	flattenedLifecycle.ID = types.StringValue(lifecycle.GetID())
+	return flattenedLifecycle
+}
+
+func flattenResourcePhasesDeprecated(phasesFromGo []*lifecycles.Phase, retentionWithoutStratUsed bool) types.List {
+	var phaseAttrTypes = getResourcePhaseAttrTypesDeprecated()
 	if phasesFromGo == nil {
 		return types.ListNull(types.ObjectType{AttrTypes: phaseAttrTypes})
 	}
@@ -316,7 +466,7 @@ func flattenResourcePhases(phasesFromGo []*lifecycles.Phase, onlyRetentionWithou
 			"is_optional_phase":                     types.BoolValue(goPhase.IsOptionalPhase),
 			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
 		}
-		if onlyRetentionWithoutStrategyWillBeUsed {
+		if retentionWithoutStratUsed {
 			attrs["release_retention_policy"] = util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenResourceRetentionWithoutStrategy(goPhase.ReleaseRetentionPolicy), ListNullRetentionWithoutStrategy)
 			attrs["tentacle_retention_policy"] = util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenResourceRetentionWithoutStrategy(goPhase.TentacleRetentionPolicy), ListNullRetentionWithoutStrategy)
 			attrs["release_retention_with_strategy"] = ListNullRetention
@@ -331,6 +481,30 @@ func flattenResourcePhases(phasesFromGo []*lifecycles.Phase, onlyRetentionWithou
 	}
 	return types.ListValueMust(types.ObjectType{AttrTypes: phaseAttrTypes}, phasesList)
 
+}
+
+func flattenResourcePhases(goPhases []*lifecycles.Phase) types.List {
+	var phaseAttrTypes = getResourcePhaseAttrTypes()
+	if goPhases == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: phaseAttrTypes})
+	}
+	phasesList := make([]attr.Value, 0, len(goPhases))
+
+	for _, goPhase := range goPhases {
+		attrs := map[string]attr.Value{
+			"id":                                    types.StringValue(goPhase.ID),
+			"name":                                  types.StringValue(goPhase.Name),
+			"automatic_deployment_targets":          util.FlattenStringList(goPhase.AutomaticDeploymentTargets),
+			"optional_deployment_targets":           util.FlattenStringList(goPhase.OptionalDeploymentTargets),
+			"minimum_environments_before_promotion": types.Int64Value(int64(goPhase.MinimumEnvironmentsBeforePromotion)),
+			"is_optional_phase":                     types.BoolValue(goPhase.IsOptionalPhase),
+			"is_priority_phase":                     types.BoolValue(goPhase.IsPriorityPhase),
+			"release_retention_with_strategy":       util.Ternary(goPhase.ReleaseRetentionPolicy != nil, flattenResourceRetention(goPhase.ReleaseRetentionPolicy), ListNullRetention),
+			"tentacle_retention_with_strategy":      util.Ternary(goPhase.TentacleRetentionPolicy != nil, flattenResourceRetention(goPhase.TentacleRetentionPolicy), ListNullRetention),
+		}
+		phasesList = append(phasesList, types.ObjectValueMust(phaseAttrTypes, attrs))
+	}
+	return types.ListValueMust(types.ObjectType{AttrTypes: phaseAttrTypes}, phasesList)
 }
 
 func flattenResourceRetention(retentionFromGo *core.RetentionPeriod) types.List {
@@ -371,7 +545,7 @@ func flattenResourceRetentionWithoutStrategy(retentionFromGo *core.RetentionPeri
 		})
 }
 
-func expandLifecycle(lifecycleUserInput *lifecycleTypeResourceModel, onlyRetentionWithoutStrategyWillBeUsed bool) *lifecycles.Lifecycle {
+func expandLifecycleDeprecated(lifecycleUserInput *lifecycleTypeResourceModelDeprecated, retentionWithoutStratUsed bool) *lifecycles.Lifecycle {
 	if lifecycleUserInput == nil {
 		return nil
 	}
@@ -381,9 +555,9 @@ func expandLifecycle(lifecycleUserInput *lifecycleTypeResourceModel, onlyRetenti
 	if !lifecycleUserInput.ID.IsNull() && lifecycleUserInput.ID.ValueString() != "" {
 		lifecycleSentToGo.ID = lifecycleUserInput.ID.ValueString()
 	}
-	lifecycleSentToGo.Phases = expandPhases(lifecycleUserInput.Phase)
+	lifecycleSentToGo.Phases = expandPhasesDeprecated(lifecycleUserInput.Phase)
 
-	if onlyRetentionWithoutStrategyWillBeUsed {
+	if retentionWithoutStratUsed {
 		lifecycleSentToGo.ReleaseRetentionPolicy = expandRetentionWithoutStrategy(lifecycleUserInput.ReleaseRetentionWithoutStrategy)
 		lifecycleSentToGo.TentacleRetentionPolicy = expandRetentionWithoutStrategy(lifecycleUserInput.TentacleRetentionWithoutStrategy)
 	} else {
@@ -394,7 +568,24 @@ func expandLifecycle(lifecycleUserInput *lifecycleTypeResourceModel, onlyRetenti
 	return lifecycleSentToGo
 }
 
-func expandPhases(phasesUserInput types.List) []*lifecycles.Phase {
+func expandLifecycle(lifecycleUserInput *lifecycleTypeResourceModel) *lifecycles.Lifecycle {
+	if lifecycleUserInput == nil {
+		return nil
+	}
+	lifecycleSentToGo := lifecycles.NewLifecycle(lifecycleUserInput.Name.ValueString())
+	lifecycleSentToGo.Description = lifecycleUserInput.Description.ValueString()
+	lifecycleSentToGo.SpaceID = lifecycleUserInput.SpaceID.ValueString()
+	if !lifecycleUserInput.ID.IsNull() && lifecycleUserInput.ID.ValueString() != "" {
+		lifecycleSentToGo.ID = lifecycleUserInput.ID.ValueString()
+	}
+	lifecycleSentToGo.Phases = expandPhases(lifecycleUserInput.Phase)
+	lifecycleSentToGo.ReleaseRetentionPolicy = expandRetention(lifecycleUserInput.ReleaseRetention)
+	lifecycleSentToGo.TentacleRetentionPolicy = expandRetention(lifecycleUserInput.TentacleRetention)
+
+	return lifecycleSentToGo
+}
+
+func expandPhasesDeprecated(phasesUserInput types.List) []*lifecycles.Phase {
 	if phasesUserInput.IsNull() || phasesUserInput.IsUnknown() || len(phasesUserInput.Elements()) == 0 {
 		return nil
 	}
@@ -447,6 +638,60 @@ func expandPhases(phasesUserInput types.List) []*lifecycles.Phase {
 
 		if v, ok := phaseAttrsUserInput["tentacle_retention_policy"].(types.List); ok && !v.IsNull() {
 			phasePlan.TentacleRetentionPolicy = expandRetentionWithoutStrategy(v)
+		}
+
+		allPhasesPlan = append(allPhasesPlan, phasePlan)
+	}
+
+	return allPhasesPlan
+}
+
+func expandPhases(phasesUserInput types.List) []*lifecycles.Phase {
+	if phasesUserInput.IsNull() || phasesUserInput.IsUnknown() || len(phasesUserInput.Elements()) == 0 {
+		return nil
+	}
+
+	allPhasesPlan := make([]*lifecycles.Phase, 0, len(phasesUserInput.Elements()))
+
+	for _, singlePhaseUserInput := range phasesUserInput.Elements() {
+		phaseAttrsUserInput := singlePhaseUserInput.(types.Object).Attributes()
+
+		phasePlan := &lifecycles.Phase{}
+
+		if v, ok := phaseAttrsUserInput["id"].(types.String); ok && !v.IsNull() {
+			phasePlan.ID = v.ValueString()
+		}
+
+		if v, ok := phaseAttrsUserInput["name"].(types.String); ok && !v.IsNull() {
+			phasePlan.Name = v.ValueString()
+		}
+
+		if v, ok := phaseAttrsUserInput["automatic_deployment_targets"].(types.List); ok && !v.IsNull() {
+			phasePlan.AutomaticDeploymentTargets = util.ExpandStringList(v)
+		}
+
+		if v, ok := phaseAttrsUserInput["optional_deployment_targets"].(types.List); ok && !v.IsNull() {
+			phasePlan.OptionalDeploymentTargets = util.ExpandStringList(v)
+		}
+
+		if v, ok := phaseAttrsUserInput["minimum_environments_before_promotion"].(types.Int64); ok && !v.IsNull() {
+			phasePlan.MinimumEnvironmentsBeforePromotion = int32(v.ValueInt64())
+		}
+
+		if v, ok := phaseAttrsUserInput["is_optional_phase"].(types.Bool); ok && !v.IsNull() {
+			phasePlan.IsOptionalPhase = v.ValueBool()
+		}
+
+		if v, ok := phaseAttrsUserInput["is_priority_phase"].(types.Bool); ok && !v.IsNull() {
+			phasePlan.IsPriorityPhase = v.ValueBool()
+		}
+
+		if v, ok := phaseAttrsUserInput["release_retention_with_strategy"].(types.List); ok && !v.IsNull() {
+			phasePlan.ReleaseRetentionPolicy = expandRetention(v)
+		}
+
+		if v, ok := phaseAttrsUserInput["tentacle_retention_with_strategy"].(types.List); ok && !v.IsNull() {
+			phasePlan.TentacleRetentionPolicy = expandRetention(v)
 		}
 
 		allPhasesPlan = append(allPhasesPlan, phasePlan)
@@ -530,7 +775,7 @@ func getResourceRetentionWithoutStrategyAttrTypes() map[string]attr.Type {
 	}
 }
 
-func getResourcePhaseAttrTypes() map[string]attr.Type {
+func getResourcePhaseAttrTypesDeprecated() map[string]attr.Type {
 	var retentionAttrTypes = getResourceRetentionAttrTypes()
 	var AttrTypesWithoutStrategy = getResourceRetentionWithoutStrategyAttrTypes()
 	return map[string]attr.Type{
@@ -547,8 +792,22 @@ func getResourcePhaseAttrTypes() map[string]attr.Type {
 		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: retentionAttrTypes}},
 	}
 }
+func getResourcePhaseAttrTypes() map[string]attr.Type {
+	var resourceAttrTypes = getResourceRetentionAttrTypes()
+	return map[string]attr.Type{
+		"id":                                    types.StringType,
+		"name":                                  types.StringType,
+		"automatic_deployment_targets":          types.ListType{ElemType: types.StringType},
+		"optional_deployment_targets":           types.ListType{ElemType: types.StringType},
+		"minimum_environments_before_promotion": types.Int64Type,
+		"is_optional_phase":                     types.BoolType,
+		"is_priority_phase":                     types.BoolType,
+		"release_retention_with_strategy":       types.ListType{ElemType: types.ObjectType{AttrTypes: resourceAttrTypes}},
+		"tentacle_retention_with_strategy":      types.ListType{ElemType: types.ObjectType{AttrTypes: resourceAttrTypes}},
+	}
+}
 
-func validateRetentionBlocksInConfig(data *lifecycleTypeResourceModel, diag *diag.Diagnostics, retentionWithStrategyNotSupported bool) {
+func validateRetentionDeprecated(data *lifecycleTypeResourceModelDeprecated, diag *diag.Diagnostics, retentionWithStrategyNotSupported bool) {
 	isNewRetentionBlockInConfig := isNewBlockInRetentionConfig(data)
 	isRetentionWithoutStrategyBlockInConfig := isWithoutStrategyBlockInRetentionConfig(data)
 	if isNewRetentionBlockInConfig && isRetentionWithoutStrategyBlockInConfig {
@@ -558,7 +817,8 @@ func validateRetentionBlocksInConfig(data *lifecycleTypeResourceModel, diag *dia
 		diag.AddError("Octopus Server Upgrade Required.", "retention_with_strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later or use retention_policy.")
 	}
 }
-func determineWhichRetentionBlocksAreInConfig(data *lifecycleTypeResourceModel) (bool, bool, bool, bool) {
+
+func determineWhichRetentionBlocksAreInConfigDeprecated(data *lifecycleTypeResourceModelDeprecated) (bool, bool, bool, bool) {
 	isNewReleaseRetentionSet := attributeIsUsed(data.ReleaseRetention)
 	isNewTentacleRetentionSet := attributeIsUsed(data.TentacleRetention)
 	isReleaseRetentionWithoutStrategySet := attributeIsUsed(data.ReleaseRetentionWithoutStrategy)
@@ -566,7 +826,7 @@ func determineWhichRetentionBlocksAreInConfig(data *lifecycleTypeResourceModel) 
 
 	return isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet
 }
-func isNewBlockInRetentionConfig(data *lifecycleTypeResourceModel) bool {
+func isNewBlockInRetentionConfig(data *lifecycleTypeResourceModelDeprecated) bool {
 	if attributeIsUsed(data.ReleaseRetention) || attributeIsUsed(data.TentacleRetention) {
 		return true
 	}
@@ -581,7 +841,7 @@ func isNewBlockInRetentionConfig(data *lifecycleTypeResourceModel) bool {
 	}
 	return false
 }
-func isWithoutStrategyBlockInRetentionConfig(data *lifecycleTypeResourceModel) bool {
+func isWithoutStrategyBlockInRetentionConfig(data *lifecycleTypeResourceModelDeprecated) bool {
 	if attributeIsUsed(data.ReleaseRetentionWithoutStrategy) || attributeIsUsed(data.TentacleRetentionWithoutStrategy) {
 		return true
 	}
@@ -595,7 +855,7 @@ func isWithoutStrategyBlockInRetentionConfig(data *lifecycleTypeResourceModel) b
 	}
 	return false
 }
-func isRetentionWithoutStrategyToBeUsedForLifecycle(data *lifecycleTypeResourceModel) bool {
+func isRetentionWithoutStratUsed(data *lifecycleTypeResourceModelDeprecated) bool {
 	releaseRetentionIsInConfig := isNewBlockInRetentionConfig(data)
 	if releaseRetentionIsInConfig {
 		return false
