@@ -314,8 +314,9 @@ func (l LifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 
 func getDatasourceSchemaLifecycles() datasourceSchema.ListNestedAttribute {
 	return datasourceSchema.ListNestedAttribute{
-		Computed: true,
-		Optional: false,
+		Computed:    true,
+		Optional:    false,
+		Description: "Displays a lifecycle",
 		NestedObject: datasourceSchema.NestedAttributeObject{
 			Attributes: map[string]datasourceSchema.Attribute{
 				"id":                               util.DataSourceString().Computed().Description("The ID of the lifecycle.").Build(),
