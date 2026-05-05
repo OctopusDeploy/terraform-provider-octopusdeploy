@@ -27,5 +27,3 @@ Manages a space's default retention policy for how releases are retained.
   - `strategy = "Forever"`, is used if releases should never be deleted.
   - `strategy = "Count"`, is used if a specific number of days/releases should be kept.
 - `unit` (String) The unit of quantity to keep. Valid Units are `Days` or `Items`
-
-

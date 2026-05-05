@@ -27,5 +27,3 @@ Manages a space's default retention policy for how files on tentacles are retain
   - `strategy = "Forever"`, is used if files on tentacles should never be deleted.
   - `strategy = "Count"`, is used if a specific number of days/releases files on tentacles should be kept for.
 - `unit` (String) The unit of quantity to keep. Valid Units are `Days` or `Items`
-
-

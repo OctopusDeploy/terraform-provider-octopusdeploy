@@ -199,6 +199,7 @@ Optional:
 - `acquisition_location` (String) Whether to acquire this package on the server ('Server'), target ('ExecutionTarget') or not at all ('NotAcquired'). Can be an expression
 - `feed_id` (String) The feed ID associated with this package reference
 - `properties` (Map of String) A collection of properties associated with this package
+- `version` (String) Package version, or a variable expression. Leave empty to select at release creation time
 
 Read-Only:
 

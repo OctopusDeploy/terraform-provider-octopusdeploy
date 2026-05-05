@@ -30,5 +30,3 @@ Manages a space's default retention policy for how releases are retained.
 ### Read-Only
 
 - `id` (String) The unique ID for this resource.
-
-

@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/services"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -156,6 +159,19 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 		updatedProject.ReleaseCreationStrategy = existingProject.ReleaseCreationStrategy
 	}
 
+	// For CaC projects, the server rejects these deployment settings fields on the
+	// base project endpoint. Clear them here; they get updated separately via
+	// PUT /projects/{id}/{gitRef}/deploymentsettings after the project update.
+	isCaC := existingProject.IsVersionControlled ||
+		(existingProject.PersistenceSettings != nil && existingProject.PersistenceSettings.Type() == projects.PersistenceSettingsTypeVersionControlled)
+	if isCaC {
+		updatedProject.DefaultGuidedFailureMode = "EnvironmentDefault"
+		updatedProject.DeploymentChangesTemplate = ""
+		updatedProject.ReleaseNotesTemplate = ""
+		updatedProject.ConnectivityPolicy = nil
+		updatedProject.VersioningStrategy = nil
+	}
+
 	updatedProject, err = projects.Update(r.Client, updatedProject)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating project", err.Error())
@@ -164,6 +180,13 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	if persistenceSettings != nil {
 		updatedProject.PersistenceSettings = persistenceSettings
+	}
+
+	if isCaC {
+		if err := r.updateDeploymentSettingsForCaC(ctx, updatedProject, plan); err != nil {
+			resp.Diagnostics.AddError("Error updating deployment settings for CaC project", err.Error())
+			return
+		}
 	}
 
 	flattenedProject, diags := flattenProject(ctx, updatedProject, &plan)
@@ -233,4 +256,40 @@ func (r *projectResource) updateStateWithDeploymentSettings(project *projects.Pr
 	}
 
 	return diags
+}
+
+func (r *projectResource) updateDeploymentSettingsForCaC(ctx context.Context, project *projects.Project, plan projectResourceModel) error {
+	gitRef := ""
+	if gitSettings, ok := project.PersistenceSettings.(projects.GitPersistenceSettings); ok {
+		gitRef = gitSettings.DefaultBranch()
+	}
+	if gitRef == "" {
+		gitRef = "main"
+	}
+
+	existing, err := r.Client.Deployments.GetDeploymentSettings(project, gitRef)
+	if err != nil {
+		return fmt.Errorf("error reading deployment settings: %w", err)
+	}
+
+	existing.DefaultGuidedFailureMode = core.GuidedFailureMode(plan.DefaultGuidedFailureMode.ValueString())
+	existing.DefaultToSkipIfAlreadyInstalled = plan.DefaultToSkipIfAlreadyInstalled.ValueBool()
+	existing.DeploymentChangesTemplate = plan.DeploymentChangesTemplate.ValueString()
+	existing.ReleaseNotesTemplate = plan.ReleaseNotesTemplate.ValueString()
+
+	// Only overwrite complex blocks when present in the plan; when absent,
+	// preserve whatever the server already has.
+	if !plan.ConnectivityPolicy.IsNull() {
+		existing.ConnectivityPolicy = expandConnectivityPolicy(ctx, plan.ConnectivityPolicy)
+	}
+	if !plan.VersioningStrategy.IsNull() {
+		existing.VersioningStrategy = expandVersioningStrategy(ctx, plan.VersioningStrategy)
+	}
+
+	_, err = services.ApiUpdate(r.Client.Deployments.GetClient(), existing, new(deployments.DeploymentSettings), existing.Links["Self"])
+	if err != nil {
+		return fmt.Errorf("error updating deployment settings: %w", err)
+	}
+
+	return nil
 }

@@ -21,6 +21,7 @@ func TestAccMapProcessChildStepFromStateWithAllAttributes(t *testing.T) {
 	primaryPackage := &schemas.ProcessStepPackageReferenceResourceModel{
 		PackageID:           types.StringValue("Packages-0"),
 		FeedID:              types.StringValue("Feeds-0"),
+		Version:             types.StringValue("1.0.0"),
 		AcquisitionLocation: types.StringValue("ExecutionTarget"),
 		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
 			"Extract": types.StringValue("True"),
@@ -81,6 +82,7 @@ func TestAccMapProcessChildStepFromStateWithAllAttributes(t *testing.T) {
 					"id":                   types.StringValue("00000000-0000-0000-0000-000000000001"),
 					"package_id":           types.StringValue("Package-1"),
 					"feed_id":              types.StringValue("Feeds-2"),
+					"version":              types.StringValue("1.0.0"),
 					"acquisition_location": types.StringValue("#{LocationVariable}"),
 					"properties": types.MapValueMust(types.StringType, map[string]attr.Value{
 						"Octopus.Package.IsPrimary": types.StringValue("True"),
@@ -134,6 +136,7 @@ func TestAccMapProcessChildStepFromStateWithAllAttributes(t *testing.T) {
 				Name:                "", // Primary package
 				PackageID:           "Packages-0",
 				FeedID:              "Feeds-0",
+				Version:             "1.0.0",
 				AcquisitionLocation: "ExecutionTarget",
 				Properties: map[string]string{
 					"Extract": "True",
@@ -144,6 +147,7 @@ func TestAccMapProcessChildStepFromStateWithAllAttributes(t *testing.T) {
 				Name:                "script-package",
 				PackageID:           "Package-1",
 				FeedID:              "Feeds-2",
+				Version:             "1.0.0",
 				AcquisitionLocation: "#{LocationVariable}",
 				Properties: map[string]string{
 					"Octopus.Package.IsPrimary": "True",
@@ -169,6 +173,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 		Name:                "",
 		PackageID:           "Package-1",
 		FeedID:              "Feeds-1",
+		Version:             "1.0.0",
 		AcquisitionLocation: "ExecutionTarget",
 		Properties: map[string]string{
 			"Octopus.Package.IsPrimary": "True",
@@ -179,6 +184,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 		Name:                "unique-name",
 		PackageID:           "Package-2",
 		FeedID:              "feeds-builtin",
+		Version:             "1.0.0",
 		AcquisitionLocation: "Server",
 	}
 	gitDependency := &gitdependencies.GitDependency{
@@ -246,6 +252,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 	expectedPrimaryPackage := &schemas.ProcessStepPackageReferenceResourceModel{
 		PackageID:           types.StringValue(primaryPackage.PackageID),
 		FeedID:              types.StringValue(primaryPackage.FeedID),
+		Version:             types.StringValue(primaryPackage.Version),
 		AcquisitionLocation: types.StringValue(primaryPackage.AcquisitionLocation),
 		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
 			"Octopus.Package.IsPrimary": types.StringValue("True"),
@@ -307,6 +314,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 					"id":                   types.StringValue(additionalPackage.ID),
 					"package_id":           types.StringValue(additionalPackage.PackageID),
 					"feed_id":              types.StringValue(additionalPackage.FeedID),
+					"version":              types.StringValue(additionalPackage.Version),
 					"acquisition_location": types.StringValue(additionalPackage.AcquisitionLocation),
 					"properties":           types.MapValueMust(types.StringType, map[string]attr.Value{}),
 				},
@@ -328,6 +336,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributesForRunbooks(t *testing.T)
 		Name:                "",
 		PackageID:           "Package-1",
 		FeedID:              "Feeds-1",
+		Version:             "1.0.0",
 		AcquisitionLocation: "ExecutionTarget",
 		Properties: map[string]string{
 			"Octopus.Package.IsPrimary": "True",
@@ -338,6 +347,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributesForRunbooks(t *testing.T)
 		Name:                "unique-name",
 		PackageID:           "Package-2",
 		FeedID:              "feeds-builtin",
+		Version:             "1.0.0",
 		AcquisitionLocation: "Server",
 	}
 	gitDependency := &gitdependencies.GitDependency{
@@ -403,8 +413,10 @@ func TestAccMapProcessChildStepToStateWithAllAttributesForRunbooks(t *testing.T)
 	assert.False(t, diags.HasError(), "Expected no errors in diagnostics")
 
 	expectedPrimaryPackage := &schemas.ProcessStepPackageReferenceResourceModel{
-		PackageID:           types.StringValue(primaryPackage.PackageID),
-		FeedID:              types.StringValue(primaryPackage.FeedID),
+		PackageID: types.StringValue(primaryPackage.PackageID),
+		FeedID:    types.StringValue(primaryPackage.FeedID),
+		Version:   types.StringValue(primaryPackage.Version),
+
 		AcquisitionLocation: types.StringValue(primaryPackage.AcquisitionLocation),
 		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
 			"Octopus.Package.IsPrimary": types.StringValue("True"),
@@ -466,6 +478,7 @@ func TestAccMapProcessChildStepToStateWithAllAttributesForRunbooks(t *testing.T)
 					"id":                   types.StringValue(additionalPackage.ID),
 					"package_id":           types.StringValue(additionalPackage.PackageID),
 					"feed_id":              types.StringValue(additionalPackage.FeedID),
+					"version":              types.StringValue(additionalPackage.Version),
 					"acquisition_location": types.StringValue(additionalPackage.AcquisitionLocation),
 					"properties":           types.MapValueMust(types.StringType, map[string]attr.Value{}),
 				},

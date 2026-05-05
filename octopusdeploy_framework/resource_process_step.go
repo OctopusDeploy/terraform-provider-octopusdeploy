@@ -65,6 +65,10 @@ func (r *processStepResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	// Octopus changes StartWithPrevious to StartAfterPrevious if no predecessor exists yet.
+	// Save the planned value so we can restore it if that happens (see below).
+	plannedStartTrigger := data.StartTrigger
+
 	spaceId := data.SpaceID.ValueString()
 	processId := data.ProcessID.ValueString()
 
@@ -105,6 +109,17 @@ func (r *processStepResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(toStateDiagnostics...)
 	if toStateDiagnostics.HasError() {
 		return
+	}
+
+	// If Octopus changed start_trigger (parallel step creation race), restore the planned
+	// value to avoid a "Provider produced inconsistent result" error. The correct value
+	// will be applied on the next update once all steps exist in the process.
+	if !data.StartTrigger.Equal(plannedStartTrigger) {
+		tflog.Info(ctx, fmt.Sprintf(
+			"process step %q: Octopus changed start_trigger from %q to %q (predecessor step not yet created); restoring planned value",
+			data.Name.ValueString(), plannedStartTrigger.ValueString(), data.StartTrigger.ValueString(),
+		))
+		data.StartTrigger = plannedStartTrigger
 	}
 
 	tflog.Info(ctx, fmt.Sprintf("process step created (%s)", data.ID))
@@ -434,6 +449,7 @@ func mapPackageReferenceFromState(ctx context.Context, state *schemas.ProcessSte
 		PackageID:           state.PackageID.ValueString(),
 		FeedID:              state.FeedID.ValueString(),
 		AcquisitionLocation: state.AcquisitionLocation.ValueString(),
+		Version:             state.Version.ValueString(),
 		Properties:          packageProperties,
 	}
 
@@ -584,6 +600,7 @@ func mapPackageReferencesToState(references []*packages.PackageReference) (*sche
 				PackageID:           types.StringValue(packageReference.PackageID),
 				FeedID:              types.StringValue(packageReference.FeedID),
 				AcquisitionLocation: types.StringValue(packageReference.AcquisitionLocation),
+				Version:             types.StringValue(packageReference.Version),
 				Properties:          types.MapValueMust(types.StringType, packageProperties),
 			}
 			primaryPackage.ID = types.StringValue(packageReference.ID)
@@ -597,6 +614,7 @@ func mapPackageReferencesToState(references []*packages.PackageReference) (*sche
 				"package_id":           types.StringValue(packageReference.PackageID),
 				"feed_id":              types.StringValue(packageReference.FeedID),
 				"acquisition_location": types.StringValue(packageReference.AcquisitionLocation),
+				"version":              types.StringValue(packageReference.Version),
 				"properties":           types.MapValueMust(types.StringType, packageProperties),
 			},
 		)

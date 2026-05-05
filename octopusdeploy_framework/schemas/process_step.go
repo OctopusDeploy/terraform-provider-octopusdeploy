@@ -223,6 +223,7 @@ type ProcessStepPackageReferenceResourceModel struct {
 	PackageID           types.String `tfsdk:"package_id"`
 	FeedID              types.String `tfsdk:"feed_id"`
 	AcquisitionLocation types.String `tfsdk:"acquisition_location"`
+	Version             types.String `tfsdk:"version"`
 	Properties          types.Map    `tfsdk:"properties"`
 
 	ResourceModel
@@ -240,6 +241,7 @@ func ProcessStepPackageReferenceAttributeTypes() map[string]attr.Type {
 		"package_id":           types.StringType,
 		"feed_id":              types.StringType,
 		"acquisition_location": types.StringType,
+		"version":              types.StringType,
 		"properties":           types.MapType{ElemType: types.StringType},
 	}
 }
@@ -278,6 +280,12 @@ func resourceActionPackageReferenceAttributes() map[string]resourceSchema.Attrib
 			Optional().
 			Computed().
 			Default("Server").
+			Build(),
+		"version": util.ResourceString().
+			Description("Package version, or a variable expression. Leave empty to select at release creation time").
+			Optional().
+			Computed().
+			Default("").
 			Build(),
 		"properties": util.ResourceMap(types.StringType).
 			Description("A collection of properties associated with this package").
