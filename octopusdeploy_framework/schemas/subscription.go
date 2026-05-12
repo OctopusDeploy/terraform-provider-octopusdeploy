@@ -7,8 +7,7 @@ import (
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -51,58 +50,56 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 			Description: "Filter criteria to limit which events trigger this subscription. When omitted, all events trigger the subscription.",
 			Attributes:  filterAttributes,
 		},
-		"email_teams": util.ResourceList(types.StringType).
+		"email_teams": util.ResourceSet(types.StringType).
 			Optional().
 			Computed().
 			Description("Team IDs to notify via email.").
-			PlanModifiers(listplanmodifier.UseStateForUnknown()).
+			PlanModifiers(setplanmodifier.UseStateForUnknown()).
 			Build(),
-		"email_frequency_period": resourceSchema.StringAttribute{
-			Optional:    true,
-			Computed:    true,
-			Description: "How often to send email digests (e.g. '01:00:00' for hourly).",
-			Default:     stringdefault.StaticString("01:00:00"),
-		},
-		"email_priority": resourceSchema.StringAttribute{
-			Optional:    true,
-			Computed:    true,
-			Description: "Priority of notification emails. Valid values: Normal, High.",
-			Default:     stringdefault.StaticString("Normal"),
-			Validators: []validator.String{
-				stringvalidator.OneOf("Normal", "High"),
-			},
-		},
-		"email_show_dates_in_timezone_id": resourceSchema.StringAttribute{
-			Optional:    true,
-			Computed:    true,
-			Description: "Timezone ID for dates shown in emails (e.g. 'UTC').",
-			Default:     stringdefault.StaticString("UTC"),
-		},
-		"webhook_uri": resourceSchema.StringAttribute{
-			Optional:    true,
-			Description: "URI to send webhook notifications to.",
-		},
-		"webhook_teams": util.ResourceList(types.StringType).
+		"email_frequency_period": util.ResourceString().
+			Optional().
+			Computed().
+			Description("How often to send email digests (e.g. '01:00:00' for hourly).").
+			Default("01:00:00").
+			Build(),
+		"email_priority": util.ResourceString().
+			Optional().
+			Computed().
+			Description("Priority of notification emails. Valid values: Normal, High, Low.").
+			Default("Normal").
+			Validators(stringvalidator.OneOf("Normal", "High", "Low")).
+			Build(),
+		"email_show_dates_in_timezone_id": util.ResourceString().
+			Optional().
+			Computed().
+			Description("Timezone ID for dates shown in emails (e.g. 'UTC').").
+			Default("UTC").
+			Build(),
+		"webhook_uri": util.ResourceString().
+			Optional().
+			Description("URI to send webhook notifications to.").
+			Build(),
+		"webhook_teams": util.ResourceSet(types.StringType).
 			Optional().
 			Computed().
 			Description("Team IDs to notify via webhook.").
-			PlanModifiers(listplanmodifier.UseStateForUnknown()).
+			PlanModifiers(setplanmodifier.UseStateForUnknown()).
 			Build(),
-		"webhook_timeout": resourceSchema.StringAttribute{
-			Optional:    true,
-			Computed:    true,
-			Description: "Timeout for webhook calls (e.g. '00:00:10' for 10 seconds).",
-			Default:     stringdefault.StaticString("00:00:10"),
-		},
-		"webhook_header_key": resourceSchema.StringAttribute{
-			Optional:    true,
-			Description: "Custom header key to include in webhook requests.",
-		},
-		"webhook_header_value": resourceSchema.StringAttribute{
-			Optional:    true,
-			Sensitive:   true,
-			Description: "Custom header value to include in webhook requests.",
-		},
+		"webhook_timeout": util.ResourceString().
+			Optional().
+			Computed().
+			Description("Timeout for webhook calls (e.g. '00:00:10' for 10 seconds).").
+			Default("00:00:10").
+			Build(),
+		"webhook_header_key": util.ResourceString().
+			Optional().
+			Description("Custom header key to include in webhook requests.").
+			Build(),
+		"webhook_header_value": util.ResourceString().
+			Optional().
+			Sensitive().
+			Description("Custom header value to include in webhook requests.").
+			Build(),
 	}
 
 	return resourceSchema.Schema{

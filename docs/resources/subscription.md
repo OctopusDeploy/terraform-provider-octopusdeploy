@@ -78,13 +78,13 @@ resource "octopusdeploy_subscription" "all_events_paused" {
 Optional:
 
 - `email_frequency_period` (String) How often to send email digests (e.g. '01:00:00' for hourly).
-- `email_priority` (String) Priority of notification emails. Valid values: Normal, High.
+- `email_priority` (String) Priority of notification emails. Valid values: Normal, High, Low.
 - `email_show_dates_in_timezone_id` (String) Timezone ID for dates shown in emails (e.g. 'UTC').
-- `email_teams` (List of String) Team IDs to notify via email.
+- `email_teams` (Set of String) Team IDs to notify via email.
 - `filter` (Attributes) Filter criteria to limit which events trigger this subscription. When omitted, all events trigger the subscription. (see [below for nested schema](#nestedatt--event_notification_subscription--filter))
 - `webhook_header_key` (String) Custom header key to include in webhook requests.
 - `webhook_header_value` (String, Sensitive) Custom header value to include in webhook requests.
-- `webhook_teams` (List of String) Team IDs to notify via webhook.
+- `webhook_teams` (Set of String) Team IDs to notify via webhook.
 - `webhook_timeout` (String) Timeout for webhook calls (e.g. '00:00:10' for 10 seconds).
 - `webhook_uri` (String) URI to send webhook notifications to.
 

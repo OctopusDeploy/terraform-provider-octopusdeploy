@@ -3,7 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/newclient"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/subscriptions"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
@@ -12,43 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-const subscriptionURITemplate = "/api/{spaceId}/subscriptions{/id}{?skip,take,ids,partialName,spaces}"
-
-type subscriptionApiModel struct {
-	ID                            string                                `json:"Id,omitempty"`
-	Name                          string                                `json:"Name"`
-	Type                          string                                `json:"Type"`
-	IsDisabled                    bool                                  `json:"IsDisabled"`
-	SpaceID                       string                                `json:"SpaceId,omitempty"`
-	EventNotificationSubscription eventNotificationSubscriptionApiModel `json:"EventNotificationSubscription"`
-}
-
-type eventNotificationSubscriptionApiModel struct {
-	Filter                     subscriptionFilterApiModel `json:"Filter"`
-	EmailTeams                 []string                   `json:"EmailTeams"`
-	EmailFrequencyPeriod       string                     `json:"EmailFrequencyPeriod,omitempty"`
-	EmailPriority              string                     `json:"EmailPriority,omitempty"`
-	EmailShowDatesInTimeZoneId string                     `json:"EmailShowDatesInTimeZoneId,omitempty"`
-	WebhookURI                 string                     `json:"WebhookURI,omitempty"`
-	WebhookTeams               []string                   `json:"WebhookTeams"`
-	WebhookTimeout             string                     `json:"WebhookTimeout,omitempty"`
-	WebhookHeaderKey           string                     `json:"WebhookHeaderKey,omitempty"`
-	WebhookHeaderValue         string                     `json:"WebhookHeaderValue,omitempty"`
-}
-
-type subscriptionFilterApiModel struct {
-	Users           []string `json:"Users"`
-	Projects        []string `json:"Projects"`
-	ProjectGroups   []string `json:"ProjectGroups"`
-	Environments    []string `json:"Environments"`
-	EventGroups     []string `json:"EventGroups"`
-	EventCategories []string `json:"EventCategories"`
-	EventAgents     []string `json:"EventAgents"`
-	Tenants         []string `json:"Tenants"`
-	Tags            []string `json:"Tags"`
-	DocumentTypes   []string `json:"DocumentTypes"`
-}
 
 type subscriptionModel struct {
 	Name                          types.String                        `tfsdk:"name"`
@@ -60,12 +23,12 @@ type subscriptionModel struct {
 
 type eventNotificationSubscriptionModel struct {
 	Filter                     *subscriptionFilterModel `tfsdk:"filter"`
-	EmailTeams                 types.List               `tfsdk:"email_teams"`
+	EmailTeams                 types.Set                `tfsdk:"email_teams"`
 	EmailFrequencyPeriod       types.String             `tfsdk:"email_frequency_period"`
 	EmailPriority              types.String             `tfsdk:"email_priority"`
 	EmailShowDatesInTimeZoneId types.String             `tfsdk:"email_show_dates_in_timezone_id"`
 	WebhookURI                 types.String             `tfsdk:"webhook_uri"`
-	WebhookTeams               types.List               `tfsdk:"webhook_teams"`
+	WebhookTeams               types.Set                `tfsdk:"webhook_teams"`
 	WebhookTimeout             types.String             `tfsdk:"webhook_timeout"`
 	WebhookHeaderKey           types.String             `tfsdk:"webhook_header_key"`
 	WebhookHeaderValue         types.String             `tfsdk:"webhook_header_value"`
@@ -121,9 +84,7 @@ func (r *subscriptionResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	apiModel := expandSubscription(&plan)
-
-	created, err := newclient.Add[subscriptionApiModel](r.Config.Client, subscriptionURITemplate, plan.SpaceID.ValueString(), apiModel)
+	created, err := subscriptions.Add(r.Config.Client, plan.SpaceID.ValueString(), expandSubscription(&plan))
 	if err != nil {
 		resp.Diagnostics.AddError("error creating subscription", err.Error())
 		return
@@ -143,7 +104,7 @@ func (r *subscriptionResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	subscription, err := newclient.GetByID[subscriptionApiModel](r.Config.Client, subscriptionURITemplate, state.SpaceID.ValueString(), state.ID.ValueString())
+	subscription, err := subscriptions.GetByID(r.Config.Client, state.SpaceID.ValueString(), state.ID.ValueString())
 	if err != nil {
 		if err := errors.ProcessApiErrorV2(ctx, resp, state, err, "subscription"); err != nil {
 			resp.Diagnostics.AddError("error reading subscription", err.Error())
@@ -165,9 +126,7 @@ func (r *subscriptionResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	apiModel := expandSubscription(&plan)
-
-	updated, err := newclient.Update[subscriptionApiModel](r.Config.Client, subscriptionURITemplate, plan.SpaceID.ValueString(), plan.ID.ValueString(), apiModel)
+	updated, err := subscriptions.Update(r.Config.Client, plan.SpaceID.ValueString(), expandSubscription(&plan))
 	if err != nil {
 		resp.Diagnostics.AddError("error updating subscription", err.Error())
 		return
@@ -187,7 +146,7 @@ func (r *subscriptionResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	if err := newclient.DeleteByID(r.Config.Client, subscriptionURITemplate, state.SpaceID.ValueString(), state.ID.ValueString()); err != nil {
+	if err := subscriptions.DeleteByID(r.Config.Client, state.SpaceID.ValueString(), state.ID.ValueString()); err != nil {
 		resp.Diagnostics.AddError("error deleting subscription", err.Error())
 		return
 	}
@@ -195,38 +154,35 @@ func (r *subscriptionResource) Delete(ctx context.Context, req resource.DeleteRe
 	resp.State.RemoveResource(ctx)
 }
 
-func expandSubscription(model *subscriptionModel) *subscriptionApiModel {
+func expandSubscription(model *subscriptionModel) *subscriptions.Subscription {
 	n := model.EventNotificationSubscription
 
-	apiNotification := eventNotificationSubscriptionApiModel{
-		Filter:                     expandSubscriptionFilter(n.Filter),
-		EmailFrequencyPeriod:       n.EmailFrequencyPeriod.ValueString(),
-		EmailPriority:              n.EmailPriority.ValueString(),
-		EmailShowDatesInTimeZoneId: n.EmailShowDatesInTimeZoneId.ValueString(),
-		WebhookURI:                 n.WebhookURI.ValueString(),
-		WebhookTimeout:             n.WebhookTimeout.ValueString(),
-		WebhookHeaderKey:           n.WebhookHeaderKey.ValueString(),
-		WebhookHeaderValue:         n.WebhookHeaderValue.ValueString(),
-		EmailTeams:                 util.ExpandStringList(n.EmailTeams),
-		WebhookTeams:               util.ExpandStringList(n.WebhookTeams),
-	}
+	s := subscriptions.NewSubscription(model.Name.ValueString())
+	s.ID = model.ID.ValueString()
+	s.SpaceID = model.SpaceID.ValueString()
+	s.IsDisabled = model.IsDisabled.ValueBool()
+	s.Type = "Event"
 
-	return &subscriptionApiModel{
-		ID:                            model.ID.ValueString(),
-		Name:                          model.Name.ValueString(),
-		Type:                          "Event",
-		IsDisabled:                    model.IsDisabled.ValueBool(),
-		SpaceID:                       model.SpaceID.ValueString(),
-		EventNotificationSubscription: apiNotification,
-	}
+	s.EventNotificationSubscription.EmailFrequencyPeriod = n.EmailFrequencyPeriod.ValueString()
+	s.EventNotificationSubscription.EmailPriority = n.EmailPriority.ValueString()
+	s.EventNotificationSubscription.EmailShowDatesInTimeZoneId = n.EmailShowDatesInTimeZoneId.ValueString()
+	s.EventNotificationSubscription.WebhookURI = n.WebhookURI.ValueString()
+	s.EventNotificationSubscription.WebhookTimeout = n.WebhookTimeout.ValueString()
+	s.EventNotificationSubscription.WebhookHeaderKey = n.WebhookHeaderKey.ValueString()
+	s.EventNotificationSubscription.WebhookHeaderValue = n.WebhookHeaderValue.ValueString()
+	s.EventNotificationSubscription.EmailTeams = util.ExpandStringSet(n.EmailTeams)
+	s.EventNotificationSubscription.WebhookTeams = util.ExpandStringSet(n.WebhookTeams)
+	s.EventNotificationSubscription.Filter = expandSubscriptionFilter(n.Filter)
+
+	return s
 }
 
-func expandSubscriptionFilter(model *subscriptionFilterModel) subscriptionFilterApiModel {
+func expandSubscriptionFilter(model *subscriptionFilterModel) *subscriptions.EventNotificationSubscriptionFilter {
 	if model == nil {
-		return subscriptionFilterApiModel{}
+		return nil
 	}
 
-	return subscriptionFilterApiModel{
+	return &subscriptions.EventNotificationSubscriptionFilter{
 		Users:           util.ExpandStringList(model.Users),
 		Projects:        util.ExpandStringList(model.Projects),
 		ProjectGroups:   util.ExpandStringList(model.ProjectGroups),
@@ -240,7 +196,7 @@ func expandSubscriptionFilter(model *subscriptionFilterModel) subscriptionFilter
 	}
 }
 
-func flattenSubscription(api *subscriptionApiModel, model *subscriptionModel) {
+func flattenSubscription(api *subscriptions.Subscription, model *subscriptionModel) {
 	model.ID = types.StringValue(api.ID)
 	model.Name = types.StringValue(api.Name)
 	model.SpaceID = types.StringValue(api.SpaceID)
@@ -253,20 +209,29 @@ func flattenSubscription(api *subscriptionApiModel, model *subscriptionModel) {
 	n := model.EventNotificationSubscription
 	apiN := api.EventNotificationSubscription
 
+	// Optional+Computed fields: always take the API value (defaults ensure they're never empty).
 	n.EmailFrequencyPeriod = types.StringValue(apiN.EmailFrequencyPeriod)
 	n.EmailPriority = types.StringValue(apiN.EmailPriority)
 	n.EmailShowDatesInTimeZoneId = types.StringValue(apiN.EmailShowDatesInTimeZoneId)
 	n.WebhookTimeout = types.StringValue(apiN.WebhookTimeout)
 
+	// Optional-only fields: the API returns "" when unset. Preserve null in state so the
+	// plan value (null) stays consistent; only store a value when the API returned one.
 	n.WebhookURI = util.StringOrNull(apiN.WebhookURI)
 	n.WebhookHeaderKey = util.StringOrNull(apiN.WebhookHeaderKey)
+	// webhook_header_value is sensitive and write-only: the API never echoes it back,
+	// so we always preserve the value from config/state rather than overwriting with "".
 
-	n.EmailTeams = util.FlattenStringList(apiN.EmailTeams)
-	n.WebhookTeams = util.FlattenStringList(apiN.WebhookTeams)
+	n.EmailTeams = util.FlattenStringSet(apiN.EmailTeams, n.EmailTeams)
+	n.WebhookTeams = util.FlattenStringSet(apiN.WebhookTeams, n.WebhookTeams)
 	n.Filter = flattenSubscriptionFilter(apiN.Filter, n.Filter)
 }
 
-func flattenSubscriptionFilter(api subscriptionFilterApiModel, existing *subscriptionFilterModel) *subscriptionFilterModel {
+func flattenSubscriptionFilter(api *subscriptions.EventNotificationSubscriptionFilter, existing *subscriptionFilterModel) *subscriptionFilterModel {
+	if api == nil {
+		return existing
+	}
+
 	allEmpty := len(api.Users) == 0 &&
 		len(api.Projects) == 0 &&
 		len(api.ProjectGroups) == 0 &&
