@@ -421,7 +421,7 @@ func TestAccLifecycleComplex_usingNewRetention(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.0.unit", "Days"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_policy.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.#", "0"),
-					testAccCheckLifecyclePhaseCount(name, 2),
+					testAccCheckLifecyclePhaseCount(resourceName, 2),
 				),
 				Config: testAccLifecycleComplex(localName, name),
 			},
@@ -457,7 +457,7 @@ func TestAccLifecycleComplex_usingRetentionWithoutStrategy(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.unit", "Days"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.#", "0"),
-					testAccCheckLifecyclePhaseCount(name, 2),
+					testAccCheckLifecyclePhaseCount(resourceName, 2),
 				),
 			},
 		},
@@ -627,17 +627,20 @@ func testAccCheckLifecycleExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckLifecyclePhaseCount(name string, expected int) resource.TestCheckFunc {
+func testAccCheckLifecyclePhaseCount(resourceAddress string, expected int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		resourceList, err := octoClient.Lifecycles.GetByPartialName(name)
-		if err != nil {
-			return err
+		rs, ok := s.RootModule().Resources[resourceAddress]
+		if !ok {
+			return fmt.Errorf("lifecycle resource %q not found in state", resourceAddress)
 		}
 
-		resource := resourceList[0]
+		lifecycle, err := octoClient.Lifecycles.GetByID(rs.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("error retrieving lifecycle %s: %s", rs.Primary.ID, err)
+		}
 
-		if len(resource.Phases) != expected {
-			return fmt.Errorf("lifecycle has %d phases instead of the expected %d", len(resource.Phases), expected)
+		if len(lifecycle.Phases) != expected {
+			return fmt.Errorf("lifecycle has %d phases instead of the expected %d", len(lifecycle.Phases), expected)
 		}
 
 		return nil
