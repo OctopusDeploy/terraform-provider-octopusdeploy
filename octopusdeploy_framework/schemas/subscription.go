@@ -44,64 +44,6 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 		"document_types":   filterList("Filter by document types (e.g. Machines, Projects, Deployments)."),
 	}
 
-	notificationAttributes := map[string]resourceSchema.Attribute{
-		"filter": resourceSchema.SingleNestedAttribute{
-			Optional:    true,
-			Description: "Filter criteria to limit which events trigger this subscription. When omitted, all events trigger the subscription.",
-			Attributes:  filterAttributes,
-		},
-		"email_teams": util.ResourceSet(types.StringType).
-			Optional().
-			Computed().
-			Description("Team IDs to notify via email.").
-			PlanModifiers(setplanmodifier.UseStateForUnknown()).
-			Build(),
-		"email_frequency_period": util.ResourceString().
-			Optional().
-			Computed().
-			Description("How often to send email digests (e.g. '01:00:00' for hourly).").
-			Default("01:00:00").
-			Build(),
-		"email_priority": util.ResourceString().
-			Optional().
-			Computed().
-			Description("Priority of notification emails. Valid values: Normal, High, Low.").
-			Default("Normal").
-			Validators(stringvalidator.OneOf("Normal", "High", "Low")).
-			Build(),
-		"email_show_dates_in_timezone_id": util.ResourceString().
-			Optional().
-			Computed().
-			Description("Timezone ID for dates shown in emails (e.g. 'UTC').").
-			Default("UTC").
-			Build(),
-		"webhook_uri": util.ResourceString().
-			Optional().
-			Description("URI to send webhook notifications to.").
-			Build(),
-		"webhook_teams": util.ResourceSet(types.StringType).
-			Optional().
-			Computed().
-			Description("Team IDs to notify via webhook.").
-			PlanModifiers(setplanmodifier.UseStateForUnknown()).
-			Build(),
-		"webhook_timeout": util.ResourceString().
-			Optional().
-			Computed().
-			Description("Timeout for webhook calls (e.g. '00:00:10' for 10 seconds).").
-			Default("00:00:10").
-			Build(),
-		"webhook_header_key": util.ResourceString().
-			Optional().
-			Description("Custom header key to include in webhook requests.").
-			Build(),
-		"webhook_header_value": util.ResourceString().
-			Optional().
-			Sensitive().
-			Description("Custom header value to include in webhook requests.").
-			Build(),
-	}
-
 	return resourceSchema.Schema{
 		Description: "This resource manages event notification subscriptions in Octopus Deploy.",
 		Attributes: map[string]resourceSchema.Attribute{
@@ -117,7 +59,63 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 			"event_notification_subscription": resourceSchema.SingleNestedAttribute{
 				Required:    true,
 				Description: "Event notification configuration for this subscription.",
-				Attributes:  notificationAttributes,
+				Attributes: map[string]resourceSchema.Attribute{
+					"filter": resourceSchema.SingleNestedAttribute{
+						Optional:    true,
+						Description: "Filter criteria to limit which events trigger this subscription. When omitted, all events trigger the subscription.",
+						Attributes:  filterAttributes,
+					},
+					"email_teams": util.ResourceSet(types.StringType).
+						Optional().
+						Computed().
+						Description("Team IDs to notify via email.").
+						PlanModifiers(setplanmodifier.UseStateForUnknown()).
+						Build(),
+					"email_frequency_period": util.ResourceString().
+						Optional().
+						Computed().
+						Description("How often to send email digests (e.g. '01:00:00' for hourly).").
+						Default("01:00:00").
+						Build(),
+					"email_priority": util.ResourceString().
+						Optional().
+						Computed().
+						Description("Priority of notification emails. Valid values: Normal, High, Low.").
+						Default("Normal").
+						Validators(stringvalidator.OneOf("Normal", "High", "Low")).
+						Build(),
+					"email_show_dates_in_timezone_id": util.ResourceString().
+						Optional().
+						Computed().
+						Description("Timezone ID for dates shown in emails (e.g. 'UTC').").
+						Default("UTC").
+						Build(),
+					"webhook_uri": util.ResourceString().
+						Optional().
+						Description("URI to send webhook notifications to.").
+						Build(),
+					"webhook_teams": util.ResourceSet(types.StringType).
+						Optional().
+						Computed().
+						Description("Team IDs to notify via webhook.").
+						PlanModifiers(setplanmodifier.UseStateForUnknown()).
+						Build(),
+					"webhook_timeout": util.ResourceString().
+						Optional().
+						Computed().
+						Description("Timeout for webhook calls (e.g. '00:00:10' for 10 seconds).").
+						Default("00:00:10").
+						Build(),
+					"webhook_header_key": util.ResourceString().
+						Optional().
+						Description("Custom header key to include in webhook requests.").
+						Build(),
+					"webhook_header_value": util.ResourceString().
+						Optional().
+						Sensitive().
+						Description("Custom header value to include in webhook requests.").
+						Build(),
+				},
 			},
 		},
 	}
