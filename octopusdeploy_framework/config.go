@@ -3,24 +3,29 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"go/version"
+	"net/http"
+	"net/url"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/configuration"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"go/version"
-	"net/url"
 )
 
 type Config struct {
-	Address        string
-	ApiKey         string
-	AccessToken    string
-	SpaceID        string
-	Client         *client.Client
-	OctopusVersion string
+	Address         string
+	ApiKey          string
+	AccessToken     string
+	AccessTokenFile string
+	SpaceID         string
+	Client          *client.Client
+	OctopusVersion  string
+	HttpClient      *http.Client
 	// Can be nil when server doesn't support feature toggles API endpoint
 	FeatureToggles map[string]bool
 }
@@ -67,6 +72,15 @@ func (c *Config) GetClient(ctx context.Context) error {
 	}
 
 	c.Client = octopus
+
+	// Wire token refresh callback so HttpSession stays in sync
+	if c.HttpClient != nil {
+		if transport, ok := c.HttpClient.Transport.(*internal.TokenRefreshTransport); ok {
+			transport.SetOnTokenRefreshed(func(newToken string) {
+				octopus.HttpSession().DefaultHeaders["Authorization"] = "Bearer " + newToken
+			})
+		}
+	}
 
 	createdClient := octopus != nil
 	tflog.Debug(ctx, fmt.Sprintf("GetClient completed: %t", createdClient))
@@ -122,7 +136,7 @@ func getClientForSpace(c *Config, ctx context.Context, spaceID string) (*client.
 		return nil, err
 	}
 
-	return client.NewClientWithCredentials(nil, apiURL, credential, spaceID, "TerraformProvider")
+	return client.NewClientWithCredentials(c.HttpClient, apiURL, credential, spaceID, "TerraformProvider")
 }
 
 func getApiCredential(c *Config, ctx context.Context) (client.ICredential, error) {
