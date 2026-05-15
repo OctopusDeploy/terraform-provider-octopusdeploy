@@ -2,8 +2,11 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"net/http"
 	"os"
+	"strings"
 
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -13,10 +16,11 @@ import (
 )
 
 type octopusDeployFrameworkProvider struct {
-	Address     types.String `tfsdk:"address"`
-	ApiKey      types.String `tfsdk:"api_key"`
-	AccessToken types.String `tfsdk:"access_token"`
-	SpaceID     types.String `tfsdk:"space_id"`
+	Address         types.String `tfsdk:"address"`
+	ApiKey          types.String `tfsdk:"api_key"`
+	AccessToken     types.String `tfsdk:"access_token"`
+	AccessTokenFile types.String `tfsdk:"access_token_file"`
+	SpaceID         types.String `tfsdk:"space_id"`
 }
 
 var _ provider.Provider = (*octopusDeployFrameworkProvider)(nil)
@@ -58,6 +62,27 @@ func (p *octopusDeployFrameworkProvider) Configure(ctx context.Context, req prov
 		config.Address = os.Getenv("OCTOPUS_URL")
 	}
 	config.SpaceID = providerData.SpaceID.ValueString()
+
+	config.AccessTokenFile = providerData.AccessTokenFile.ValueString()
+	if config.AccessTokenFile == "" {
+		config.AccessTokenFile = os.Getenv("OCTOPUS_ACCESS_TOKEN_FILE")
+	}
+
+	// If access_token_file set but no access_token provided, read initial token from file
+	if config.AccessTokenFile != "" && config.AccessToken == "" {
+		data, err := os.ReadFile(config.AccessTokenFile)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to read access token file", err.Error())
+			return
+		}
+		config.AccessToken = strings.TrimSpace(string(data))
+	}
+
+	// Create token refresh transport for Bearer auth (not API key)
+	if config.ApiKey == "" && config.AccessToken != "" {
+		transport := internal.NewTokenRefreshTransport(config.AccessToken, config.AccessTokenFile, "OCTOPUS_ACCESS_TOKEN")
+		config.HttpClient = &http.Client{Transport: transport}
+	}
 
 	if diags := config.SetOctopus(ctx); diags.HasError() {
 		resp.Diagnostics.Append(diags...)
@@ -192,6 +217,10 @@ func (p *octopusDeployFrameworkProvider) Schema(_ context.Context, req provider.
 			"access_token": schema.StringAttribute{
 				Optional:    true,
 				Description: "The OIDC Access Token to use with the Octopus REST API",
+			},
+			"access_token_file": schema.StringAttribute{
+				Optional:    true,
+				Description: "Path to a file containing the OIDC access token. The file is re-read on authentication failure, enabling automatic token refresh for long-running operations.",
 			},
 			"space_id": schema.StringAttribute{
 				Optional:    true,
