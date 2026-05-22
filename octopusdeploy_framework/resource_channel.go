@@ -107,6 +107,7 @@ func (r *channelResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.AddError("Error updating channel", err.Error())
 		return
 	}
+
 	state := flattenChannel(ctx, updatedChannel, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	return
