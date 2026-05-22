@@ -2,9 +2,11 @@ package schemas
 
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -59,6 +61,9 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 			"custom_field_definitions": resourceSchema.ListNestedAttribute{
 				Description: "A list of custom field definitions for this channel. Maximum of 10.",
 				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(10),
+				},
 				NestedObject: resourceSchema.NestedAttributeObject{
 					Attributes: map[string]resourceSchema.Attribute{
 						"field_name": resourceSchema.StringAttribute{

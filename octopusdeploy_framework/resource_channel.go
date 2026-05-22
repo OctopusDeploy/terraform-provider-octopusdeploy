@@ -99,7 +99,8 @@ func (r *channelResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	channel := expandChannel(ctx, plan)
 	updateReq := newclient.NewUpdateRequest(channel)
-	if plan.CustomFieldDefinitions.IsNull() || len(plan.CustomFieldDefinitions.Elements()) == 0 {
+	if !plan.CustomFieldDefinitions.IsUnknown() &&
+		(plan.CustomFieldDefinitions.IsNull() || len(plan.CustomFieldDefinitions.Elements()) == 0) {
 		updateReq.Clear("CustomFieldDefinitions")
 	}
 	updatedChannel, err := channels.UpdateChannel(r.Client, updateReq)
