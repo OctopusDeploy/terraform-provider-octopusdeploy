@@ -2,9 +2,11 @@ package schemas
 
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -20,6 +22,7 @@ type ChannelModel struct {
 	Name                             types.String `tfsdk:"name"`
 	ParentEnvironmentID              types.String `tfsdk:"parent_environment_id"`
 	ProjectId                        types.String `tfsdk:"project_id"`
+	CustomFieldDefinitions           types.List   `tfsdk:"custom_field_definitions"`
 	Rule                             types.List   `tfsdk:"rule"`
 	SpaceId                          types.String `tfsdk:"space_id"`
 	TenantTags                       types.Set    `tfsdk:"tenant_tags"`
@@ -54,6 +57,25 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 			"project_id": resourceSchema.StringAttribute{
 				Description: "The project ID associated with this channel.",
 				Required:    true,
+			},
+			"custom_field_definitions": resourceSchema.ListNestedAttribute{
+				Description: "A list of custom field definitions for this channel. Maximum of 10.",
+				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(10),
+				},
+				NestedObject: resourceSchema.NestedAttributeObject{
+					Attributes: map[string]resourceSchema.Attribute{
+						"field_name": resourceSchema.StringAttribute{
+							Required:    true,
+							Description: "The name of the custom field.",
+						},
+						"description": resourceSchema.StringAttribute{
+							Required:    true,
+							Description: "The description of the custom field.",
+						},
+					},
+				},
 			},
 			"space_id": GetSpaceIdResourceSchema(ChannelResourceDescription),
 			"tenant_tags": resourceSchema.SetAttribute{

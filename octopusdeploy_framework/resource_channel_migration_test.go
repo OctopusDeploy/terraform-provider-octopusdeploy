@@ -148,6 +148,12 @@ const updatedChannelConfig = `
 	  lifecycle_id = octopusdeploy_lifecycle.custom_lifecycle.id
 	  is_default   = false
 	  tenant_tags  = [octopusdeploy_tag.test_tag1.canonical_tag_name, octopusdeploy_tag.test_tag3.canonical_tag_name]
+	  custom_field_definitions = [
+	    {
+	      field_name  = "MyField"
+	      description = "A custom field"
+	    }
+	  ]
 	}`
 
 func testChannelUpdated(t *testing.T) resource.TestCheckFunc {
@@ -170,6 +176,10 @@ func testChannelUpdated(t *testing.T) resource.TestCheckFunc {
 
 		expectedTenantTags := []string{"test-tagset/tag1", "test-tagset/tag3"}
 		assert.ElementsMatch(t, expectedTenantTags, channel.TenantTags, "Tenant tags should match expected values")
+
+		assert.Len(t, channel.CustomFieldDefinitions, 1, "Channel should have one custom field definition")
+		assert.Equal(t, "MyField", channel.CustomFieldDefinitions[0].FieldName, "Custom field name did not match expected value")
+		assert.Equal(t, "A custom field", channel.CustomFieldDefinitions[0].Description, "Custom field description did not match expected value")
 
 		return nil
 	}
