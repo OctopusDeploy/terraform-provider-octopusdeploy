@@ -21,7 +21,6 @@ import (
 
 type lifecycleTypeResource struct {
 	*Config
-	newRetentionNotSupported bool
 }
 
 var _ resource.Resource = &lifecycleTypeResource{}
@@ -72,10 +71,8 @@ func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaReque
 
 func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	r.Config = resourceConfiguration(req, resp)
-	if r.Config != nil {
-		if !r.Config.IsVersionSameOrGreaterThan("2025.3") {
-			r.newRetentionNotSupported = true
-		}
+	if r.Config != nil && !internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy) {
+		resp.Diagnostics.Append(r.Config.EnsureResourceCompatibilityByVersion("lifecycle", "2025.3")...)
 	}
 }
 
@@ -88,7 +85,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 			return
 		}
 
-		validateRetentionDeprecated(data, &resp.Diagnostics, r.newRetentionNotSupported)
+		validateRetentionDeprecated(data, &resp.Diagnostics, !r.Config.IsVersionSameOrGreaterThan("2025.3"))
 		retentionWithoutStratUsed := isRetentionWithoutStratUsed(data)
 		isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfigDeprecated(data)
 		initialRetentionSettingForNewBlock, initialRetentionSettingForRetentionWithoutStrategyBlock := setInitialRetentionDeprecated(data, retentionWithoutStratUsed)
@@ -112,10 +109,6 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 			return
 		}
 
-		if r.newRetentionNotSupported {
-			resp.Diagnostics.AddError("Octopus Server Upgrade Required.", "retention_with_strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later")
-			return
-		}
 		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
 		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(data, initialRetentionSetting)
 
@@ -144,7 +137,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 			return
 		}
 
-		validateRetentionDeprecated(data, &resp.Diagnostics, r.newRetentionNotSupported)
+		validateRetentionDeprecated(data, &resp.Diagnostics, !r.Config.IsVersionSameOrGreaterThan("2025.3"))
 		retentionWithoutStratUsed := isRetentionWithoutStratUsed(data)
 		isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfigDeprecated(data)
 		initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock := setInitialRetentionDeprecated(data, retentionWithoutStratUsed)
@@ -197,7 +190,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 			return
 		}
 
-		validateRetentionDeprecated(data, &resp.Diagnostics, r.newRetentionNotSupported)
+		validateRetentionDeprecated(data, &resp.Diagnostics, !r.Config.IsVersionSameOrGreaterThan("2025.3"))
 		retentionWithoutStratUsed := isRetentionWithoutStratUsed(data)
 		isNewReleaseRetentionSet, isNewTentacleRetentionSet, isReleaseRetentionWithoutStrategySet, isTentacleRetentionWithoutStrategySet := determineWhichRetentionBlocksAreInConfigDeprecated(data)
 		initialRetentionSettingForNewBlock, initialRetentionSettingForWithoutStrategyBlock := setInitialRetentionDeprecated(data, retentionWithoutStratUsed)
@@ -224,10 +217,6 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 			return
 		}
 
-		if r.newRetentionNotSupported {
-			resp.Diagnostics.AddError("Octopus Server Upgrade Required.", "retention_with_strategy is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later")
-			return
-		}
 		initialRetentionSetting := flattenResourceRetention(core.SpaceDefaultRetentionPeriod())
 		isReleaseRetentionDefined, isTentacleRetentionDefined := setInitialRetention(data, initialRetentionSetting)
 
