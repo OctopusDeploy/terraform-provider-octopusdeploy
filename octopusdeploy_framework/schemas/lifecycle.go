@@ -2,7 +2,6 @@ package schemas
 
 import (
 	"context"
-	"os"
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -25,14 +24,6 @@ import (
 )
 
 var _ EntitySchema = LifecycleSchema{}
-
-func AllowDeprecatedRetention() bool {
-	deprecationReversals := strings.TrimSpace(os.Getenv("TF_OCTOPUS_DEPRECATION_REVERSALS"))
-	if strings.EqualFold(deprecationReversals, "octopusdeploy_lifecycles.retention_policy") {
-		return true
-	}
-	return false
-}
 
 type LifecycleSchema struct {
 	AllowDeprecatedRetention bool

@@ -7,6 +7,7 @@ import (
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -21,7 +22,6 @@ import (
 type lifecycleTypeResource struct {
 	*Config
 	newRetentionNotSupported bool
-	allowDeprecatedRetention bool
 }
 
 var _ resource.Resource = &lifecycleTypeResource{}
@@ -52,8 +52,7 @@ type lifecycleTypeResourceModel struct {
 }
 
 func NewLifecycleResource() resource.Resource {
-	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
-	return &lifecycleTypeResource{allowDeprecatedRetention: allowDeprecatedRetention}
+	return &lifecycleTypeResource{}
 }
 
 func (r *lifecycleTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -68,7 +67,7 @@ func (r *lifecycleTypeResource) Metadata(_ context.Context, req resource.Metadat
 }
 
 func (r *lifecycleTypeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: r.allowDeprecatedRetention}.GetResourceSchema()
+	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy)}.GetResourceSchema()
 }
 
 func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -82,7 +81,7 @@ func (r *lifecycleTypeResource) Configure(ctx context.Context, req resource.Conf
 
 func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 
-	if r.allowDeprecatedRetention {
+	if internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy) {
 		var data *lifecycleTypeResourceModelDeprecated
 		resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 		if resp.Diagnostics.HasError() {
@@ -138,7 +137,7 @@ func (r *lifecycleTypeResource) Create(ctx context.Context, req resource.CreateR
 }
 
 func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	if r.allowDeprecatedRetention {
+	if internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy) {
 		var data *lifecycleTypeResourceModelDeprecated
 		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 		if resp.Diagnostics.HasError() {
@@ -190,7 +189,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	if r.allowDeprecatedRetention {
+	if internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy) {
 		var data, state *lifecycleTypeResourceModelDeprecated
 		resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 		resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -250,7 +249,7 @@ func (r *lifecycleTypeResource) Update(ctx context.Context, req resource.UpdateR
 }
 
 func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	if r.allowDeprecatedRetention {
+	if internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy) {
 		var data lifecycleTypeResourceModelDeprecated
 		resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 		if resp.Diagnostics.HasError() {

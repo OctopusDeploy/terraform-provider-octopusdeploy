@@ -7,6 +7,7 @@ import (
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -17,7 +18,6 @@ import (
 
 type lifecyclesDataSource struct {
 	*Config
-	allowDeprecatedRetention bool
 }
 type lifecyclesDataSourceModel struct {
 	ID          types.String `tfsdk:"id"`
@@ -32,9 +32,7 @@ type lifecyclesDataSourceModel struct {
 var _ datasource.DataSource = &lifecyclesDataSource{}
 
 func NewLifecyclesDataSource() datasource.DataSource {
-
-	allowDeprecatedRetention := schemas.AllowDeprecatedRetention()
-	return &lifecyclesDataSource{allowDeprecatedRetention: allowDeprecatedRetention}
+	return &lifecyclesDataSource{}
 }
 
 func (l *lifecyclesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -44,7 +42,7 @@ func (l *lifecyclesDataSource) Metadata(ctx context.Context, req datasource.Meta
 
 func (l *lifecyclesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	tflog.Debug(ctx, "lifecycles datasource Schema")
-	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: l.allowDeprecatedRetention}.GetDatasourceSchema()
+	resp.Schema = schemas.LifecycleSchema{AllowDeprecatedRetention: internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy)}.GetDatasourceSchema()
 }
 
 func (l *lifecyclesDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -78,7 +76,7 @@ func (l *lifecyclesDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 	util.DatasourceResultCount(ctx, "lifecycles", len(lifecyclesResult.Items))
 
-	if l.allowDeprecatedRetention {
+	if internal.IsDeprecatedResourceEnabled(internal.DeprecationKeyLifecycleRetentionPolicy) {
 		resp.Diagnostics.AddWarning("Deprecated attributes should be disregarded", "release_retention_policy and tentacle_retention_policy are deprecated and will be removed in a future release.\nPlease use release_retention_with_strategy and tentacle_retention_with_strategy instead.")
 		data.Lifecycles = flattenLifecyclesForDatasourceDeprecated(lifecyclesResult.Items)
 	} else {
