@@ -5,7 +5,7 @@ description: |-
   This resource manages lifecycles in Octopus Deploy.
   Lifecycle retention is set using retention_with_strategy by default.
   When using an octopus version prior to 2025.3
-  the release_retention_policy and tentacle_retention_policy blocks can be used by adding the environmental variable "TF_OCTOPUS_DEPRECATION_REVERSALS=octopusdeploy_lifecycles.retention_policy"
+  the release_retention_policy and tentacle_retention_policy blocks can be used by adding the environment variable "TF_OCTOPUS_DEPRECATION_REVERSALS=octopusdeploy_lifecycles.retention_policy"
 ---
 
 # octopusdeploy_lifecycle (Resource)
@@ -14,7 +14,7 @@ This resource manages lifecycles in Octopus Deploy.
 
 Lifecycle retention is set using `retention_with_strategy` by default.
 - When using an octopus version prior to `2025.3`
-	- the `release_retention_policy` and `tentacle_retention_policy` blocks can be used by adding the environmental variable `"TF_OCTOPUS_DEPRECATION_REVERSALS=octopusdeploy_lifecycles.retention_policy"`
+	- the `release_retention_policy` and `tentacle_retention_policy` blocks can be used by adding the environment variable `"TF_OCTOPUS_DEPRECATION_REVERSALS=octopusdeploy_lifecycles.retention_policy"`
 
 ## Example Usage
 
