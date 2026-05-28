@@ -289,7 +289,7 @@ func TestAccLifecycleComplex_usingRetentionWithoutStrategy(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_policy.0.unit", "Days"),
 					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.#", "0"),
-					testAccCheckLifecyclePhaseCount(name, 2),
+					testAccCheckLifecyclePhaseCount(resourceName, 2),
 				),
 			},
 		},
