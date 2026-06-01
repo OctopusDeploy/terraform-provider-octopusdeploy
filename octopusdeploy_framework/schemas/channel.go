@@ -108,6 +108,14 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 						"version_range": resourceSchema.StringAttribute{
 							Optional: true,
 						},
+						"versioning_strategy": resourceSchema.StringAttribute{
+							Description: "The ordering strategy used to determine the latest package version. Valid values are `\"SemVer\"` (default) and `\"MostRecentlyPublished\"`. When `MostRecentlyPublished`, the channel ranks candidate package versions by publish date rather than by Semantic Versioning comparison; use this with non-SemVer schemes such as date-stamped or feature-branch tags. Requires the `non-semver-ordering` feature toggle on the Octopus instance.",
+							Optional:    true,
+						},
+						"version_tag_regex": resourceSchema.StringAttribute{
+							Description: "A regular expression matched against the full package version string. Used in place of `version_range` and `tag` filtering when `versioning_strategy` is `\"MostRecentlyPublished\"`.",
+							Optional:    true,
+						},
 					},
 					Blocks: map[string]resourceSchema.Block{
 						"action_package": resourceSchema.ListNestedBlock{
