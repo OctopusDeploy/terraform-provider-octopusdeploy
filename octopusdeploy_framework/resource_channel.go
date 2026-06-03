@@ -303,7 +303,7 @@ func flattenChannelRule(rule *channels.ChannelRule) types.Object {
 	return types.ObjectValueMust(getChannelRuleAttrTypes(), map[string]attr.Value{
 		"action_package":      flattenChannelRuleDeploymentActionPackages(rule.ActionPackages),
 		"id":                  types.StringValue(rule.ID),
-		"tag":                 types.StringValue(rule.Tag),
+		"tag":                 util.StringOrNull(rule.Tag),
 		"version_range":       util.StringOrNull(rule.VersionRange),
 		"versioning_strategy": util.StringOrNull(rule.VersioningStrategy),
 		"version_tag_regex":   util.StringOrNull(rule.VersionTagRegex),

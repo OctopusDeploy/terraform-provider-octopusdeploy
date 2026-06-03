@@ -62,6 +62,8 @@ Optional:
 - `id` (String) The ID associated with this channel rule.
 - `tag` (String)
 - `version_range` (String)
+- `version_tag_regex` (String) A regular expression matched against the full package version string. Used in place of `version_range` and `tag` filtering when `versioning_strategy` is `"MostRecentlyPublished"`.
+- `versioning_strategy` (String) The ordering strategy used to determine the latest package version. Valid values are `"SemVer"` (default) and `"MostRecentlyPublished"`. When `MostRecentlyPublished`, the channel ranks candidate package versions by publish date rather than by Semantic Versioning comparison; use this with non-SemVer schemes such as date-stamped or feature-branch tags. Requires the `non-semver-ordering` feature toggle on the Octopus instance.
 
 <a id="nestedblock--rule--action_package"></a>
 ### Nested Schema for `rule.action_package`
