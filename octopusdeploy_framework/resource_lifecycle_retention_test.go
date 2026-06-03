@@ -285,6 +285,31 @@ func lifecycle_newReleaseRetention(lifecycleName string, strategy string, quanti
 	return resource
 }
 
+func TestAccLifecycleRetentionUnit_caseInsensitive(t *testing.T) {
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccLifecycleCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: lifecycle_newRetention(lifecycleName, "Count", "1", "days", ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLifecycleExists(lifecycleResource),
+					resource.TestCheckResourceAttr(lifecycleResource, "release_retention_with_strategy.0.unit", "days"),
+					resource.TestCheckResourceAttr(lifecycleResource, "tentacle_retention_with_strategy.0.unit", "days"),
+				),
+			},
+			{
+				Config:   lifecycle_newRetention(lifecycleName, "Count", "1", "days", ""),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func lifecycle_retentionWithoutStrategy_count(lifecycleName string, unit string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
        name        = "%s"
