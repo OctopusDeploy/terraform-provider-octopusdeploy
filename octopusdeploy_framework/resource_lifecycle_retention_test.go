@@ -284,3 +284,18 @@ func lifecycle_newReleaseRetention(lifecycleName string, strategy string, quanti
 
 	return resource
 }
+
+func lifecycle_retentionWithoutStrategy_count(lifecycleName string, unit string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {
+       name        = "%s"
+		release_retention_policy {
+			should_keep_forever = "false"
+			quantity_to_keep    = "1"
+			unit                = "%s"
+		}
+		tentacle_retention_policy {
+			quantity_to_keep = "1"
+			unit             = "%s"
+		}
+    }`, lifecycleName, lifecycleName, unit, unit)
+}
