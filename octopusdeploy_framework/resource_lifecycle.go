@@ -173,6 +173,7 @@ func (r *lifecycleTypeResource) Read(ctx context.Context, req resource.ReadReque
 			}
 			return
 		}
+		handleUnitCasing(lifecycle, expandLifecycle(data))
 		data = flattenResourceLifecycle(lifecycle)
 
 		removeInitialRetention(data, isReleaseRetentionDefined, isTentacleRetentionDefined, initialRetentionSetting)
