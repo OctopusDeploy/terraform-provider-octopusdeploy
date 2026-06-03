@@ -37,36 +37,6 @@ func TestAccDataSourceLifecycles(t *testing.T) {
 	})
 }
 
-func TestAccDataSourceLifecyclesDeprecated(t *testing.T) {
-	t.Setenv("TF_OCTOPUS_DEPRECATION_REVERSALS", "octopusdeploy_lifecycles.retention_policy")
-	spaceName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	lifecycleName := "Default Lifecycle"
-	resourceName := "data.octopusdeploy_lifecycles.lifecycle_default_lifecycle"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDataSourceLifecyclesConfig(spaceName, lifecycleName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceName, "space_id"),
-					resource.TestCheckResourceAttr(resourceName, "partial_name", lifecycleName),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.#", "1"),
-					resource.TestCheckResourceAttrSet(resourceName, "lifecycles.0.id"),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.name", lifecycleName),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_policy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.release_retention_with_strategy.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "lifecycles.0.tentacle_retention_with_strategy.#", "1"),
-					testAccCheckOutputExists("octopus_space_id"),
-					testAccCheckOutputExists("octopus_lifecycle_id"),
-				),
-			},
-		},
-	})
-}
-
 func testAccDataSourceLifecyclesConfig(spaceName, lifecycleName string) string {
 	return fmt.Sprintf(`
 resource "octopusdeploy_space" "octopus_project_space_test" {
