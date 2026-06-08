@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
-	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
@@ -14,8 +13,6 @@ import (
 )
 
 func TestAccResourceBuiltInTrigger(t *testing.T) {
-	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
-
 	localName := acctest.RandStringFromCharSet(50, acctest.CharSetAlpha)
 	prefix := fmt.Sprintf("octopusdeploy_built_in_trigger.%s", localName)
 
@@ -139,77 +136,74 @@ func configTestAccBuiltInTrigger(localName string, actionName string, packageRef
 		  take         = 1
 		}
 		
-		resource "octopusdeploy_deployment_process" "test" {
+		resource "octopusdeploy_process" "test" {
 		  project_id = octopusdeploy_project.test.id
+		}
 
-		  step {
-			condition           = "Success"
-			name                = "Step One"
-			package_requirement = "LetOctopusDecide"
-			start_trigger       = "StartAfterPrevious"
-			run_script_action {
-			  condition                          = "Success"
-			  is_disabled                        = false
-			  is_required                        = true
-			  name                               = "Action One"
-			  sort_order 						 = 1
-			  script_body                        = <<-EOT
-				  $ExtractedPath = $OctopusParameters["Octopus.Action.Package[console.one].ExtractedPath"]
-				  Write-Host $ExtractedPath
-				EOT
-			  run_on_server                      = true
-		
-			  package {
-				name                      = "console.one"
-				package_id                = "console.one"
-				feed_id                   = data.octopusdeploy_feeds.built_in_feed.feeds[0].id
-				acquisition_location      = "Server"
-				extract_during_deployment = true
-			  }
-			}
+		resource "octopusdeploy_process_step" "step_one" {
+		  process_id = octopusdeploy_process.test.id
+		  name       = "Action One"
+		  type       = "Octopus.Script"
+		  execution_properties = {
+			"Octopus.Action.RunOnServer"         = "True"
+			"Octopus.Action.Script.ScriptSource" = "Inline"
+			"Octopus.Action.Script.Syntax"       = "PowerShell"
+			"Octopus.Action.Script.ScriptBody"   = <<-EOT
+				$ExtractedPath = $OctopusParameters["Octopus.Action.Package[console.one].ExtractedPath"]
+				Write-Host $ExtractedPath
+			  EOT
 		  }
-
-		  step {
-			condition           = "Success"
-			name                = "Step Two"
-			package_requirement = "LetOctopusDecide"
-			start_trigger       = "StartAfterPrevious"
-			run_script_action {
-			  condition                          = "Success"
-			  is_disabled                        = false
-			  is_required                        = true
-			  name                               = "Action Two"
-			  sort_order 						 = 1
-			  script_body                        = <<-EOT
-				  $ExtractedPath = $OctopusParameters["Octopus.Action.Package[console.two].ExtractedPath"]
-				  Write-Host $ExtractedPath
-				EOT
-			  run_on_server                      = true
-		
-			  package {
-				name                      = "console.two"
-				package_id                = "console.two"
-				feed_id                   = data.octopusdeploy_feeds.built_in_feed.feeds[0].id
-				acquisition_location      = "Server"
-				extract_during_deployment = true
+		  packages = {
+			"console.one" = {
+			  package_id           = "console.one"
+			  feed_id              = data.octopusdeploy_feeds.built_in_feed.feeds[0].id
+			  acquisition_location = "Server"
+			  properties = {
+				"Extract" = "True"
 			  }
 			}
 		  }
 		}
-		
+
+		resource "octopusdeploy_process_step" "step_two" {
+		  process_id = octopusdeploy_process.test.id
+		  name       = "Action Two"
+		  type       = "Octopus.Script"
+		  execution_properties = {
+			"Octopus.Action.RunOnServer"         = "True"
+			"Octopus.Action.Script.ScriptSource" = "Inline"
+			"Octopus.Action.Script.Syntax"       = "PowerShell"
+			"Octopus.Action.Script.ScriptBody"   = <<-EOT
+				$ExtractedPath = $OctopusParameters["Octopus.Action.Package[console.two].ExtractedPath"]
+				Write-Host $ExtractedPath
+			  EOT
+		  }
+		  packages = {
+			"console.two" = {
+			  package_id           = "console.two"
+			  feed_id              = data.octopusdeploy_feeds.built_in_feed.feeds[0].id
+			  acquisition_location = "Server"
+			  properties = {
+				"Extract" = "True"
+			  }
+			}
+		  }
+		}
+
 		resource "octopusdeploy_built_in_trigger" "%s" {
 		  project_id = octopusdeploy_project.test.id
 		  channel_id = octopusdeploy_channel.test.id
-		  
+
 		  release_creation_package = {
 			deployment_action = "%s"
 			package_reference = "%s"
 		  }
-		
+
 		  depends_on = [
 			octopusdeploy_project.test,
 			octopusdeploy_channel.test,
-			octopusdeploy_deployment_process.test
+			octopusdeploy_process_step.step_one,
+			octopusdeploy_process_step.step_two
 		  ]
 		}
 		`,

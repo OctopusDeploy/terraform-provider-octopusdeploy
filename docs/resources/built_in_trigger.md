@@ -53,30 +53,30 @@ data "octopusdeploy_feeds" "built_in" {
   take         = 1
 }
 
-resource "octopusdeploy_deployment_process" "example" {
+resource "octopusdeploy_process" "example" {
   project_id = octopusdeploy_project.example.id
-  step {
-    condition           = "Success"
-    name                = "Step One"
-    package_requirement = "LetOctopusDecide"
-    start_trigger       = "StartAfterPrevious"
-    run_script_action {
-      condition                          = "Success"
-      is_disabled                        = false
-      is_required                        = true
-      name                               = "Action One"
-      script_body                        = <<-EOT
-          $ExtractedPath = $OctopusParameters["Octopus.Action.Package[my.package].ExtractedPath"]
-          Write-Host $ExtractedPath
-        EOT
-      run_on_server                      = true
+}
 
-      package {
-        name                      = "my.package"
-        package_id                = "my.package"
-        feed_id                   = data.octopusdeploy_feeds.built_in.feeds[0].id
-        acquisition_location      = "Server"
-        extract_during_deployment = true
+resource "octopusdeploy_process_step" "example" {
+  process_id = octopusdeploy_process.example.id
+  name       = "Action One"
+  type       = "Octopus.Script"
+  execution_properties = {
+    "Octopus.Action.RunOnServer"         = "True"
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.Syntax"       = "PowerShell"
+    "Octopus.Action.Script.ScriptBody"   = <<-EOT
+        $ExtractedPath = $OctopusParameters["Octopus.Action.Package[my.package].ExtractedPath"]
+        Write-Host $ExtractedPath
+      EOT
+  }
+  packages = {
+    "my.package" = {
+      package_id           = "my.package"
+      feed_id              = data.octopusdeploy_feeds.built_in.feeds[0].id
+      acquisition_location = "Server"
+      properties = {
+        "Extract" = "True"
       }
     }
   }
@@ -85,7 +85,7 @@ resource "octopusdeploy_deployment_process" "example" {
 resource "octopusdeploy_built_in_trigger" "example" {
   project_id = octopusdeploy_project.example.id
   channel_id = octopusdeploy_channel.example.id
-  
+
   release_creation_package = {
     deployment_action = "Action One"
     package_reference = "my.package"
@@ -94,7 +94,7 @@ resource "octopusdeploy_built_in_trigger" "example" {
   depends_on = [
     octopusdeploy_project.example,
     octopusdeploy_channel.example,
-    octopusdeploy_deployment_process.example
+    octopusdeploy_process_step.example
   ]
 }
 ```

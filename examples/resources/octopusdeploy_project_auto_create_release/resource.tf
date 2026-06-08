@@ -46,41 +46,31 @@ resource "octopusdeploy_channel" "default" {
 }
 
 # Deployment process with a package step that uses built-in feed
-resource "octopusdeploy_deployment_process" "example" {
+resource "octopusdeploy_process" "example" {
   project_id = octopusdeploy_project.example.id
+}
 
-  step {
-    condition           = "Success"
-    name                = "Deploy Package"
-    package_requirement = "LetOctopusDecide"
-    start_trigger       = "StartAfterPrevious"
-    
-    action {
-      action_type                        = "Octopus.TentaclePackage"
-      name                              = "Deploy Package Action"
-      condition                         = "Success"
-      run_on_server                     = false
-      is_disabled                       = false
-      can_be_used_for_project_versioning = false
-      is_required                       = false
-      worker_pool_id                    = ""
-      
-      environments                      = [octopusdeploy_environment.development.id]
-      excluded_environments             = []
-      channels                          = []
-      tenant_tags                       = []
-      
-      package {
-        name                      = "MyApp"
-        package_id                = "MyApp"
-        acquisition_location      = "Server"
-        extract_during_deployment = false
-        feed_id                   = data.octopusdeploy_feeds.built_in.feeds[0].id
-      }
-      
-      properties = {
-        "Octopus.Action.EnabledFeatures" = ""
-      }
+resource "octopusdeploy_process_step" "example" {
+  process_id            = octopusdeploy_process.example.id
+  name                  = "Deploy Package Action"
+  type                  = "Octopus.TentaclePackage"
+  condition             = "Success"
+  environments          = [octopusdeploy_environment.development.id]
+
+  properties = {
+    "Octopus.Action.TargetRoles" = "web-server"
+  }
+
+  execution_properties = {
+    "Octopus.Action.RunOnServer"     = "False"
+    "Octopus.Action.EnabledFeatures" = ""
+  }
+
+  packages = {
+    "MyApp" = {
+      package_id           = "MyApp"
+      acquisition_location = "Server"
+      feed_id              = data.octopusdeploy_feeds.built_in.feeds[0].id
     }
   }
 }
@@ -89,11 +79,11 @@ resource "octopusdeploy_deployment_process" "example" {
 resource "octopusdeploy_project_auto_create_release" "example" {
   project_id = octopusdeploy_project.example.id
   channel_id = octopusdeploy_channel.default.id
-  
+
   release_creation_package {
-    deployment_action = octopusdeploy_deployment_process.example.step[0].action[0].name
-    package_reference = octopusdeploy_deployment_process.example.step[0].action[0].package[0].name
+    deployment_action = octopusdeploy_process_step.example.name
+    package_reference = "MyApp"
   }
-  
+
   # release_creation_package_step_id is computed automatically if not provided
 }

@@ -8,9 +8,8 @@ import (
 )
 
 const (
-	DeprecationReversalsEnvVar              = "TF_OCTOPUS_DEPRECATION_REVERSALS"
-	DeprecationKeyProcess                   = "Process_v1.0.0"
-	DeprecationKeyLifecycleRetentionPolicy  = "octopusdeploy_lifecycles.retention_policy"
+	DeprecationReversalsEnvVar             = "TF_OCTOPUS_DEPRECATION_REVERSALS"
+	DeprecationKeyLifecycleRetentionPolicy = "octopusdeploy_lifecycles.retention_policy"
 )
 
 var (
