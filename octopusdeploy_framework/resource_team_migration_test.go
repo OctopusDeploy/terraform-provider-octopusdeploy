@@ -148,9 +148,9 @@ func updateTeamConfigWithUserRole(name, description, userRoleName string) string
 
 func updateTeamConfigWithSystemLevelUserRole(name, description, userRoleName string) string {
 	return fmt.Sprintf(`
-	resource "octopusdeploy_user_role" "user_role1" {
-		granted_space_permissions = ["AccountCreate"]
-		name = "%s"
+	resource "octopusdeploy_user_role" "system_user_role1" {
+		granted_system_permissions = ["SpaceView"]
+		name = "%s-system"
 	}
 
 	resource "octopusdeploy_team" "team1" {
@@ -159,7 +159,7 @@ func updateTeamConfigWithSystemLevelUserRole(name, description, userRoleName str
 
 		user_role {
 			space_id = null
-			user_role_id = octopusdeploy_user_role.user_role1.id
+			user_role_id = octopusdeploy_user_role.system_user_role1.id
 		}
 	}`, userRoleName, name, description)
 }
