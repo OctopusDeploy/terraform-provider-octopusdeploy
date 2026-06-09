@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/teams"
@@ -172,11 +173,12 @@ func mapUserRoleSetStateToResource(ctx context.Context, team *teams.Team, userRo
 		userRoleSetElementAttributes := userRoleSetElement.(types.Object).Attributes()
 
 		userRoleId := userRoleSetElementAttributes["user_role_id"].(types.String).ValueString()
-		spaceId := userRoleSetElementAttributes["space_id"].(types.String).ValueString()
-
 		scopedUserRole := userroles.NewScopedUserRole(userRoleId)
 		scopedUserRole.TeamID = team.ID
-		scopedUserRole.SpaceID = spaceId
+
+		if spaceId, ok := userRoleSetElementAttributes["space_id"]; ok && !spaceId.IsNull() && !spaceId.IsUnknown() {
+			scopedUserRole.SpaceID = spaceId.(types.String).ValueString()
+		}
 
 		if id, ok := userRoleSetElementAttributes["id"]; ok && !id.IsNull() && !id.IsUnknown() {
 			scopedUserRole.ID = id.(types.String).ValueString()
