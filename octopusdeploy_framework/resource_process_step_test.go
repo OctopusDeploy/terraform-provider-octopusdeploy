@@ -92,11 +92,10 @@ func TestAccOctopusDeployProcessStepContainerBundledTooling(t *testing.T) {
 func testAccProcessStepContainerConfiguration(dependencies string, process string, step string, scriptBody string, extraProperties string) string {
 	return fmt.Sprintf(`
 		%s
-		data "octopusdeploy_feeds" "docker" {
-		  feed_type    = "Docker"
-		  partial_name = "Docker"
-		  skip         = 0
-		  take         = 1
+		resource "octopusdeploy_docker_container_registry" "docker" {
+		  name        = "Docker Hub %s"
+		  feed_uri    = "https://index.docker.io"
+		  api_version = "v2"
 		}
 
 		resource "octopusdeploy_process_step" "%s" {
@@ -105,7 +104,7 @@ func testAccProcessStepContainerConfiguration(dependencies string, process strin
 		  type           = "Octopus.Script"
 		  worker_pool_id = data.octopusdeploy_worker_pools.default.worker_pools[0].id
 		  container = {
-			feed_id = data.octopusdeploy_feeds.docker.feeds[0].id
+			feed_id = octopusdeploy_docker_container_registry.docker.id
 			image   = "octopusdeploy/worker-tools:latest"
 		  }
 		  execution_properties = {
@@ -118,6 +117,7 @@ func testAccProcessStepContainerConfiguration(dependencies string, process strin
 		}
 		`,
 		dependencies,
+		step,
 		step,
 		process,
 		step,
