@@ -7,6 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// OctopusUseBundledToolingPropertyKey is an execution property that the server
+// automatically injects when a step is configured to run inside a container.
+const OctopusUseBundledToolingPropertyKey = "OctopusUseBundledTooling"
+
 type reservedExecutionPropertiesValidator struct{}
 
 func warnAboutReservedExecutionProperties() validator.Map {

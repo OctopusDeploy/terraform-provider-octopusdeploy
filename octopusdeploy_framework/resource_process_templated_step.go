@@ -677,6 +677,17 @@ func mapTemplatedActionPropertiesToState(ctx context.Context, template *actionte
 			continue
 		}
 
+		// The server automatically injects OctopusUseBundledTooling into a step's
+		// execution properties when the step runs inside a container. If the user has
+		// not explicitly declared this property, surfacing it into state causes a
+		// "Provider produced inconsistent result after apply" error. Only include it
+		// when the user has explicitly set it.
+		if key == schemas.OctopusUseBundledToolingPropertyKey {
+			if _, declared := stateExecutionProperties[key]; !declared {
+				continue
+			}
+		}
+
 		executionPropertyValues[key] = value
 	}
 
