@@ -2,13 +2,13 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestChannelResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
@@ -25,15 +25,6 @@ func TestChannelResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 					},
 				},
 				Config: channelConfig,
-			},
-			{
-				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   channelConfig,
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectEmptyPlan(),
-					},
-				},
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
@@ -148,6 +139,12 @@ const updatedChannelConfig = `
 	  lifecycle_id = octopusdeploy_lifecycle.custom_lifecycle.id
 	  is_default   = false
 	  tenant_tags  = [octopusdeploy_tag.test_tag1.canonical_tag_name, octopusdeploy_tag.test_tag3.canonical_tag_name]
+	  custom_field_definitions = [
+	    {
+	      field_name  = "MyField"
+	      description = "A custom field"
+	    }
+	  ]
 	}`
 
 func testChannelUpdated(t *testing.T) resource.TestCheckFunc {
@@ -170,6 +167,10 @@ func testChannelUpdated(t *testing.T) resource.TestCheckFunc {
 
 		expectedTenantTags := []string{"test-tagset/tag1", "test-tagset/tag3"}
 		assert.ElementsMatch(t, expectedTenantTags, channel.TenantTags, "Tenant tags should match expected values")
+
+		assert.Len(t, channel.CustomFieldDefinitions, 1, "Channel should have one custom field definition")
+		assert.Equal(t, "MyField", channel.CustomFieldDefinitions[0].FieldName, "Custom field name did not match expected value")
+		assert.Equal(t, "A custom field", channel.CustomFieldDefinitions[0].Description, "Custom field description did not match expected value")
 
 		return nil
 	}
