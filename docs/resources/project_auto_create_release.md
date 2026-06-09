@@ -25,11 +25,11 @@ resource "octopusdeploy_project_group" "example" {
 resource "octopusdeploy_lifecycle" "example" {
   description = "Example lifecycle"
   name        = "Example Lifecycle"
-  
-  release_retention_policy {
-    quantity_to_keep    = 30
-    should_keep_forever = false
-    unit                = "Days"
+
+  release_retention_with_strategy {
+    strategy         = "Count"
+    quantity_to_keep = 30
+    unit             = "Days"
   }
 }
 
@@ -43,7 +43,7 @@ resource "octopusdeploy_project" "example" {
   lifecycle_id     = octopusdeploy_lifecycle.example.id
   name             = "Example Project with Auto Create Release"
   project_group_id = octopusdeploy_project_group.example.id
-  
+
   # Note: auto_create_release is NOT set here - it will be managed by the separate resource
 }
 
@@ -55,9 +55,9 @@ data "octopusdeploy_feeds" "built_in" {
 
 # Channel for the project
 resource "octopusdeploy_channel" "default" {
-  description = "Default channel"
+  description  = "Auto release channel"
   lifecycle_id = octopusdeploy_lifecycle.example.id
-  name         = "Default"
+  name         = "Auto Release Channel"
   project_id   = octopusdeploy_project.example.id
 }
 
@@ -67,21 +67,21 @@ resource "octopusdeploy_process" "example" {
 }
 
 resource "octopusdeploy_process_step" "example" {
-  process_id            = octopusdeploy_process.example.id
-  name                  = "Deploy Package Action"
-  type                  = "Octopus.TentaclePackage"
-  condition             = "Success"
-  environments          = [octopusdeploy_environment.development.id]
-
-  properties = {
-    "Octopus.Action.TargetRoles" = "web-server"
-  }
+  process_id   = octopusdeploy_process.example.id
+  name         = "Deploy Package Action"
+  type         = "Octopus.Script"
+  condition    = "Success"
+  environments = [octopusdeploy_environment.development.id]
 
   execution_properties = {
-    "Octopus.Action.RunOnServer"     = "False"
-    "Octopus.Action.EnabledFeatures" = ""
+    "Octopus.Action.RunOnServer"         = "True"
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.Syntax"       = "PowerShell"
+    "Octopus.Action.Script.ScriptBody"   = "Write-Host \"Deploying MyApp\""
   }
 
+  # Auto create release points at a package by its reference name, so use a
+  # named package reference (the map key is the reference name).
   packages = {
     "MyApp" = {
       package_id           = "MyApp"
@@ -93,8 +93,8 @@ resource "octopusdeploy_process_step" "example" {
 
 # Auto create release configuration
 resource "octopusdeploy_project_auto_create_release" "example" {
-  project_id = octopusdeploy_project.example.id
-  channel_id = octopusdeploy_channel.default.id
+  deployment_process_id = octopusdeploy_process.example.id
+  channel_id            = octopusdeploy_channel.default.id
 
   release_creation_package {
     deployment_action = octopusdeploy_process_step.example.name

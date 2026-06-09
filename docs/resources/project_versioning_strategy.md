@@ -73,8 +73,7 @@ resource "octopusdeploy_project_versioning_strategy" "using_template" {
 
 resource "octopusdeploy_project_versioning_strategy" "using_donor_package" {
   project_id = octopusdeploy_project.tp.id
-  space_id = octopusdeploy_project.tp.space_id
-  donor_package_step_id = octopusdeploy_process_step.hello_world.id
+  space_id   = octopusdeploy_project.tp.space_id
   donor_package = {
     deployment_action = "Hello World"
     package_reference = "Package"
