@@ -22,6 +22,8 @@ func TestAccOctopusDeployAzureOIDCAccountBasic(t *testing.T) {
 	tenantID := uuid.New()
 	subscriptionID := uuid.New()
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureOIDCAccountCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -35,12 +37,12 @@ func TestAccOctopusDeployAzureOIDCAccountBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "application_id", applicationID.String()),
 					resource.TestCheckResourceAttr(prefix, "tenant_id", tenantID.String()),
 					resource.TestCheckResourceAttr(prefix, "subscription_id", subscriptionID.String()),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 					resource.TestCheckResourceAttr(prefix, "audience", "api://AzureADTokenExchange"),
 					resource.TestCheckResourceAttr(prefix, "tenanted_deployment_participation", string(core.TenantedDeploymentModeUntenanted)),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 				),
-				Config: testAccAzureOIDCAccountBasic(localName, name, description, applicationID, tenantID, subscriptionID),
+				Config: testAccAzureOIDCAccountBasic(space.ID, localName, name, description, applicationID, tenantID, subscriptionID),
 			},
 		},
 	})
@@ -58,6 +60,8 @@ func TestAccOctopusDeployAzureOIDCAccountUpdate(t *testing.T) {
 	tenantID := uuid.New()
 	subscriptionID := uuid.New()
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureOIDCAccountCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -70,7 +74,7 @@ func TestAccOctopusDeployAzureOIDCAccountUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", description),
 					resource.TestCheckResourceAttr(prefix, "application_id", applicationID.String()),
 				),
-				Config: testAccAzureOIDCAccountBasic(localName, name, description, applicationID, tenantID, subscriptionID),
+				Config: testAccAzureOIDCAccountBasic(space.ID, localName, name, description, applicationID, tenantID, subscriptionID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -79,7 +83,7 @@ func TestAccOctopusDeployAzureOIDCAccountUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 					resource.TestCheckResourceAttr(prefix, "application_id", applicationID.String()),
 				),
-				Config: testAccAzureOIDCAccountBasic(localName, newName, newDescription, applicationID, tenantID, subscriptionID),
+				Config: testAccAzureOIDCAccountBasic(space.ID, localName, newName, newDescription, applicationID, tenantID, subscriptionID),
 			},
 		},
 	})
@@ -94,6 +98,8 @@ func TestAccOctopusDeployAzureOIDCAccountWithSubjectKeys(t *testing.T) {
 	applicationID := uuid.New()
 	tenantID := uuid.New()
 	subscriptionID := uuid.New()
+
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureOIDCAccountCheckDestroy,
@@ -111,7 +117,7 @@ func TestAccOctopusDeployAzureOIDCAccountWithSubjectKeys(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "account_test_subject_keys.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "account_test_subject_keys.0", "type"),
 				),
-				Config: testAccAzureOIDCAccountWithSubjectKeys(localName, name, description, applicationID, tenantID, subscriptionID),
+				Config: testAccAzureOIDCAccountWithSubjectKeys(space.ID, localName, name, description, applicationID, tenantID, subscriptionID),
 			},
 		},
 	})
@@ -127,13 +133,15 @@ func TestAccOctopusDeployAzureOIDCAccountImport(t *testing.T) {
 	tenantID := uuid.New()
 	subscriptionID := uuid.New()
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureOIDCAccountCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureOIDCAccountBasic(localName, name, description, applicationID, tenantID, subscriptionID),
+				Config: testAccAzureOIDCAccountBasic(space.ID, localName, name, description, applicationID, tenantID, subscriptionID),
 			},
 			{
 				ResourceName:            resourceName,
@@ -146,37 +154,38 @@ func TestAccOctopusDeployAzureOIDCAccountImport(t *testing.T) {
 	})
 }
 
-func testAccAzureOIDCAccountBasic(localName, name, description string, applicationID, tenantID, subscriptionID uuid.UUID) string {
+func testAccAzureOIDCAccountBasic(spaceID, localName, name, description string, applicationID, tenantID, subscriptionID uuid.UUID) string {
 	return fmt.Sprintf(`resource "octopusdeploy_azure_openid_connect" "%s" {
 		name            = "%s"
 		description     = "%s"
 		application_id  = "%s"
 		tenant_id       = "%s"
 		subscription_id = "%s"
-		space_id        = "Spaces-1"
+		space_id        = "%s"
 		audience        = "api://AzureADTokenExchange"
-	}`, localName, name, description, applicationID.String(), tenantID.String(), subscriptionID.String())
+	}`, localName, name, description, applicationID.String(), tenantID.String(), subscriptionID.String(), spaceID)
 }
 
-func testAccAzureOIDCAccountWithSubjectKeys(localName, name, description string, applicationID, tenantID, subscriptionID uuid.UUID) string {
+func testAccAzureOIDCAccountWithSubjectKeys(spaceID, localName, name, description string, applicationID, tenantID, subscriptionID uuid.UUID) string {
 	return fmt.Sprintf(`resource "octopusdeploy_azure_openid_connect" "%s" {
 		name                      = "%s"
 		description               = "%s"
 		application_id            = "%s"
 		tenant_id                 = "%s"
 		subscription_id           = "%s"
-		space_id                  = "Spaces-1"
+		space_id                  = "%s"
 		audience                  = "api://AzureADTokenExchange"
 		execution_subject_keys    = ["space"]
 		health_subject_keys       = ["target"]
 		account_test_subject_keys = ["type"]
-	}`, localName, name, description, applicationID.String(), tenantID.String(), subscriptionID.String())
+	}`, localName, name, description, applicationID.String(), tenantID.String(), subscriptionID.String(), spaceID)
 }
 
 func testAccAzureOIDCAccountExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		accountID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), accountID); err != nil {
+		rs := s.RootModule().Resources[prefix]
+		accountID := rs.Primary.ID
+		if _, err := accounts.GetByID(octoClient, rs.Primary.Attributes["space_id"], accountID); err != nil {
 			return err
 		}
 
@@ -190,7 +199,7 @@ func testAccAzureOIDCAccountCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		if account, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID); err == nil {
+		if account, err := accounts.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID); err == nil {
 			return fmt.Errorf("Azure OIDC account (%s) still exists", account.GetID())
 		}
 	}

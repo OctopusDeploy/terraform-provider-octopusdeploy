@@ -12,6 +12,7 @@ import (
 func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
+	space := NewTestSpace(t)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
@@ -24,11 +25,11 @@ func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
-				Config: scopedUserRoleConfig(userRoleName),
+				Config: scopedUserRoleConfig(space.ID, userRoleName),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   scopedUserRoleConfig(userRoleName),
+				Config:                   scopedUserRoleConfig(space.ID, userRoleName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -37,7 +38,7 @@ func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   scopedUserRoleConfig(userRoleName),
+				Config:                   scopedUserRoleConfig(space.ID, userRoleName),
 			},
 		},
 	})
@@ -46,6 +47,7 @@ func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework_WithScopes(t *testing.T) {
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
+	space := NewTestSpace(t)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
@@ -59,11 +61,11 @@ func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework_WithScopes(t *t
 						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
-				Config: scopedUserRoleConfigWithScopes(userRoleName, environmentName),
+				Config: scopedUserRoleConfigWithScopes(space.ID, userRoleName, environmentName),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   scopedUserRoleConfigWithScopes(userRoleName, environmentName),
+				Config:                   scopedUserRoleConfigWithScopes(space.ID, userRoleName, environmentName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -72,13 +74,13 @@ func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework_WithScopes(t *t
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   scopedUserRoleConfigWithScopes(userRoleName, environmentName),
+				Config:                   scopedUserRoleConfigWithScopes(space.ID, userRoleName, environmentName),
 			},
 		},
 	})
 }
 
-func scopedUserRoleConfig(userRoleName string) string {
+func scopedUserRoleConfig(spaceID, userRoleName string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		name = "%s"
@@ -87,13 +89,13 @@ func scopedUserRoleConfig(userRoleName string) string {
 	}
 
 	resource "octopusdeploy_scoped_user_role" "scoped_user_role1" {
-		space_id     = "Spaces-1"
+		space_id     = "%s"
 		team_id      = "teams-everyone"
 		user_role_id = octopusdeploy_user_role.user_role1.id
-	}`, userRoleName)
+	}`, userRoleName, spaceID)
 }
 
-func scopedUserRoleConfigWithScopes(userRoleName, environmentName string) string {
+func scopedUserRoleConfigWithScopes(spaceID, userRoleName, environmentName string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		name = "%s"
@@ -102,13 +104,14 @@ func scopedUserRoleConfigWithScopes(userRoleName, environmentName string) string
 	}
 
 	resource "octopusdeploy_environment" "environment1" {
+		space_id = "%s"
 		name = "%s"
 	}
 
 	resource "octopusdeploy_scoped_user_role" "scoped_user_role1" {
-		space_id        = "Spaces-1"
+		space_id        = "%s"
 		team_id         = "teams-everyone"
 		user_role_id    = octopusdeploy_user_role.user_role1.id
 		environment_ids = [octopusdeploy_environment.environment1.id]
-	}`, userRoleName, environmentName)
+	}`, userRoleName, spaceID, environmentName, spaceID)
 }

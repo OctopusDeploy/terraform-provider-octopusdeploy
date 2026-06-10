@@ -11,6 +11,8 @@ import (
 )
 
 func TestAccOctopusDeploySSHConnectionDeploymentTargetBasic(t *testing.T) {
+	space := NewTestSpace(t)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_ssh_connection_deployment_target." + localName
 
@@ -36,14 +38,17 @@ func TestAccOctopusDeploySSHConnectionDeploymentTargetBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "roles.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "roles.0", "ssh"),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 				),
-				Config: testAccSSHConnectionDeploymentTargetBasic(localName, environmentLocalName, name, environmentName, host, port, fingerprint),
+				Config: testAccSSHConnectionDeploymentTargetBasic(space.ID, localName, environmentLocalName, name, environmentName, host, port, fingerprint),
 			},
 		},
 	})
 }
 
 func TestAccOctopusDeploySSHConnectionDeploymentTargetUpdate(t *testing.T) {
+	space := NewTestSpace(t)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_ssh_connection_deployment_target." + localName
 
@@ -69,7 +74,7 @@ func TestAccOctopusDeploySSHConnectionDeploymentTargetUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "host", host),
 					resource.TestCheckResourceAttr(prefix, "fingerprint", fingerprint),
 				),
-				Config: testAccSSHConnectionDeploymentTargetBasic(localName, environmentLocalName, name, environmentName, host, port, fingerprint),
+				Config: testAccSSHConnectionDeploymentTargetBasic(space.ID, localName, environmentLocalName, name, environmentName, host, port, fingerprint),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -78,13 +83,15 @@ func TestAccOctopusDeploySSHConnectionDeploymentTargetUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "host", newHost),
 					resource.TestCheckResourceAttr(prefix, "fingerprint", newFingerprint),
 				),
-				Config: testAccSSHConnectionDeploymentTargetBasic(localName, environmentLocalName, newName, environmentName, newHost, port, newFingerprint),
+				Config: testAccSSHConnectionDeploymentTargetBasic(space.ID, localName, environmentLocalName, newName, environmentName, newHost, port, newFingerprint),
 			},
 		},
 	})
 }
 
 func TestAccOctopusDeploySSHConnectionDeploymentTargetWithAccount(t *testing.T) {
+	space := NewTestSpace(t)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_ssh_connection_deployment_target." + localName
 
@@ -108,14 +115,17 @@ func TestAccOctopusDeploySSHConnectionDeploymentTargetWithAccount(t *testing.T) 
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "host", host),
 					resource.TestCheckResourceAttrPair(prefix, "account_id", "octopusdeploy_ssh_key_account."+accountLocalName, "id"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 				),
-				Config: testAccSSHConnectionDeploymentTargetWithAccount(localName, environmentLocalName, accountLocalName, name, environmentName, accountName, host, port, fingerprint),
+				Config: testAccSSHConnectionDeploymentTargetWithAccount(space.ID, localName, environmentLocalName, accountLocalName, name, environmentName, accountName, host, port, fingerprint),
 			},
 		},
 	})
 }
 
 func TestAccOctopusDeploySSHConnectionDeploymentTargetImport(t *testing.T) {
+	space := NewTestSpace(t)
+
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_ssh_connection_deployment_target." + localName
 
@@ -132,7 +142,7 @@ func TestAccOctopusDeploySSHConnectionDeploymentTargetImport(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSSHConnectionDeploymentTargetBasic(localName, environmentLocalName, name, environmentName, host, port, fingerprint),
+				Config: testAccSSHConnectionDeploymentTargetBasic(space.ID, localName, environmentLocalName, name, environmentName, host, port, fingerprint),
 			},
 			{
 				ResourceName:            resourceName,
@@ -145,18 +155,19 @@ func TestAccOctopusDeploySSHConnectionDeploymentTargetImport(t *testing.T) {
 	})
 }
 
-func testAccSSHConnectionDeploymentTargetBasic(localName, environmentLocalName, name, environmentName, host string, port int, fingerprint string) string {
+func testAccSSHConnectionDeploymentTargetBasic(spaceID, localName, environmentLocalName, name, environmentName, host string, port int, fingerprint string) string {
 	return fmt.Sprintf(`
 		resource "octopusdeploy_environment" "%s" {
 			name        = "%s"
 			description = "Test environment for SSH connection deployment target"
+			space_id    = "%s"
 		}
 
 		resource "octopusdeploy_ssh_key_account" "%s_account" {
 			name         = "%s-account"
 			username     = "testuser"
 			private_key_file = "-----BEGIN OPENSSH PRIVATE KEY-----\\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAFwAAAAdzc2gtcn\\nNhAAAAAwEAAQAAAQEA0VktClrpGk8ijTETjc7+Nzgu+rzVNAzRYRbOXZw4/rZAoYgEXA\\nJgKa4KWAkp6Kn++vZJ7Uk8l1XrzWcTfKG4+KxNdGEPqe+n5Sxv4zWoE5n7GQZJ+hYn\\n7Q5Z0Sv1Z1M2Z2F2N+/ZqZ7Y9J3YXX5TfjD0oV8fAJ0xN7DQAA5S/4DQAA5S/4DQ\\nYQ==\\n-----END OPENSSH PRIVATE KEY-----"
-			space_id     = "Spaces-1"
+			space_id     = "%s"
 		}
 
 		resource "octopusdeploy_ssh_connection_deployment_target" "%s" {
@@ -167,21 +178,23 @@ func testAccSSHConnectionDeploymentTargetBasic(localName, environmentLocalName, 
 			port         = %d
 			fingerprint  = "%s"
 			account_id   = octopusdeploy_ssh_key_account.%s_account.id
-		}`, environmentLocalName, environmentName, localName, name, localName, name, environmentLocalName, host, port, fingerprint, localName)
+			space_id     = "%s"
+		}`, environmentLocalName, environmentName, spaceID, localName, name, spaceID, localName, name, environmentLocalName, host, port, fingerprint, localName, spaceID)
 }
 
-func testAccSSHConnectionDeploymentTargetWithAccount(localName, environmentLocalName, accountLocalName, name, environmentName, accountName, host string, port int, fingerprint string) string {
+func testAccSSHConnectionDeploymentTargetWithAccount(spaceID, localName, environmentLocalName, accountLocalName, name, environmentName, accountName, host string, port int, fingerprint string) string {
 	return fmt.Sprintf(`
 		resource "octopusdeploy_environment" "%s" {
 			name        = "%s"
 			description = "Test environment for SSH connection deployment target"
+			space_id    = "%s"
 		}
 
 		resource "octopusdeploy_ssh_key_account" "%s" {
 			name        = "%s"
 			username    = "testuser"
 			private_key_file = "-----BEGIN OPENSSH PRIVATE KEY-----\\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAFwAAAAdzc2gtcn\\nNhAAAAAwEAAQAAAQEA0VktClrpGk8ijTETjc7+Nzgu+rzVNAzRYRbOXZw4/rZAoYgEXA\\nJgKa4KWAkp6Kn++vZJ7Uk8l1XrzWcTfKG4+KxNdGEPqe+n5Sxv4zWoE5n7GQZJ+hYn\\n7Q5Z0Sv1Z1M2Z2F2N+/ZqZ7Y9J3YXX5TfjD0oV8fAJ0xN7DQAA5S/4DQAA5S/4DQ\\nYQ==\\n-----END OPENSSH PRIVATE KEY-----"
-			space_id    = "Spaces-1"
+			space_id    = "%s"
 		}
 
 		resource "octopusdeploy_ssh_connection_deployment_target" "%s" {
@@ -192,13 +205,15 @@ func testAccSSHConnectionDeploymentTargetWithAccount(localName, environmentLocal
 			port         = %d
 			fingerprint  = "%s"
 			account_id   = octopusdeploy_ssh_key_account.%s.id
-		}`, environmentLocalName, environmentName, accountLocalName, accountName, localName, name, environmentLocalName, host, port, fingerprint, accountLocalName)
+			space_id     = "%s"
+		}`, environmentLocalName, environmentName, spaceID, accountLocalName, accountName, spaceID, localName, name, environmentLocalName, host, port, fingerprint, accountLocalName, spaceID)
 }
 
 func testAccSSHConnectionDeploymentTargetExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		deploymentTargetID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := machines.GetByID(octoClient, octoClient.GetSpaceID(), deploymentTargetID); err != nil {
+		rs := s.RootModule().Resources[prefix]
+		deploymentTargetID := rs.Primary.ID
+		if _, err := machines.GetByID(octoClient, rs.Primary.Attributes["space_id"], deploymentTargetID); err != nil {
 			return err
 		}
 
@@ -212,7 +227,7 @@ func testAccSSHConnectionDeploymentTargetCheckDestroy(s *terraform.State) error 
 			continue
 		}
 
-		if deploymentTarget, err := machines.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID); err == nil {
+		if deploymentTarget, err := machines.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID); err == nil {
 			return fmt.Errorf("SSH connection deployment target (%s) still exists", deploymentTarget.GetID())
 		}
 	}

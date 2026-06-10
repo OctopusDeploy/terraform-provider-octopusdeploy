@@ -9,7 +9,8 @@ import (
 )
 
 func TestAccDataSourceSpaces(t *testing.T) {
-	spaceID := "Spaces-1"
+	space := NewTestSpace(t)
+	spaceID := space.ID
 	resourceName := "data.octopusdeploy_spaces.test"
 
 	resource.Test(t, resource.TestCase{

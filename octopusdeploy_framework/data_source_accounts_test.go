@@ -54,16 +54,17 @@ func TestAccOctopusDeployDataSourceAccountsWithFilters(t *testing.T) {
 func TestAccOctopusDeployDataSourceAccountsWithSpaceId(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	name := fmt.Sprintf("data.octopusdeploy_accounts.%s", localName)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceAccountsWithSpaceIdConfig(localName),
+				Config: testAccDataSourceAccountsWithSpaceIdConfig(localName, space.ID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAccountsDataSourceID(name),
-					resource.TestCheckResourceAttr(name, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(name, "space_id", space.ID),
 					resource.TestCheckResourceAttrSet(name, "accounts.#"),
 				),
 			},
@@ -99,9 +100,9 @@ func testAccDataSourceAccountsWithFiltersConfig(localName, partialName string) s
 	}`, localName, partialName)
 }
 
-func testAccDataSourceAccountsWithSpaceIdConfig(localName string) string {
+func testAccDataSourceAccountsWithSpaceIdConfig(localName, spaceID string) string {
 	return fmt.Sprintf(`data "octopusdeploy_accounts" "%s" {
-		space_id = "Spaces-1"
+		space_id = "%s"
 		take = 10
-	}`, localName)
+	}`, localName, spaceID)
 }

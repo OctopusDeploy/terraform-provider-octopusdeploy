@@ -16,6 +16,8 @@ func TestAccOctopusDeployScopedUserRoleBasic(t *testing.T) {
 	userRoleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccScopedUserRoleCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -26,9 +28,9 @@ func TestAccOctopusDeployScopedUserRoleBasic(t *testing.T) {
 					testAccScopedUserRoleExists(prefix),
 					resource.TestCheckResourceAttrSet(prefix, "team_id"),
 					resource.TestCheckResourceAttrSet(prefix, "user_role_id"),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 				),
-				Config: testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName),
+				Config: testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName, space.ID),
 			},
 		},
 	})
@@ -45,6 +47,8 @@ func TestAccOctopusDeployScopedUserRoleWithScopes(t *testing.T) {
 	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccScopedUserRoleCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -58,7 +62,7 @@ func TestAccOctopusDeployScopedUserRoleWithScopes(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "environment_ids.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "project_group_ids.#", "1"),
 				),
-				Config: testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName),
+				Config: testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName, space.ID),
 			},
 		},
 	})
@@ -75,6 +79,8 @@ func TestAccOctopusDeployScopedUserRoleUpdate(t *testing.T) {
 	environment2LocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environment2Name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccScopedUserRoleCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -85,14 +91,14 @@ func TestAccOctopusDeployScopedUserRoleUpdate(t *testing.T) {
 					testAccScopedUserRoleExists(prefix),
 					resource.TestCheckResourceAttr(prefix, "environment_ids.#", "1"),
 				),
-				Config: testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName),
+				Config: testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, space.ID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
 					testAccScopedUserRoleExists(prefix),
 					resource.TestCheckResourceAttr(prefix, "environment_ids.#", "2"),
 				),
-				Config: testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name),
+				Config: testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name, space.ID),
 			},
 		},
 	})
@@ -130,13 +136,15 @@ func TestAccOctopusDeployScopedUserRoleImport(t *testing.T) {
 	userRoleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccScopedUserRoleCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName),
+				Config: testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName, space.ID),
 			},
 			{
 				ResourceName:      resourceName,
@@ -148,7 +156,7 @@ func TestAccOctopusDeployScopedUserRoleImport(t *testing.T) {
 	})
 }
 
-func testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName string) string {
+func testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
@@ -157,13 +165,13 @@ func testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName strin
 	}
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
-		space_id     = "Spaces-1"
+		space_id     = "%s"
 		team_id      = "teams-everyone"
 		user_role_id = octopusdeploy_user_role.%s.id
-	}`, userRoleLocalName, userRoleName, localName, userRoleLocalName)
+	}`, userRoleLocalName, userRoleName, localName, spaceID, userRoleLocalName)
 }
 
-func testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName string) string {
+func testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
@@ -172,23 +180,25 @@ func testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName,
 	}
 
 	resource "octopusdeploy_environment" "%s" {
-		name = "%s"
+		name     = "%s"
+		space_id = "%s"
 	}
 
 	resource "octopusdeploy_project_group" "%s" {
-		name = "%s"
+		name     = "%s"
+		space_id = "%s"
 	}
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
-		space_id          = "Spaces-1"
+		space_id          = "%s"
 		team_id           = "teams-everyone"
 		user_role_id      = octopusdeploy_user_role.%s.id
 		environment_ids   = [octopusdeploy_environment.%s.id]
 		project_group_ids = [octopusdeploy_project_group.%s.id]
-	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName, localName, userRoleLocalName, environmentLocalName, projectGroupLocalName)
+	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, spaceID, projectGroupLocalName, projectGroupName, spaceID, localName, spaceID, userRoleLocalName, environmentLocalName, projectGroupLocalName)
 }
 
-func testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName string) string {
+func testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
@@ -197,18 +207,19 @@ func testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, en
 	}
 
 	resource "octopusdeploy_environment" "%s" {
-		name = "%s"
+		name     = "%s"
+		space_id = "%s"
 	}
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
-		space_id        = "Spaces-1"
+		space_id        = "%s"
 		team_id         = "teams-everyone"
 		user_role_id    = octopusdeploy_user_role.%s.id
 		environment_ids = [octopusdeploy_environment.%s.id]
-	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, localName, userRoleLocalName, environmentLocalName)
+	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, spaceID, localName, spaceID, userRoleLocalName, environmentLocalName)
 }
 
-func testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name string) string {
+func testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
@@ -217,22 +228,24 @@ func testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, en
 	}
 
 	resource "octopusdeploy_environment" "%s" {
-		name = "%s"
+		name     = "%s"
+		space_id = "%s"
 	}
 
 	resource "octopusdeploy_environment" "%s" {
-		name = "%s"
+		name     = "%s"
+		space_id = "%s"
 	}
 
 	resource "octopusdeploy_scoped_user_role" "%s" {
-		space_id        = "Spaces-1"
+		space_id        = "%s"
 		team_id         = "teams-everyone"
 		user_role_id    = octopusdeploy_user_role.%s.id
 		environment_ids = [
 			octopusdeploy_environment.%s.id,
 			octopusdeploy_environment.%s.id
 		]
-	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name, localName, userRoleLocalName, environmentLocalName, environment2LocalName)
+	}`, userRoleLocalName, userRoleName, environmentLocalName, environmentName, spaceID, environment2LocalName, environment2Name, spaceID, localName, spaceID, userRoleLocalName, environmentLocalName, environment2LocalName)
 }
 
 func testAccScopedUserRoleSystemLevel(localName, userRoleLocalName, userRoleName string) string {

@@ -18,6 +18,7 @@ func TestAccOctopusDeployRunbookBasic(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -33,7 +34,7 @@ func TestAccOctopusDeployRunbookBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(prefix, "project_id"),
 					resource.TestCheckResourceAttrSet(prefix, "space_id"),
 				),
-				Config: testAccRunbookBasic(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookBasic(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -47,6 +48,7 @@ func TestAccOctopusDeployRunbookUpdate(t *testing.T) {
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	newDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -59,7 +61,7 @@ func TestAccOctopusDeployRunbookUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", description),
 				),
-				Config: testAccRunbookBasic(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookBasic(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -67,7 +69,7 @@ func TestAccOctopusDeployRunbookUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 				),
-				Config: testAccRunbookBasic(localName, projectLocalName, name, newDescription, projectName),
+				Config: testAccRunbookBasic(localName, projectLocalName, name, newDescription, projectName, space.ID),
 			},
 		},
 	})
@@ -80,6 +82,7 @@ func TestAccOctopusDeployRunbookWithConnectivityPolicy(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -95,7 +98,7 @@ func TestAccOctopusDeployRunbookWithConnectivityPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "connectivity_policy.0.allow_deployments_to_no_targets", "true"),
 					resource.TestCheckResourceAttr(prefix, "connectivity_policy.0.exclude_unhealthy_targets", "true"),
 				),
-				Config: testAccRunbookWithConnectivityPolicy(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookWithConnectivityPolicy(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -108,6 +111,7 @@ func TestAccOctopusDeployRunbookWithLegacyCountRetentionPolicy(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -122,7 +126,7 @@ func TestAccOctopusDeployRunbookWithLegacyCountRetentionPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "retention_policy.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "retention_policy.0.quantity_to_keep", "10"),
 				),
-				Config: testAccRunbookWithLegacyCountRetentionPolicy(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookWithLegacyCountRetentionPolicy(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -135,6 +139,7 @@ func TestAccOctopusDeployRunbookWithLegacyForeverRetentionPolicy(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -150,7 +155,7 @@ func TestAccOctopusDeployRunbookWithLegacyForeverRetentionPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "retention_policy.0.quantity_to_keep", "0"),
 					resource.TestCheckResourceAttr(prefix, "retention_policy.0.should_keep_forever", "true"),
 				),
-				Config: testAccRunbookWithLegacyForeverRetentionPolicy(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookWithLegacyForeverRetentionPolicy(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -163,6 +168,7 @@ func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicy(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -179,7 +185,7 @@ func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.quantity_to_keep", "10"),
 					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.unit", "Items"),
 				),
-				Config: testAccRunbookWithCountStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookWithCountStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -191,6 +197,7 @@ func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicyWithoutUnit(t *t
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -199,7 +206,7 @@ func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicyWithoutUnit(t *t
 		Steps: []resource.TestStep{
 			{
 				ExpectError: regexp.MustCompile("Missing Required Field"),
-				Config:      testAccRunbookWithCountStrategyRetentionPolicyWithoutUnit(localName, projectLocalName, name, description, projectName),
+				Config:      testAccRunbookWithCountStrategyRetentionPolicyWithoutUnit(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -211,6 +218,7 @@ func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicyWithoutQuantity(
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -219,7 +227,7 @@ func TestAccOctopusDeployRunbookWithCountStrategyRetentionPolicyWithoutQuantity(
 		Steps: []resource.TestStep{
 			{
 				ExpectError: regexp.MustCompile("Missing Required Field"),
-				Config:      testAccRunbookWithCountStrategyRetentionPolicyWithoutQuantity(localName, projectLocalName, name, description, projectName),
+				Config:      testAccRunbookWithCountStrategyRetentionPolicyWithoutQuantity(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -231,6 +239,7 @@ func TestAccOctopusDeployRunbookWithForeverStrategyRetentionPolicyWithQuantity(t
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -239,7 +248,7 @@ func TestAccOctopusDeployRunbookWithForeverStrategyRetentionPolicyWithQuantity(t
 		Steps: []resource.TestStep{
 			{
 				ExpectError: regexp.MustCompile("Invalid Field"),
-				Config:      testAccRunbookWithForeverStrategyRetentionPolicyWithQuantity(localName, projectLocalName, name, description, projectName),
+				Config:      testAccRunbookWithForeverStrategyRetentionPolicyWithQuantity(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -252,6 +261,7 @@ func TestAccOctopusDeployRunbookWithForeverStrategyRetentionPolicy(t *testing.T)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -266,7 +276,7 @@ func TestAccOctopusDeployRunbookWithForeverStrategyRetentionPolicy(t *testing.T)
 					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.strategy", "Forever"),
 				),
-				Config: testAccRunbookWithForeverStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookWithForeverStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -279,6 +289,7 @@ func TestAccOctopusDeployRunbookWithDefaultStrategyRetentionPolicy(t *testing.T)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -293,7 +304,7 @@ func TestAccOctopusDeployRunbookWithDefaultStrategyRetentionPolicy(t *testing.T)
 					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "retention_policy_with_strategy.0.strategy", "Default"),
 				),
-				Config: testAccRunbookWithDefaultStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookWithDefaultStrategyRetentionPolicy(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 		},
 	})
@@ -305,6 +316,7 @@ func TestAccOctopusDeployRunbookImport(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccRunbookCheckDestroy,
@@ -312,7 +324,7 @@ func TestAccOctopusDeployRunbookImport(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRunbookBasic(localName, projectLocalName, name, description, projectName),
+				Config: testAccRunbookBasic(localName, projectLocalName, name, description, projectName, space.ID),
 			},
 			{
 				ResourceName:      resourceName,
@@ -333,6 +345,7 @@ func TestAccOctopusDeployRunbookWithTags(t *testing.T) {
 	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagSetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	tagName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -340,7 +353,7 @@ func TestAccOctopusDeployRunbookWithTags(t *testing.T) {
 		CheckDestroy:             testAccRunbookCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRunbookWithTags(localName, projectLocalName, projectName, name, tagSetName, tagName),
+				Config: testAccRunbookWithTags(localName, projectLocalName, projectName, name, tagSetName, tagName, space.ID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "runbook_tags.#", "1"),
@@ -350,222 +363,223 @@ func TestAccOctopusDeployRunbookWithTags(t *testing.T) {
 	})
 }
 
-func testAccRunbookBasic(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookBasic(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+		space_id     = "%s"
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithConnectivityPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithConnectivityPolicy(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		connectivity_policy {
 			allow_deployments_to_no_targets = true
 			exclude_unhealthy_targets        = true
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithLegacyCountRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithLegacyCountRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy {
 			quantity_to_keep = 10
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithLegacyForeverRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithLegacyForeverRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy {
 			should_keep_forever = true
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithCountStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithCountStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy_with_strategy {
 			strategy		= "Count"
 			quantity_to_keep = 10
 			unit 		 = "Items"
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithCountStrategyRetentionPolicyWithoutUnit(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithCountStrategyRetentionPolicyWithoutUnit(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy_with_strategy {
 			strategy		= "Count"
 			quantity_to_keep = 10
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithCountStrategyRetentionPolicyWithoutQuantity(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithCountStrategyRetentionPolicyWithoutQuantity(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy_with_strategy {
 			strategy		= "Count"
 			unit 		 	= "Items"
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithForeverStrategyRetentionPolicyWithQuantity(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithForeverStrategyRetentionPolicyWithQuantity(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy_with_strategy {
 			strategy		 = "Forever"
 			quantity_to_keep = 10
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithForeverStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithForeverStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy_with_strategy {
 			strategy		= "Forever"
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
-func testAccRunbookWithDefaultStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string) string {
+func testAccRunbookWithDefaultStrategyRetentionPolicy(localName string, projectLocalName string, name string, description string, projectName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name                                 = "%s"
 		lifecycle_id                         = "Lifecycles-1"
 		project_group_id                     = "ProjectGroups-1"
-		space_id                             = "Spaces-1"
+		space_id                             = "%s"
 	}
 
 	resource "octopusdeploy_runbook" "%s" {
 		project_id   = octopusdeploy_project.%s.id
 		name         = "%s"
 		description  = "%s"
-		space_id     = "Spaces-1"
-		
+		space_id     = "%s"
+
 		retention_policy_with_strategy {
 			strategy		= "Default"
 		}
-	}`, projectLocalName, projectName, localName, projectLocalName, name, description)
+	}`, projectLocalName, projectName, spaceID, localName, projectLocalName, name, description, spaceID)
 }
 
 func testAccRunbookExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		runbookID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := runbooks.GetByID(octoClient, octoClient.GetSpaceID(), runbookID); err != nil {
+		rs := s.RootModule().Resources[prefix]
+		runbookID := rs.Primary.ID
+		if _, err := runbooks.GetByID(octoClient, rs.Primary.Attributes["space_id"], runbookID); err != nil {
 			return err
 		}
 
@@ -579,7 +593,7 @@ func testAccRunbookCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		if runbook, err := runbooks.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID); err == nil {
+		if runbook, err := runbooks.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID); err == nil {
 			return fmt.Errorf("runbook (%s) still exists", runbook.GetID())
 		}
 	}
@@ -598,13 +612,13 @@ func testAccRunbookImportStateIdFunc(resourceName string) resource.ImportStateId
 	}
 }
 
-func testAccRunbookWithTags(localName string, projectLocalName string, projectName string, name string, tagSetName string, tagName string) string {
+func testAccRunbookWithTags(localName string, projectLocalName string, projectName string, name string, tagSetName string, tagName string, spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project" "%s" {
 		name             = "%s"
 		lifecycle_id     = "Lifecycles-1"
 		project_group_id = "ProjectGroups-1"
-		space_id         = "Spaces-1"
+		space_id         = "%s"
 	}
 
 	resource "octopusdeploy_tag_set" "%s" {
@@ -622,5 +636,5 @@ func testAccRunbookWithTags(localName string, projectLocalName string, projectNa
 		name         = "%s"
 		project_id   = octopusdeploy_project.%s.id
 		runbook_tags = [octopusdeploy_tag.%s.canonical_tag_name]
-	}`, projectLocalName, projectName, tagSetName, tagSetName, tagName, tagName, tagSetName, localName, name, projectLocalName, tagName)
+	}`, projectLocalName, projectName, spaceID, tagSetName, tagSetName, tagName, tagName, tagSetName, localName, name, projectLocalName, tagName)
 }

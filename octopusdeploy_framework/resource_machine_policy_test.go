@@ -14,6 +14,7 @@ func TestAccOctopusDeployMachinePolicyBasic(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_machine_policy." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccMachinePolicyCheckDestroy,
@@ -25,10 +26,10 @@ func TestAccOctopusDeployMachinePolicyBasic(t *testing.T) {
 					testAccMachinePolicyExists(prefix),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 					resource.TestCheckResourceAttr(prefix, "name", name),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 					resource.TestCheckResourceAttr(prefix, "is_default", "false"),
 				),
-				Config: testAccMachinePolicyBasic(localName, name),
+				Config: testAccMachinePolicyBasic(localName, name, space.ID),
 			},
 		},
 	})
@@ -41,6 +42,7 @@ func TestAccOctopusDeployMachinePolicyUpdate(t *testing.T) {
 	newName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	newDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccMachinePolicyCheckDestroy,
@@ -53,7 +55,7 @@ func TestAccOctopusDeployMachinePolicyUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", description),
 				),
-				Config: testAccMachinePolicyWithDescription(localName, name, description),
+				Config: testAccMachinePolicyWithDescription(localName, name, description, space.ID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -61,7 +63,7 @@ func TestAccOctopusDeployMachinePolicyUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", newName),
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 				),
-				Config: testAccMachinePolicyWithDescription(localName, newName, newDescription),
+				Config: testAccMachinePolicyWithDescription(localName, newName, newDescription, space.ID),
 			},
 		},
 	})
@@ -71,6 +73,7 @@ func TestAccOctopusDeployMachinePolicyWithConnectivitySettings(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_machine_policy." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccMachinePolicyCheckDestroy,
@@ -86,7 +89,7 @@ func TestAccOctopusDeployMachinePolicyWithConnectivitySettings(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "connection_retry_sleep_interval", "1000000000"),
 					resource.TestCheckResourceAttr(prefix, "connection_retry_time_limit", "300000000000"),
 				),
-				Config: testAccMachinePolicyWithConnectivitySettings(localName, name),
+				Config: testAccMachinePolicyWithConnectivitySettings(localName, name, space.ID),
 			},
 		},
 	})
@@ -96,6 +99,7 @@ func TestAccOctopusDeployMachinePolicyImport(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_machine_policy." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccMachinePolicyCheckDestroy,
@@ -103,7 +107,7 @@ func TestAccOctopusDeployMachinePolicyImport(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMachinePolicyBasic(localName, name),
+				Config: testAccMachinePolicyBasic(localName, name, space.ID),
 			},
 			{
 				ResourceName:      resourceName,
@@ -115,36 +119,37 @@ func TestAccOctopusDeployMachinePolicyImport(t *testing.T) {
 	})
 }
 
-func testAccMachinePolicyBasic(localName, name string) string {
+func testAccMachinePolicyBasic(localName, name, spaceID string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
 		name     = "%s"
-		space_id = "Spaces-1"
-	}`, localName, name)
+		space_id = "%s"
+	}`, localName, name, spaceID)
 }
 
-func testAccMachinePolicyWithDescription(localName, name, description string) string {
+func testAccMachinePolicyWithDescription(localName, name, description, spaceID string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
 		name        = "%s"
 		description = "%s"
-		space_id    = "Spaces-1"
-	}`, localName, name, description)
+		space_id    = "%s"
+	}`, localName, name, description, spaceID)
 }
 
-func testAccMachinePolicyWithConnectivitySettings(localName, name string) string {
+func testAccMachinePolicyWithConnectivitySettings(localName, name, spaceID string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
 		name                           = "%s"
-		space_id                       = "Spaces-1"
+		space_id                       = "%s"
 		connection_connect_timeout     = 60000000000
 		connection_retry_count_limit   = 5
 		connection_retry_sleep_interval = 1000000000
 		connection_retry_time_limit     = 300000000000
-	}`, localName, name)
+	}`, localName, name, spaceID)
 }
 
 func testAccMachinePolicyExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		machinePolicyID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := machinepolicies.GetByID(octoClient, octoClient.GetSpaceID(), machinePolicyID); err != nil {
+		rs := s.RootModule().Resources[prefix]
+		machinePolicyID := rs.Primary.ID
+		if _, err := machinepolicies.GetByID(octoClient, rs.Primary.Attributes["space_id"], machinePolicyID); err != nil {
 			return err
 		}
 
@@ -158,7 +163,7 @@ func testAccMachinePolicyCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		if machinePolicy, err := machinepolicies.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID); err == nil {
+		if machinePolicy, err := machinepolicies.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID); err == nil {
 			return fmt.Errorf("machine policy (%s) still exists", machinePolicy.GetID())
 		}
 	}

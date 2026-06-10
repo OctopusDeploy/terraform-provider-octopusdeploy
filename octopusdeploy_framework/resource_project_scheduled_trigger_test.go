@@ -11,6 +11,7 @@ import (
 
 func TestAccOctopusDeployProjectScheduledTriggerBasic(t *testing.T) {
 	t.Skip("Skipping test due to SDK issue - flattenProjectScheduledTrigger includes 'id' which causes panic when set")
+	space := NewTestSpace(t)
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_project_scheduled_trigger." + localName
 
@@ -38,7 +39,7 @@ func TestAccOctopusDeployProjectScheduledTriggerBasic(t *testing.T) {
 					testAccProjectScheduledTriggerExists(prefix),
 					resource.TestCheckResourceAttr(prefix, "name", triggerName),
 					resource.TestCheckResourceAttr(prefix, "description", triggerDescription),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 					resource.TestCheckResourceAttrSet(prefix, "project_id"),
 					// resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
 					resource.TestCheckResourceAttr(prefix, "timezone", "UTC"),
@@ -49,7 +50,7 @@ func TestAccOctopusDeployProjectScheduledTriggerBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(prefix, "deploy_latest_release_action.0.destination_environment_id"),
 					resource.TestCheckResourceAttr(prefix, "deploy_latest_release_action.0.should_redeploy", "false"),
 				),
-				Config: testAccProjectScheduledTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
+				Config: testAccProjectScheduledTriggerBasic(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
 			},
 		},
 	})
@@ -57,6 +58,7 @@ func TestAccOctopusDeployProjectScheduledTriggerBasic(t *testing.T) {
 
 func TestAccOctopusDeployProjectScheduledTriggerUpdate(t *testing.T) {
 	t.Skip("Skipping test due to SDK issue - flattenProjectScheduledTrigger includes 'id' which causes panic when set")
+	space := NewTestSpace(t)
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_project_scheduled_trigger." + localName
 
@@ -88,7 +90,7 @@ func TestAccOctopusDeployProjectScheduledTriggerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", triggerDescription),
 					// resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
 				),
-				Config: testAccProjectScheduledTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
+				Config: testAccProjectScheduledTriggerBasic(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -98,7 +100,7 @@ func TestAccOctopusDeployProjectScheduledTriggerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "true"),
 					resource.TestCheckResourceAttr(prefix, "deploy_latest_release_action.0.should_redeploy", "true"),
 				),
-				Config: testAccProjectScheduledTriggerUpdate(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, newTriggerName, newTriggerDescription),
+				Config: testAccProjectScheduledTriggerUpdate(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, newTriggerName, newTriggerDescription),
 			},
 		},
 	})
@@ -106,6 +108,7 @@ func TestAccOctopusDeployProjectScheduledTriggerUpdate(t *testing.T) {
 
 func TestAccOctopusDeployProjectScheduledTriggerOnceDailySchedule(t *testing.T) {
 	t.Skip("Skipping test due to SDK days_of_week type conversion issue")
+	space := NewTestSpace(t)
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_project_scheduled_trigger." + localName
 
@@ -138,7 +141,7 @@ func TestAccOctopusDeployProjectScheduledTriggerOnceDailySchedule(t *testing.T) 
 					resource.TestCheckResourceAttr(prefix, "once_daily_schedule.0.days_of_week.0", "Monday"),
 					resource.TestCheckResourceAttr(prefix, "once_daily_schedule.0.days_of_week.1", "Friday"),
 				),
-				Config: testAccProjectScheduledTriggerOnceDailySchedule(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
+				Config: testAccProjectScheduledTriggerOnceDailySchedule(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
 			},
 		},
 	})
@@ -146,6 +149,7 @@ func TestAccOctopusDeployProjectScheduledTriggerOnceDailySchedule(t *testing.T) 
 
 func TestAccOctopusDeployProjectScheduledTriggerImport(t *testing.T) {
 	t.Skip("Skipping test due to SDK issue - flattenProjectScheduledTrigger includes 'id' which causes panic when set")
+	space := NewTestSpace(t)
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_project_scheduled_trigger." + localName
 
@@ -169,7 +173,7 @@ func TestAccOctopusDeployProjectScheduledTriggerImport(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccProjectScheduledTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
+				Config: testAccProjectScheduledTriggerBasic(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription),
 			},
 			{
 				ResourceName:            resourceName,
@@ -182,12 +186,12 @@ func TestAccOctopusDeployProjectScheduledTriggerImport(t *testing.T) {
 	})
 }
 
-func testAccProjectScheduledTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription string) string {
-	return testAccProjectScheduledTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription) + fmt.Sprintf(`
+func testAccProjectScheduledTriggerBasic(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription string) string {
+	return testAccProjectScheduledTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription) + fmt.Sprintf(`
 	resource "octopusdeploy_project_scheduled_trigger" "%s" {
 		name        = "%s"
 		description = "%s"
-		space_id    = "Spaces-1"
+		space_id    = "%s"
 		project_id  = octopusdeploy_project.%s.id
 
 		deploy_latest_release_action {
@@ -201,15 +205,15 @@ func testAccProjectScheduledTriggerBasic(localName, lifecycleLocalName, lifecycl
 		}
 
 		timezone = "UTC"
-	}`, localName, triggerName, triggerDescription, projectLocalName, environmentLocalName, environmentLocalName)
+	}`, localName, triggerName, triggerDescription, spaceID, projectLocalName, environmentLocalName, environmentLocalName)
 }
 
-func testAccProjectScheduledTriggerUpdate(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription string) string {
-	return testAccProjectScheduledTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription) + fmt.Sprintf(`
+func testAccProjectScheduledTriggerUpdate(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription string) string {
+	return testAccProjectScheduledTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription) + fmt.Sprintf(`
 	resource "octopusdeploy_project_scheduled_trigger" "%s" {
 		name        = "%s"
 		description = "%s"
-		space_id    = "Spaces-1"
+		space_id    = "%s"
 		project_id  = octopusdeploy_project.%s.id
 		is_disabled = true
 
@@ -224,15 +228,15 @@ func testAccProjectScheduledTriggerUpdate(localName, lifecycleLocalName, lifecyc
 		}
 
 		timezone = "UTC"
-	}`, localName, triggerName, triggerDescription, projectLocalName, environmentLocalName, environmentLocalName)
+	}`, localName, triggerName, triggerDescription, spaceID, projectLocalName, environmentLocalName, environmentLocalName)
 }
 
-func testAccProjectScheduledTriggerOnceDailySchedule(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription string) string {
-	return testAccProjectScheduledTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription) + fmt.Sprintf(`
+func testAccProjectScheduledTriggerOnceDailySchedule(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription, triggerName, triggerDescription string) string {
+	return testAccProjectScheduledTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription) + fmt.Sprintf(`
 	resource "octopusdeploy_project_scheduled_trigger" "%s" {
 		name        = "%s"
 		description = "%s"
-		space_id    = "Spaces-1"
+		space_id    = "%s"
 		project_id  = octopusdeploy_project.%s.id
 
 		deploy_latest_release_action {
@@ -247,34 +251,38 @@ func testAccProjectScheduledTriggerOnceDailySchedule(localName, lifecycleLocalNa
 		}
 
 		timezone = "America/New_York"
-	}`, localName, triggerName, triggerDescription, projectLocalName, environmentLocalName, environmentLocalName)
+	}`, localName, triggerName, triggerDescription, spaceID, projectLocalName, environmentLocalName, environmentLocalName)
 }
 
-func testAccProjectScheduledTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription string) string {
+func testAccProjectScheduledTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_lifecycle" "%s" {
+		space_id = "%s"
 		name = "%s"
 	}
 
 	resource "octopusdeploy_project_group" "%s" {
+		space_id = "%s"
 		name = "%s"
 	}
 
 	resource "octopusdeploy_environment" "%s" {
+		space_id    = "%s"
 		name        = "%s"
 		description = "%s"
 	}
 
 	resource "octopusdeploy_project" "%s" {
+		space_id         = "%s"
 		description      = "%s"
 		lifecycle_id     = octopusdeploy_lifecycle.%s.id
 		name             = "%s"
 		project_group_id = octopusdeploy_project_group.%s.id
-	}`, 
-		lifecycleLocalName, lifecycleName,
-		projectGroupLocalName, projectGroupName,
-		environmentLocalName, environmentName, environmentDescription,
-		projectLocalName, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName)
+	}`,
+		lifecycleLocalName, spaceID, lifecycleName,
+		projectGroupLocalName, spaceID, projectGroupName,
+		environmentLocalName, spaceID, environmentName, environmentDescription,
+		projectLocalName, spaceID, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName)
 }
 
 func testAccProjectScheduledTriggerExists(prefix string) resource.TestCheckFunc {

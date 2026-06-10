@@ -22,6 +22,8 @@ func TestAccOctopusDeployDynamicWorkerPoolBasic(t *testing.T) {
 	isDefault := false
 	sortOrder := acctest.RandIntRange(50, 100)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccDynamicWorkerPoolCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -35,11 +37,11 @@ func TestAccOctopusDeployDynamicWorkerPoolBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", description),
 					resource.TestCheckResourceAttr(prefix, "is_default", strconv.FormatBool(isDefault)),
 					resource.TestCheckResourceAttr(prefix, "sort_order", strconv.Itoa(sortOrder)),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 					resource.TestCheckResourceAttr(prefix, "can_add_workers", "true"), // This should be computed
 				),
-				Config: testAccDynamicWorkerPoolBasic(localName, name, workerType, description, isDefault, sortOrder),
+				Config: testAccDynamicWorkerPoolBasic(localName, name, workerType, description, isDefault, sortOrder, space.ID),
 			},
 		},
 	})
@@ -59,6 +61,8 @@ func TestAccOctopusDeployDynamicWorkerPoolUpdate(t *testing.T) {
 	sortOrder := acctest.RandIntRange(50, 100)
 	newSortOrder := acctest.RandIntRange(101, 200)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccDynamicWorkerPoolCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -71,7 +75,7 @@ func TestAccOctopusDeployDynamicWorkerPoolUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", description),
 					resource.TestCheckResourceAttr(prefix, "sort_order", strconv.Itoa(sortOrder)),
 				),
-				Config: testAccDynamicWorkerPoolBasic(localName, name, workerType, description, isDefault, sortOrder),
+				Config: testAccDynamicWorkerPoolBasic(localName, name, workerType, description, isDefault, sortOrder, space.ID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -80,7 +84,7 @@ func TestAccOctopusDeployDynamicWorkerPoolUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 					resource.TestCheckResourceAttr(prefix, "sort_order", strconv.Itoa(newSortOrder)),
 				),
-				Config: testAccDynamicWorkerPoolBasic(localName, newName, workerType, newDescription, isDefault, newSortOrder),
+				Config: testAccDynamicWorkerPoolBasic(localName, newName, workerType, newDescription, isDefault, newSortOrder, space.ID),
 			},
 		},
 	})
@@ -92,6 +96,8 @@ func TestAccOctopusDeployDynamicWorkerPoolMinimal(t *testing.T) {
 	prefix := "octopusdeploy_dynamic_worker_pool." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	workerType := "WindowsDefault"
+
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccDynamicWorkerPoolCheckDestroy,
@@ -105,7 +111,7 @@ func TestAccOctopusDeployDynamicWorkerPoolMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "worker_type", workerType),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 				),
-				Config: testAccDynamicWorkerPoolMinimal(localName, name, workerType),
+				Config: testAccDynamicWorkerPoolMinimal(localName, name, workerType, space.ID),
 			},
 		},
 	})
@@ -121,13 +127,15 @@ func TestAccOctopusDeployDynamicWorkerPoolImport(t *testing.T) {
 	isDefault := false
 	sortOrder := acctest.RandIntRange(50, 100)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccDynamicWorkerPoolCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDynamicWorkerPoolBasic(localName, name, workerType, description, isDefault, sortOrder),
+				Config: testAccDynamicWorkerPoolBasic(localName, name, workerType, description, isDefault, sortOrder, space.ID),
 			},
 			{
 				ResourceName:      resourceName,
@@ -139,29 +147,30 @@ func TestAccOctopusDeployDynamicWorkerPoolImport(t *testing.T) {
 	})
 }
 
-func testAccDynamicWorkerPoolBasic(localName, name, workerType, description string, isDefault bool, sortOrder int) string {
+func testAccDynamicWorkerPoolBasic(localName, name, workerType, description string, isDefault bool, sortOrder int, spaceID string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_dynamic_worker_pool" "%s" {
 		name        = "%s"
 		worker_type = "%s"
 		description = "%s"
 		is_default  = %v
 		sort_order  = %v
-		space_id    = "Spaces-1"
-	}`, localName, name, workerType, description, isDefault, sortOrder)
+		space_id    = "%s"
+	}`, localName, name, workerType, description, isDefault, sortOrder, spaceID)
 }
 
-func testAccDynamicWorkerPoolMinimal(localName, name, workerType string) string {
+func testAccDynamicWorkerPoolMinimal(localName, name, workerType, spaceID string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_dynamic_worker_pool" "%s" {
 		name        = "%s"
 		worker_type = "%s"
-		space_id    = "Spaces-1"
-	}`, localName, name, workerType)
+		space_id    = "%s"
+	}`, localName, name, workerType, spaceID)
 }
 
 func testAccDynamicWorkerPoolExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		workerPoolID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := workerpools.GetByID(octoClient, octoClient.GetSpaceID(), workerPoolID); err != nil {
+		rs := s.RootModule().Resources[prefix]
+		workerPoolID := rs.Primary.ID
+		if _, err := workerpools.GetByID(octoClient, rs.Primary.Attributes["space_id"], workerPoolID); err != nil {
 			return err
 		}
 
@@ -175,7 +184,7 @@ func testAccDynamicWorkerPoolCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		if workerPool, err := workerpools.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID); err == nil {
+		if workerPool, err := workerpools.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID); err == nil {
 			return fmt.Errorf("dynamic worker pool (%s) still exists", workerPool.GetID())
 		}
 	}

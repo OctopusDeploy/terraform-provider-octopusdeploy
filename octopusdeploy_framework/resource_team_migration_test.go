@@ -15,6 +15,7 @@ import (
 func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
+	space := NewTestSpace(t)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
@@ -27,11 +28,11 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
-				Config: teamConfig(name, description),
+				Config: teamConfig(space.ID, name, description),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   teamConfig(name, description),
+				Config:                   teamConfig(space.ID, name, description),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -40,7 +41,7 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   updateTeamConfig(name, description),
+				Config:                   updateTeamConfig(space.ID, name, description),
 				Check: resource.ComposeTestCheckFunc(
 					testTeam(t, name, description),
 				),
@@ -52,6 +53,7 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T) {
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
+	space := NewTestSpace(t)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -66,11 +68,11 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T
 						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
-				Config: teamConfigWithUserRole(name, description, userRoleName),
+				Config: teamConfigWithUserRole(space.ID, name, description, userRoleName),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   teamConfigWithUserRole(name, description, userRoleName),
+				Config:                   teamConfigWithUserRole(space.ID, name, description, userRoleName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -79,30 +81,32 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   updateTeamConfigWithUserRole(name, description, userRoleName),
+				Config:                   updateTeamConfigWithUserRole(space.ID, name, description, userRoleName),
 				Check: resource.ComposeTestCheckFunc(
-					testTeamWithUserRole(t, name, description),
+					testTeamWithUserRole(t, space.ID, name, description),
 				),
 			},
 		},
 	})
 }
 
-func teamConfig(name, description string) string {
+func teamConfig(spaceID, name, description string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_team" "team1" {
+		space_id = "%s"
 		name = "%s"
 		description = "%s"
-	}`, name, description)
+	}`, spaceID, name, description)
 }
 
-func updateTeamConfig(name, description string) string {
+func updateTeamConfig(spaceID, name, description string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_team" "team1" {
+		space_id = "%s"
 		name = "%s"
 		description = "%s - updated"
-	}`, name, description)
+	}`, spaceID, name, description)
 }
 
-func teamConfigWithUserRole(name, description, userRoleName string) string {
+func teamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		granted_space_permissions = ["AccountCreate"]
@@ -110,17 +114,18 @@ func teamConfigWithUserRole(name, description, userRoleName string) string {
 	}
 
 	resource "octopusdeploy_team" "team1" {
+		space_id = "%s"
 		name = "%s"
 		description = "%s"
 
 		user_role {
-			space_id = "Spaces-1"
+			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, name, description)
+	}`, userRoleName, spaceID, name, description, spaceID)
 }
 
-func updateTeamConfigWithUserRole(name, description, userRoleName string) string {
+func updateTeamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		granted_space_permissions = ["AccountCreate"]
@@ -128,14 +133,15 @@ func updateTeamConfigWithUserRole(name, description, userRoleName string) string
 	}
 
 	resource "octopusdeploy_team" "team1" {
+		space_id = "%s"
 		name = "%s"
 		description = "%s - updated"
 
 		user_role {
-			space_id = "Spaces-1"
+			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, name, description)
+	}`, userRoleName, spaceID, name, description, spaceID)
 }
 
 func testTeamDestroy(s *terraform.State) error {
@@ -169,7 +175,7 @@ func testTeam(t *testing.T, name, description string) resource.TestCheckFunc {
 	}
 }
 
-func testTeamWithUserRole(t *testing.T, name, description string) resource.TestCheckFunc {
+func testTeamWithUserRole(t *testing.T, spaceID, name, description string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		teamId := s.RootModule().Resources["octopusdeploy_team.team1"].Primary.ID
 		team, err := octoClient.Teams.GetByID(teamId)
@@ -188,7 +194,7 @@ func testTeamWithUserRole(t *testing.T, name, description string) resource.TestC
 
 		assert.NotEmpty(t, userRoles.Items, "Team should have user roles")
 		assert.Len(t, userRoles.Items, 1, "Team should have exactly one user role")
-		assert.Equal(t, "Spaces-1", userRoles.Items[0].SpaceID, "User role space ID should match")
+		assert.Equal(t, spaceID, userRoles.Items[0].SpaceID, "User role space ID should match")
 
 		return nil
 	}

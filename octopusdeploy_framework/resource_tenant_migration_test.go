@@ -19,6 +19,7 @@ func TestTenantResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 	// override the path to check for terraformrc file and test against the real 0.21.1 version
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
+	space := NewTestSpace(t)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
 		CheckDestroy: testTenantProjectDestroyed,
@@ -30,11 +31,11 @@ func TestTenantResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 						Source:            "OctopusDeployLabs/octopusdeploy",
 					},
 				},
-				Config: tenantConfig(),
+				Config: tenantConfig(space.ID),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   tenantConfig(),
+				Config:                   tenantConfig(space.ID),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -43,25 +44,27 @@ func TestTenantResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   updatedTenantResourceConfig(),
+				Config:                   updatedTenantResourceConfig(space.ID),
 				Check: resource.ComposeTestCheckFunc(
-					testTenantResourceUpdated(t, name),
+					testTenantResourceUpdated(t, space.ID, name),
 				),
 			},
 		},
 	})
 }
 
-func tenantConfig() string {
+func tenantConfig(spaceID string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_tenant" "tenant1" {
+		space_id    = "%s"
 		name        = "tenant test"
-	}`)
+	}`, spaceID)
 }
 
-func updatedTenantResourceConfig() string {
+func updatedTenantResourceConfig(spaceID string) string {
 	return fmt.Sprintf(`
 resource "octopusdeploy_tag_set" "tagset_tag1" {
+  space_id    = "%s"
   name        = "tag1"
   description = "Test tagset"
   sort_order  = 0
@@ -84,14 +87,15 @@ resource "octopusdeploy_tag" "tag_b" {
 }
 
 resource "octopusdeploy_tenant" "tenant1" {
+	space_id    = "%s"
 	name        = "Updated tenant"
 	description = "Updated description"
 	tenant_tags = ["tag1/a", "tag1/b"]
 	depends_on  = [octopusdeploy_tag.tag_a, octopusdeploy_tag.tag_b]
-}`)
+}`, spaceID, spaceID)
 }
 
-func testTenantResourceUpdated(t *testing.T, name string) resource.TestCheckFunc {
+func testTenantResourceUpdated(t *testing.T, spaceID, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tenantId := s.RootModule().Resources["octopusdeploy_tenant.tenant1"].Primary.ID
 		tenant, err := octoClient.Tenants.GetByID(tenantId)
@@ -104,7 +108,7 @@ func testTenantResourceUpdated(t *testing.T, name string) resource.TestCheckFunc
 		assert.Equal(t, fmt.Sprintf("Updated description"), tenant.Description)
 		assert.Equal(t, "", tenant.ClonedFromTenantID)
 		assert.Equal(t, "Updated tenant", tenant.Name)
-		assert.Equal(t, "Spaces-1", tenant.SpaceID)
+		assert.Equal(t, spaceID, tenant.SpaceID)
 		assert.Equal(t, []string{"tag1/a", "tag1/b"}, tenant.TenantTags)
 
 		return nil

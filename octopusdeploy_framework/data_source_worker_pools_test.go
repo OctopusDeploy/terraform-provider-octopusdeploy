@@ -54,16 +54,17 @@ func TestAccOctopusDeployDataSourceWorkerPoolsWithFilters(t *testing.T) {
 func TestAccOctopusDeployDataSourceWorkerPoolsWithSpaceId(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	name := fmt.Sprintf("data.octopusdeploy_worker_pools.%s", localName)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceWorkerPoolsWithSpaceIdConfig(localName),
+				Config: testAccDataSourceWorkerPoolsWithSpaceIdConfig(localName, space.ID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWorkerPoolsDataSourceID(name),
-					resource.TestCheckResourceAttr(name, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(name, "space_id", space.ID),
 					resource.TestCheckResourceAttrSet(name, "worker_pools.#"),
 				),
 			},
@@ -99,9 +100,9 @@ func testAccDataSourceWorkerPoolsWithFiltersConfig(localName, partialName string
 	}`, localName, partialName)
 }
 
-func testAccDataSourceWorkerPoolsWithSpaceIdConfig(localName string) string {
+func testAccDataSourceWorkerPoolsWithSpaceIdConfig(localName, spaceID string) string {
 	return fmt.Sprintf(`data "octopusdeploy_worker_pools" "%s" {
-		space_id = "Spaces-1"
+		space_id = "%s"
 		take = 10
-	}`, localName)
+	}`, localName, spaceID)
 }

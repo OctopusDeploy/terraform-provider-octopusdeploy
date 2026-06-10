@@ -26,6 +26,8 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerBasic(t *testing.T) {
 
 	triggerName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -38,10 +40,10 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(prefix, "project_id"),
 					resource.TestCheckResourceAttrSet(prefix, "channel_id"),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 					resource.TestCheckResourceAttr(prefix, "package.#", "0"),
 				),
-				Config: testAccExternalFeedCreateReleaseTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
+				Config: testAccExternalFeedCreateReleaseTriggerBasic(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
 			},
 		},
 	})
@@ -65,6 +67,8 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerUpdate(t *testing.T) {
 	triggerName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	newTriggerName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -76,7 +80,7 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", triggerName),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
 				),
-				Config: testAccExternalFeedCreateReleaseTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
+				Config: testAccExternalFeedCreateReleaseTriggerBasic(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -84,7 +88,7 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", newTriggerName),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "true"),
 				),
-				Config: testAccExternalFeedCreateReleaseTriggerUpdate(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, newTriggerName),
+				Config: testAccExternalFeedCreateReleaseTriggerUpdate(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, newTriggerName),
 			},
 		},
 	})
@@ -107,6 +111,8 @@ func testAccOctopusDeployExternalFeedCreateReleaseTriggerWithPrimaryPackage(t *t
 
 	triggerName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -120,7 +126,7 @@ func testAccOctopusDeployExternalFeedCreateReleaseTriggerWithPrimaryPackage(t *t
 					resource.TestCheckResourceAttr(prefix, "primary_package.0.deployment_action_slug", "test-action"),
 					resource.TestCheckResourceAttr(prefix, "package.#", "0"),
 				),
-				Config: testAccExternalFeedCreateReleaseTriggerWithPrimaryPackage(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
+				Config: testAccExternalFeedCreateReleaseTriggerWithPrimaryPackage(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
 			},
 		},
 	})
@@ -143,13 +149,15 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerImport(t *testing.T) {
 
 	triggerName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccExternalFeedCreateReleaseTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
+				Config: testAccExternalFeedCreateReleaseTriggerBasic(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName),
 			},
 			{
 				ResourceName:      resourceName,
@@ -161,52 +169,55 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerImport(t *testing.T) {
 	})
 }
 
-func testAccExternalFeedCreateReleaseTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName string) string {
-	return testAccExternalFeedCreateReleaseTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription) + fmt.Sprintf(`
+func testAccExternalFeedCreateReleaseTriggerBasic(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName string) string {
+	return testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription) + fmt.Sprintf(`
 	resource "octopusdeploy_external_feed_create_release_trigger" "%s" {
 		name       = "%s"
-		space_id   = "Spaces-1"
+		space_id   = "%s"
 		project_id = octopusdeploy_project.%s.id
 		channel_id = octopusdeploy_channel.%s.id
-	}`, localName, triggerName, projectLocalName, channelLocalName)
+	}`, localName, triggerName, spaceID, projectLocalName, channelLocalName)
 }
 
-func testAccExternalFeedCreateReleaseTriggerUpdate(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName string) string {
-	return testAccExternalFeedCreateReleaseTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription) + fmt.Sprintf(`
+func testAccExternalFeedCreateReleaseTriggerUpdate(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName string) string {
+	return testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription) + fmt.Sprintf(`
 	resource "octopusdeploy_external_feed_create_release_trigger" "%s" {
 		name        = "%s"
-		space_id    = "Spaces-1"
+		space_id    = "%s"
 		project_id  = octopusdeploy_project.%s.id
 		channel_id  = octopusdeploy_channel.%s.id
 		is_disabled = true
-	}`, localName, triggerName, projectLocalName, channelLocalName)
+	}`, localName, triggerName, spaceID, projectLocalName, channelLocalName)
 }
 
-func testAccExternalFeedCreateReleaseTriggerWithPrimaryPackage(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName string) string {
-	return testAccExternalFeedCreateReleaseTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription) + fmt.Sprintf(`
+func testAccExternalFeedCreateReleaseTriggerWithPrimaryPackage(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName string) string {
+	return testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription) + fmt.Sprintf(`
 	resource "octopusdeploy_external_feed_create_release_trigger" "%s" {
 		name       = "%s"
-		space_id   = "Spaces-1"
+		space_id   = "%s"
 		project_id = octopusdeploy_project.%s.id
 		channel_id = octopusdeploy_channel.%s.id
 		
 		primary_package {
 			deployment_action_slug = "test-action"
 		}
-	}`, localName, triggerName, projectLocalName, channelLocalName)
+	}`, localName, triggerName, spaceID, projectLocalName, channelLocalName)
 }
 
-func testAccExternalFeedCreateReleaseTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription string) string {
+func testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_lifecycle" "%s" {
-		name = "%s"
+		space_id = "%s"
+		name     = "%s"
 	}
 
 	resource "octopusdeploy_project_group" "%s" {
-		name = "%s"
+		space_id = "%s"
+		name     = "%s"
 	}
 
 	resource "octopusdeploy_project" "%s" {
+		space_id         = "%s"
 		description      = "%s"
 		lifecycle_id     = octopusdeploy_lifecycle.%s.id
 		name             = "%s"
@@ -215,14 +226,15 @@ func testAccExternalFeedCreateReleaseTriggerDependencies(lifecycleLocalName, lif
 
 
 	resource "octopusdeploy_channel" "%s" {
+		space_id    = "%s"
 		description = "%s"
 		name        = "%s"
 		project_id  = octopusdeploy_project.%s.id
-	}`, 
-		lifecycleLocalName, lifecycleName,
-		projectGroupLocalName, projectGroupName,
-		projectLocalName, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName,
-		channelLocalName, channelDescription, channelName, projectLocalName)
+	}`,
+		lifecycleLocalName, spaceID, lifecycleName,
+		projectGroupLocalName, spaceID, projectGroupName,
+		projectLocalName, spaceID, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName,
+		channelLocalName, spaceID, channelDescription, channelName, projectLocalName)
 }
 
 func testAccExternalFeedCreateReleaseTriggerExists(prefix string) resource.TestCheckFunc {
