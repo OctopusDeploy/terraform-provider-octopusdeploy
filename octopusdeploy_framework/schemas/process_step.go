@@ -248,7 +248,7 @@ func ProcessStepPackageReferenceAttributeTypes() map[string]attr.Type {
 
 func resourceActionPackageReferencesAttribute() resourceSchema.MapNestedAttribute {
 	return resourceSchema.MapNestedAttribute{
-		Description:  "Package references associated with this step where key is a name of the package reference (use empty name for primary package)",
+		Description:  "Package references associated with this step where key is a name of the package reference",
 		Optional:     true,
 		Computed:     true,
 		Default:      mapdefault.StaticValue(types.MapValueMust(ProcessStepPackageReferenceObjectType(), map[string]attr.Value{})),

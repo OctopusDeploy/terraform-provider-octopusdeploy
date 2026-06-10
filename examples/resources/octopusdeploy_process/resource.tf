@@ -48,18 +48,13 @@ resource "octopusdeploy_process_step" "deploy_package" {
     "Octopus.Action.TargetRoles" = "role-one"
   }
   type = "Octopus.TentaclePackage"
-  packages = {
-    "": {
+  primary_package = {
       package_id: "my.package"
       feed_id: "Feeds-1"
-    }
   }
+
   execution_properties = {
-    "Octopus.Action.RunOnServer" = "True"    
-    # Reference primary package in execution properties for legacy purposes
-    "Octopus.Action.Package.DownloadOnTentacle" = "False"
-    "Octopus.Action.Package.FeedId" = "Feeds-1"
-    "Octopus.Action.Package.PackageId" = "my.package"
+    "Octopus.Action.RunOnServer" = "True"
   }
 }
 
