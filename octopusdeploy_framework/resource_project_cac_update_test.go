@@ -12,13 +12,11 @@ import (
 // TestAccProjectCaCUpdate verifies that updating a CaC (Config as Code) project
 // (e.g. adding a library variable set or changing deployment settings) does not
 // fail with the "Cannot update deployment settings" error.
-// Requires GIT_URL, GIT_USERNAME, GIT_PASSWORD env vars.
+// Requires GIT_URL, GIT_USERNAME, and GIT_PASSWORD or GIT_CREDENTIAL env vars.
 func TestAccProjectCaCUpdate(t *testing.T) {
-	gitURL := os.Getenv("GIT_URL")
-	gitUsername := os.Getenv("GIT_USERNAME")
-	gitPassword := os.Getenv("GIT_PASSWORD")
+	gitURL, gitUsername, gitPassword := testAccGitSettings()
 	if gitURL == "" || gitUsername == "" || gitPassword == "" {
-		t.Skip("Skipping CaC project update test: GIT_URL, GIT_USERNAME, GIT_PASSWORD must be set")
+		t.Skip("Skipping CaC project update test: GIT_URL, GIT_USERNAME, and GIT_PASSWORD or GIT_CREDENTIAL must be set")
 	}
 
 	localName := acctest.RandStringFromCharSet(8, acctest.CharSetAlpha)
@@ -49,6 +47,27 @@ func TestAccProjectCaCUpdate(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccGitSettings() (string, string, string) {
+	gitPassword := os.Getenv("GIT_PASSWORD")
+	if gitPassword == "" {
+		gitPassword = os.Getenv("GIT_CREDENTIAL")
+	}
+
+	return os.Getenv("GIT_URL"), os.Getenv("GIT_USERNAME"), gitPassword
+}
+
+func testAccGitResourceRuleSettings() (string, string, string, string, bool) {
+	basePath, basePathSet := os.LookupEnv("GIT_RESOURCE_RULE_BASE_PATH")
+	actionSlug, actionSlugSet := os.LookupEnv("GIT_RESOURCE_RULE_ACTION_SLUG")
+	dependencyName, dependencyNameSet := os.LookupEnv("GIT_RESOURCE_RULE_DEPENDENCY_NAME")
+	guidedFailureMode := os.Getenv("GIT_RESOURCE_RULE_GUIDED_FAILURE_MODE")
+	if guidedFailureMode == "" {
+		guidedFailureMode = "EnvironmentDefault"
+	}
+
+	return basePath, actionSlug, dependencyName, guidedFailureMode, basePathSet && actionSlugSet && dependencyNameSet
 }
 
 func testAccCaCProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode string, includeLibVarSet bool) string {
@@ -95,12 +114,12 @@ func testAccCaCProjectConfig(localName, basePath, gitURL, gitUsername, gitPasswo
 		  }
 		}
 		`,
-		localName,  // 1
-		basePath,   // 2
-		gitURL,     // 3
-		gitUsername, // 4
-		gitPassword, // 5
+		localName,         // 1
+		basePath,          // 2
+		gitURL,            // 3
+		gitUsername,       // 4
+		gitPassword,       // 5
 		guidedFailureMode, // 6
-		includedSets, // 7
+		includedSets,      // 7
 	)
 }

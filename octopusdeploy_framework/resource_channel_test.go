@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/gitdependencies"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -63,9 +65,20 @@ func TestBuildChannelUpdateRequest_ClearsEmptyCollections(t *testing.T) {
 		VersionRange: "[1.0.0,2.0.0)",
 	}}
 	channel.TenantTags = []string{"TagSets-1/tag-a"}
+	channel.GitReferenceRules = []string{"refs/heads/main"}
+	channel.GitResourceRules = []channels.ChannelGitResourceRule{{
+		Id:    "ChannelGitResourceRules-1",
+		Rules: []string{"refs/tags/*"},
+		GitDependencyActions: []gitdependencies.DeploymentActionGitDependency{{
+			DeploymentActionSlug: "deploy-package",
+			GitDependencyName:    "app-config",
+		}},
+	}}
 
 	plan := schemas.ChannelModel{
 		CustomFieldDefinitions: types.ListNull(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()}),
+		GitReferenceRules:      types.ListNull(types.StringType),
+		GitResourceRule:        types.ListNull(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}),
 		Rule:                   types.ListNull(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}),
 		TenantTags:             types.SetNull(types.StringType),
 	}
@@ -78,8 +91,48 @@ func TestBuildChannelUpdateRequest_ClearsEmptyCollections(t *testing.T) {
 	require.NoError(t, json.Unmarshal(body, &payload))
 
 	assert.JSONEq(t, `[]`, string(payload["CustomFieldDefinitions"]))
+	assert.JSONEq(t, `[]`, string(payload["GitReferenceRules"]))
+	assert.JSONEq(t, `[]`, string(payload["GitResourceRules"]))
 	assert.JSONEq(t, `[]`, string(payload["Rules"]))
 	assert.JSONEq(t, `[]`, string(payload["TenantTags"]))
+}
+
+func TestExpandAndFlattenChannelGitRules(t *testing.T) {
+	model := schemas.ChannelModel{
+		GitReferenceRules: types.ListValueMust(types.StringType, []attr.Value{
+			types.StringValue("refs/heads/main"),
+			types.StringValue("refs/tags/release-*"),
+		}),
+		GitResourceRule: types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{
+			types.ObjectValueMust(getChannelGitResourceRuleAttrTypes(), map[string]attr.Value{
+				"id":    types.StringValue("ChannelGitResourceRules-1"),
+				"rules": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("refs/heads/release/*")}),
+				"git_dependency_action": types.ListValueMust(types.ObjectType{AttrTypes: getDeploymentActionGitDependencyAttrTypes()}, []attr.Value{
+					types.ObjectValueMust(getDeploymentActionGitDependencyAttrTypes(), map[string]attr.Value{
+						"deployment_action_slug": types.StringValue("deploy-package"),
+						"git_dependency_name":    types.StringValue("app-config"),
+					}),
+				}),
+			}),
+		}),
+	}
+
+	channel := expandChannel(t.Context(), model)
+	require.Equal(t, []string{"refs/heads/main", "refs/tags/release-*"}, channel.GitReferenceRules)
+	require.Len(t, channel.GitResourceRules, 1)
+	assert.Equal(t, "ChannelGitResourceRules-1", channel.GitResourceRules[0].Id)
+	assert.Equal(t, []string{"refs/heads/release/*"}, channel.GitResourceRules[0].Rules)
+	require.Len(t, channel.GitResourceRules[0].GitDependencyActions, 1)
+	assert.Equal(t, "deploy-package", channel.GitResourceRules[0].GitDependencyActions[0].DeploymentActionSlug)
+	assert.Equal(t, "app-config", channel.GitResourceRules[0].GitDependencyActions[0].GitDependencyName)
+
+	flattened := flattenChannel(t.Context(), channel, schemas.ChannelModel{
+		GitReferenceRules: types.ListNull(types.StringType),
+		GitResourceRule:   types.ListNull(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}),
+	})
+
+	assert.Equal(t, 2, len(flattened.GitReferenceRules.Elements()))
+	assert.Equal(t, 1, len(flattened.GitResourceRule.Elements()))
 }
 
 func TestAccChannelRuleRemoval(t *testing.T) {
@@ -105,6 +158,102 @@ func TestAccChannelRuleRemoval(t *testing.T) {
 					testChannelExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "rule.#", "0"),
 					testChannelRuleCount(resourceName, 0),
+				),
+			},
+		},
+	})
+}
+
+func TestAccChannelGitReferenceRules(t *testing.T) {
+	gitURL, gitUsername, gitPassword := testAccGitSettings()
+	if gitURL == "" || gitUsername == "" || gitPassword == "" {
+		t.Skip("Skipping Git reference rules test: GIT_URL, GIT_USERNAME, and GIT_PASSWORD or GIT_CREDENTIAL must be set")
+	}
+
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	basePath := ".octopus/" + acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	resourceName := fmt.Sprintf("octopusdeploy_channel.%s", localName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy:             testChannelDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testChannelWithGitReferenceRules(localName, basePath, gitURL, gitUsername, gitPassword, []string{"refs/heads/main", "refs/tags/release-*"}),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "git_reference_rules.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "git_reference_rules.0", "refs/heads/main"),
+					resource.TestCheckResourceAttr(resourceName, "git_reference_rules.1", "refs/tags/release-*"),
+					testChannelGitReferenceRules(resourceName, []string{"refs/heads/main", "refs/tags/release-*"}),
+				),
+			},
+			{
+				Config: testChannelWithGitReferenceRules(localName, basePath, gitURL, gitUsername, gitPassword, []string{"refs/heads/release/*"}),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "git_reference_rules.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_reference_rules.0", "refs/heads/release/*"),
+					testChannelGitReferenceRules(resourceName, []string{"refs/heads/release/*"}),
+				),
+			},
+			{
+				Config: testChannelWithGitReferenceRules(localName, basePath, gitURL, gitUsername, gitPassword, nil),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "git_reference_rules.#", "0"),
+					testChannelGitReferenceRules(resourceName, []string{}),
+				),
+			},
+		},
+	})
+}
+
+func TestAccChannelGitResourceRules(t *testing.T) {
+	gitURL, gitUsername, gitPassword := testAccGitSettings()
+	basePath, actionSlug, dependencyName, guidedFailureMode, ok := testAccGitResourceRuleSettings()
+	if gitURL == "" || gitUsername == "" || gitPassword == "" || !ok {
+		t.Skip("Skipping Git resource rules test: GIT_URL, GIT_USERNAME, GIT_PASSWORD or GIT_CREDENTIAL, GIT_RESOURCE_RULE_BASE_PATH, GIT_RESOURCE_RULE_ACTION_SLUG, and GIT_RESOURCE_RULE_DEPENDENCY_NAME must be set")
+	}
+
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := fmt.Sprintf("octopusdeploy_channel.%s", localName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy:             testChannelDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, actionSlug, dependencyName, []string{"refs/heads/main"}),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.0", "refs/heads/main"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.git_dependency_action.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.git_dependency_action.0.deployment_action_slug", actionSlug),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.git_dependency_action.0.git_dependency_name", dependencyName),
+					testChannelGitResourceRules(resourceName, []string{"refs/heads/main"}, actionSlug, dependencyName),
+				),
+			},
+			{
+				Config: testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, actionSlug, dependencyName, []string{"refs/heads/release/*"}),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.0", "refs/heads/release/*"),
+					testChannelGitResourceRules(resourceName, []string{"refs/heads/release/*"}, actionSlug, dependencyName),
+				),
+			},
+			{
+				Config: testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, actionSlug, dependencyName, nil),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.#", "0"),
+					testChannelGitResourceRuleCount(resourceName, 0),
 				),
 			},
 		},
@@ -154,6 +303,79 @@ func testChannelRuleCount(resourceName string, expected int) resource.TestCheckF
 
 		if len(channel.Rules) != expected {
 			return fmt.Errorf("expected %d channel rules, got %d", expected, len(channel.Rules))
+		}
+
+		return nil
+	}
+}
+
+func testChannelGitReferenceRules(resourceName string, expected []string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		channelID, err := getChannelID(s, resourceName)
+		if err != nil {
+			return err
+		}
+
+		channel, err := channels.GetByID(octoClient, octoClient.GetSpaceID(), channelID)
+		if err != nil {
+			return fmt.Errorf("channel %s not found", channelID)
+		}
+
+		return compareStringSlices(expected, channel.GitReferenceRules)
+	}
+}
+
+func testChannelGitResourceRules(resourceName string, expectedRules []string, expectedActionSlug string, expectedDependencyName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		channelID, err := getChannelID(s, resourceName)
+		if err != nil {
+			return err
+		}
+
+		channel, err := channels.GetByID(octoClient, octoClient.GetSpaceID(), channelID)
+		if err != nil {
+			return fmt.Errorf("channel %s not found", channelID)
+		}
+
+		if len(channel.GitResourceRules) != 1 {
+			return fmt.Errorf("expected 1 Git resource rule, got %d", len(channel.GitResourceRules))
+		}
+
+		rule := channel.GitResourceRules[0]
+		if err := compareStringSlices(expectedRules, rule.Rules); err != nil {
+			return err
+		}
+
+		if len(rule.GitDependencyActions) != 1 {
+			return fmt.Errorf("expected 1 Git dependency action, got %d", len(rule.GitDependencyActions))
+		}
+
+		action := rule.GitDependencyActions[0]
+		if action.DeploymentActionSlug != expectedActionSlug {
+			return fmt.Errorf("expected deployment action slug %q, got %q", expectedActionSlug, action.DeploymentActionSlug)
+		}
+		if action.GitDependencyName != expectedDependencyName {
+			return fmt.Errorf("expected Git dependency name %q, got %q", expectedDependencyName, action.GitDependencyName)
+		}
+
+		return nil
+	}
+}
+
+func testChannelGitResourceRuleCount(resourceName string, expected int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		channelID, err := getChannelID(s, resourceName)
+		if err != nil {
+			return err
+		}
+
+		channel, err := channels.GetByID(octoClient, octoClient.GetSpaceID(), channelID)
+		if err != nil {
+			return fmt.Errorf("channel %s not found", channelID)
+		}
+
+		if len(channel.GitResourceRules) != expected {
+			return fmt.Errorf("expected %d Git resource rules, got %d", expected, len(channel.GitResourceRules))
 		}
 
 		return nil
@@ -267,4 +489,81 @@ func testChannelWithRule(localName string, includeRule bool) string {
 		  depends_on = [octopusdeploy_process_step.package_step]
 		}
 	`, localName, ruleBlock)
+}
+
+func testChannelWithGitReferenceRules(localName, basePath, gitURL, gitUsername, gitPassword string, gitReferenceRules []string) string {
+	rules := ""
+	if gitReferenceRules != nil {
+		rules = fmt.Sprintf("git_reference_rules = %s", quoteStringList(gitReferenceRules))
+	}
+
+	return testAccCaCProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, "Off", false) + fmt.Sprintf(`
+		resource "octopusdeploy_channel" "%[1]s" {
+		  name       = "%[1]s"
+		  project_id = octopusdeploy_project.%[1]s.id
+
+		  %[2]s
+		}
+	`, localName, rules)
+}
+
+func testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, actionSlug, dependencyName string, gitResourceRules []string) string {
+	ruleBlock := ""
+	if gitResourceRules != nil {
+		ruleBlock = fmt.Sprintf(`
+		  git_resource_rule {
+		    rules = %[1]s
+
+		    git_dependency_action {
+		      deployment_action_slug = %[2]q
+		      git_dependency_name    = %[3]q
+		    }
+		  }
+		`, quoteStringList(gitResourceRules), actionSlug, dependencyName)
+	}
+
+	return testAccCaCProjectConfig(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, false) + fmt.Sprintf(`
+		resource "octopusdeploy_channel" "%[1]s" {
+		  name       = "%[1]s"
+		  project_id = octopusdeploy_project.%[1]s.id
+
+		  %[2]s
+		}
+	`, localName, ruleBlock)
+}
+
+func quoteStringList(values []string) string {
+	if len(values) == 0 {
+		return "[]"
+	}
+
+	result := "["
+	for i, value := range values {
+		if i > 0 {
+			result += ", "
+		}
+		result += fmt.Sprintf("%q", value)
+	}
+	return result + "]"
+}
+
+func compareStringSlices(expected []string, actual []string) error {
+	if len(expected) != len(actual) {
+		return fmt.Errorf("expected %d values, got %d: %v", len(expected), len(actual), actual)
+	}
+
+	counts := map[string]int{}
+	for _, value := range expected {
+		counts[value]++
+	}
+	for _, value := range actual {
+		counts[value]--
+	}
+	for value, count := range counts {
+		if count != 0 {
+			return fmt.Errorf("expected values %v, got %v; mismatch at %q", expected, actual, value)
+		}
+	}
+
+	return nil
 }
