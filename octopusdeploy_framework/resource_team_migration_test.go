@@ -16,7 +16,6 @@ import (
 func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
-	space := NewTestSpace(t)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resource.Test(t, resource.TestCase{
@@ -29,11 +28,11 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
-				Config: teamConfig(space.ID, name, description),
+				Config: teamConfig(name, description),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   teamConfig(space.ID, name, description),
+				Config:                   teamConfig(name, description),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -42,7 +41,7 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   updateTeamConfig(space.ID, name, description),
+				Config:                   updateTeamConfig(name, description),
 				Check: resource.ComposeTestCheckFunc(
 					testTeam(t, name, description),
 				),
@@ -98,20 +97,18 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T
 	})
 }
 
-func teamConfig(spaceID, name, description string) string {
-	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_team" "team1" {
-		space_id = "%s"
+func teamConfig(name, description string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_team" "team1" {
 		name = "%s"
 		description = "%s"
-	}`, spaceID, name, description)
+	}`, name, description)
 }
 
-func updateTeamConfig(spaceID, name, description string) string {
-	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_team" "team1" {
-		space_id = "%s"
+func updateTeamConfig(name, description string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_team" "team1" {
 		name = "%s"
 		description = "%s - updated"
-	}`, spaceID, name, description)
+	}`, name, description)
 }
 
 func teamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
@@ -122,7 +119,6 @@ func teamConfigWithUserRole(spaceID, name, description, userRoleName string) str
 	}
 
 	resource "octopusdeploy_team" "team1" {
-		space_id = "%s"
 		name = "%s"
 		description = "%s"
 
@@ -130,7 +126,7 @@ func teamConfigWithUserRole(spaceID, name, description, userRoleName string) str
 			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, spaceID, name, description, spaceID)
+	}`, userRoleName, name, description, spaceID)
 }
 
 func updateTeamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
@@ -141,7 +137,6 @@ func updateTeamConfigWithUserRole(spaceID, name, description, userRoleName strin
 	}
 
 	resource "octopusdeploy_team" "team1" {
-		space_id = "%s"
 		name = "%s"
 		description = "%s - updated"
 
@@ -149,7 +144,7 @@ func updateTeamConfigWithUserRole(spaceID, name, description, userRoleName strin
 			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, spaceID, name, description, spaceID)
+	}`, userRoleName, name, description, spaceID)
 }
 
 func updateTeamConfigWithSystemLevelUserRole(spaceID, name, description, userRoleName string) string {
@@ -165,7 +160,6 @@ func updateTeamConfigWithSystemLevelUserRole(spaceID, name, description, userRol
 	}
 
 	resource "octopusdeploy_team" "team1" {
-		space_id = "%s"
 		name = "%s"
 		description = "%s - updated"
 
@@ -178,7 +172,7 @@ func updateTeamConfigWithSystemLevelUserRole(spaceID, name, description, userRol
 			space_id = null
 			user_role_id = octopusdeploy_user_role.user_role2.id
 		}
-	}`, userRoleName, userRoleName, spaceID, name, description, spaceID)
+	}`, userRoleName, userRoleName, name, description, spaceID)
 }
 
 func testTeamDestroy(s *terraform.State) error {

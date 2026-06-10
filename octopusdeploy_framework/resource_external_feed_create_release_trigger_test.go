@@ -29,13 +29,13 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerBasic(t *testing.T) {
 	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
+		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy(space),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testAccExternalFeedCreateReleaseTriggerExists(prefix),
+					testAccExternalFeedCreateReleaseTriggerExists(space, prefix),
 					resource.TestCheckResourceAttr(prefix, "name", triggerName),
 					resource.TestCheckResourceAttrSet(prefix, "project_id"),
 					resource.TestCheckResourceAttrSet(prefix, "channel_id"),
@@ -70,13 +70,13 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerUpdate(t *testing.T) {
 	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
+		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy(space),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testAccExternalFeedCreateReleaseTriggerExists(prefix),
+					testAccExternalFeedCreateReleaseTriggerExists(space, prefix),
 					resource.TestCheckResourceAttr(prefix, "name", triggerName),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
 				),
@@ -84,7 +84,7 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerUpdate(t *testing.T) {
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testAccExternalFeedCreateReleaseTriggerExists(prefix),
+					testAccExternalFeedCreateReleaseTriggerExists(space, prefix),
 					resource.TestCheckResourceAttr(prefix, "name", newTriggerName),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "true"),
 				),
@@ -114,13 +114,13 @@ func testAccOctopusDeployExternalFeedCreateReleaseTriggerWithPrimaryPackage(t *t
 	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
+		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy(space),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
-					testAccExternalFeedCreateReleaseTriggerExists(prefix),
+					testAccExternalFeedCreateReleaseTriggerExists(space, prefix),
 					resource.TestCheckResourceAttr(prefix, "name", triggerName),
 					resource.TestCheckResourceAttr(prefix, "primary_package.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "primary_package.0.deployment_action_slug", "test-action"),
@@ -152,7 +152,7 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerImport(t *testing.T) {
 	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy,
+		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy(space),
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -237,10 +237,10 @@ func testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocal
 		channelLocalName, spaceID, channelDescription, channelName, projectLocalName)
 }
 
-func testAccExternalFeedCreateReleaseTriggerExists(prefix string) resource.TestCheckFunc {
+func testAccExternalFeedCreateReleaseTriggerExists(space *TestSpace, prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		triggerID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := octoClient.ProjectTriggers.GetByID(triggerID); err != nil {
+		if _, err := space.Client.ProjectTriggers.GetByID(triggerID); err != nil {
 			return err
 		}
 
@@ -248,18 +248,20 @@ func testAccExternalFeedCreateReleaseTriggerExists(prefix string) resource.TestC
 	}
 }
 
-func testAccExternalFeedCreateReleaseTriggerCheckDestroy(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "octopusdeploy_external_feed_create_release_trigger" {
-			continue
+func testAccExternalFeedCreateReleaseTriggerCheckDestroy(space *TestSpace) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "octopusdeploy_external_feed_create_release_trigger" {
+				continue
+			}
+
+			if trigger, err := space.Client.ProjectTriggers.GetByID(rs.Primary.ID); err == nil {
+				return fmt.Errorf("external feed create release trigger (%s) still exists", trigger.GetID())
+			}
 		}
 
-		if trigger, err := octoClient.ProjectTriggers.GetByID(rs.Primary.ID); err == nil {
-			return fmt.Errorf("external feed create release trigger (%s) still exists", trigger.GetID())
-		}
+		return nil
 	}
-
-	return nil
 }
 
 func testAccExternalFeedCreateReleaseTriggerImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {
