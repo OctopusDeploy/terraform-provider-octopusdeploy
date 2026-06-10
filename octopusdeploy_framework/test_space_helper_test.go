@@ -1,10 +1,14 @@
 package octopusdeploy_framework
 
 import (
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projectgroups"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
 	"github.com/OctopusSolutionsEngineering/OctopusTerraformTestFramework/octoclient"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -33,6 +37,34 @@ type TestSpace struct {
 	// lookups in CheckDestroy / Check functions instead of the package-level
 	// octoClient, which is scoped to the default space.
 	Client *client.Client
+	// LifecycleID is the ID of the space's auto-created default lifecycle.
+	LifecycleID string
+	// ProjectGroupID is the ID of the space's auto-created default project
+	// group.
+	ProjectGroupID string
+}
+
+// ProviderConfig returns an HCL `provider "octopusdeploy"` block pinned to this
+// space. Prepend it to a test's configuration so that the provider performs ALL
+// operations (create, read, import, destroy) against the isolated space. This
+// is required for operations that do not carry a space_id on the resource
+// itself — notably `terraform import`, where the import ID is just the resource
+// ID and the provider must already know which space to look in.
+func (s *TestSpace) ProviderConfig() string {
+	return providerSpaceConfig(s.ID)
+}
+
+// providerSpaceConfig returns an HCL `provider "octopusdeploy"` block pinned to
+// the given space ID. Config builders that only have a space ID (not the full
+// TestSpace) prepend this so every config they emit targets the test space —
+// including the empty-config import step, which reuses the provider configured
+// by the preceding step.
+func providerSpaceConfig(spaceID string) string {
+	return fmt.Sprintf(`
+provider "octopusdeploy" {
+	space_id = "%s"
+}
+`, spaceID)
 }
 
 // NewTestSpace creates a fresh, isolated space with its task queue stopped and
@@ -86,9 +118,6 @@ func NewTestSpaceWithTaskQueue(t *testing.T, taskQueueEnabled bool) *TestSpace {
 	}
 
 	t.Cleanup(func() {
-		// A space can only be deleted while its task queue is stopped. It is
-		// stopped at creation by default, but a test may have started it (or
-		// requested it enabled), so ensure it is stopped before deleting.
 		space, err := spaces.GetByID(octoClient, createdSpace.GetID())
 		if err != nil {
 			t.Logf("failed to read test space %q for cleanup: %s", createdSpace.GetID(), err)
@@ -108,17 +137,60 @@ func NewTestSpaceWithTaskQueue(t *testing.T, taskQueueEnabled bool) *TestSpace {
 		}
 	})
 
-	// Build a client scoped to the new space for direct API checks. The URL
-	// and API key are set on the environment by TestMain for both the shared
-	// container and TF_ACC_LOCAL paths.
 	spaceClient, err := octoclient.CreateClient(os.Getenv("OCTOPUS_URL"), createdSpace.GetID(), os.Getenv("OCTOPUS_APIKEY"))
 	if err != nil {
 		t.Fatalf("failed to create space-scoped client for %q: %s", createdSpace.GetID(), err)
 	}
 
+	// A new space's built-in entities (default lifecycle, project group) are
+	// seeded asynchronously by the server. Wait for them to appear, both to
+	// expose their space-specific IDs and to ensure the space is ready to
+	// accept writes before a test starts applying Terraform. Until they exist,
+	// the API returns "Resource is not found ... in the current space context".
+	lifecycleID, projectGroupID := waitForSpaceDefaults(t, spaceClient, createdSpace.GetID())
+
 	return &TestSpace{
-		ID:     createdSpace.GetID(),
-		Name:   createdSpace.GetName(),
-		Client: spaceClient,
+		ID:             createdSpace.GetID(),
+		Name:           createdSpace.GetName(),
+		Client:         spaceClient,
+		LifecycleID:    lifecycleID,
+		ProjectGroupID: projectGroupID,
 	}
+}
+
+func waitForSpaceDefaults(t *testing.T, spaceClient *client.Client, spaceID string) (lifecycleID string, projectGroupID string) {
+	t.Helper()
+
+	deadline := time.Now().Add(1 * time.Minute)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		lifecycleID, projectGroupID, lastErr = getSpaceDefaults(spaceClient, spaceID)
+		if lastErr == nil {
+			return lifecycleID, projectGroupID
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	t.Fatalf("timed out waiting for default lifecycle and project group in space %q: %s", spaceID, lastErr)
+	return "", ""
+}
+
+func getSpaceDefaults(spaceClient *client.Client, spaceID string) (lifecycleID string, projectGroupID string, err error) {
+	allLifecycles, err := lifecycles.GetAll(spaceClient, spaceID)
+	if err != nil {
+		return "", "", err
+	}
+	if len(allLifecycles) == 0 {
+		return "", "", fmt.Errorf("no lifecycles found yet")
+	}
+
+	allProjectGroups, err := projectgroups.GetAll(spaceClient, spaceID)
+	if err != nil {
+		return "", "", err
+	}
+	if len(allProjectGroups) == 0 {
+		return "", "", fmt.Errorf("no project groups found yet")
+	}
+
+	return allLifecycles[0].GetID(), allProjectGroups[0].GetID(), nil
 }

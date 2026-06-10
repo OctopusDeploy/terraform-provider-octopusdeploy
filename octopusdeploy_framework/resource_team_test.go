@@ -146,7 +146,7 @@ func TestAccOctopusDeployTeamImport(t *testing.T) {
 }
 
 func testAccTeamBasic(localName string, name string, description string, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_team" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_team" "%s" {
 		name        = "%s"
 		description = "%s"
 		space_id    = "%s"
@@ -154,7 +154,7 @@ func testAccTeamBasic(localName string, name string, description string, spaceID
 }
 
 func testAccTeamWithUserRole(localName string, name string, description string, userRoleName string, spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		granted_space_permissions = ["AccountCreate"]
 		name = "%s"
@@ -253,7 +253,7 @@ func TestAccOctopusDeployTeamScopedUserRoleNoConflict(t *testing.T) {
 }
 
 func testAccTeamWithoutUserRolesConfig(teamName, spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 resource "octopusdeploy_team" "test_team" {
 	name        = "%s"
 	description = "Test team without user roles"
@@ -263,7 +263,7 @@ resource "octopusdeploy_team" "test_team" {
 }
 
 func testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName, spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 resource "octopusdeploy_user_role" "test_user_role" {
 	name = "%s"
 	description = "Test user role"

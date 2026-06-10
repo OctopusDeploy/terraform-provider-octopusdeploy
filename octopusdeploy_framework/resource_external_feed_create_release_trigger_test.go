@@ -205,7 +205,7 @@ func testAccExternalFeedCreateReleaseTriggerWithPrimaryPackage(spaceID, localNam
 }
 
 func testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_lifecycle" "%s" {
 		space_id = "%s"
 		name     = "%s"

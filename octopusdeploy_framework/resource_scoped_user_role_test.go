@@ -157,7 +157,7 @@ func TestAccOctopusDeployScopedUserRoleImport(t *testing.T) {
 }
 
 func testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName, spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -172,7 +172,7 @@ func testAccScopedUserRoleBasic(localName, userRoleLocalName, userRoleName, spac
 }
 
 func testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, projectGroupLocalName, projectGroupName, spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -199,7 +199,7 @@ func testAccScopedUserRoleWithScopes(localName, userRoleLocalName, userRoleName,
 }
 
 func testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -220,7 +220,7 @@ func testAccScopedUserRoleUpdate1(localName, userRoleLocalName, userRoleName, en
 }
 
 func testAccScopedUserRoleUpdate2(localName, userRoleLocalName, userRoleName, environmentLocalName, environmentName, environment2LocalName, environment2Name, spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		name = "%s"
 		description = "Test user role with environment permissions"

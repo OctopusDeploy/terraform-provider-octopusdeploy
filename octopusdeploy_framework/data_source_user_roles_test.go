@@ -101,7 +101,7 @@ func testAccDataSourceUserRolesWithFiltersConfig(localName, partialName string) 
 }
 
 func testAccDataSourceUserRolesWithSpaceIdConfig(localName, spaceID string) string {
-	return fmt.Sprintf(`data "octopusdeploy_user_roles" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`data "octopusdeploy_user_roles" "%s" {
 		space_id = "%s"
 		take = 10
 	}`, localName, spaceID)

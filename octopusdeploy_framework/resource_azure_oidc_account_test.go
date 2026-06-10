@@ -155,7 +155,7 @@ func TestAccOctopusDeployAzureOIDCAccountImport(t *testing.T) {
 }
 
 func testAccAzureOIDCAccountBasic(spaceID, localName, name, description string, applicationID, tenantID, subscriptionID uuid.UUID) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_openid_connect" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_openid_connect" "%s" {
 		name            = "%s"
 		description     = "%s"
 		application_id  = "%s"
@@ -167,7 +167,7 @@ func testAccAzureOIDCAccountBasic(spaceID, localName, name, description string, 
 }
 
 func testAccAzureOIDCAccountWithSubjectKeys(spaceID, localName, name, description string, applicationID, tenantID, subscriptionID uuid.UUID) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_openid_connect" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_openid_connect" "%s" {
 		name                      = "%s"
 		description               = "%s"
 		application_id            = "%s"

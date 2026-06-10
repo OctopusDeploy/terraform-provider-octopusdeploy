@@ -148,7 +148,7 @@ func TestAccOctopusDeployDynamicWorkerPoolImport(t *testing.T) {
 }
 
 func testAccDynamicWorkerPoolBasic(localName, name, workerType, description string, isDefault bool, sortOrder int, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_dynamic_worker_pool" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_dynamic_worker_pool" "%s" {
 		name        = "%s"
 		worker_type = "%s"
 		description = "%s"
@@ -159,7 +159,7 @@ func testAccDynamicWorkerPoolBasic(localName, name, workerType, description stri
 }
 
 func testAccDynamicWorkerPoolMinimal(localName, name, workerType, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_dynamic_worker_pool" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_dynamic_worker_pool" "%s" {
 		name        = "%s"
 		worker_type = "%s"
 		space_id    = "%s"

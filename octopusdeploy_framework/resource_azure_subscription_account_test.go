@@ -172,7 +172,7 @@ func TestAccOctopusDeployAzureSubscriptionAccountImport(t *testing.T) {
 }
 
 func testAccAzureSubscriptionAccountBasic(localName, name, description string, subscriptionID uuid.UUID, azureEnvironment, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
 		name                    = "%s"
 		description             = "%s"
 		subscription_id         = "%s"
@@ -184,7 +184,7 @@ func testAccAzureSubscriptionAccountBasic(localName, name, description string, s
 }
 
 func testAccAzureSubscriptionAccountMinimal(localName, name string, subscriptionID uuid.UUID, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
 		name            = "%s"
 		subscription_id = "%s"
 		space_id        = "%s"
@@ -192,7 +192,7 @@ func testAccAzureSubscriptionAccountMinimal(localName, name string, subscription
 }
 
 func testAccAzureSubscriptionAccountTenanted(localName, name string, subscriptionID uuid.UUID, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
 		name                              = "%s"
 		subscription_id                   = "%s"
 		space_id                          = "%s"

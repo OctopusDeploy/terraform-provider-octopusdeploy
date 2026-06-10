@@ -145,7 +145,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountImport(t *testing.T) {
 }
 
 func testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
 		name         = "%s"
 		description  = "%s"
 		role_arn     = "%s"
@@ -154,7 +154,7 @@ func testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn, 
 }
 
 func testAccAWSOpenIDConnectAccountWithSubjectKeys(localName, name, description, roleArn, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
 		name                     = "%s"
 		description              = "%s"
 		role_arn                 = "%s"

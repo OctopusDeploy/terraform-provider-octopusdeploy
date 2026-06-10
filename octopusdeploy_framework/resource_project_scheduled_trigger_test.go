@@ -255,7 +255,7 @@ func testAccProjectScheduledTriggerOnceDailySchedule(spaceID, localName, lifecyc
 }
 
 func testAccProjectScheduledTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, environmentLocalName, environmentName, environmentDescription string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_lifecycle" "%s" {
 		space_id = "%s"
 		name = "%s"

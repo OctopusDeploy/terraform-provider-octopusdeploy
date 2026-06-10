@@ -120,14 +120,14 @@ func TestAccOctopusDeployMachinePolicyImport(t *testing.T) {
 }
 
 func testAccMachinePolicyBasic(localName, name, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
 		name     = "%s"
 		space_id = "%s"
 	}`, localName, name, spaceID)
 }
 
 func testAccMachinePolicyWithDescription(localName, name, description, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
 		name        = "%s"
 		description = "%s"
 		space_id    = "%s"
@@ -135,7 +135,7 @@ func testAccMachinePolicyWithDescription(localName, name, description, spaceID s
 }
 
 func testAccMachinePolicyWithConnectivitySettings(localName, name, spaceID string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
 		name                           = "%s"
 		space_id                       = "%s"
 		connection_connect_timeout     = 60000000000

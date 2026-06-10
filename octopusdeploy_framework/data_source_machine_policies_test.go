@@ -101,7 +101,7 @@ func testAccDataSourceMachinePoliciesWithFiltersConfig(localName, partialName st
 }
 
 func testAccDataSourceMachinePoliciesWithSpaceIdConfig(localName, spaceID string) string {
-	return fmt.Sprintf(`data "octopusdeploy_machine_policies" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`data "octopusdeploy_machine_policies" "%s" {
 		space_id = "%s"
 		take = 10
 	}`, localName, spaceID)

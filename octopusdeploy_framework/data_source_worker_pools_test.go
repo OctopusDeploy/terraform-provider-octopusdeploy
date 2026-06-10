@@ -101,7 +101,7 @@ func testAccDataSourceWorkerPoolsWithFiltersConfig(localName, partialName string
 }
 
 func testAccDataSourceWorkerPoolsWithSpaceIdConfig(localName, spaceID string) string {
-	return fmt.Sprintf(`data "octopusdeploy_worker_pools" "%s" {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`data "octopusdeploy_worker_pools" "%s" {
 		space_id = "%s"
 		take = 10
 	}`, localName, spaceID)

@@ -156,7 +156,7 @@ func TestAccOctopusDeploySSHConnectionDeploymentTargetImport(t *testing.T) {
 }
 
 func testAccSSHConnectionDeploymentTargetBasic(spaceID, localName, environmentLocalName, name, environmentName, host string, port int, fingerprint string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 		resource "octopusdeploy_environment" "%s" {
 			name        = "%s"
 			description = "Test environment for SSH connection deployment target"
@@ -183,7 +183,7 @@ func testAccSSHConnectionDeploymentTargetBasic(spaceID, localName, environmentLo
 }
 
 func testAccSSHConnectionDeploymentTargetWithAccount(spaceID, localName, environmentLocalName, accountLocalName, name, environmentName, accountName, host string, port int, fingerprint string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 		resource "octopusdeploy_environment" "%s" {
 			name        = "%s"
 			description = "Test environment for SSH connection deployment target"

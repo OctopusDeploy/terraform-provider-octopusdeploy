@@ -54,7 +54,7 @@ func TestTenantResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 }
 
 func tenantConfig(spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_tenant" "tenant1" {
 		space_id    = "%s"
 		name        = "tenant test"
@@ -62,7 +62,7 @@ func tenantConfig(spaceID string) string {
 }
 
 func updatedTenantResourceConfig(spaceID string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 resource "octopusdeploy_tag_set" "tagset_tag1" {
   space_id    = "%s"
   name        = "tag1"

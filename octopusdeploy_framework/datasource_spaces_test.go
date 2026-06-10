@@ -34,7 +34,7 @@ func TestAccDataSourceSpaces(t *testing.T) {
 }
 
 func testAccDataSourceSpacesConfig(spaceID string) string {
-	tfConfig := fmt.Sprintf(`
+	tfConfig := providerSpaceConfig(spaceID) + fmt.Sprintf(`
 		data "octopusdeploy_spaces" "test" {
 		  ids  = ["%s"]
 		  skip = 0

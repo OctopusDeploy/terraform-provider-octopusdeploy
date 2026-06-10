@@ -81,7 +81,7 @@ func TestScopedUserRoleResource_UpgradeFromSDK_ToPluginFramework_WithScopes(t *t
 }
 
 func scopedUserRoleConfig(spaceID, userRoleName string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		name = "%s"
 		description = "Test user role with environment permissions"
@@ -96,7 +96,7 @@ func scopedUserRoleConfig(spaceID, userRoleName string) string {
 }
 
 func scopedUserRoleConfigWithScopes(spaceID, userRoleName, environmentName string) string {
-	return fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		name = "%s"
 		description = "Test user role with environment permissions"
