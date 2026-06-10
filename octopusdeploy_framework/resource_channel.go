@@ -98,11 +98,7 @@ func (r *channelResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	channel := expandChannel(ctx, plan)
-	updateReq := newclient.NewUpdateRequest(channel)
-	if !plan.CustomFieldDefinitions.IsUnknown() &&
-		(plan.CustomFieldDefinitions.IsNull() || len(plan.CustomFieldDefinitions.Elements()) == 0) {
-		updateReq.Clear("CustomFieldDefinitions")
-	}
+	updateReq := buildChannelUpdateRequest(channel, plan)
 	updatedChannel, err := channels.UpdateChannel(r.Client, updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating channel", err.Error())
@@ -154,6 +150,24 @@ func expandChannel(ctx context.Context, model schemas.ChannelModel) *channels.Ch
 	channel.EphemeralEnvironmentNameTemplate = model.EphemeralEnvironmentNameTemplate.ValueString()
 
 	return channel
+}
+
+func buildChannelUpdateRequest(channel *channels.Channel, plan schemas.ChannelModel) *newclient.UpdateRequest[channels.Channel] {
+	updateReq := newclient.NewUpdateRequest(channel)
+	if !plan.CustomFieldDefinitions.IsUnknown() &&
+		(plan.CustomFieldDefinitions.IsNull() || len(plan.CustomFieldDefinitions.Elements()) == 0) {
+		updateReq.Clear("CustomFieldDefinitions")
+	}
+	if !plan.Rule.IsUnknown() &&
+		(plan.Rule.IsNull() || len(plan.Rule.Elements()) == 0) {
+		updateReq.Clear("Rules")
+	}
+	if !plan.TenantTags.IsUnknown() &&
+		(plan.TenantTags.IsNull() || len(plan.TenantTags.Elements()) == 0) {
+		updateReq.Clear("TenantTags")
+	}
+
+	return updateReq
 }
 
 func expandChannelRules(rules types.List) []channels.ChannelRule {
