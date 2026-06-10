@@ -114,9 +114,12 @@ jobs:
         run: |
           docker pull docker.packages.octopushq.com/octopusdeploy/octopusdeploy
           if [ "${{ steps.mssql-cache.outputs.cache-hit }}" != "true" ]; then
-            # Pull by digest for determinism; the local tag becomes MSSQL_TAG,
-            # which is what the test framework and docker save reference.
+            # Pull by digest for determinism, then explicitly apply the plain
+            # MSSQL_TAG. A digest pull does not reliably create the plain tag on
+            # all Docker engines, so tag it ourselves: the test framework starts
+            # the container by MSSQL_TAG, and docker save needs that reference.
             docker pull "mcr.microsoft.com/mssql/server:${MSSQL_PINNED}"
+            docker tag "mcr.microsoft.com/mssql/server:${MSSQL_PINNED}" "mcr.microsoft.com/mssql/server:${MSSQL_TAG}"
             docker save "mcr.microsoft.com/mssql/server:${MSSQL_TAG}" --output ~/mssql-image.tar
           fi
       - name: Test
