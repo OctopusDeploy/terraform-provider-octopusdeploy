@@ -10,6 +10,17 @@ name: Tests
     branches:
       - main
 
+env:
+  # Tag the test framework starts the MSSQL container with. testcontainers only
+  # pulls when the image is absent locally, so a tag restored from the cache (or
+  # pre-pulled) is reused without hitting the registry. Kept as a plain tag
+  # because `docker load` does not restore the registry digest, so a tag@digest
+  # reference would fail the local-presence check and trigger a re-pull.
+  MSSQL_TAG: 2019-latest
+  # Immutable digest of MSSQL_TAG as of 2026-06-10, used only to pin the pull and
+  # key the cache so the build is deterministic. Re-resolve to take SQL patches.
+  MSSQL_PINNED: 2019-latest@sha256:5b89fce40832a459ad4d634e9d588ae1e4496e664d9a4a9f8baeed6949b53fef
+
 jobs:
   tests:
     name: Test
@@ -85,10 +96,29 @@ jobs:
             direct {}
           }
           EOT
+      # Cache the MSSQL image as a tarball so it is loaded from cache instead of
+      # re-pulled (~1.5GB) on every run. The cache key is the pinned digest, so
+      # bumping MSSQL_PINNED invalidates it. The Octopus image stays on :latest
+      # (mutable) and is pulled fresh each run, since tests are expected to run
+      # against the newest server build.
+      - name: Restore cached MSSQL image
+        id: mssql-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/mssql-image.tar
+          key: mssql-image-${{ env.MSSQL_PINNED }}
+      - name: Load cached MSSQL image
+        if: steps.mssql-cache.outputs.cache-hit == 'true'
+        run: docker load --input ~/mssql-image.tar
       - name: Pre-pull container images
         run: |
           docker pull docker.packages.octopushq.com/octopusdeploy/octopusdeploy
-          docker pull mcr.microsoft.com/mssql/server:2019-latest
+          if [ "${{ steps.mssql-cache.outputs.cache-hit }}" != "true" ]; then
+            # Pull by digest for determinism; the local tag becomes MSSQL_TAG,
+            # which is what the test framework and docker save reference.
+            docker pull "mcr.microsoft.com/mssql/server:${MSSQL_PINNED}"
+            docker save "mcr.microsoft.com/mssql/server:${MSSQL_TAG}" --output ~/mssql-image.tar
+          fi
       - name: Test
         run: |
           GOBIN=$PWD/bin go install gotest.tools/gotestsum@latest
@@ -103,6 +133,7 @@ jobs:
           OCTOTESTVERSION: latest
           OCTOTESTIMAGEURL: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
           OCTOTESTRETRYCOUNT: 0
+          OCTO_MSSQLTAG: ${{ env.MSSQL_TAG }}
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
