@@ -44,7 +44,8 @@ Please ensure you are working from a clean slate and have no pending changes to 
 1. Transpose `run_on_server` to the `execution_properties` using the key `Octopus.Action.RunOnServer`
 1. Transpose `window_size` to the `execution_properties` using the key `Octopus.Action.TargetRoles`
 1. Transpose `target_roles` to the `properties` using the key `Octopus.Action.TargetRoles`
-1. Transpose `primary_package` to the `packages` attribute with the key being an empty string `""`
+1. Transpose the `primary_package` block to the new resource's `primary_package` attribute
+1. Transpose any additional `package` blocks to the `packages` attribute, with the key being the name of each package reference
 1. Repeat until all parent `steps` have been transposed
 1. For child steps create a new resource of type `octopusdeploy_process_child_step` (nested actions) for regular child steps or `octopusdeploy_process_templated_child_step` for templated child steps
 1. Set the `process_id` to the `id` of the new process resource

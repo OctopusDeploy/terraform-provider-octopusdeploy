@@ -127,7 +127,7 @@ resource "octopusdeploy_process_step" "deploy_package" {
 - `is_required` (Boolean) Indicates the required status of this step.
 - `notes` (String) The notes associated with this step.
 - `package_requirement` (String) Whether to run this step before or after package acquisition (if possible).
-- `packages` (Attributes Map) Package references associated with this step where key is a name of the package reference (use empty name for primary package) (see [below for nested schema](#nestedatt--packages))
+- `packages` (Attributes Map) Package references associated with this step where key is a name of the package reference (see [below for nested schema](#nestedatt--packages))
 - `primary_package` (Attributes) Primary package of the step (see [below for nested schema](#nestedatt--primary_package))
 - `properties` (Map of String) A collection of process step properties where the key is the property name and the value is its value.
 - `slug` (String) The human-readable unique identifier for the step.
