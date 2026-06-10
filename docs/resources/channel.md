@@ -32,6 +32,8 @@ resource "octopusdeploy_channel" "example" {
 - `custom_field_definitions` (Attributes List) A list of custom field definitions for this channel. Maximum of 10. (see [below for nested schema](#nestedatt--custom_field_definitions))
 - `description` (String) The description of this channel.
 - `ephemeral_environment_name_template` (String) The name template for ephemeral environments created from this channel.
+- `git_reference_rules` (List of String) A list of Git reference rules that constrain which Git refs can be deployed through this channel.
+- `git_resource_rule` (Block List) A list of Git resource rules associated with this channel. (see [below for nested schema](#nestedblock--git_resource_rule))
 - `is_default` (Boolean) Indicates whether this is the default channel for the associated project.
 - `lifecycle_id` (String) The lifecycle ID associated with this channel.
 - `parent_environment_id` (String) The parent environment ID for ephemeral environments.
@@ -51,6 +53,24 @@ Required:
 
 - `description` (String) The description of the custom field.
 - `field_name` (String) The name of the custom field.
+
+
+<a id="nestedblock--git_resource_rule"></a>
+### Nested Schema for `git_resource_rule`
+
+Optional:
+
+- `git_dependency_action` (Block List) (see [below for nested schema](#nestedblock--git_resource_rule--git_dependency_action))
+- `id` (String) The ID associated with this Git resource rule.
+- `rules` (List of String) Git ref rules to apply to the selected Git dependency actions.
+
+<a id="nestedblock--git_resource_rule--git_dependency_action"></a>
+### Nested Schema for `git_resource_rule.git_dependency_action`
+
+Optional:
+
+- `deployment_action_slug` (String)
+- `git_dependency_name` (String)
 
 
 <a id="nestedblock--rule"></a>

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/gitdependencies"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/newclient"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/packages"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
@@ -142,6 +143,8 @@ func expandChannel(ctx context.Context, model schemas.ChannelModel) *channels.Ch
 	channel.IsDefault = model.IsDefault.ValueBool()
 	channel.LifecycleID = model.LifecycleId.ValueString()
 	channel.CustomFieldDefinitions = expandChannelCustomFieldDefinitions(model.CustomFieldDefinitions)
+	channel.GitReferenceRules = expandChannelStringList(model.GitReferenceRules)
+	channel.GitResourceRules = expandChannelGitResourceRules(model.GitResourceRule)
 	channel.Rules = expandChannelRules(model.Rule)
 	channel.SpaceID = model.SpaceId.ValueString()
 	channel.TenantTags = util.ExpandStringSet(model.TenantTags)
@@ -166,8 +169,81 @@ func buildChannelUpdateRequest(channel *channels.Channel, plan schemas.ChannelMo
 		(plan.TenantTags.IsNull() || len(plan.TenantTags.Elements()) == 0) {
 		updateReq.Clear("TenantTags")
 	}
+	if !plan.GitReferenceRules.IsUnknown() &&
+		(plan.GitReferenceRules.IsNull() || len(plan.GitReferenceRules.Elements()) == 0) {
+		updateReq.Clear("GitReferenceRules")
+	}
+	if !plan.GitResourceRule.IsUnknown() &&
+		(plan.GitResourceRule.IsNull() || len(plan.GitResourceRule.Elements()) == 0) {
+		updateReq.Clear("GitResourceRules")
+	}
 
 	return updateReq
+}
+
+func expandChannelStringList(values types.List) []string {
+	if values.IsNull() || values.IsUnknown() || len(values.Elements()) == 0 {
+		return nil
+	}
+
+	var result []string
+	values.ElementsAs(context.Background(), &result, false)
+	if len(result) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+func expandChannelGitResourceRules(rules types.List) []channels.ChannelGitResourceRule {
+	if rules.IsNull() || rules.IsUnknown() || len(rules.Elements()) == 0 {
+		return nil
+	}
+
+	result := make([]channels.ChannelGitResourceRule, 0, len(rules.Elements()))
+	for _, ruleElem := range rules.Elements() {
+		ruleObj := ruleElem.(types.Object)
+		ruleAttrs := ruleObj.Attributes()
+
+		var gitResourceRule channels.ChannelGitResourceRule
+		if v, ok := ruleAttrs["id"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+			gitResourceRule.Id = v.ValueString()
+		}
+		if v, ok := ruleAttrs["rules"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
+			gitResourceRule.Rules = expandChannelStringList(v)
+		}
+		if v, ok := ruleAttrs["git_dependency_action"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
+			gitResourceRule.GitDependencyActions = expandDeploymentActionGitDependencies(v)
+		}
+
+		result = append(result, gitResourceRule)
+	}
+
+	return result
+}
+
+func expandDeploymentActionGitDependencies(actions types.List) []gitdependencies.DeploymentActionGitDependency {
+	if actions.IsNull() || actions.IsUnknown() || len(actions.Elements()) == 0 {
+		return nil
+	}
+
+	result := make([]gitdependencies.DeploymentActionGitDependency, 0, len(actions.Elements()))
+	for _, actionElem := range actions.Elements() {
+		actionObj := actionElem.(types.Object)
+		actionAttrs := actionObj.Attributes()
+
+		var action gitdependencies.DeploymentActionGitDependency
+		if v, ok := actionAttrs["deployment_action_slug"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+			action.DeploymentActionSlug = v.ValueString()
+		}
+		if v, ok := actionAttrs["git_dependency_name"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+			action.GitDependencyName = v.ValueString()
+		}
+
+		result = append(result, action)
+	}
+
+	return result
 }
 
 func expandChannelRules(rules types.List) []channels.ChannelRule {
@@ -274,6 +350,8 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 	model.ProjectId = types.StringValue(channel.ProjectID)
 
 	model.CustomFieldDefinitions = flattenChannelCustomFieldDefinitions(channel.CustomFieldDefinitions)
+	model.GitReferenceRules = flattenChannelStringList(channel.GitReferenceRules, model.GitReferenceRules)
+	model.GitResourceRule = flattenChannelGitResourceRules(channel.GitResourceRules, model.GitResourceRule)
 	model.Rule = flattenChannelRules(channel.Rules, model.Rule)
 
 	if channel.SpaceID == "" && model.SpaceId.IsNull() {
@@ -291,9 +369,28 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 	return model
 }
 
+func flattenChannelStringList(values []string, current types.List) types.List {
+	if len(values) == 0 {
+		if current.IsNull() {
+			return types.ListNull(types.StringType)
+		}
+		return types.ListValueMust(types.StringType, []attr.Value{})
+	}
+
+	flattened := make([]attr.Value, 0, len(values))
+	for _, value := range values {
+		flattened = append(flattened, types.StringValue(value))
+	}
+
+	return types.ListValueMust(types.StringType, flattened)
+}
+
 func flattenChannelRules(rules []channels.ChannelRule, currentRules types.List) types.List {
 	if rules == nil || len(rules) == 0 {
-		return types.ListNull(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()})
+		if currentRules.IsNull() {
+			return types.ListNull(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()})
+		}
+		return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}, []attr.Value{})
 	}
 
 	flattenedRules := make([]attr.Value, 0, len(rules))
@@ -305,11 +402,47 @@ func flattenChannelRules(rules []channels.ChannelRule, currentRules types.List) 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}, flattenedRules)
 }
 
+func flattenChannelGitResourceRules(rules []channels.ChannelGitResourceRule, currentRules types.List) types.List {
+	if len(rules) == 0 {
+		if currentRules.IsNull() {
+			return types.ListNull(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()})
+		}
+		return types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{})
+	}
+
+	flattenedRules := make([]attr.Value, 0, len(rules))
+	for _, rule := range rules {
+		flattenedRules = append(flattenedRules, types.ObjectValueMust(getChannelGitResourceRuleAttrTypes(), map[string]attr.Value{
+			"id":                    util.StringOrNull(rule.Id),
+			"rules":                 flattenChannelStringList(rule.Rules, types.ListNull(types.StringType)),
+			"git_dependency_action": flattenDeploymentActionGitDependencies(rule.GitDependencyActions),
+		}))
+	}
+
+	return types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, flattenedRules)
+}
+
+func flattenDeploymentActionGitDependencies(actions []gitdependencies.DeploymentActionGitDependency) types.List {
+	if len(actions) == 0 {
+		return types.ListNull(types.ObjectType{AttrTypes: getDeploymentActionGitDependencyAttrTypes()})
+	}
+
+	flattenedActions := make([]attr.Value, 0, len(actions))
+	for _, action := range actions {
+		flattenedActions = append(flattenedActions, types.ObjectValueMust(getDeploymentActionGitDependencyAttrTypes(), map[string]attr.Value{
+			"deployment_action_slug": util.StringOrNull(action.DeploymentActionSlug),
+			"git_dependency_name":    util.StringOrNull(action.GitDependencyName),
+		}))
+	}
+
+	return types.ListValueMust(types.ObjectType{AttrTypes: getDeploymentActionGitDependencyAttrTypes()}, flattenedActions)
+}
+
 func flattenChannelRule(rule *channels.ChannelRule) types.Object {
 	return types.ObjectValueMust(getChannelRuleAttrTypes(), map[string]attr.Value{
 		"action_package": flattenChannelRuleDeploymentActionPackages(rule.ActionPackages),
 		"id":             types.StringValue(rule.ID),
-		"tag":            types.StringValue(rule.Tag),
+		"tag":            util.StringOrNull(rule.Tag),
 		"version_range":  util.StringOrNull(rule.VersionRange),
 	})
 
@@ -346,6 +479,25 @@ func getChannelRuleAttrTypes() map[string]attr.Type {
 		"id":            types.StringType,
 		"tag":           types.StringType,
 		"version_range": types.StringType,
+	}
+}
+
+func getChannelGitResourceRuleAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":    types.StringType,
+		"rules": types.ListType{ElemType: types.StringType},
+		"git_dependency_action": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: getDeploymentActionGitDependencyAttrTypes(),
+			},
+		},
+	}
+}
+
+func getDeploymentActionGitDependencyAttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"deployment_action_slug": types.StringType,
+		"git_dependency_name":    types.StringType,
 	}
 }
 
