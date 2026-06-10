@@ -81,8 +81,8 @@ resource "octopusdeploy_process_step" "deploy_package" {
   }
   type = "Octopus.TentaclePackage"
   primary_package = {
-      package_id: "my.package"
-      feed_id: "Feeds-1"
+    package_id = "my.package"
+    feed_id = "Feeds-1"
   }
 
   execution_properties = {
@@ -142,8 +142,8 @@ resource "octopusdeploy_process_step" "deploy_package" {
   }
   type = "Octopus.TentaclePackage"
   primary_package = {
-      package_id: "my.package"
-      feed_id: "Feeds-1"
+    package_id = "my.package"
+    feed_id = "Feeds-1"
   }
   execution_properties = {
     "Octopus.Action.RunOnServer" = "True"
