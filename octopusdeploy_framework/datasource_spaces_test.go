@@ -9,7 +9,8 @@ import (
 )
 
 func TestAccDataSourceSpaces(t *testing.T) {
-	spaceID := "Spaces-1"
+	space := NewTestSpace(t)
+	spaceID := space.ID
 	resourceName := "data.octopusdeploy_spaces.test"
 
 	resource.Test(t, resource.TestCase{
@@ -33,7 +34,7 @@ func TestAccDataSourceSpaces(t *testing.T) {
 }
 
 func testAccDataSourceSpacesConfig(spaceID string) string {
-	tfConfig := fmt.Sprintf(`
+	tfConfig := providerSpaceConfig(spaceID) + fmt.Sprintf(`
 		data "octopusdeploy_spaces" "test" {
 		  ids  = ["%s"]
 		  skip = 0

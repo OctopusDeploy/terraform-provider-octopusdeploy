@@ -71,14 +71,17 @@ func TestAccTenantProjectVariableBasic(t *testing.T) {
 func testAccTenantProjectVariable(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, projectLocalName string, projectName string, projectDescription string, primaryEnvironmentLocalName string, primaryEnvironmentName string, secondaryEnvironmentLocalName string, secondaryEnvironmentName string, tenantLocalName string, tenantName string, tenantDescription string, primaryLocalName string, primaryValue string, secondaryLocalName string, secondaryValue string) string {
 	allowDynamicInfrastructure := false
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	sortOrder := acctest.RandIntRange(0, 10)
+	// Each environment must use a distinct sort_order; the server reassigns
+	// duplicate sort_order values, which would produce an inconsistent plan result.
+	primarySortOrder := acctest.RandIntRange(0, 10)
+	secondarySortOrder := primarySortOrder + 1
 	useGuidedFailure := false
 
 	var tfconfig = testAccLifecycle(lifecycleLocalName, lifecycleName) + "\n" +
 		testAccProjectGroup(projectGroupLocalName, projectGroupName) + "\n" +
 		testAccProjectWithTemplate(projectLocalName, projectName, lifecycleLocalName, projectGroupLocalName) + "\n" +
-		testAccEnvironment(primaryEnvironmentLocalName, primaryEnvironmentName, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure) + "\n" +
-		testAccEnvironment(secondaryEnvironmentLocalName, secondaryEnvironmentName, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure) + "\n" +
+		testAccEnvironment(primaryEnvironmentLocalName, primaryEnvironmentName, description, allowDynamicInfrastructure, primarySortOrder, useGuidedFailure) + "\n" +
+		testAccEnvironment(secondaryEnvironmentLocalName, secondaryEnvironmentName, description, allowDynamicInfrastructure, secondarySortOrder, useGuidedFailure) + "\n" +
 		testAccTenantWithProjectEnvironment(tenantLocalName, tenantName, projectLocalName, primaryEnvironmentLocalName, secondaryEnvironmentLocalName) + "\n" +
 		testTenantProjectVariable(primaryLocalName, primaryEnvironmentLocalName, projectLocalName, tenantLocalName, projectLocalName, primaryValue) + "\n" +
 		testTenantProjectVariable(secondaryLocalName, secondaryEnvironmentLocalName, projectLocalName, tenantLocalName, projectLocalName, secondaryValue)
@@ -360,13 +363,15 @@ func TestAccTenantProjectVariableMigration(t *testing.T) {
 func testAccTenantProjectVariableMigrationV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, localName, value string) string {
 	allowDynamicInfrastructure := false
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	// Each environment must use a distinct sort_order; the server reassigns
+	// duplicate sort_order values, which would produce an inconsistent plan result.
 	sortOrder := acctest.RandIntRange(1, 10)
 	useGuidedFailure := false
 
 	return fmt.Sprintf(testAccLifecycle(lifecycleLocalName, lifecycleName)+"\n"+
 		testAccProjectGroup(projectGroupLocalName, projectGroupName)+"\n"+
 		testAccEnvironment(env1LocalName, env1Name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure)+"\n"+
-		testAccEnvironment(env2LocalName, env2Name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure)+"\n"+`
+		testAccEnvironment(env2LocalName, env2Name, description, allowDynamicInfrastructure, sortOrder+1, useGuidedFailure)+"\n"+`
         resource "octopusdeploy_project" "%[1]s" {
             lifecycle_id     = octopusdeploy_lifecycle.%[2]s.id
             name             = "%[3]s"
@@ -408,13 +413,15 @@ func testAccTenantProjectVariableMigrationV1(lifecycleLocalName, lifecycleName, 
 func testAccTenantProjectVariableMigrationV2(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, localName, value string) string {
 	allowDynamicInfrastructure := false
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	// Each environment must use a distinct sort_order; the server reassigns
+	// duplicate sort_order values, which would produce an inconsistent plan result.
 	sortOrder := acctest.RandIntRange(1, 10)
 	useGuidedFailure := false
 
 	return fmt.Sprintf(testAccLifecycle(lifecycleLocalName, lifecycleName)+"\n"+
 		testAccProjectGroup(projectGroupLocalName, projectGroupName)+"\n"+
 		testAccEnvironment(env1LocalName, env1Name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure)+"\n"+
-		testAccEnvironment(env2LocalName, env2Name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure)+"\n"+`
+		testAccEnvironment(env2LocalName, env2Name, description, allowDynamicInfrastructure, sortOrder+1, useGuidedFailure)+"\n"+`
         resource "octopusdeploy_project" "%[1]s" {
             lifecycle_id     = octopusdeploy_lifecycle.%[2]s.id
             name             = "%[3]s"
@@ -509,6 +516,8 @@ func TestAccTenantProjectVariableWithScope(t *testing.T) {
 func testAccTenantProjectVariableWithScope(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, env1LocalName, env1Name, env2LocalName, env2Name, tenantLocalName, tenantName, variableLocalName, value string) string {
 	allowDynamicInfrastructure := false
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	// Each environment must use a distinct sort_order; the server reassigns
+	// duplicate sort_order values, which would produce an inconsistent plan result.
 	sortOrder := acctest.RandIntRange(1, 10)
 	useGuidedFailure := false
 
@@ -516,7 +525,7 @@ func testAccTenantProjectVariableWithScope(lifecycleLocalName, lifecycleName, pr
 		testAccProjectGroup(projectGroupLocalName, projectGroupName) + "\n" +
 		testAccProjectWithTemplate(projectLocalName, projectName, lifecycleLocalName, projectGroupLocalName) + "\n" +
 		testAccEnvironment(env1LocalName, env1Name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure) + "\n" +
-		testAccEnvironment(env2LocalName, env2Name, description, allowDynamicInfrastructure, sortOrder, useGuidedFailure) + "\n" +
+		testAccEnvironment(env2LocalName, env2Name, description, allowDynamicInfrastructure, sortOrder+1, useGuidedFailure) + "\n" +
 		testAccTenantWithProjectEnvironment(tenantLocalName, tenantName, projectLocalName, env1LocalName, env2LocalName) + "\n" +
 		testTenantProjectVariableWithScope(variableLocalName, projectLocalName, tenantLocalName, env1LocalName, env2LocalName, value)
 }
