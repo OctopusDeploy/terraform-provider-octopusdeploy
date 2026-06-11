@@ -68,23 +68,14 @@ provider "octopusdeploy" {
 }
 
 // NewTestSpace creates a fresh, isolated space with its task queue stopped and
-// registers cleanup so the space is removed when the test finishes. Most
-// acceptance tests only manipulate configuration and never need the task queue
-// running, so stopping it avoids the space spending resources processing tasks.
-// Use NewTestSpaceWithTaskQueue if a test needs the queue running (e.g. it
-// triggers deployments or runbook runs).
-func NewTestSpace(t *testing.T) *TestSpace {
-	return NewTestSpaceWithTaskQueue(t, false)
-}
-
-// NewTestSpaceWithTaskQueue creates a fresh, isolated space and registers
-// cleanup so the space is removed when the test finishes. It fails the test on
-// any error. When taskQueueEnabled is false the space is created with its task
-// queue stopped.
+// registers cleanup so the space is removed when the test finishes. It fails
+// the test on any error. Acceptance tests only manipulate configuration and
+// never need the task queue running, so stopping it avoids the space spending
+// resources processing tasks.
 //
 // The space is created with the calling API key's user as a space manager so
 // that the same credentials retain full access to the new space.
-func NewTestSpaceWithTaskQueue(t *testing.T, taskQueueEnabled bool) *TestSpace {
+func NewTestSpace(t *testing.T) *TestSpace {
 	t.Helper()
 
 	if octoClient == nil {
@@ -110,11 +101,9 @@ func NewTestSpaceWithTaskQueue(t *testing.T, taskQueueEnabled bool) *TestSpace {
 
 	// A space can't be created with a stopped task queue via the create call;
 	// it needs a subsequent update (mirroring the space resource's Create).
-	if !taskQueueEnabled {
-		createdSpace.TaskQueueStopped = true
-		if createdSpace, err = spaces.Update(octoClient, createdSpace); err != nil {
-			t.Fatalf("failed to stop task queue for test space %q: %s", createdSpace.GetID(), err)
-		}
+	createdSpace.TaskQueueStopped = true
+	if createdSpace, err = spaces.Update(octoClient, createdSpace); err != nil {
+		t.Fatalf("failed to stop task queue for test space %q: %s", createdSpace.GetID(), err)
 	}
 
 	t.Cleanup(func() {
