@@ -73,7 +73,7 @@ func MapFromVariablePromptOptions(variablePromptOptions *variables.VariablePromp
 
 	// The Octopus server injects a default display_settings onto every prompted
 	// variable. Only surface it when the prior state already declared display_settings.
-	displaySettingsDeclared := false
+	displaySettingsDeclared := true
 	if !currentState.IsNull() && len(currentState.Elements()) > 0 {
 		if obj, ok := currentState.Elements()[0].(types.Object); ok {
 			if displaySettings, ok := obj.Attributes()[VariableSchemaAttributeNames.DisplaySettings].(types.List); ok {
