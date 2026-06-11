@@ -97,6 +97,50 @@ func TestBuildChannelUpdateRequest_ClearsEmptyCollections(t *testing.T) {
 	assert.JSONEq(t, `[]`, string(payload["TenantTags"]))
 }
 
+func TestBuildChannelUpdateRequest_ClearsExplicitEmptyCollections(t *testing.T) {
+	channel := channels.NewChannel("channel", "Projects-1")
+	channel.CustomFieldDefinitions = []channels.ChannelCustomFieldDefinition{{
+		FieldName:   "field",
+		Description: "description",
+	}}
+	channel.Rules = []channels.ChannelRule{{
+		ID:           "ChannelRules-1",
+		Tag:          "beta",
+		VersionRange: "[1.0.0,2.0.0)",
+	}}
+	channel.TenantTags = []string{"TagSets-1/tag-a"}
+	channel.GitReferenceRules = []string{"refs/heads/main"}
+	channel.GitResourceRules = []channels.ChannelGitResourceRule{{
+		Id:    "ChannelGitResourceRules-1",
+		Rules: []string{"refs/tags/*"},
+		GitDependencyActions: []gitdependencies.DeploymentActionGitDependency{{
+			DeploymentActionSlug: "deploy-package",
+			GitDependencyName:    "app-config",
+		}},
+	}}
+
+	plan := schemas.ChannelModel{
+		CustomFieldDefinitions: types.ListValueMust(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()}, []attr.Value{}),
+		GitReferenceRules:      types.ListValueMust(types.StringType, []attr.Value{}),
+		GitResourceRule:        types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{}),
+		Rule:                   types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}, []attr.Value{}),
+		TenantTags:             types.SetValueMust(types.StringType, []attr.Value{}),
+	}
+
+	updateReq := buildChannelUpdateRequest(channel, plan)
+	body, err := json.Marshal(updateReq)
+	require.NoError(t, err)
+
+	var payload map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(body, &payload))
+
+	assert.JSONEq(t, `[]`, string(payload["CustomFieldDefinitions"]))
+	assert.JSONEq(t, `[]`, string(payload["GitReferenceRules"]))
+	assert.JSONEq(t, `[]`, string(payload["GitResourceRules"]))
+	assert.JSONEq(t, `[]`, string(payload["Rules"]))
+	assert.JSONEq(t, `[]`, string(payload["TenantTags"]))
+}
+
 func TestExpandAndFlattenChannelGitRules(t *testing.T) {
 	model := schemas.ChannelModel{
 		GitReferenceRules: types.ListValueMust(types.StringType, []attr.Value{
@@ -158,6 +202,35 @@ func TestAccChannelRuleRemoval(t *testing.T) {
 					testChannelExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "rule.#", "0"),
 					testChannelRuleCount(resourceName, 0),
+				),
+			},
+		},
+	})
+}
+
+func TestAccChannelTenantTagRemoval(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := fmt.Sprintf("octopusdeploy_channel.%s", localName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy:             testChannelDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testChannelWithTenantTags(localName, true),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "tenant_tags.#", "1"),
+					testChannelTenantTagCount(resourceName, 1),
+				),
+			},
+			{
+				Config: testChannelWithTenantTags(localName, false),
+				Check: resource.ComposeTestCheckFunc(
+					testChannelExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "tenant_tags.#", "0"),
+					testChannelTenantTagCount(resourceName, 0),
 				),
 			},
 		},
@@ -303,6 +376,26 @@ func testChannelRuleCount(resourceName string, expected int) resource.TestCheckF
 
 		if len(channel.Rules) != expected {
 			return fmt.Errorf("expected %d channel rules, got %d", expected, len(channel.Rules))
+		}
+
+		return nil
+	}
+}
+
+func testChannelTenantTagCount(resourceName string, expected int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		channelID, err := getChannelID(s, resourceName)
+		if err != nil {
+			return err
+		}
+
+		channel, err := channels.GetByID(octoClient, octoClient.GetSpaceID(), channelID)
+		if err != nil {
+			return fmt.Errorf("channel %s not found", channelID)
+		}
+
+		if len(channel.TenantTags) != expected {
+			return fmt.Errorf("expected %d tenant tags, got %d", expected, len(channel.TenantTags))
 		}
 
 		return nil
@@ -489,6 +582,50 @@ func testChannelWithRule(localName string, includeRule bool) string {
 		  depends_on = [octopusdeploy_process_step.package_step]
 		}
 	`, localName, ruleBlock)
+}
+
+func testChannelWithTenantTags(localName string, includeTenantTags bool) string {
+	tenantTags := ""
+	if includeTenantTags {
+		tenantTags = "tenant_tags = [octopusdeploy_tag.channel_tag.canonical_tag_name]"
+	}
+
+	return fmt.Sprintf(`
+		data "octopusdeploy_lifecycles" "default" {
+		  ids          = null
+		  partial_name = "Default Lifecycle"
+		  skip         = 0
+		  take         = 1
+		}
+
+		resource "octopusdeploy_project_group" "%[1]s" {
+		  name = "%[1]s"
+		}
+
+		resource "octopusdeploy_project" "%[1]s" {
+		  lifecycle_id     = data.octopusdeploy_lifecycles.default.lifecycles[0].id
+		  name             = "%[1]s"
+		  project_group_id = octopusdeploy_project_group.%[1]s.id
+		}
+
+		resource "octopusdeploy_tag_set" "%[1]s" {
+		  name = "%[1]s"
+		}
+
+		resource "octopusdeploy_tag" "channel_tag" {
+		  name        = "%[1]s"
+		  color       = "#6e6e6e"
+		  description = "Channel tag"
+		  tag_set_id  = octopusdeploy_tag_set.%[1]s.id
+		}
+
+		resource "octopusdeploy_channel" "%[1]s" {
+		  name       = "%[1]s"
+		  project_id = octopusdeploy_project.%[1]s.id
+
+		  %[2]s
+		}
+	`, localName, tenantTags)
 }
 
 func testChannelWithGitReferenceRules(localName, basePath, gitURL, gitUsername, gitPassword string, gitReferenceRules []string) string {
