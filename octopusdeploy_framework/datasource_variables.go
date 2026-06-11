@@ -72,7 +72,7 @@ func (v *variablesDataSource) Read(ctx context.Context, req datasource.ReadReque
 	if variable.Prompt != nil {
 		data.Prompt = types.ListValueMust(
 			types.ObjectType{AttrTypes: schemas.VariablePromptOptionsObjectType()},
-			[]attr.Value{schemas.MapFromVariablePromptOptions(variable.Prompt)},
+			[]attr.Value{schemas.MapFromVariablePromptOptions(variable.Prompt, data.Prompt)},
 		)
 	}
 	if !variable.Scope.IsEmpty() {
