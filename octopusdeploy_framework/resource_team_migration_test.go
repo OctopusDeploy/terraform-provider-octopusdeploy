@@ -53,6 +53,7 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T) {
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
+	space := NewTestSpace(t)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -67,11 +68,11 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T
 						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
-				Config: teamConfigWithUserRole(name, description, userRoleName),
+				Config: teamConfigWithUserRole(space.ID, name, description, userRoleName),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   teamConfigWithUserRole(name, description, userRoleName),
+				Config:                   teamConfigWithUserRole(space.ID, name, description, userRoleName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -80,16 +81,16 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   updateTeamConfigWithUserRole(name, description, userRoleName),
+				Config:                   updateTeamConfigWithUserRole(space.ID, name, description, userRoleName),
 				Check: resource.ComposeTestCheckFunc(
-					testTeamWithUserRole(t, name, description),
+					testTeamWithUserRole(t, space.ID, name, description),
 				),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   updateTeamConfigWithSystemLevelUserRole(name, description, userRoleName),
+				Config:                   updateTeamConfigWithSystemLevelUserRole(space.ID, name, description, userRoleName),
 				Check: resource.ComposeTestCheckFunc(
-					testTeamWithSystemLevelUserRole(t, name, description),
+					testTeamWithSystemLevelUserRole(t, space.ID, name, description),
 				),
 			},
 		},
@@ -110,8 +111,8 @@ func updateTeamConfig(name, description string) string {
 	}`, name, description)
 }
 
-func teamConfigWithUserRole(name, description, userRoleName string) string {
-	return fmt.Sprintf(`
+func teamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		granted_space_permissions = ["AccountCreate"]
 		name = "%s"
@@ -122,14 +123,14 @@ func teamConfigWithUserRole(name, description, userRoleName string) string {
 		description = "%s"
 
 		user_role {
-			space_id = "Spaces-1"
+			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, name, description)
+	}`, userRoleName, name, description, spaceID)
 }
 
-func updateTeamConfigWithUserRole(name, description, userRoleName string) string {
-	return fmt.Sprintf(`
+func updateTeamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		granted_space_permissions = ["AccountCreate"]
 		name = "%s"
@@ -140,14 +141,14 @@ func updateTeamConfigWithUserRole(name, description, userRoleName string) string
 		description = "%s - updated"
 
 		user_role {
-			space_id = "Spaces-1"
+			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, name, description)
+	}`, userRoleName, name, description, spaceID)
 }
 
-func updateTeamConfigWithSystemLevelUserRole(name, description, userRoleName string) string {
-	return fmt.Sprintf(`
+func updateTeamConfigWithSystemLevelUserRole(spaceID, name, description, userRoleName string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		granted_space_permissions = ["AccountCreate"]
 		name = "%s"
@@ -163,7 +164,7 @@ func updateTeamConfigWithSystemLevelUserRole(name, description, userRoleName str
 		description = "%s - updated"
 
 		user_role {
-			space_id = "Spaces-1"
+			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
 
@@ -171,7 +172,7 @@ func updateTeamConfigWithSystemLevelUserRole(name, description, userRoleName str
 			space_id = null
 			user_role_id = octopusdeploy_user_role.user_role2.id
 		}
-	}`, userRoleName, userRoleName, name, description)
+	}`, userRoleName, userRoleName, name, description, spaceID)
 }
 
 func testTeamDestroy(s *terraform.State) error {
@@ -205,7 +206,7 @@ func testTeam(t *testing.T, name, description string) resource.TestCheckFunc {
 	}
 }
 
-func testTeamWithUserRole(t *testing.T, name, description string) resource.TestCheckFunc {
+func testTeamWithUserRole(t *testing.T, spaceID, name, description string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		teamId := s.RootModule().Resources["octopusdeploy_team.team1"].Primary.ID
 		team, err := octoClient.Teams.GetByID(teamId)
@@ -224,13 +225,13 @@ func testTeamWithUserRole(t *testing.T, name, description string) resource.TestC
 
 		assert.NotEmpty(t, userRoles.Items, "Team should have user roles")
 		assert.Len(t, userRoles.Items, 1, "Team should have exactly one user role")
-		assert.Equal(t, "Spaces-1", userRoles.Items[0].SpaceID, "User role space ID should match")
+		assert.Equal(t, spaceID, userRoles.Items[0].SpaceID, "User role space ID should match")
 
 		return nil
 	}
 }
 
-func testTeamWithSystemLevelUserRole(t *testing.T, name, description string) resource.TestCheckFunc {
+func testTeamWithSystemLevelUserRole(t *testing.T, spaceID, name, description string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		teamId := s.RootModule().Resources["octopusdeploy_team.team1"].Primary.ID
 		team, err := octoClient.Teams.GetByID(teamId)
@@ -255,7 +256,7 @@ func testTeamWithSystemLevelUserRole(t *testing.T, name, description string) res
 			if item.SpaceID == "" {
 				spacelessCount++
 			} else {
-				assert.Equal(t, "Spaces-1", item.SpaceID, "Space-scoped user role should be scoped to Spaces-1")
+				assert.Equal(t, spaceID, item.SpaceID, "Space-scoped user role should be scoped to the test space")
 				spaceScopedCount++
 			}
 		}
