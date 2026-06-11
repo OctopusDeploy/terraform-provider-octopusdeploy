@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -258,9 +260,13 @@ func getVariablePromptResourceSchema() resourceSchema.ListNestedBlock {
 				SchemaAttributeNames.Description: GetDescriptionResourceSchema("variable prompt option"),
 				VariableSchemaAttributeNames.IsRequired: resourceSchema.BoolAttribute{
 					Optional: true,
+					Computed: true,
+					Default:  booldefault.StaticBool(false),
 				},
 				VariableSchemaAttributeNames.Label: resourceSchema.StringAttribute{
 					Optional: true,
+					Computed: true,
+					Default:  stringdefault.StaticString(""),
 				},
 			},
 			Blocks: map[string]resourceSchema.Block{
