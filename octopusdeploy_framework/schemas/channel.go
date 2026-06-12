@@ -18,7 +18,7 @@ type ChannelModel struct {
 	Description                      types.String `tfsdk:"description"`
 	EphemeralEnvironmentNameTemplate types.String `tfsdk:"ephemeral_environment_name_template"`
 	GitReferenceRules                types.List   `tfsdk:"git_reference_rules"`
-	GitResourceRule                  types.List   `tfsdk:"git_resource_rule"`
+	GitResourceRules                 types.List   `tfsdk:"git_resource_rules"`
 	IsDefault                        types.Bool   `tfsdk:"is_default"`
 	LifecycleId                      types.String `tfsdk:"lifecycle_id"`
 	Name                             types.String `tfsdk:"name"`
@@ -47,6 +47,43 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 				Description: "A list of Git reference rules that constrain which Git refs can be deployed through this channel.",
 				Optional:    true,
 				ElementType: types.StringType,
+			},
+			"git_resource_rules": resourceSchema.ListNestedAttribute{
+				Description: "A list of Git resource rules associated with this channel.",
+				Optional:    true,
+				NestedObject: resourceSchema.NestedAttributeObject{
+					Attributes: map[string]resourceSchema.Attribute{
+						"id": resourceSchema.StringAttribute{
+							Description: "The ID associated with this Git resource rule.",
+							Computed:    true,
+							Optional:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"rules": resourceSchema.ListAttribute{
+							Description: "Git ref rules to apply to the selected Git dependency actions.",
+							Optional:    true,
+							ElementType: types.StringType,
+						},
+						"git_dependency_actions": resourceSchema.ListNestedAttribute{
+							Description: "A list of Git dependency actions that these Git ref rules apply to.",
+							Optional:    true,
+							NestedObject: resourceSchema.NestedAttributeObject{
+								Attributes: map[string]resourceSchema.Attribute{
+									"deployment_action_slug": resourceSchema.StringAttribute{
+										Description: "The slug of the deployment action that the Git dependency belongs to.",
+										Optional:    true,
+									},
+									"git_dependency_name": resourceSchema.StringAttribute{
+										Description: "The name of the Git dependency that these rules apply to.",
+										Optional:    true,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			"is_default": resourceSchema.BoolAttribute{
 				Description: "Indicates whether this is the default channel for the associated project.",
@@ -100,37 +137,6 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 			},
 		},
 		Blocks: map[string]resourceSchema.Block{
-			"git_resource_rule": resourceSchema.ListNestedBlock{
-				Description: "A list of Git resource rules associated with this channel.",
-				NestedObject: resourceSchema.NestedBlockObject{
-					Attributes: map[string]resourceSchema.Attribute{
-						"id": resourceSchema.StringAttribute{
-							Description: "The ID associated with this Git resource rule.",
-							Computed:    true,
-							Optional:    true,
-						},
-						"rules": resourceSchema.ListAttribute{
-							Description: "Git ref rules to apply to the selected Git dependency actions.",
-							Optional:    true,
-							ElementType: types.StringType,
-						},
-					},
-					Blocks: map[string]resourceSchema.Block{
-						"git_dependency_action": resourceSchema.ListNestedBlock{
-							NestedObject: resourceSchema.NestedBlockObject{
-								Attributes: map[string]resourceSchema.Attribute{
-									"deployment_action_slug": resourceSchema.StringAttribute{
-										Optional: true,
-									},
-									"git_dependency_name": resourceSchema.StringAttribute{
-										Optional: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 			"rule": resourceSchema.ListNestedBlock{
 				Description: "A list of rules associated with this channel.",
 				NestedObject: resourceSchema.NestedBlockObject{
@@ -139,6 +145,9 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 							Description: "The ID associated with this channel rule.",
 							Computed:    true,
 							Optional:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"tag": resourceSchema.StringAttribute{
 							Optional: true,

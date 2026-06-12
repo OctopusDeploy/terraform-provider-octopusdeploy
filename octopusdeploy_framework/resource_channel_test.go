@@ -78,7 +78,7 @@ func TestBuildChannelUpdateRequest_ClearsEmptyCollections(t *testing.T) {
 	plan := schemas.ChannelModel{
 		CustomFieldDefinitions: types.ListNull(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()}),
 		GitReferenceRules:      types.ListNull(types.StringType),
-		GitResourceRule:        types.ListNull(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}),
+		GitResourceRules:       types.ListNull(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}),
 		Rule:                   types.ListNull(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}),
 		TenantTags:             types.SetNull(types.StringType),
 	}
@@ -122,7 +122,7 @@ func TestBuildChannelUpdateRequest_ClearsExplicitEmptyCollections(t *testing.T) 
 	plan := schemas.ChannelModel{
 		CustomFieldDefinitions: types.ListValueMust(types.ObjectType{AttrTypes: getChannelCustomFieldDefinitionAttrTypes()}, []attr.Value{}),
 		GitReferenceRules:      types.ListValueMust(types.StringType, []attr.Value{}),
-		GitResourceRule:        types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{}),
+		GitResourceRules:       types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{}),
 		Rule:                   types.ListValueMust(types.ObjectType{AttrTypes: getChannelRuleAttrTypes()}, []attr.Value{}),
 		TenantTags:             types.SetValueMust(types.StringType, []attr.Value{}),
 	}
@@ -147,11 +147,11 @@ func TestExpandAndFlattenChannelGitRules(t *testing.T) {
 			types.StringValue("refs/heads/main"),
 			types.StringValue("refs/tags/release-*"),
 		}),
-		GitResourceRule: types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{
+		GitResourceRules: types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{
 			types.ObjectValueMust(getChannelGitResourceRuleAttrTypes(), map[string]attr.Value{
 				"id":    types.StringValue("ChannelGitResourceRules-1"),
 				"rules": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("refs/heads/release/*")}),
-				"git_dependency_action": types.ListValueMust(types.ObjectType{AttrTypes: getDeploymentActionGitDependencyAttrTypes()}, []attr.Value{
+				"git_dependency_actions": types.ListValueMust(types.ObjectType{AttrTypes: getDeploymentActionGitDependencyAttrTypes()}, []attr.Value{
 					types.ObjectValueMust(getDeploymentActionGitDependencyAttrTypes(), map[string]attr.Value{
 						"deployment_action_slug": types.StringValue("deploy-package"),
 						"git_dependency_name":    types.StringValue("app-config"),
@@ -172,11 +172,11 @@ func TestExpandAndFlattenChannelGitRules(t *testing.T) {
 
 	flattened := flattenChannel(t.Context(), channel, schemas.ChannelModel{
 		GitReferenceRules: types.ListNull(types.StringType),
-		GitResourceRule:   types.ListNull(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}),
+		GitResourceRules:  types.ListNull(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}),
 	})
 
 	assert.Equal(t, 2, len(flattened.GitReferenceRules.Elements()))
-	assert.Equal(t, 1, len(flattened.GitResourceRule.Elements()))
+	assert.Equal(t, 1, len(flattened.GitResourceRules.Elements()))
 }
 
 func TestAccChannelRuleRemoval(t *testing.T) {
@@ -302,12 +302,12 @@ func TestAccChannelGitResourceRules(t *testing.T) {
 				Config: testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, actionSlug, dependencyName, []string{"refs/heads/main"}),
 				Check: resource.ComposeTestCheckFunc(
 					testChannelExists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.0", "refs/heads/main"),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.git_dependency_action.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.git_dependency_action.0.deployment_action_slug", actionSlug),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.git_dependency_action.0.git_dependency_name", dependencyName),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.0.rules.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.0.rules.0", "refs/heads/main"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.0.git_dependency_actions.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.0.git_dependency_actions.0.deployment_action_slug", actionSlug),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.0.git_dependency_actions.0.git_dependency_name", dependencyName),
 					testChannelGitResourceRules(resourceName, []string{"refs/heads/main"}, actionSlug, dependencyName),
 				),
 			},
@@ -315,9 +315,9 @@ func TestAccChannelGitResourceRules(t *testing.T) {
 				Config: testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, actionSlug, dependencyName, []string{"refs/heads/release/*"}),
 				Check: resource.ComposeTestCheckFunc(
 					testChannelExists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.0.rules.0", "refs/heads/release/*"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.0.rules.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.0.rules.0", "refs/heads/release/*"),
 					testChannelGitResourceRules(resourceName, []string{"refs/heads/release/*"}, actionSlug, dependencyName),
 				),
 			},
@@ -325,7 +325,7 @@ func TestAccChannelGitResourceRules(t *testing.T) {
 				Config: testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, gitPassword, guidedFailureMode, actionSlug, dependencyName, nil),
 				Check: resource.ComposeTestCheckFunc(
 					testChannelExists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "git_resource_rule.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "git_resource_rules.#", "0"),
 					testChannelGitResourceRuleCount(resourceName, 0),
 				),
 			},
@@ -648,14 +648,14 @@ func testChannelWithGitResourceRules(localName, basePath, gitURL, gitUsername, g
 	ruleBlock := ""
 	if gitResourceRules != nil {
 		ruleBlock = fmt.Sprintf(`
-		  git_resource_rule {
+		  git_resource_rules = [{
 		    rules = %[1]s
 
-		    git_dependency_action {
+		    git_dependency_actions = [{
 		      deployment_action_slug = %[2]q
 		      git_dependency_name    = %[3]q
-		    }
-		  }
+		    }]
+		  }]
 		`, quoteStringList(gitResourceRules), actionSlug, dependencyName)
 	}
 

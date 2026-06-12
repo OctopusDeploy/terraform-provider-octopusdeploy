@@ -143,8 +143,8 @@ func expandChannel(ctx context.Context, model schemas.ChannelModel) *channels.Ch
 	channel.IsDefault = model.IsDefault.ValueBool()
 	channel.LifecycleID = model.LifecycleId.ValueString()
 	channel.CustomFieldDefinitions = expandChannelCustomFieldDefinitions(model.CustomFieldDefinitions)
-	channel.GitReferenceRules = expandChannelStringList(model.GitReferenceRules)
-	channel.GitResourceRules = expandChannelGitResourceRules(model.GitResourceRule)
+	channel.GitReferenceRules = expandChannelStringList(ctx, model.GitReferenceRules)
+	channel.GitResourceRules = expandChannelGitResourceRules(ctx, model.GitResourceRules)
 	channel.Rules = expandChannelRules(model.Rule)
 	channel.SpaceID = model.SpaceId.ValueString()
 	channel.TenantTags = util.ExpandStringSet(model.TenantTags)
@@ -173,21 +173,21 @@ func buildChannelUpdateRequest(channel *channels.Channel, plan schemas.ChannelMo
 		(plan.GitReferenceRules.IsNull() || len(plan.GitReferenceRules.Elements()) == 0) {
 		updateReq.Clear("GitReferenceRules")
 	}
-	if !plan.GitResourceRule.IsUnknown() &&
-		(plan.GitResourceRule.IsNull() || len(plan.GitResourceRule.Elements()) == 0) {
+	if !plan.GitResourceRules.IsUnknown() &&
+		(plan.GitResourceRules.IsNull() || len(plan.GitResourceRules.Elements()) == 0) {
 		updateReq.Clear("GitResourceRules")
 	}
 
 	return updateReq
 }
 
-func expandChannelStringList(values types.List) []string {
+func expandChannelStringList(ctx context.Context, values types.List) []string {
 	if values.IsNull() || values.IsUnknown() || len(values.Elements()) == 0 {
 		return nil
 	}
 
 	var result []string
-	values.ElementsAs(context.Background(), &result, false)
+	values.ElementsAs(ctx, &result, false)
 	if len(result) == 0 {
 		return nil
 	}
@@ -195,7 +195,7 @@ func expandChannelStringList(values types.List) []string {
 	return result
 }
 
-func expandChannelGitResourceRules(rules types.List) []channels.ChannelGitResourceRule {
+func expandChannelGitResourceRules(ctx context.Context, rules types.List) []channels.ChannelGitResourceRule {
 	if rules.IsNull() || rules.IsUnknown() || len(rules.Elements()) == 0 {
 		return nil
 	}
@@ -210,9 +210,9 @@ func expandChannelGitResourceRules(rules types.List) []channels.ChannelGitResour
 			gitResourceRule.Id = v.ValueString()
 		}
 		if v, ok := ruleAttrs["rules"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
-			gitResourceRule.Rules = expandChannelStringList(v)
+			gitResourceRule.Rules = expandChannelStringList(ctx, v)
 		}
-		if v, ok := ruleAttrs["git_dependency_action"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
+		if v, ok := ruleAttrs["git_dependency_actions"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
 			gitResourceRule.GitDependencyActions = expandDeploymentActionGitDependencies(v)
 		}
 
@@ -351,7 +351,7 @@ func flattenChannel(ctx context.Context, channel *channels.Channel, model schema
 
 	model.CustomFieldDefinitions = flattenChannelCustomFieldDefinitions(channel.CustomFieldDefinitions)
 	model.GitReferenceRules = flattenChannelStringList(channel.GitReferenceRules, model.GitReferenceRules)
-	model.GitResourceRule = flattenChannelGitResourceRules(channel.GitResourceRules, model.GitResourceRule)
+	model.GitResourceRules = flattenChannelGitResourceRules(channel.GitResourceRules, model.GitResourceRules)
 	model.Rule = flattenChannelRules(channel.Rules, model.Rule)
 
 	if channel.SpaceID == "" && model.SpaceId.IsNull() {
@@ -413,9 +413,9 @@ func flattenChannelGitResourceRules(rules []channels.ChannelGitResourceRule, cur
 	flattenedRules := make([]attr.Value, 0, len(rules))
 	for _, rule := range rules {
 		flattenedRules = append(flattenedRules, types.ObjectValueMust(getChannelGitResourceRuleAttrTypes(), map[string]attr.Value{
-			"id":                    util.StringOrNull(rule.Id),
-			"rules":                 flattenChannelStringList(rule.Rules, types.ListNull(types.StringType)),
-			"git_dependency_action": flattenDeploymentActionGitDependencies(rule.GitDependencyActions),
+			"id":                     util.StringOrNull(rule.Id),
+			"rules":                  flattenChannelStringList(rule.Rules, types.ListNull(types.StringType)),
+			"git_dependency_actions": flattenDeploymentActionGitDependencies(rule.GitDependencyActions),
 		}))
 	}
 
@@ -486,7 +486,7 @@ func getChannelGitResourceRuleAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":    types.StringType,
 		"rules": types.ListType{ElemType: types.StringType},
-		"git_dependency_action": types.ListType{
+		"git_dependency_actions": types.ListType{
 			ElemType: types.ObjectType{
 				AttrTypes: getDeploymentActionGitDependencyAttrTypes(),
 			},
