@@ -34,7 +34,7 @@ Once your pull request is merged, our build and test workflow will execute once 
 
 ## Merging Pull Requests from External Contributors
 
-Our PR checks don't run automatically on pull requests from forks. You can approve the run from the PR, but it won't help: the checks require access to secrets that GitHub Actions won't expose to a workflow running in the contributor's profile rather than the Octopus organization, so they will always fail and the change can't be validated where it is. To work around this, redirect the change through a branch in this repository so the checks can run before it reaches `main`.
+Our PR checks don't run automatically on pull requests from forks. You can approve the run from the PR, but it won't help: the checks require access to values that GitHub Actions won't expose to a workflow running in the contributor's profile rather than the Octopus organization, so they will always fail and the change can't be validated where it is. To work around this, redirect the change through a branch in this repository so the checks can run before it reaches `main`.
 
 > [!IMPORTANT]
 > Don't merge a fork PR directly into `main`. Follow the steps below to redirect it through a branch in this repository first.
