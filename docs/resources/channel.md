@@ -80,7 +80,7 @@ Optional:
 <a id="nestedatt--git_resource_rules--git_dependency_actions"></a>
 ### Nested Schema for `git_resource_rules.git_dependency_actions`
 
-Optional:
+Required:
 
 - `deployment_action_slug` (String) The slug of the deployment action that the Git dependency belongs to.
 - `git_dependency_name` (String) The name of the Git dependency that these rules apply to. Specify an empty string when the deployment action has a single Git dependency.

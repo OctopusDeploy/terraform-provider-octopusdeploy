@@ -73,11 +73,11 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 								Attributes: map[string]resourceSchema.Attribute{
 									"deployment_action_slug": resourceSchema.StringAttribute{
 										Description: "The slug of the deployment action that the Git dependency belongs to.",
-										Optional:    true,
+										Required:    true,
 									},
 									"git_dependency_name": resourceSchema.StringAttribute{
 										Description: "The name of the Git dependency that these rules apply to. Specify an empty string when the deployment action has a single Git dependency.",
-										Optional:    true,
+										Required:    true,
 									},
 								},
 							},

@@ -143,8 +143,8 @@ func expandChannel(ctx context.Context, model schemas.ChannelModel) *channels.Ch
 	channel.IsDefault = model.IsDefault.ValueBool()
 	channel.LifecycleID = model.LifecycleId.ValueString()
 	channel.CustomFieldDefinitions = expandChannelCustomFieldDefinitions(model.CustomFieldDefinitions)
-	channel.GitReferenceRules = expandChannelStringList(ctx, model.GitReferenceRules)
-	channel.GitResourceRules = expandChannelGitResourceRules(ctx, model.GitResourceRules)
+	channel.GitReferenceRules = util.ExpandStringList(model.GitReferenceRules)
+	channel.GitResourceRules = expandChannelGitResourceRules(model.GitResourceRules)
 	channel.Rules = expandChannelRules(model.Rule)
 	channel.SpaceID = model.SpaceId.ValueString()
 	channel.TenantTags = util.ExpandStringSet(model.TenantTags)
@@ -181,21 +181,7 @@ func buildChannelUpdateRequest(channel *channels.Channel, plan schemas.ChannelMo
 	return updateReq
 }
 
-func expandChannelStringList(ctx context.Context, values types.List) []string {
-	if values.IsNull() || values.IsUnknown() || len(values.Elements()) == 0 {
-		return nil
-	}
-
-	var result []string
-	values.ElementsAs(ctx, &result, false)
-	if len(result) == 0 {
-		return nil
-	}
-
-	return result
-}
-
-func expandChannelGitResourceRules(ctx context.Context, rules types.List) []channels.ChannelGitResourceRule {
+func expandChannelGitResourceRules(rules types.List) []channels.ChannelGitResourceRule {
 	if rules.IsNull() || rules.IsUnknown() || len(rules.Elements()) == 0 {
 		return nil
 	}
@@ -210,7 +196,7 @@ func expandChannelGitResourceRules(ctx context.Context, rules types.List) []chan
 			gitResourceRule.Id = v.ValueString()
 		}
 		if v, ok := ruleAttrs["rules"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
-			gitResourceRule.Rules = expandChannelStringList(ctx, v)
+			gitResourceRule.Rules = util.ExpandStringList(v)
 		}
 		if v, ok := ruleAttrs["git_dependency_actions"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
 			gitResourceRule.GitDependencyActions = expandDeploymentActionGitDependencies(v)
