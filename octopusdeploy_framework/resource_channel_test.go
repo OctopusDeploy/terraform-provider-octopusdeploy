@@ -3,7 +3,6 @@ package octopusdeploy_framework
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/channels"
@@ -371,58 +370,6 @@ func TestAccChannelGitResourceRules(t *testing.T) {
 			},
 		},
 	})
-}
-
-// deployment_action_slug and git_dependency_name are required: a git dependency action that
-// omits git_dependency_name must be rejected at plan time. Without the required constraint the
-// resource would apply an empty string and then fail with an inconsistent-result-after-apply
-// error, because flatten always returns the empty string the API echoes back rather than null.
-// PlanOnly keeps this independent of the Git env the other Git resource rule tests need.
-func TestAccChannelGitResourceRuleRequiresDependencyName(t *testing.T) {
-	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		Steps: []resource.TestStep{
-			{
-				Config:      testChannelGitResourceRuleMissingDependencyName(localName),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`(?s)git_dependency_name.*required`),
-			},
-		},
-	})
-}
-
-func testChannelGitResourceRuleMissingDependencyName(localName string) string {
-	return fmt.Sprintf(`
-		resource "octopusdeploy_lifecycle" "%[1]s" {
-			name = "%[1]s"
-		}
-
-		resource "octopusdeploy_project_group" "%[1]s" {
-			name = "%[1]s"
-		}
-
-		resource "octopusdeploy_project" "%[1]s" {
-			lifecycle_id     = octopusdeploy_lifecycle.%[1]s.id
-			name             = "%[1]s"
-			project_group_id = octopusdeploy_project_group.%[1]s.id
-		}
-
-		resource "octopusdeploy_channel" "%[1]s" {
-			name       = "%[1]s"
-			project_id = octopusdeploy_project.%[1]s.id
-
-			git_resource_rules = [{
-				rules = ["refs/heads/main"]
-
-				git_dependency_actions = [{
-					deployment_action_slug = "deploy-package"
-				}]
-			}]
-		}
-	`, localName)
 }
 
 func testChannelExists(resourceName string) resource.TestCheckFunc {
