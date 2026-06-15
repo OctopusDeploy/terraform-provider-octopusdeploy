@@ -5,9 +5,11 @@ resource "octopusdeploy_channel" "example" {
 
 # A channel whose package version rule orders by publish date instead of
 # SemVer ("Most Recently Published"). Use this for packages versioned with
-# non-SemVer schemes such as date stamps or feature-branch tags. The
-# version_tag_regex matches the full version string in place of the SemVer
-# version_range / tag filtering.
+# non-SemVer schemes such as date stamps or feature-branch tags.
+#
+# versioning_strategy only changes the ordering of candidate versions; the
+# version_range, tag, and version_tag_regex filters are all applied together
+# to decide which versions satisfy the rule, regardless of strategy.
 #
 # Requires the `non-semver-ordering` feature toggle on the Octopus instance;
 # without it the server silently ignores the MostRecentlyPublished strategy.

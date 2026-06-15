@@ -47,9 +47,11 @@ func TestAccChannelBasic(t *testing.T) {
 }
 
 // TestAccChannelWithMRPRule covers the "Most Recently Published" ordering
-// strategy and the version-tag regex on a channel package version rule. Both
-// fields require the `non-semver-ordering` feature toggle to be enabled on the
-// target Octopus instance — without it the server silently ignores MRP rules
+// strategy and the version-tag regex on a channel package version rule. It also
+// asserts that version_range, tag, and version_tag_regex coexist with an MRP
+// strategy — versioning_strategy only changes ordering, not which filters apply.
+// These fields require the `non-semver-ordering` feature toggle to be enabled on
+// the target Octopus instance — without it the server silently ignores MRP rules
 // and the round-trip assertions below will fail.
 func TestAccChannelWithMRPRule(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -71,13 +73,16 @@ func TestAccChannelWithMRPRule(t *testing.T) {
 		CheckDestroy:             testChannelDestroy,
 		Steps: []resource.TestStep{
 			{
-				// Create an MRP rule with a catch-all version tag regex.
+				// Create an MRP rule with a catch-all regex plus the SemVer
+				// range/tag filters, which apply alongside the regex.
 				Config: testChannelWithMRPRule(localName, channelName, feedLocalName, feedName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, ".*"),
 				Check: resource.ComposeTestCheckFunc(
 					testChannelExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", channelName),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.versioning_strategy", "MostRecentlyPublished"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.version_tag_regex", ".*"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.version_range", "[1.0.0,)"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.tag", "^$"),
 				),
 			},
 			{
@@ -218,6 +223,8 @@ func testChannelWithMRPRule(localName, channelName, feedLocalName, feedName, lif
 			rule {
 				versioning_strategy = "MostRecentlyPublished"
 				version_tag_regex   = "%s"
+				version_range       = "[1.0.0,)"
+				tag                 = "^$"
 				action_package {
 					deployment_action = octopusdeploy_process_step.step.name
 					package_reference = "nuget-pkg"

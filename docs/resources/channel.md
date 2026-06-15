@@ -20,9 +20,11 @@ resource "octopusdeploy_channel" "example" {
 
 # A channel whose package version rule orders by publish date instead of
 # SemVer ("Most Recently Published"). Use this for packages versioned with
-# non-SemVer schemes such as date stamps or feature-branch tags. The
-# version_tag_regex matches the full version string in place of the SemVer
-# version_range / tag filtering.
+# non-SemVer schemes such as date stamps or feature-branch tags.
+#
+# versioning_strategy only changes the ordering of candidate versions; the
+# version_range, tag, and version_tag_regex filters are all applied together
+# to decide which versions satisfy the rule, regardless of strategy.
 #
 # Requires the `non-semver-ordering` feature toggle on the Octopus instance;
 # without it the server silently ignores the MostRecentlyPublished strategy.
@@ -85,8 +87,8 @@ Optional:
 - `id` (String) The ID associated with this channel rule.
 - `tag` (String)
 - `version_range` (String)
-- `version_tag_regex` (String) A regular expression matched against the full package version string. Used in place of `version_range` and `tag` filtering when `versioning_strategy` is `"MostRecentlyPublished"`.
-- `versioning_strategy` (String) The ordering strategy used to determine the latest package version. Valid values are `"SemVer"` (default) and `"MostRecentlyPublished"`. When `MostRecentlyPublished`, the channel ranks candidate package versions by publish date rather than by Semantic Versioning comparison; use this with non-SemVer schemes such as date-stamped or feature-branch tags. Requires the `non-semver-ordering` feature toggle on the Octopus instance.
+- `version_tag_regex` (String) An optional regular expression matched against the full package version string. Applied together with `version_range` and `tag` (it does not replace them) to determine which versions satisfy the rule, regardless of `versioning_strategy`. A malformed pattern is rejected on write.
+- `versioning_strategy` (String) The ordering strategy used to determine the latest package version. Valid values are `"SemVer"` (the default when omitted) and `"MostRecentlyPublished"` (case-insensitive). This only changes how candidate versions are *ordered* — by publish date rather than by Semantic Versioning comparison — it does not change which versions satisfy the rule. Use `"MostRecentlyPublished"` for non-SemVer schemes such as date stamps or build numbers. Not supported on container-registry feeds (Docker, DockerHub, GCR/GAR, OCI), which error at version-resolution time. Requires the `non-semver-ordering` feature toggle on the Octopus instance.
 
 <a id="nestedblock--rule--action_package"></a>
 ### Nested Schema for `rule.action_package`
