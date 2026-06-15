@@ -430,8 +430,8 @@ func flattenDeploymentActionGitDependencies(actions []gitdependencies.Deployment
 	flattenedActions := make([]attr.Value, 0, len(actions))
 	for _, action := range actions {
 		flattenedActions = append(flattenedActions, types.ObjectValueMust(getDeploymentActionGitDependencyAttrTypes(), map[string]attr.Value{
-			"deployment_action_slug": util.StringOrNull(action.DeploymentActionSlug),
-			"git_dependency_name":    util.StringOrNull(action.GitDependencyName),
+			"deployment_action_slug": types.StringValue(action.DeploymentActionSlug),
+			"git_dependency_name":    types.StringValue(action.GitDependencyName),
 		}))
 	}
 

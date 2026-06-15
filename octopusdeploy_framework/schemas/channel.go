@@ -76,7 +76,7 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 										Optional:    true,
 									},
 									"git_dependency_name": resourceSchema.StringAttribute{
-										Description: "The name of the Git dependency that these rules apply to.",
+										Description: "The name of the Git dependency that these rules apply to. Specify an empty string when the deployment action has a single Git dependency.",
 										Optional:    true,
 									},
 								},

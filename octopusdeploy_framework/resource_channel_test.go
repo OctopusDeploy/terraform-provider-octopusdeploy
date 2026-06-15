@@ -179,6 +179,45 @@ func TestExpandAndFlattenChannelGitRules(t *testing.T) {
 	assert.Equal(t, 1, len(flattened.GitResourceRules.Elements()))
 }
 
+// Ensures an empty git_dependency_name is sent to the API as an empty string (not omitted) and
+// must round-trip through flatten as an empty string (not null) so the planned and final state agree.
+func TestChannelGitDependencyNameEmptyStringPreserved(t *testing.T) {
+	model := schemas.ChannelModel{
+		GitResourceRules: types.ListValueMust(types.ObjectType{AttrTypes: getChannelGitResourceRuleAttrTypes()}, []attr.Value{
+			types.ObjectValueMust(getChannelGitResourceRuleAttrTypes(), map[string]attr.Value{
+				"id":    types.StringValue("ChannelGitResourceRules-1"),
+				"rules": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("refs/heads/main")}),
+				"git_dependency_actions": types.ListValueMust(types.ObjectType{AttrTypes: getDeploymentActionGitDependencyAttrTypes()}, []attr.Value{
+					types.ObjectValueMust(getDeploymentActionGitDependencyAttrTypes(), map[string]attr.Value{
+						"deployment_action_slug": types.StringValue("run-a-script-from-git"),
+						"git_dependency_name":    types.StringValue(""),
+					}),
+				}),
+			}),
+		}),
+	}
+
+	channel := expandChannel(t.Context(), model)
+	require.Len(t, channel.GitResourceRules, 1)
+	require.Len(t, channel.GitResourceRules[0].GitDependencyActions, 1)
+	assert.Equal(t, "", channel.GitResourceRules[0].GitDependencyActions[0].GitDependencyName)
+
+	// The empty string must survive JSON serialization (the SDK struct must not use
+	// `omitempty` on GitDependencyName), otherwise the API rejects the request.
+	body, err := json.Marshal(channel.GitResourceRules[0].GitDependencyActions[0])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"DeploymentActionSlug":"run-a-script-from-git","GitDependencyName":""}`, string(body))
+
+	// Flatten must keep the empty string rather than converting it to null, so the
+	// final state matches a planned empty string.
+	flattened := flattenDeploymentActionGitDependencies(channel.GitResourceRules[0].GitDependencyActions)
+	require.Equal(t, 1, len(flattened.Elements()))
+	action := flattened.Elements()[0].(types.Object)
+	name := action.Attributes()["git_dependency_name"].(types.String)
+	assert.False(t, name.IsNull(), "git_dependency_name should be an empty string, not null")
+	assert.Equal(t, "", name.ValueString())
+}
+
 func TestAccChannelRuleRemoval(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := fmt.Sprintf("octopusdeploy_channel.%s", localName)
