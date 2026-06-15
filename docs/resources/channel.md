@@ -86,6 +86,7 @@ Optional:
 - `git_dependency_name` (String) The name of the Git dependency that these rules apply to. Specify an empty string when the deployment action has a single Git dependency.
 
 
+
 <a id="nestedblock--rule"></a>
 ### Nested Schema for `rule`
 
