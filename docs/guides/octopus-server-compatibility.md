@@ -3,17 +3,10 @@ page_title: "Octopus Server compatibility"
 subcategory: "Upgrades & Migrations"
 ---
 
-# Version Matrix
-Provider supports major versions of Octopus Server.
-Provider may work with older versions of Octopus Server, see [Breaking Changes](./breaking-changes-list.md) and [Breaking Changes Policy](./breaking-changes-policy.md) for possible incompatibility 
+# Supported Versions
 
-## Supported versions
-
-| Server Version | Comment     |
-| -------------- | ----------- |
-| 2025.2         | Recommended |
-| 2025.1         |             |
-| 2024.4         |             |
+The provider supports major versions of Octopus Server 2024.4 and later. We recommend using the latest major version of Octopus Server to ensure all resources are fully supported.
+The provider may work with older versions of Octopus Server. See [Breaking Changes](./breaking-changes-list.md) and [Breaking Changes Policy](./breaking-changes-policy.md) for possible incompatibility issues.
 
 ## Partially supported resources
 
