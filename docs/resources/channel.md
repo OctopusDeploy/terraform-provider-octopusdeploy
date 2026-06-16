@@ -16,6 +16,19 @@ This resource manages channels in Octopus Deploy.
 resource "octopusdeploy_channel" "example" {
   name       = "Development Channel (OK to Delete)"
   project_id = "Projects-123"
+
+  # Constrain which Git refs can be deployed through this channel.
+  git_reference_rules = ["refs/heads/main", "refs/tags/release-*"]
+
+  # Apply Git ref rules to specific Git dependency actions.
+  git_resource_rules = [{
+    rules = ["refs/heads/main"]
+
+    git_dependency_actions = [{
+      deployment_action_slug = "deploy-application"
+      git_dependency_name    = "app-config"
+    }]
+  }]
 }
 ```
 
@@ -32,6 +45,8 @@ resource "octopusdeploy_channel" "example" {
 - `custom_field_definitions` (Attributes List) A list of custom field definitions for this channel. Maximum of 10. (see [below for nested schema](#nestedatt--custom_field_definitions))
 - `description` (String) The description of this channel.
 - `ephemeral_environment_name_template` (String) The name template for ephemeral environments created from this channel.
+- `git_reference_rules` (List of String) A list of Git reference rules that constrain which Git refs can be deployed through this channel.
+- `git_resource_rules` (Attributes List) A list of Git resource rules associated with this channel. (see [below for nested schema](#nestedatt--git_resource_rules))
 - `is_default` (Boolean) Indicates whether this is the default channel for the associated project.
 - `lifecycle_id` (String) The lifecycle ID associated with this channel.
 - `parent_environment_id` (String) The parent environment ID for ephemeral environments.
@@ -51,6 +66,25 @@ Required:
 
 - `description` (String) The description of the custom field.
 - `field_name` (String) The name of the custom field.
+
+
+<a id="nestedatt--git_resource_rules"></a>
+### Nested Schema for `git_resource_rules`
+
+Optional:
+
+- `git_dependency_actions` (Attributes List) A list of Git dependency actions that these Git ref rules apply to. (see [below for nested schema](#nestedatt--git_resource_rules--git_dependency_actions))
+- `id` (String) The ID associated with this Git resource rule.
+- `rules` (List of String) Git ref rules to apply to the selected Git dependency actions.
+
+<a id="nestedatt--git_resource_rules--git_dependency_actions"></a>
+### Nested Schema for `git_resource_rules.git_dependency_actions`
+
+Required:
+
+- `deployment_action_slug` (String) The slug of the deployment action that the Git dependency belongs to.
+- `git_dependency_name` (String) The name of the Git dependency that these rules apply to. Specify an empty string when the deployment action has a single Git dependency.
+
 
 
 <a id="nestedblock--rule"></a>
