@@ -2,9 +2,11 @@ package schemas
 
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -15,11 +17,14 @@ type ChannelSchema struct{}
 type ChannelModel struct {
 	Description                      types.String `tfsdk:"description"`
 	EphemeralEnvironmentNameTemplate types.String `tfsdk:"ephemeral_environment_name_template"`
+	GitReferenceRules                types.List   `tfsdk:"git_reference_rules"`
+	GitResourceRules                 types.List   `tfsdk:"git_resource_rules"`
 	IsDefault                        types.Bool   `tfsdk:"is_default"`
 	LifecycleId                      types.String `tfsdk:"lifecycle_id"`
 	Name                             types.String `tfsdk:"name"`
 	ParentEnvironmentID              types.String `tfsdk:"parent_environment_id"`
 	ProjectId                        types.String `tfsdk:"project_id"`
+	CustomFieldDefinitions           types.List   `tfsdk:"custom_field_definitions"`
 	Rule                             types.List   `tfsdk:"rule"`
 	SpaceId                          types.String `tfsdk:"space_id"`
 	TenantTags                       types.Set    `tfsdk:"tenant_tags"`
@@ -38,6 +43,48 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 				Description: "The name template for ephemeral environments created from this channel.",
 				Optional:    true,
 			},
+			"git_reference_rules": resourceSchema.ListAttribute{
+				Description: "A list of Git reference rules that constrain which Git refs can be deployed through this channel.",
+				Optional:    true,
+				ElementType: types.StringType,
+			},
+			"git_resource_rules": resourceSchema.ListNestedAttribute{
+				Description: "A list of Git resource rules associated with this channel.",
+				Optional:    true,
+				NestedObject: resourceSchema.NestedAttributeObject{
+					Attributes: map[string]resourceSchema.Attribute{
+						"id": resourceSchema.StringAttribute{
+							Description: "The ID associated with this Git resource rule.",
+							Computed:    true,
+							Optional:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+						},
+						"rules": resourceSchema.ListAttribute{
+							Description: "Git ref rules to apply to the selected Git dependency actions.",
+							Optional:    true,
+							ElementType: types.StringType,
+						},
+						"git_dependency_actions": resourceSchema.ListNestedAttribute{
+							Description: "A list of Git dependency actions that these Git ref rules apply to.",
+							Optional:    true,
+							NestedObject: resourceSchema.NestedAttributeObject{
+								Attributes: map[string]resourceSchema.Attribute{
+									"deployment_action_slug": resourceSchema.StringAttribute{
+										Description: "The slug of the deployment action that the Git dependency belongs to.",
+										Required:    true,
+									},
+									"git_dependency_name": resourceSchema.StringAttribute{
+										Description: "The name of the Git dependency that these rules apply to. Specify an empty string when the deployment action has a single Git dependency.",
+										Required:    true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"is_default": resourceSchema.BoolAttribute{
 				Description: "Indicates whether this is the default channel for the associated project.",
 				Optional:    true,
@@ -54,6 +101,25 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 			"project_id": resourceSchema.StringAttribute{
 				Description: "The project ID associated with this channel.",
 				Required:    true,
+			},
+			"custom_field_definitions": resourceSchema.ListNestedAttribute{
+				Description: "A list of custom field definitions for this channel. Maximum of 10.",
+				Optional:    true,
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(10),
+				},
+				NestedObject: resourceSchema.NestedAttributeObject{
+					Attributes: map[string]resourceSchema.Attribute{
+						"field_name": resourceSchema.StringAttribute{
+							Required:    true,
+							Description: "The name of the custom field.",
+						},
+						"description": resourceSchema.StringAttribute{
+							Required:    true,
+							Description: "The description of the custom field.",
+						},
+					},
+				},
 			},
 			"space_id": GetSpaceIdResourceSchema(ChannelResourceDescription),
 			"tenant_tags": resourceSchema.SetAttribute{
@@ -79,6 +145,9 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 							Description: "The ID associated with this channel rule.",
 							Computed:    true,
 							Optional:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"tag": resourceSchema.StringAttribute{
 							Optional: true,

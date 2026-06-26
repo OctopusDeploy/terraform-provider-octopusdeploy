@@ -31,3 +31,15 @@ This project employs [branch protection](https://docs.github.com/en/repositories
 Congratulations! :tada: And thank you very much for your contribution to this project!
 
 Once your pull request is merged, our build and test workflow will execute once again to validate changes. Afterward, your changes will be committed to the `main` branch.
+
+## Merging Pull Requests from External Contributors
+
+Our PR checks don't run automatically on pull requests from forks. You can approve the run from the PR, but it won't help: the checks require access to values that GitHub Actions won't expose to a workflow running in the contributor's profile rather than the Octopus organization, so they will always fail and the change can't be validated where it is. To work around this, redirect the change through a branch in this repository so the checks can run before it reaches `main`.
+
+> [!IMPORTANT]
+> Don't merge a fork PR directly into `main`. Follow the steps below to redirect it through a branch in this repository first.
+
+1. Create a new branch in this repository with a name similar to the contributor's branch (for example, if their branch is `fix-typo-in-docs`, create `fix-typo-in-docs`).
+2. Edit the contributor's PR and change its base branch from `main` to the new branch you just created.
+3. Squash and merge the PR into the new branch.
+4. Continue as you would for any other change: open a PR from the intermediate branch to `main` and merge it.

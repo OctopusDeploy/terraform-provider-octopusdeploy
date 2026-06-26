@@ -89,7 +89,8 @@ func GetUserRoleSchema() resourceSchema.NestedBlockObject {
 				ElementType: types.StringType,
 			},
 			"space_id": resourceSchema.StringAttribute{
-				Required: true,
+				Optional: true,
+				Computed: true,
 			},
 			"team_id": resourceSchema.StringAttribute{
 				Computed: true,
