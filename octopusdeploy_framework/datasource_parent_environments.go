@@ -58,6 +58,7 @@ func (e *parentEnvironmentDataSource) Read(ctx context.Context, req datasource.R
 		PartialName: data.PartialName.ValueString(),
 		Skip:        util.GetNumber(data.Skip),
 		Take:        util.GetNumber(data.Take),
+		Type:        []string{"Parent"},
 	}
 
 	util.DatasourceReading(ctx, "parent_environments", query)
