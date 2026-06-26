@@ -34,7 +34,7 @@ func TestAccDataSourceParentEnvironments(t *testing.T) {
 			{
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckParentEnvironmentsDataSourceID(prefix),
-					resource.TestCheckResourceAttr(prefix, "environments.#", "3"),
+					resource.TestCheckResourceAttr(prefix, "parent_environments.#", "3"),
 				),
 				Config: fmt.Sprintf(`%s
 				
