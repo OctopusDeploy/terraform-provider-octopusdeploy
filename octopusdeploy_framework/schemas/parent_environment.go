@@ -1,6 +1,9 @@
 package schemas
 
 import (
+	"context"
+
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments/v2/environments"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas/planmodifiers"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -134,4 +137,33 @@ func (p ParentEnvironmentSchema) GetResourceSchema() schema.Schema {
 				Build(),
 		},
 	}
+}
+
+func MapFromParentEnvironment(ctx context.Context, environment *environments.Environment) ParentEnvironmentTypeResourceModel {
+	var env ParentEnvironmentTypeResourceModel
+	env.ID = types.StringValue(environment.ID)
+	env.SpaceID = types.StringValue(environment.SpaceID)
+	env.Slug = types.StringValue(environment.Slug)
+	env.Name = types.StringValue(environment.Name)
+	env.Description = types.StringValue(environment.Description)
+	env.SortOrder = types.Int64Value(int64(environment.SortOrder))
+	env.UseGuidedFailure = types.BoolValue(environment.UseGuidedFailure)
+	env.Type = types.StringValue(environment.Type)
+
+	env.EnvironmentTags, _ = types.SetValueFrom(ctx, types.StringType, environment.EnvironmentTags)
+
+	return env
+}
+
+type ParentEnvironmentTypeResourceModel struct {
+	Slug             types.String `tfsdk:"slug"`
+	Name             types.String `tfsdk:"name"`
+	Description      types.String `tfsdk:"description"`
+	SortOrder        types.Int64  `tfsdk:"sort_order"`
+	UseGuidedFailure types.Bool   `tfsdk:"use_guided_failure"`
+	SpaceID          types.String `tfsdk:"space_id"`
+	EnvironmentTags  types.Set    `tfsdk:"environment_tags"`
+	Type             types.String `tfsdk:"type"`
+
+	ResourceModel
 }
