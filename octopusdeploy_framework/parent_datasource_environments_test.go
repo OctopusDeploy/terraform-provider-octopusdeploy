@@ -90,16 +90,28 @@ func createTestAccDataSourceParentEnvironmentsConfig(spaceName string, localName
 		resource "octopusdeploy_parent_environment" "%[2]s" {
 			name = "%[3]s"
 			space_id = octopusdeploy_space.%[1]s.id
+			automatic_deprovisioning_rule = {
+			  days  = 7 
+			  hours = 0 
+			}
 		}
 		
 		resource "octopusdeploy_parent_environment" "%[2]s-1" {
 			name = "%[3]s-1"
 			space_id = octopusdeploy_space.%[1]s.id
+			automatic_deprovisioning_rule = {
+			  days  = 7 
+			  hours = 0 
+			}
 		}
 
 		resource "octopusdeploy_parent_environment" "%[2]s-2" {
 			name = "%[3]s-2"
 			space_id = octopusdeploy_space.%[1]s.id
+			automatic_deprovisioning_rule = {
+			  days  = 7 
+			  hours = 0 
+			}
 		}
 	`, spaceName, localName, name)
 }
