@@ -19,14 +19,14 @@ type parentEnvironmentDataSource struct {
 }
 
 type parentEnvironmentsDataSourceModel struct {
-	ID           types.String `tfsdk:"id"`
-	SpaceID      types.String `tfsdk:"space_id"`
-	IDs          types.List   `tfsdk:"ids"`
-	PartialName  types.String `tfsdk:"partial_name"`
-	Name         types.String `tfsdk:"name"`
-	Skip         types.Int64  `tfsdk:"skip"`
-	Take         types.Int64  `tfsdk:"take"`
-	Environments types.List   `tfsdk:"environments"`
+	ID                 types.String `tfsdk:"id"`
+	SpaceID            types.String `tfsdk:"space_id"`
+	IDs                types.List   `tfsdk:"ids"`
+	PartialName        types.String `tfsdk:"partial_name"`
+	Name               types.String `tfsdk:"name"`
+	Skip               types.Int64  `tfsdk:"skip"`
+	Take               types.Int64  `tfsdk:"take"`
+	ParentEnvironments types.List   `tfsdk:"parent_environments"`
 }
 
 func NewParentEnvironmentsDataSource() datasource.DataSource {
@@ -38,7 +38,7 @@ func (*parentEnvironmentDataSource) Metadata(_ context.Context, req datasource.M
 }
 
 func (*parentEnvironmentDataSource) Schema(_ context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = schemas.EnvironmentSchema{}.GetDatasourceSchema()
+	resp.Schema = schemas.ParentEnvironmentSchema{}.GetDatasourceSchema()
 }
 
 func (e *parentEnvironmentDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
@@ -69,11 +69,11 @@ func (e *parentEnvironmentDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
-	mappedEnvironments := []schemas.ParentEnvironmentTypeResourceModel{}
+	mappedEnvironments := []schemas.ParentEnvironmentDatasourceModel{}
 	if data.Name.IsNull() {
 		tflog.Debug(ctx, fmt.Sprintf("parent environments returned from API: %#v", existingEnvironments))
 		for _, environment := range existingEnvironments.Items {
-			mappedEnvironments = append(mappedEnvironments, schemas.MapFromParentEnvironment(ctx, environment))
+			mappedEnvironments = append(mappedEnvironments, schemas.MapFromParentEnvironmentForDatasource(ctx, environment))
 		}
 	} else { // if name has been specified, match by exact name rather than partial name as the API does
 		var matchedEnvironment *environments.Environment
@@ -84,13 +84,13 @@ func (e *parentEnvironmentDataSource) Read(ctx context.Context, req datasource.R
 			}
 		}
 		if matchedEnvironment != nil {
-			mappedEnvironments = append(mappedEnvironments, schemas.MapFromParentEnvironment(ctx, matchedEnvironment))
+			mappedEnvironments = append(mappedEnvironments, schemas.MapFromParentEnvironmentForDatasource(ctx, matchedEnvironment))
 		}
 	}
 
 	util.DatasourceResultCount(ctx, "parent_environments", len(mappedEnvironments))
 
-	data.Environments, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: schemas.EnvironmentObjectType()}, mappedEnvironments)
+	data.ParentEnvironments, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: schemas.ParentEnvironmentDatasourceObjectType()}, mappedEnvironments)
 	data.ID = types.StringValue("Parent Environments " + time.Now().UTC().String())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

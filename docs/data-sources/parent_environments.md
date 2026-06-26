@@ -3,12 +3,12 @@
 page_title: "octopusdeploy_parent_environments Data Source - terraform-provider-octopusdeploy"
 subcategory: ""
 description: |-
-  Provides information about existing environments.
+  
 ---
 
 # octopusdeploy_parent_environments (Data Source)
 
-Provides information about existing environments.
+
 
 
 
@@ -21,51 +21,31 @@ Provides information about existing environments.
 - `name` (String) A filter search by exact name
 - `partial_name` (String) A filter to search by a partial name.
 - `skip` (Number) A filter to specify the number of items to skip in the response.
-- `space_id` (String) The space ID associated with this environment.
+- `space_id` (String) The space ID associated with this parent environment.
 - `take` (Number) A filter to specify the number of items to take (or return) in the response.
 
 ### Read-Only
 
-- `environments` (Attributes List) (see [below for nested schema](#nestedatt--environments))
 - `id` (String) The unique ID for this resource.
+- `parent_environments` (Attributes List) A list of parent environments that match the filter(s). (see [below for nested schema](#nestedatt--parent_environments))
 
-<a id="nestedatt--environments"></a>
-### Nested Schema for `environments`
+<a id="nestedatt--parent_environments"></a>
+### Nested Schema for `parent_environments`
 
 Read-Only:
 
-- `allow_dynamic_infrastructure` (Boolean)
-- `description` (String) The description of this environment.
-- `environment_tags` (Set of String) A list of environment tags associated with this resource.
+- `automatic_deprovisioning_rule` (Attributes) Automatic deprovisioning rule for the environment. (see [below for nested schema](#nestedatt--parent_environments--automatic_deprovisioning_rule))
+- `description` (String) The description of this parent environment.
 - `id` (String) The unique ID for this resource.
-- `jira_extension_settings` (Attributes List) Provides extension settings for the Jira integration for this environment. (see [below for nested schema](#nestedatt--environments--jira_extension_settings))
-- `jira_service_management_extension_settings` (Attributes List) Provides extension settings for the Jira Service Management (JSM) integration for this environment. (see [below for nested schema](#nestedatt--environments--jira_service_management_extension_settings))
 - `name` (String) The name of this resource.
-- `servicenow_extension_settings` (Attributes List) Provides extension settings for the ServiceNow integration for this environment. (see [below for nested schema](#nestedatt--environments--servicenow_extension_settings))
-- `slug` (String) The unique slug of this environment
-- `sort_order` (Number) The order number to sort an environment
-- `space_id` (String) The space ID associated with this environment.
-- `use_guided_failure` (Boolean)
+- `slug` (String) The unique slug of this parent environment
+- `space_id` (String) The space ID associated with this parent environment.
+- `use_guided_failure` (Boolean) Indicates whether guided failure mode is enabled for this parent environment.
 
-<a id="nestedatt--environments--jira_extension_settings"></a>
-### Nested Schema for `environments.jira_extension_settings`
+<a id="nestedatt--parent_environments--automatic_deprovisioning_rule"></a>
+### Nested Schema for `parent_environments.automatic_deprovisioning_rule`
 
 Read-Only:
 
-- `environment_type` (String)
-
-
-<a id="nestedatt--environments--jira_service_management_extension_settings"></a>
-### Nested Schema for `environments.jira_service_management_extension_settings`
-
-Read-Only:
-
-- `is_enabled` (Boolean)
-
-
-<a id="nestedatt--environments--servicenow_extension_settings"></a>
-### Nested Schema for `environments.servicenow_extension_settings`
-
-Read-Only:
-
-- `is_enabled` (Boolean)
+- `days` (Number) Number of days to wait before deprovisioning.
+- `hours` (Number) Number of hours to wait before deprovisioning.

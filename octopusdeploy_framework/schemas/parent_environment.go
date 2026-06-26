@@ -6,6 +6,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/environments/v2/environments"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas/planmodifiers"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -45,6 +46,7 @@ func (p ParentEnvironmentSchema) GetDatasourceSchema() datasourceSchema.Schema {
 			"space_id":     GetSpaceIdDatasourceSchema(ParentEnvironmentResourceDescription, false),
 			"ids":          GetQueryIDsDatasourceSchema(),
 			"partial_name": GetQueryPartialNameDatasourceSchema(),
+			"name":         GetQueryNameDatasourceSchema(),
 			"skip":         GetQuerySkipDatasourceSchema(),
 			"take":         GetQueryTakeDatasourceSchema(),
 
@@ -166,4 +168,51 @@ type ParentEnvironmentTypeResourceModel struct {
 	Type             types.String `tfsdk:"type"`
 
 	ResourceModel
+}
+
+// ParentEnvironmentDatasourceObjectType returns the attribute types for the parent environment datasource nested objects.
+func ParentEnvironmentDatasourceObjectType() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":                 types.StringType,
+		"space_id":           types.StringType,
+		"name":               types.StringType,
+		"slug":               types.StringType,
+		"description":        types.StringType,
+		"use_guided_failure": types.BoolType,
+		"automatic_deprovisioning_rule": types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"days":  types.Int64Type,
+				"hours": types.Int64Type,
+			},
+		},
+	}
+}
+
+// ParentEnvironmentDatasourceModel is the model for parent environment items in the datasource response.
+type ParentEnvironmentDatasourceModel struct {
+	ID                          types.String `tfsdk:"id"`
+	SpaceID                     types.String `tfsdk:"space_id"`
+	Name                        types.String `tfsdk:"name"`
+	Slug                        types.String `tfsdk:"slug"`
+	Description                 types.String `tfsdk:"description"`
+	UseGuidedFailure            types.Bool   `tfsdk:"use_guided_failure"`
+	AutomaticDeprovisioningRule types.Object `tfsdk:"automatic_deprovisioning_rule"`
+}
+
+// MapFromParentEnvironmentForDatasource maps an API environment to a datasource model.
+func MapFromParentEnvironmentForDatasource(ctx context.Context, environment *environments.Environment) ParentEnvironmentDatasourceModel {
+	adrAttrTypes := map[string]attr.Type{
+		"days":  types.Int64Type,
+		"hours": types.Int64Type,
+	}
+
+	return ParentEnvironmentDatasourceModel{
+		ID:                          types.StringValue(environment.ID),
+		SpaceID:                     types.StringValue(environment.SpaceID),
+		Name:                        types.StringValue(environment.Name),
+		Slug:                        types.StringValue(environment.Slug),
+		Description:                 types.StringValue(environment.Description),
+		UseGuidedFailure:            types.BoolValue(environment.UseGuidedFailure),
+		AutomaticDeprovisioningRule: types.ObjectNull(adrAttrTypes),
+	}
 }

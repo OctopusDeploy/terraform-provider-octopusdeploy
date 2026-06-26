@@ -47,9 +47,9 @@ func TestAccDataSourceParentEnvironments(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckParentEnvironmentsDataSourceID(prefix),
 					resource.TestCheckResourceAttr(prefix, "name", environmentName),
-					resource.TestCheckResourceAttr(prefix, "environments.#", "1"),
-					resource.TestCheckResourceAttrSet(prefix, "environments.0.id"),
-					resource.TestCheckResourceAttr(prefix, "environments.0.name", environmentName),
+					resource.TestCheckResourceAttr(prefix, "parent_environments.#", "1"),
+					resource.TestCheckResourceAttrSet(prefix, "parent_environments.0.id"),
+					resource.TestCheckResourceAttr(prefix, "parent_environments.0.name", environmentName),
 				),
 				Config: fmt.Sprintf(`%s
 
