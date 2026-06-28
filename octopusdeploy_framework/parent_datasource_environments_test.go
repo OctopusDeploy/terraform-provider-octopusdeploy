@@ -84,7 +84,7 @@ func createTestAccDataSourceParentEnvironmentsConfig(spaceName string, localName
 			is_default            = false
 			is_task_queue_stopped = true
 			description           = "Test space for environments datasource"
-			space_managers_teams  = ["teams-administrators"]
+			space_managers_teams  = ["teams-administrators", "teams-managers"]
 		}
 
 		resource "octopusdeploy_parent_environment" "%[2]s" {
@@ -131,6 +131,7 @@ func testAccDataSourceParentEnvironmentsConfig(localName string, take int, space
 func testAccDataSourceParentEnvironmentByNameConfig(localName string, name string, spaceName string, environmentLocalName string) string {
 	return fmt.Sprintf(`data "octopusdeploy_parent_environments" "%s" {
 		name = "%s"	
+		take = 10
 		space_id = octopusdeploy_space.%s.id
 		depends_on = [octopusdeploy_parent_environment.%s, octopusdeploy_parent_environment.%[4]s-1, octopusdeploy_parent_environment.%[4]s-2]
 	}`, localName, name, spaceName, environmentLocalName)
