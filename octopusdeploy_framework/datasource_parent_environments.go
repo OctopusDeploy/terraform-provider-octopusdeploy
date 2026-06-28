@@ -53,9 +53,15 @@ func (e *parentEnvironmentDataSource) Read(ctx context.Context, req datasource.R
 		return
 	}
 
+	// Name takes precedence over PartialName
+	partialName := data.PartialName.ValueString()
+	if !data.Name.IsNull() {
+		partialName = data.Name.ValueString()
+	}
+
 	query := environments.EnvironmentQuery{
 		IDs:         util.GetIds(data.IDs),
-		PartialName: data.PartialName.ValueString(),
+		PartialName: partialName,
 		Skip:        util.GetNumber(data.Skip),
 		Take:        util.GetNumber(data.Take),
 		Type:        []string{"Parent"},
