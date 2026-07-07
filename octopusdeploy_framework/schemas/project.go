@@ -74,10 +74,10 @@ func (p ProjectSchema) GetResourceSchema() resourceSchema.Schema {
 						objectplanmodifier.UseStateForUnknown(),
 					},
 					Attributes: map[string]resourceSchema.Attribute{
-						"allow_deployments_to_no_targets": util.ResourceBool().Optional().Computed().Default(false).PlanModifiers(boolplanmodifier.UseStateForUnknown()).Build(),
-						"exclude_unhealthy_targets":       util.ResourceBool().Optional().Computed().Default(false).PlanModifiers(boolplanmodifier.UseStateForUnknown()).Build(),
-						"skip_machine_behavior":           util.ResourceString().Optional().Computed().Default("None").PlanModifiers(stringplanmodifier.UseStateForUnknown()).Build(),
-						"target_roles":                    util.ResourceList(types.StringType).Optional().Computed().PlanModifiers(listplanmodifier.UseStateForUnknown()).Build(),
+						"allow_deployments_to_no_targets": util.ResourceBool().Optional().Computed().Default(false).Build(),
+						"exclude_unhealthy_targets":       util.ResourceBool().Optional().Computed().Default(false).Build(),
+						"skip_machine_behavior":           util.ResourceString().Optional().Computed().Default("None").Build(),
+						"target_roles":                    util.ResourceList(types.StringType).Optional().Computed().PlanModifiers(listplanmodifier.UseNonNullStateForUnknown()).Build(),
 					},
 				},
 				PlanModifiers: []planmodifier.List{

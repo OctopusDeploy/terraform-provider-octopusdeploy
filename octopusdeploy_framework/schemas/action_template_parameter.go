@@ -7,9 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -89,9 +87,6 @@ func (a ActionTemplateParameterSchema) GetResourceSchema() resourceSchema.Schema
 			},
 			"variable_set_id": resourceSchema.StringAttribute{
 				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 		},
 		Description: "This resource manages library variable sets in Octopus Deploy.",
@@ -110,9 +105,6 @@ func GetActionTemplateParameterSchema() resourceSchema.ListNestedBlock {
 					Optional:    true,
 					Computed:    true,
 					Default:     stringdefault.StaticString(""),
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
 				},
 				"display_settings": resourceSchema.MapAttribute{
 					Description: "The display settings for the parameter.",
@@ -124,17 +116,11 @@ func GetActionTemplateParameterSchema() resourceSchema.ListNestedBlock {
 					Optional:    true,
 					Computed:    true,
 					Default:     stringdefault.StaticString(""),
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
 				},
 				"id": GetIdResourceSchema(),
 				"label": resourceSchema.StringAttribute{
 					Description: "The label shown beside the parameter when presented in the deployment process. Example: `Server name`.",
 					Optional:    true,
-					PlanModifiers: []planmodifier.String{
-						stringplanmodifier.UseStateForUnknown(),
-					},
 				},
 				"name": resourceSchema.StringAttribute{
 					Description: "The name of the variable set by the parameter. The name can contain letters, digits, dashes and periods. Example: `ServerName`",

@@ -58,7 +58,7 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 							Computed:    true,
 							Optional:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								stringplanmodifier.UseNonNullStateForUnknown(),
 							},
 						},
 						"rules": resourceSchema.ListAttribute{
@@ -132,7 +132,7 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 		},
@@ -146,7 +146,7 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 							Computed:    true,
 							Optional:    true,
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								stringplanmodifier.UseNonNullStateForUnknown(),
 							},
 						},
 						"tag": resourceSchema.StringAttribute{
