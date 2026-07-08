@@ -117,7 +117,10 @@ func GetActionTemplateParameterSchema() resourceSchema.ListNestedBlock {
 					Computed:    true,
 					Default:     stringdefault.StaticString(""),
 				},
-				"id": GetIdResourceSchema(),
+				"id": resourceSchema.StringAttribute{
+					Description: "The unique ID for this resource.",
+					Computed:    true,
+				},
 				"label": resourceSchema.StringAttribute{
 					Description: "The label shown beside the parameter when presented in the deployment process. Example: `Server name`.",
 					Optional:    true,
