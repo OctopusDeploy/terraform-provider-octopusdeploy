@@ -39,6 +39,10 @@ Optional:
 - `email_show_dates_in_timezone_id` (String) Timezone ID for dates shown in emails (e.g. 'UTC').
 - `email_teams` (Set of String) Team IDs to notify via email.
 - `filter` (Attributes) Filter criteria to limit which events trigger this subscription. When omitted, all events trigger the subscription. (see [below for nested schema](#nestedatt--event_notification_subscription--filter))
+- `slack_channel_ids` (List of String) Slack channel IDs to post to.
+- `slack_channel_names` (List of String) Display names for the channels in slack_channel_ids, in the same order. If a name is omitted, the channel ID is shown instead.
+- `slack_digest_format` (String) Format of Slack digest messages. Valid values: Summary, Detailed.
+- `slack_frequency_period` (String) How often to send Slack digests (e.g. '01:00:00' for hourly).
 - `webhook_header_key` (String) Custom header key to include in webhook requests.
 - `webhook_header_value` (String, Sensitive) Custom header value to include in webhook requests.
 - `webhook_teams` (Set of String) Team IDs to notify via webhook.
