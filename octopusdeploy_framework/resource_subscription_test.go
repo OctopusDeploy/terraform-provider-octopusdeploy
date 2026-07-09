@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/subscriptions"
@@ -82,6 +83,72 @@ func TestAccSubscriptionEmailAndWebhook(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccSubscriptionSlack(t *testing.T) {
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := "octopusdeploy_subscription." + name
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy:             testAccSubscriptionCheckDestroy(resourceName),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSubscriptionSlackConfig(name, []string{"C0123"}, []string{"general"}, "Summary"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSubscriptionExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_ids.0", "C0123"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_names.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_names.0", "general"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_digest_format", "Summary"),
+					resource.TestCheckResourceAttrSet(resourceName, "event_notification_subscription.slack_frequency_period"),
+				),
+			},
+			{
+				Config: testAccSubscriptionSlackConfig(name, []string{"C0123", "C0456"}, []string{"general", "releases"}, "Detailed"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSubscriptionExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_ids.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_ids.1", "C0456"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_digest_format", "Detailed"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccSubscriptionSlackConfig(resourceID string, channelIDs, channelNames []string, digestFormat string) string {
+	channelIDsList := "[]"
+	if len(channelIDs) > 0 {
+		channelIDsList = fmt.Sprintf(`["%s"]`, strings.Join(channelIDs, `", "`))
+	}
+	channelNamesList := "[]"
+	if len(channelNames) > 0 {
+		channelNamesList = fmt.Sprintf(`["%s"]`, strings.Join(channelNames, `", "`))
+	}
+
+	return fmt.Sprintf(`
+resource "octopusdeploy_subscription" "%s" {
+  name = "%s"
+
+  event_notification_subscription = {
+    slack_channel_ids   = %s
+    slack_channel_names = %s
+    slack_digest_format = "%s"
+
+    filter = {
+      event_categories = ["Modified"]
+    }
+  }
+}`, resourceID, resourceID, channelIDsList, channelNamesList, digestFormat)
 }
 
 func testAccSubscriptionExists(n string) resource.TestCheckFunc {

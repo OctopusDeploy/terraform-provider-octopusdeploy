@@ -90,6 +90,31 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 						Description("Timezone ID for dates shown in emails (e.g. 'UTC').").
 						Default("UTC").
 						Build(),
+					"slack_channel_ids": util.ResourceList(types.StringType).
+						Optional().
+						Computed().
+						Description("Slack channel IDs to post to.").
+						PlanModifiers(listplanmodifier.UseStateForUnknown()).
+						Build(),
+					"slack_channel_names": util.ResourceList(types.StringType).
+						Optional().
+						Computed().
+						Description("Display names for the channels in slack_channel_ids, in the same order. If a name is omitted, the channel ID is shown instead.").
+						PlanModifiers(listplanmodifier.UseStateForUnknown()).
+						Build(),
+					"slack_frequency_period": util.ResourceString().
+						Optional().
+						Computed().
+						Description("How often to send Slack digests (e.g. '01:00:00' for hourly).").
+						Default("01:00:00").
+						Build(),
+					"slack_digest_format": util.ResourceString().
+						Optional().
+						Computed().
+						Description("Format of Slack digest messages. Valid values: Summary, Detailed.").
+						Default("Summary").
+						Validators(stringvalidator.OneOf("Summary", "Detailed")).
+						Build(),
 					"webhook_uri": util.ResourceString().
 						Optional().
 						Description("URI to send webhook notifications to.").
