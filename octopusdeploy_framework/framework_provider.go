@@ -91,6 +91,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 		NewServiceAccountOIDCIdentityDataSource,
 		NewWorkersDataSource,
 		NewDeploymentFreezeDataSource,
+		NewApprovalPolicyDataSource,
 		NewSpaceDefaultLifecycleReleaseRetentionPoliciesDataSource,
 		NewSpaceDefaultLifecycleTentacleRetentionPoliciesDataSource,
 		NewSpaceDefaultRunbookRetentionPoliciesDataSource,
