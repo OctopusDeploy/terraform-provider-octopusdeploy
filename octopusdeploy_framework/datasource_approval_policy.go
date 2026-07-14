@@ -77,18 +77,18 @@ func (d *approvalPolicyDataSource) Read(ctx context.Context, req datasource.Read
 func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.ApprovalPolicy) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	approvingUserIDs, listDiags := approvalPolicyStringListOrNull(ctx, policy.ApprovingUserIds)
+	approvingUserIDs, listDiags := stringListOrNull(ctx, policy.ApprovingUserIds)
 	diags.Append(listDiags...)
 
-	approvingTeamIDs, listDiags := approvalPolicyStringListOrNull(ctx, policy.ApprovingTeamIds)
+	approvingTeamIDs, listDiags := stringListOrNull(ctx, policy.ApprovingTeamIds)
 	diags.Append(listDiags...)
 
 	tagScopes := make([]attr.Value, 0, len(policy.TagScopes))
 	for _, scope := range policy.TagScopes {
-		projectTags, projectTagsDiags := approvalPolicyStringListOrNull(ctx, scope.ProjectTags)
+		projectTags, projectTagsDiags := stringListOrNull(ctx, scope.ProjectTags)
 		diags.Append(projectTagsDiags...)
 
-		environmentTags, environmentTagsDiags := approvalPolicyStringListOrNull(ctx, scope.EnvironmentTags)
+		environmentTags, environmentTagsDiags := stringListOrNull(ctx, scope.EnvironmentTags)
 		diags.Append(environmentTagsDiags...)
 
 		tagScope, tagScopeDiags := types.ObjectValue(approvalPolicyTagScopeObjectType(), map[string]attr.Value{
@@ -104,7 +104,7 @@ func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.
 
 	idScopes := make([]attr.Value, 0, len(policy.IdScopes))
 	for _, scope := range policy.IdScopes {
-		environmentIDs, environmentIDsDiags := approvalPolicyStringListOrNull(ctx, scope.EnvironmentIds)
+		environmentIDs, environmentIDsDiags := stringListOrNull(ctx, scope.EnvironmentIds)
 		diags.Append(environmentIDsDiags...)
 
 		idScope, idScopeDiags := types.ObjectValue(approvalPolicyIdScopeObjectType(), map[string]attr.Value{
@@ -138,16 +138,6 @@ func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.
 	}
 
 	return types.ObjectValueMust(approvalPolicyObjectType(), attrs), diags
-}
-
-// approvalPolicyStringListOrNull converts a Go string slice into a types.List,
-// returning a null list when the slice is empty, mirroring the resource's
-// mapApprovalPolicyToState behaviour.
-func approvalPolicyStringListOrNull(ctx context.Context, values []string) (types.List, diag.Diagnostics) {
-	if len(values) == 0 {
-		return types.ListNull(types.StringType), nil
-	}
-	return types.ListValueFrom(ctx, types.StringType, values)
 }
 
 func approvalPolicyTagScopeObjectType() map[string]attr.Type {
