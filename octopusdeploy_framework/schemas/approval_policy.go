@@ -57,7 +57,7 @@ type ApprovalPoliciesDataSourceModel struct {
 
 func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
-		Description: util.GetResourceSchemaDescription(ApprovalPolicyResourceDescription),
+		Description: "This resource manages approval policies in Octopus Deploy.",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":       GetIdResourceSchema(),
 			"space_id": GetSpaceIdResourceSchema(ApprovalPolicyResourceDescription),
