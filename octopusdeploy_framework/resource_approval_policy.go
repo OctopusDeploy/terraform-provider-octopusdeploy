@@ -243,20 +243,20 @@ func mapApprovalPolicyToState(ctx context.Context, state *schemas.ApprovalPolicy
 	state.AllowSelfApproval = types.BoolValue(policy.AllowSelfApproval)
 	state.IsDisabled = types.BoolValue(policy.IsDisabled)
 
-	approvingUserIDs, listDiags := stringListOrEmpty(ctx, policy.ApprovingUserIds)
+	approvingUserIDs, listDiags := stringListOrNull(ctx, policy.ApprovingUserIds)
 	diags.Append(listDiags...)
 	state.ApprovingUserIDs = approvingUserIDs
 
-	approvingTeamIDs, listDiags := stringListOrEmpty(ctx, policy.ApprovingTeamIds)
+	approvingTeamIDs, listDiags := stringListOrNull(ctx, policy.ApprovingTeamIds)
 	diags.Append(listDiags...)
 	state.ApprovingTeamIDs = approvingTeamIDs
 
-	tagScopes := make([]schemas.ApprovalPolicyTagScopeModel, 0, len(policy.TagScopes))
+	var tagScopes []schemas.ApprovalPolicyTagScopeModel
 	for _, s := range policy.TagScopes {
-		projectTags, projectTagsDiags := stringListOrEmpty(ctx, s.ProjectTags)
+		projectTags, projectTagsDiags := stringListOrNull(ctx, s.ProjectTags)
 		diags.Append(projectTagsDiags...)
 
-		environmentTags, environmentTagsDiags := stringListOrEmpty(ctx, s.EnvironmentTags)
+		environmentTags, environmentTagsDiags := stringListOrNull(ctx, s.EnvironmentTags)
 		diags.Append(environmentTagsDiags...)
 
 		tagScopes = append(tagScopes, schemas.ApprovalPolicyTagScopeModel{
@@ -266,9 +266,9 @@ func mapApprovalPolicyToState(ctx context.Context, state *schemas.ApprovalPolicy
 	}
 	state.TagScopes = tagScopes
 
-	idScopes := make([]schemas.ApprovalPolicyIdScopeModel, 0, len(policy.IdScopes))
+	var idScopes []schemas.ApprovalPolicyIdScopeModel
 	for _, s := range policy.IdScopes {
-		environmentIDs, environmentIDsDiags := stringListOrEmpty(ctx, s.EnvironmentIds)
+		environmentIDs, environmentIDsDiags := stringListOrNull(ctx, s.EnvironmentIds)
 		diags.Append(environmentIDsDiags...)
 
 		idScopes = append(idScopes, schemas.ApprovalPolicyIdScopeModel{
@@ -281,11 +281,13 @@ func mapApprovalPolicyToState(ctx context.Context, state *schemas.ApprovalPolicy
 	return diags
 }
 
-// stringListOrEmpty converts a Go string slice into a types.List, preserving an
-// empty (non-null) list when the slice has no elements so that plans stay stable.
-func stringListOrEmpty(ctx context.Context, values []string) (types.List, diag.Diagnostics) {
+// stringListOrNull converts a Go string slice into a types.List, returning a
+// null list when the slice is empty so that Optional-only attributes don't
+// flip from a null plan value to a known empty list in state (which the
+// framework reports as an inconsistent-result error).
+func stringListOrNull(ctx context.Context, values []string) (types.List, diag.Diagnostics) {
 	if len(values) == 0 {
-		return types.ListValueFrom(ctx, types.StringType, []string{})
+		return types.ListNull(types.StringType), nil
 	}
 	return types.ListValueFrom(ctx, types.StringType, values)
 }
