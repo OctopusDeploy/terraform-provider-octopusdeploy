@@ -35,7 +35,8 @@ type eventNotificationSubscriptionModel struct {
 	SlackChannelIds            types.List               `tfsdk:"slack_channel_ids"`
 	SlackChannelNames          types.List               `tfsdk:"slack_channel_names"`
 	SlackFrequencyPeriod       types.String             `tfsdk:"slack_frequency_period"`
-	SlackDigestFormat          types.String             `tfsdk:"slack_digest_format"`
+	// Deprecated and ignored; not mapped to the API. Preserved from config/state so existing configs don't drift.
+	SlackDigestFormat types.String `tfsdk:"slack_digest_format"`
 }
 
 type subscriptionFilterModel struct {
@@ -177,7 +178,6 @@ func expandSubscription(model *subscriptionModel) *subscriptions.Subscription {
 	s.EventNotificationSubscription.SlackChannelIds = util.ExpandStringList(n.SlackChannelIds)
 	s.EventNotificationSubscription.SlackChannelNames = util.ExpandStringList(n.SlackChannelNames)
 	s.EventNotificationSubscription.SlackFrequencyPeriod = n.SlackFrequencyPeriod.ValueString()
-	s.EventNotificationSubscription.SlackDigestFormat = n.SlackDigestFormat.ValueString()
 	s.EventNotificationSubscription.EmailTeams = util.ExpandStringSet(n.EmailTeams)
 	s.EventNotificationSubscription.WebhookTeams = util.ExpandStringSet(n.WebhookTeams)
 	s.EventNotificationSubscription.Filter = expandSubscriptionFilter(n.Filter)
@@ -223,7 +223,6 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.EmailShowDatesInTimeZoneId = types.StringValue(apiN.EmailShowDatesInTimeZoneId)
 	n.WebhookTimeout = types.StringValue(apiN.WebhookTimeout)
 	n.SlackFrequencyPeriod = types.StringValue(apiN.SlackFrequencyPeriod)
-	n.SlackDigestFormat = types.StringValue(apiN.SlackDigestFormat)
 	n.SlackChannelIds = util.FlattenStringList(apiN.SlackChannelIds)
 	n.SlackChannelNames = util.FlattenStringList(apiN.SlackChannelNames)
 
