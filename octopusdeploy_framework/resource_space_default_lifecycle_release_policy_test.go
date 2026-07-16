@@ -180,7 +180,7 @@ func spaceDefaultLifecycleReleaseRetentionPolicy(localName string, strategy stri
 		resource "octopusdeploy_space" "space_%[1]s" {
 			name                  = "%[1]s"
 			is_default            = false
-			is_task_queue_stopped = false
+			is_task_queue_stopped = true
 			description           = "Test space for lifecycles datasource"
 			space_managers_teams  = ["teams-administrators"]
 		}
@@ -207,7 +207,7 @@ func noSpaceDefaultLifecycleReleaseRetentionPolicy(localName string) string {
 		resource "octopusdeploy_space" "space_%[1]s" {
 			name                  = "%[1]s"
 			is_default            = false
-			is_task_queue_stopped = false
+			is_task_queue_stopped = true
 			description           = "Test space for lifecycles datasource"
 			space_managers_teams  = ["teams-administrators"]
 		}

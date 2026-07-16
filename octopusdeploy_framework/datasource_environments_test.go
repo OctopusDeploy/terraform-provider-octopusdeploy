@@ -82,7 +82,7 @@ func createTestAccDataSourceEnvironmentsConfig(spaceName string, localName strin
 		resource "octopusdeploy_space" "%[1]s" {
 			name                  = "%[1]s"
 			is_default            = false
-			is_task_queue_stopped = false
+			is_task_queue_stopped = true
 			description           = "Test space for environments datasource"
 			space_managers_teams  = ["teams-administrators"]
 		}

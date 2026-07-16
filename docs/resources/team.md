@@ -56,7 +56,6 @@ Optional:
 
 Required:
 
-- `space_id` (String)
 - `user_role_id` (String)
 
 Optional:
@@ -64,6 +63,7 @@ Optional:
 - `environment_ids` (Set of String)
 - `project_group_ids` (Set of String)
 - `project_ids` (Set of String)
+- `space_id` (String)
 - `tenant_ids` (Set of String)
 
 Read-Only:

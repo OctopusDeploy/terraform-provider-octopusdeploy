@@ -185,3 +185,6 @@ The repository uses [conventional commits](https://www.conventionalcommits.org/)
 ## 🤝 Contributions
 
 Contributions are welcome! :heart: Please read our [Contributing Guide](CONTRIBUTING.md) for information about how to get involved in this project.
+
+> [!IMPORTANT]
+> Pull requests from forks need an extra step before merging so our PR checks can run — see [Merging Pull Requests from External Contributors](CONTRIBUTING.md#merging-pull-requests-from-external-contributors).

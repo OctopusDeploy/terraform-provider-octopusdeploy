@@ -27,37 +27,34 @@ resource "octopusdeploy_project" "tp" {
   depends_on  = [octopusdeploy_project_group.tp]
 }
 
-resource "octopusdeploy_deployment_process" "process" {
+resource "octopusdeploy_process" "process" {
   project_id = octopusdeploy_project.tp.id
 
-  step {
-    name = "Hello World"
-    target_roles        = [ "hello-world" ]
-    start_trigger       = "StartAfterPrevious"
-    package_requirement = "LetOctopusDecide"
-    condition           = "Success"
+  depends_on = [octopusdeploy_project.tp]
+}
 
-    run_script_action {
-      name                               = "Hello World"
-      is_disabled                        = false
-      is_required                        = true
-      script_body                        = "Write-Host 'hello world'"
-      script_syntax                      = "PowerShell"
-      can_be_used_for_project_versioning = true
-      sort_order = 1
+resource "octopusdeploy_process_step" "hello_world" {
+  process_id = octopusdeploy_process.process.id
+  name       = "Hello World"
+  type       = "Octopus.Script"
 
-
-      package {
-        name                      = "Package"
-        feed_id                   = "feeds-builtin"
-        package_id                = "myExpressApp"
-        acquisition_location      = "Server"
-        extract_during_deployment = true
-      }
-    }
+  properties = {
+    "Octopus.Action.TargetRoles" = "hello-world"
   }
 
-  depends_on  = [octopusdeploy_project.tp]
+  execution_properties = {
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.Syntax"       = "PowerShell"
+    "Octopus.Action.Script.ScriptBody"   = "Write-Host 'hello world'"
+  }
+
+  packages = {
+    "Package" = {
+      feed_id              = "feeds-builtin"
+      package_id           = "myExpressApp"
+      acquisition_location = "Server"
+    }
+  }
 }
 
 ######
@@ -70,21 +67,20 @@ resource "octopusdeploy_project_versioning_strategy" "using_template" {
   template = "#{Octopus.Version.LastMajor}.#{Octopus.Version.NextMinor}-alpha"
   depends_on = [
     octopusdeploy_project_group.tp,
-    octopusdeploy_deployment_process.process
+    octopusdeploy_process_step.hello_world
   ]
 }
 
 resource "octopusdeploy_project_versioning_strategy" "using_donor_package" {
   project_id = octopusdeploy_project.tp.id
-  space_id = octopusdeploy_project.tp.space_id
-  donor_package_step_id = octopusdeploy_deployment_process.process.step[0].run_script_action[0].id
+  space_id   = octopusdeploy_project.tp.space_id
   donor_package = {
     deployment_action = "Hello World"
     package_reference = "Package"
   }
   depends_on = [
     octopusdeploy_project_group.tp,
-    octopusdeploy_deployment_process.process
+    octopusdeploy_process_step.hello_world
   ]
 }
 ```

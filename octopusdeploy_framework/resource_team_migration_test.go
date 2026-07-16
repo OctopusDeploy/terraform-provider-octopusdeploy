@@ -2,14 +2,15 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 )
 
 func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
@@ -52,6 +53,7 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework(t *testing.T) {
 func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T) {
 	os.Setenv("TF_CLI_CONFIG_FILE=", "")
 
+	space := NewTestSpace(t)
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -66,11 +68,11 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T
 						Source:            "OctopusDeploy/octopusdeploy",
 					},
 				},
-				Config: teamConfigWithUserRole(name, description, userRoleName),
+				Config: teamConfigWithUserRole(space.ID, name, description, userRoleName),
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   teamConfigWithUserRole(name, description, userRoleName),
+				Config:                   teamConfigWithUserRole(space.ID, name, description, userRoleName),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
 						plancheck.ExpectEmptyPlan(),
@@ -79,9 +81,16 @@ func TestTeamResource_UpgradeFromSDK_ToPluginFramework_WithUserRole(t *testing.T
 			},
 			{
 				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-				Config:                   updateTeamConfigWithUserRole(name, description, userRoleName),
+				Config:                   updateTeamConfigWithUserRole(space.ID, name, description, userRoleName),
 				Check: resource.ComposeTestCheckFunc(
-					testTeamWithUserRole(t, name, description),
+					testTeamWithUserRole(t, space.ID, name, description),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+				Config:                   updateTeamConfigWithSystemLevelUserRole(space.ID, name, description, userRoleName),
+				Check: resource.ComposeTestCheckFunc(
+					testTeamWithSystemLevelUserRole(t, space.ID, name, description),
 				),
 			},
 		},
@@ -102,8 +111,8 @@ func updateTeamConfig(name, description string) string {
 	}`, name, description)
 }
 
-func teamConfigWithUserRole(name, description, userRoleName string) string {
-	return fmt.Sprintf(`
+func teamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		granted_space_permissions = ["AccountCreate"]
 		name = "%s"
@@ -114,14 +123,14 @@ func teamConfigWithUserRole(name, description, userRoleName string) string {
 		description = "%s"
 
 		user_role {
-			space_id = "Spaces-1"
+			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, name, description)
+	}`, userRoleName, name, description, spaceID)
 }
 
-func updateTeamConfigWithUserRole(name, description, userRoleName string) string {
-	return fmt.Sprintf(`
+func updateTeamConfigWithUserRole(spaceID, name, description, userRoleName string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "user_role1" {
 		granted_space_permissions = ["AccountCreate"]
 		name = "%s"
@@ -132,10 +141,38 @@ func updateTeamConfigWithUserRole(name, description, userRoleName string) string
 		description = "%s - updated"
 
 		user_role {
-			space_id = "Spaces-1"
+			space_id = "%s"
 			user_role_id = octopusdeploy_user_role.user_role1.id
 		}
-	}`, userRoleName, name, description)
+	}`, userRoleName, name, description, spaceID)
+}
+
+func updateTeamConfigWithSystemLevelUserRole(spaceID, name, description, userRoleName string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
+	resource "octopusdeploy_user_role" "user_role1" {
+		granted_space_permissions = ["AccountCreate"]
+		name = "%s"
+	}
+
+	resource "octopusdeploy_user_role" "user_role2" {
+		granted_system_permissions = ["SpaceCreate"]
+		name = "%s - system"
+	}
+
+	resource "octopusdeploy_team" "team1" {
+		name = "%s"
+		description = "%s - updated"
+
+		user_role {
+			space_id = "%s"
+			user_role_id = octopusdeploy_user_role.user_role1.id
+		}
+
+		user_role {
+			space_id = null
+			user_role_id = octopusdeploy_user_role.user_role2.id
+		}
+	}`, userRoleName, userRoleName, name, description, spaceID)
 }
 
 func testTeamDestroy(s *terraform.State) error {
@@ -169,7 +206,7 @@ func testTeam(t *testing.T, name, description string) resource.TestCheckFunc {
 	}
 }
 
-func testTeamWithUserRole(t *testing.T, name, description string) resource.TestCheckFunc {
+func testTeamWithUserRole(t *testing.T, spaceID, name, description string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		teamId := s.RootModule().Resources["octopusdeploy_team.team1"].Primary.ID
 		team, err := octoClient.Teams.GetByID(teamId)
@@ -188,7 +225,43 @@ func testTeamWithUserRole(t *testing.T, name, description string) resource.TestC
 
 		assert.NotEmpty(t, userRoles.Items, "Team should have user roles")
 		assert.Len(t, userRoles.Items, 1, "Team should have exactly one user role")
-		assert.Equal(t, "Spaces-1", userRoles.Items[0].SpaceID, "User role space ID should match")
+		assert.Equal(t, spaceID, userRoles.Items[0].SpaceID, "User role space ID should match")
+
+		return nil
+	}
+}
+
+func testTeamWithSystemLevelUserRole(t *testing.T, spaceID, name, description string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		teamId := s.RootModule().Resources["octopusdeploy_team.team1"].Primary.ID
+		team, err := octoClient.Teams.GetByID(teamId)
+		if err != nil {
+			return fmt.Errorf("Failed to retrieve team by ID: %s", err)
+		}
+
+		assert.NotEmpty(t, team.ID, "Team ID should not be empty")
+		assert.Equal(t, name, team.Name, "Team name did not match expected value")
+		assert.Equal(t, description+" - updated", team.Description, "Team description did not match expected value")
+
+		userRoles, err := octoClient.Teams.GetScopedUserRoles(*team, core.SkipTakeQuery{})
+		if err != nil {
+			return fmt.Errorf("Failed to retrieve user roles: %s", err)
+		}
+
+		assert.NotEmpty(t, userRoles.Items, "Team should have user roles")
+		assert.Len(t, userRoles.Items, 2, "Team should have exactly two user roles")
+		spacelessCount := 0
+		spaceScopedCount := 0
+		for _, item := range userRoles.Items {
+			if item.SpaceID == "" {
+				spacelessCount++
+			} else {
+				assert.Equal(t, spaceID, item.SpaceID, "Space-scoped user role should be scoped to the test space")
+				spaceScopedCount++
+			}
+		}
+		assert.Equal(t, 1, spacelessCount, "Team should have exactly one system-level (spaceless) user role")
+		assert.Equal(t, 1, spaceScopedCount, "Team should have exactly one space-scoped user role")
 
 		return nil
 	}

@@ -35,7 +35,7 @@ func testAccDataSourceSpaceDefaultRunbookRetentionPolicyConfig(spaceName string)
 resource "octopusdeploy_space" "octopus_project_space_test" {
   name                  = "%s"
   is_default            = false
-  is_task_queue_stopped = false
+  is_task_queue_stopped = true
   description           = "Test space for Runbook datasource"
   space_managers_teams  = ["teams-administrators"]
 }

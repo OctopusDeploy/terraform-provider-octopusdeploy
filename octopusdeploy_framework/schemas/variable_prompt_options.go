@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -64,9 +66,20 @@ func VariableSelectOptionsObjectType() map[string]attr.Type {
 	}
 }
 
-func MapFromVariablePromptOptions(variablePromptOptions *variables.VariablePromptOptions) attr.Value {
+func MapFromVariablePromptOptions(variablePromptOptions *variables.VariablePromptOptions, currentState types.List) attr.Value {
 	if variablePromptOptions == nil {
 		return nil
+	}
+
+	// The Octopus server injects a default display_settings onto every prompted
+	// variable. Only surface it when the prior state already declared display_settings.
+	displaySettingsDeclared := true
+	if !currentState.IsNull() && len(currentState.Elements()) > 0 {
+		if obj, ok := currentState.Elements()[0].(types.Object); ok {
+			if displaySettings, ok := obj.Attributes()[VariableSchemaAttributeNames.DisplaySettings].(types.List); ok {
+				displaySettingsDeclared = !displaySettings.IsNull() && len(displaySettings.Elements()) > 0
+			}
+		}
 	}
 
 	attrs := map[string]attr.Value{
@@ -75,7 +88,7 @@ func MapFromVariablePromptOptions(variablePromptOptions *variables.VariablePromp
 		VariableSchemaAttributeNames.Label:           types.StringValue(variablePromptOptions.Label),
 		VariableSchemaAttributeNames.DisplaySettings: types.ListNull(types.ObjectType{AttrTypes: VariableDisplaySettingsObjectType()}),
 	}
-	if variablePromptOptions.DisplaySettings != nil {
+	if variablePromptOptions.DisplaySettings != nil && displaySettingsDeclared {
 		attrs[VariableSchemaAttributeNames.DisplaySettings] = types.ListValueMust(
 			types.ObjectType{
 				AttrTypes: VariableDisplaySettingsObjectType(),
@@ -258,9 +271,13 @@ func getVariablePromptResourceSchema() resourceSchema.ListNestedBlock {
 				SchemaAttributeNames.Description: GetDescriptionResourceSchema("variable prompt option"),
 				VariableSchemaAttributeNames.IsRequired: resourceSchema.BoolAttribute{
 					Optional: true,
+					Computed: true,
+					Default:  booldefault.StaticBool(false),
 				},
 				VariableSchemaAttributeNames.Label: resourceSchema.StringAttribute{
 					Optional: true,
+					Computed: true,
+					Default:  stringdefault.StaticString(""),
 				},
 			},
 			Blocks: map[string]resourceSchema.Block{

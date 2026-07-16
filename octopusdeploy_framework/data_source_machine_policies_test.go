@@ -54,16 +54,17 @@ func TestAccOctopusDeployDataSourceMachinePoliciesWithFilters(t *testing.T) {
 func TestAccOctopusDeployDataSourceMachinePoliciesWithSpaceId(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	name := fmt.Sprintf("data.octopusdeploy_machine_policies.%s", localName)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceMachinePoliciesWithSpaceIdConfig(localName),
+				Config: testAccDataSourceMachinePoliciesWithSpaceIdConfig(localName, space.ID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMachinePoliciesDataSourceID(name),
-					resource.TestCheckResourceAttr(name, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(name, "space_id", space.ID),
 					resource.TestCheckResourceAttrSet(name, "machine_policies.#"),
 				),
 			},
@@ -99,9 +100,9 @@ func testAccDataSourceMachinePoliciesWithFiltersConfig(localName, partialName st
 	}`, localName, partialName)
 }
 
-func testAccDataSourceMachinePoliciesWithSpaceIdConfig(localName string) string {
-	return fmt.Sprintf(`data "octopusdeploy_machine_policies" "%s" {
-		space_id = "Spaces-1"
+func testAccDataSourceMachinePoliciesWithSpaceIdConfig(localName, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`data "octopusdeploy_machine_policies" "%s" {
+		space_id = "%s"
 		take = 10
-	}`, localName)
+	}`, localName, spaceID)
 }

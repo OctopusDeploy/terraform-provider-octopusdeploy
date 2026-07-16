@@ -7,7 +7,6 @@ import (
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
-	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	internalTest "github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/test"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -87,8 +86,6 @@ func TestAccOctopusDeployChannelBasicWithUpdate(t *testing.T) {
 }
 
 func TestAccOctopusDeployChannelWithOneRule(t *testing.T) {
-	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
-
 	internalTest.SkipCI(t, "action_package blocks required on rule, this test is out of date.")
 	const terraformNamePrefix = "octopusdeploy_channel.ch"
 	const channelName = "Funky Channel"
@@ -116,8 +113,6 @@ func TestAccOctopusDeployChannelWithOneRule(t *testing.T) {
 }
 
 func TestAccOctopusDeployChannelWithOneRuleWithUpdate(t *testing.T) {
-	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
-
 	internalTest.SkipCI(t, "action_package blocks required on rule, this test is out of date.")
 	const terraformNamePrefix = "octopusdeploy_channel.ch"
 	const channelName = "Funky Channel"
@@ -159,8 +154,6 @@ func TestAccOctopusDeployChannelWithOneRuleWithUpdate(t *testing.T) {
 }
 
 func TestAccOctopusDeployChannelWithTwoRules(t *testing.T) {
-	t.Setenv(internal.DeprecationReversalsEnvVar, internal.DeprecationKeyProcess)
-
 	internalTest.SkipCI(t, "action_package blocks required on rule, this test is out of date.")
 	const terraformNamePrefix = "octopusdeploy_channel.ch"
 	const channelName = "Funky Channel"
@@ -268,33 +261,28 @@ func testAccChannelWithOneRule(name, description, versionRange, actionName strin
 			project_group_id = octopusdeploy_project_group.test-project-group.id
 		}
 
-		resource "octopusdeploy_deployment_process" "deploy_step_template" {
+		resource "octopusdeploy_process" "deploy_step_template" {
 			project_id = octopusdeploy_project.test-project.id
+		}
 
-			step {
-				name = "step-1"
-				target_roles = ["Webserver",]
-
-				deploy_package_action {
-					features = [
-						"Octopus.Features.ConfigurationTransforms",
-						"Octopus.Features.ConfigurationVariables",
-						"Octopus.Features.CustomDirectory",
-						"Octopus.Features.CustomScripts",
-						"Octopus.Features.IISWebSite"
-					]
-					name = "%s"
-
-					primary_package {
-						feed_id = "feeds-builtin"
-						package_id = "MyPackage"
-					}
-				}
+		resource "octopusdeploy_process_step" "step-1" {
+			process_id   = octopusdeploy_process.deploy_step_template.id
+			name         = "%s"
+			type         = "Octopus.TentaclePackage"
+			properties   = {
+				"Octopus.Action.TargetRoles" = "Webserver"
+			}
+			execution_properties = {
+				"Octopus.Action.EnabledFeatures" = "Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables,Octopus.Features.CustomDirectory,Octopus.Features.CustomScripts,Octopus.Features.IISWebSite"
+			}
+			primary_package = {
+				feed_id    = "feeds-builtin"
+				package_id = "MyPackage"
 			}
 		}
 
 		resource "octopusdeploy_channel" "ch" {
-		  depends_on  = ["octopusdeploy_deployment_process.deploy_step_template"]
+		  depends_on  = [octopusdeploy_process_step.step-1]
 		  description = "%s"
 		  name = "%s"
 		  project_id = octopusdeploy_project.test-project.id
@@ -321,32 +309,33 @@ func testAccChannelWithTwoRules(name, description, versionRange1, actionName1, v
 	return testAccProjectGroup(projectGroupLocalName, projectGroupName) + "\n" +
 		testAccLifecycle(lifecycleLocalName, lifecycleName) + "\n" +
 		testAccProjectWithOptions(projectTestOptions) + "\n" +
-		fmt.Sprintf(`resource "octopusdeploy_deployment_process" "deploy_step_template" {
+		fmt.Sprintf(`resource "octopusdeploy_process" "deploy_step_template" {
 			project_id          = octopusdeploy_project.`+projectTestOptions.LocalName+`.id
-			step {
-				name            = "step-1"
-				target_roles    = ["Webserver",]
-				action {
-					name 		= "%s"
-					action_type = "Octopus.TentaclePackage"
+		}
 
-					properties = {
-						"Octopus.Action.Package.FeedId": "feeds-builtin"
-						"Octopus.Action.Package.PackageId": "#{PackageName}"
-					}
+		resource "octopusdeploy_process_step" "step-1" {
+			process_id   = octopusdeploy_process.deploy_step_template.id
+			name         = "%s"
+			type         = "Octopus.TentaclePackage"
+			properties   = {
+				"Octopus.Action.TargetRoles" = "Webserver"
+			}
+			primary_package = {
+				feed_id    = "feeds-builtin"
+				package_id = "#{PackageName}"
+			}
+		}
 
-				}
-
-				action {
-					name 		= "%s"
-					action_type = "Octopus.TentaclePackage"
-
-					properties = {
-						"Octopus.Action.Package.FeedId": "feeds-builtin"
-						"Octopus.Action.Package.PackageId": "#{PackageName}"
-					}
-
-				}
+		resource "octopusdeploy_process_step" "step-2" {
+			process_id   = octopusdeploy_process.deploy_step_template.id
+			name         = "%s"
+			type         = "Octopus.TentaclePackage"
+			properties   = {
+				"Octopus.Action.TargetRoles" = "Webserver"
+			}
+			primary_package = {
+				feed_id    = "feeds-builtin"
+				package_id = "#{PackageName}"
 			}
 		}
 
@@ -365,7 +354,7 @@ func testAccChannelWithTwoRules(name, description, versionRange1, actionName1, v
 				actions       = ["%s"]
 			}
 
-			depends_on = ["octopusdeploy_deployment_process.deploy_step_template"]
+			depends_on = [octopusdeploy_process_step.step-1, octopusdeploy_process_step.step-2]
 		}
 		`,
 			actionName1, actionName2, name, description, versionRange1, actionName1, versionRange2, actionName2,

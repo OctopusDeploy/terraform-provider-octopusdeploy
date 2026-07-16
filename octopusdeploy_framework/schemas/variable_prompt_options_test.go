@@ -131,7 +131,7 @@ func TestFlattenPromptedVariableDisplaySettingsWithNilInput(t *testing.T) {
 }
 
 func TestFlattenPromptedVariableSettingsWithNilInput(t *testing.T) {
-	result := MapFromVariablePromptOptions(nil)
+	result := MapFromVariablePromptOptions(nil, types.ListNull(types.ObjectType{AttrTypes: VariablePromptOptionsObjectType()}))
 	require.Empty(t, result)
 }
 

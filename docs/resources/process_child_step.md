@@ -99,7 +99,7 @@ resource "octopusdeploy_process_child_step" "run_script" {
 - `is_disabled` (Boolean) Indicates the disabled status of this step.
 - `is_required` (Boolean) Indicates the required status of this step.
 - `notes` (String) The notes associated with this step.
-- `packages` (Attributes Map) Package references associated with this step where key is a name of the package reference (use empty name for primary package) (see [below for nested schema](#nestedatt--packages))
+- `packages` (Attributes Map) Package references associated with this step where key is a name of the package reference (see [below for nested schema](#nestedatt--packages))
 - `primary_package` (Attributes) Primary package of the step (see [below for nested schema](#nestedatt--primary_package))
 - `slug` (String) The human-readable unique identifier for the step.
 - `space_id` (String) The space ID associated with this process_child_step.

@@ -19,6 +19,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountBasic(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	roleArn := "arn:aws:iam::123456789012:role/test-role"
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAWSOpenIDConnectAccountCheckDestroy,
@@ -31,12 +32,12 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", description),
 					resource.TestCheckResourceAttr(prefix, "role_arn", roleArn),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 					resource.TestCheckResourceAttr(prefix, "tenanted_deployment_participation", string(core.TenantedDeploymentModeUntenanted)),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 					// Skip checking session_duration as SDK returns string but expects int
 				),
-				Config: testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn),
+				Config: testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn, space.ID),
 			},
 		},
 	})
@@ -53,6 +54,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountUpdate(t *testing.T) {
 	newDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	roleArn := "arn:aws:iam::123456789012:role/test-role"
 	newRoleArn := "arn:aws:iam::123456789012:role/updated-test-role"
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAWSOpenIDConnectAccountCheckDestroy,
@@ -66,7 +68,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", description),
 					resource.TestCheckResourceAttr(prefix, "role_arn", roleArn),
 				),
-				Config: testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn),
+				Config: testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn, space.ID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -75,7 +77,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 					resource.TestCheckResourceAttr(prefix, "role_arn", newRoleArn),
 				),
-				Config: testAccAWSOpenIDConnectAccountBasic(localName, newName, newDescription, newRoleArn),
+				Config: testAccAWSOpenIDConnectAccountBasic(localName, newName, newDescription, newRoleArn, space.ID),
 			},
 		},
 	})
@@ -89,6 +91,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountWithSubjectKeys(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	roleArn := "arn:aws:iam::123456789012:role/test-role"
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAWSOpenIDConnectAccountCheckDestroy,
@@ -106,7 +109,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountWithSubjectKeys(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "account_test_subject_keys.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "account_test_subject_keys.0", "type"),
 				),
-				Config: testAccAWSOpenIDConnectAccountWithSubjectKeys(localName, name, description, roleArn),
+				Config: testAccAWSOpenIDConnectAccountWithSubjectKeys(localName, name, description, roleArn, space.ID),
 			},
 		},
 	})
@@ -120,6 +123,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountImport(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	roleArn := "arn:aws:iam::123456789012:role/test-role"
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAWSOpenIDConnectAccountCheckDestroy,
@@ -127,7 +131,7 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountImport(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn),
+				Config: testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn, space.ID),
 			},
 			{
 				ResourceName:      resourceName,
@@ -140,31 +144,32 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountImport(t *testing.T) {
 	})
 }
 
-func testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
+func testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
 		name         = "%s"
 		description  = "%s"
 		role_arn     = "%s"
-		space_id     = "Spaces-1"
-	}`, localName, name, description, roleArn)
+		space_id     = "%s"
+	}`, localName, name, description, roleArn, spaceID)
 }
 
-func testAccAWSOpenIDConnectAccountWithSubjectKeys(localName, name, description, roleArn string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
+func testAccAWSOpenIDConnectAccountWithSubjectKeys(localName, name, description, roleArn, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_aws_openid_connect_account" "%s" {
 		name                     = "%s"
 		description              = "%s"
 		role_arn                 = "%s"
-		space_id                 = "Spaces-1"
+		space_id                 = "%s"
 		execution_subject_keys   = ["space"]
 		health_subject_keys      = ["target"]
 		account_test_subject_keys = ["type"]
-	}`, localName, name, description, roleArn)
+	}`, localName, name, description, roleArn, spaceID)
 }
 
 func testAccAWSOpenIDConnectAccountExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		accountID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), accountID); err != nil {
+		rs := s.RootModule().Resources[prefix]
+		accountID := rs.Primary.ID
+		if _, err := accounts.GetByID(octoClient, rs.Primary.Attributes["space_id"], accountID); err != nil {
 			return err
 		}
 
@@ -178,7 +183,7 @@ func testAccAWSOpenIDConnectAccountCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		if account, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID); err == nil {
+		if account, err := accounts.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID); err == nil {
 			return fmt.Errorf("AWS OIDC account (%s) still exists", account.GetID())
 		}
 	}

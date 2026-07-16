@@ -39,6 +39,93 @@ func TestAccOctopusDeployProcessStepRunScript(t *testing.T) {
 	})
 }
 
+// TestAccOctopusDeployProcessStepContainerBundledTooling reproduces the issue where
+// a step configured with a container causes the server to inject the
+// OctopusUseBundledTooling execution property. When the user has not explicitly set
+// that property, the provider would previously surface the server-injected value into
+// state, producing a "Provider produced inconsistent result after apply" error.
+// The acceptance test framework asserts a non-empty plan after apply fails the test,
+// so this passing confirms the fix.
+func TestAccOctopusDeployProcessStepContainerBundledTooling(t *testing.T) {
+	scenario := newProcessStepTestDependenciesConfiguration("container")
+	step := fmt.Sprintf("container_%s", acctest.RandStringFromCharSet(8, acctest.CharSetAlpha))
+	createScript := fmt.Sprintf(`Write-Host 'create: %s'`, acctest.RandStringFromCharSet(20, acctest.CharSetAlpha))
+	qualifiedName := fmt.Sprintf("octopusdeploy_process_step.%s", step)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccProjectCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			// Step 1: container set, user does NOT declare OctopusUseBundledTooling.
+			// Server injects it; provider must suppress it from state so apply succeeds.
+			{
+				Config: testAccProcessStepContainerConfiguration(scenario.config, scenario.process, step, createScript, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckResourceProcessStepExists(),
+					resource.TestCheckResourceAttrSet(qualifiedName, "id"),
+					resource.TestCheckResourceAttr(qualifiedName, "container.image", "octopusdeploy/worker-tools:latest"),
+					// Server-injected OctopusUseBundledTooling must NOT appear in state
+					// because the user did not declare it.
+					resource.TestCheckNoResourceAttr(qualifiedName, "execution_properties.OctopusUseBundledTooling"),
+				),
+			},
+			// Step 2: re-apply identical config. Confirms no perpetual diff is produced
+			// by the suppression (the framework fails the test on a non-empty plan).
+			{
+				Config:   testAccProcessStepContainerConfiguration(scenario.config, scenario.process, step, createScript, ""),
+				PlanOnly: true,
+			},
+			// Step 3: user explicitly declares OctopusUseBundledTooling (the documented
+			// workaround). It must be preserved in state, unchanged from prior behaviour.
+			{
+				Config: testAccProcessStepContainerConfiguration(scenario.config, scenario.process, step, createScript, `"OctopusUseBundledTooling" = "False"`),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckResourceProcessStepExists(),
+					resource.TestCheckResourceAttr(qualifiedName, "execution_properties.OctopusUseBundledTooling", "False"),
+				),
+			},
+		},
+	})
+}
+
+func testAccProcessStepContainerConfiguration(dependencies string, process string, step string, scriptBody string, extraProperties string) string {
+	return fmt.Sprintf(`
+		%s
+		resource "octopusdeploy_docker_container_registry" "docker" {
+		  name        = "Docker Hub %s"
+		  feed_uri    = "https://index.docker.io"
+		  api_version = "v2"
+		}
+
+		resource "octopusdeploy_process_step" "%s" {
+		  process_id     = octopusdeploy_process.%s.id
+		  name           = "%s"
+		  type           = "Octopus.Script"
+		  worker_pool_id = data.octopusdeploy_worker_pools.default.worker_pools[0].id
+		  container = {
+			feed_id = octopusdeploy_docker_container_registry.docker.id
+			image   = "octopusdeploy/worker-tools:latest"
+		  }
+		  execution_properties = {
+			"Octopus.Action.RunOnServer"         = "True"
+			"Octopus.Action.Script.ScriptSource" = "Inline"
+			"Octopus.Action.Script.Syntax"       = "PowerShell"
+			"Octopus.Action.Script.ScriptBody"   = "%s"
+			%s
+		  }
+		}
+		`,
+		dependencies,
+		step,
+		step,
+		process,
+		step,
+		scriptBody,
+		extraProperties,
+	)
+}
+
 func testAccProcessStepRunScriptConfiguration(dependencies string, process string, step string, scriptBody string) string {
 	return fmt.Sprintf(`
 		%s

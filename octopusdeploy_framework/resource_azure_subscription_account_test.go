@@ -21,6 +21,8 @@ func TestAccOctopusDeployAzureSubscriptionAccountBasic(t *testing.T) {
 	subscriptionID := uuid.New()
 	azureEnvironment := "AzureChinaCloud"
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureSubscriptionAccountCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -35,11 +37,11 @@ func TestAccOctopusDeployAzureSubscriptionAccountBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "azure_environment", azureEnvironment),
 					resource.TestCheckResourceAttr(prefix, "management_endpoint", "https://management.core.chinacloudapi.cn/"),
 					resource.TestCheckResourceAttr(prefix, "storage_endpoint_suffix", "core.chinacloudapi.cn"),
-					resource.TestCheckResourceAttr(prefix, "space_id", "Spaces-1"),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
 					resource.TestCheckResourceAttr(prefix, "tenanted_deployment_participation", string(core.TenantedDeploymentModeUntenanted)),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 				),
-				Config: testAccAzureSubscriptionAccountBasic(localName, name, description, subscriptionID, azureEnvironment),
+				Config: testAccAzureSubscriptionAccountBasic(localName, name, description, subscriptionID, azureEnvironment, space.ID),
 			},
 		},
 	})
@@ -56,6 +58,8 @@ func TestAccOctopusDeployAzureSubscriptionAccountUpdate(t *testing.T) {
 	subscriptionID := uuid.New()
 	azureEnvironment := "AzureChinaCloud"
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureSubscriptionAccountCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
@@ -68,7 +72,7 @@ func TestAccOctopusDeployAzureSubscriptionAccountUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", description),
 					resource.TestCheckResourceAttr(prefix, "subscription_id", subscriptionID.String()),
 				),
-				Config: testAccAzureSubscriptionAccountBasic(localName, name, description, subscriptionID, azureEnvironment),
+				Config: testAccAzureSubscriptionAccountBasic(localName, name, description, subscriptionID, azureEnvironment, space.ID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -77,7 +81,7 @@ func TestAccOctopusDeployAzureSubscriptionAccountUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 					resource.TestCheckResourceAttr(prefix, "subscription_id", subscriptionID.String()),
 				),
-				Config: testAccAzureSubscriptionAccountBasic(localName, newName, newDescription, subscriptionID, azureEnvironment),
+				Config: testAccAzureSubscriptionAccountBasic(localName, newName, newDescription, subscriptionID, azureEnvironment, space.ID),
 			},
 		},
 	})
@@ -89,6 +93,8 @@ func TestAccOctopusDeployAzureSubscriptionAccountMinimal(t *testing.T) {
 
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	subscriptionID := uuid.New()
+
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureSubscriptionAccountCheckDestroy,
@@ -102,7 +108,7 @@ func TestAccOctopusDeployAzureSubscriptionAccountMinimal(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "subscription_id", subscriptionID.String()),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 				),
-				Config: testAccAzureSubscriptionAccountMinimal(localName, name, subscriptionID),
+				Config: testAccAzureSubscriptionAccountMinimal(localName, name, subscriptionID, space.ID),
 			},
 		},
 	})
@@ -114,6 +120,8 @@ func TestAccOctopusDeployAzureSubscriptionAccountTenanted(t *testing.T) {
 
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	subscriptionID := uuid.New()
+
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureSubscriptionAccountCheckDestroy,
@@ -127,7 +135,7 @@ func TestAccOctopusDeployAzureSubscriptionAccountTenanted(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "subscription_id", subscriptionID.String()),
 					resource.TestCheckResourceAttr(prefix, "tenanted_deployment_participation", string(core.TenantedDeploymentModeTenantedOrUntenanted)),
 				),
-				Config: testAccAzureSubscriptionAccountTenanted(localName, name, subscriptionID),
+				Config: testAccAzureSubscriptionAccountTenanted(localName, name, subscriptionID, space.ID),
 			},
 		},
 	})
@@ -142,13 +150,15 @@ func TestAccOctopusDeployAzureSubscriptionAccountImport(t *testing.T) {
 	subscriptionID := uuid.New()
 	azureEnvironment := "AzureChinaCloud"
 
+	space := NewTestSpace(t)
+
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccAzureSubscriptionAccountCheckDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureSubscriptionAccountBasic(localName, name, description, subscriptionID, azureEnvironment),
+				Config: testAccAzureSubscriptionAccountBasic(localName, name, description, subscriptionID, azureEnvironment, space.ID),
 			},
 			{
 				ResourceName:            resourceName,
@@ -161,39 +171,40 @@ func TestAccOctopusDeployAzureSubscriptionAccountImport(t *testing.T) {
 	})
 }
 
-func testAccAzureSubscriptionAccountBasic(localName, name, description string, subscriptionID uuid.UUID, azureEnvironment string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
+func testAccAzureSubscriptionAccountBasic(localName, name, description string, subscriptionID uuid.UUID, azureEnvironment, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
 		name                    = "%s"
 		description             = "%s"
 		subscription_id         = "%s"
 		azure_environment       = "%s"
 		management_endpoint     = "https://management.core.chinacloudapi.cn/"
 		storage_endpoint_suffix = "core.chinacloudapi.cn"
-		space_id                = "Spaces-1"
-	}`, localName, name, description, subscriptionID.String(), azureEnvironment)
+		space_id                = "%s"
+	}`, localName, name, description, subscriptionID.String(), azureEnvironment, spaceID)
 }
 
-func testAccAzureSubscriptionAccountMinimal(localName, name string, subscriptionID uuid.UUID) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
+func testAccAzureSubscriptionAccountMinimal(localName, name string, subscriptionID uuid.UUID, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
 		name            = "%s"
 		subscription_id = "%s"
-		space_id        = "Spaces-1"
-	}`, localName, name, subscriptionID.String())
+		space_id        = "%s"
+	}`, localName, name, subscriptionID.String(), spaceID)
 }
 
-func testAccAzureSubscriptionAccountTenanted(localName, name string, subscriptionID uuid.UUID) string {
-	return fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
+func testAccAzureSubscriptionAccountTenanted(localName, name string, subscriptionID uuid.UUID, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_azure_subscription_account" "%s" {
 		name                              = "%s"
 		subscription_id                   = "%s"
-		space_id                          = "Spaces-1"
+		space_id                          = "%s"
 		tenanted_deployment_participation = "%s"
-	}`, localName, name, subscriptionID.String(), string(core.TenantedDeploymentModeTenantedOrUntenanted))
+	}`, localName, name, subscriptionID.String(), spaceID, string(core.TenantedDeploymentModeTenantedOrUntenanted))
 }
 
 func testAccAzureSubscriptionAccountExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		accountID := s.RootModule().Resources[prefix].Primary.ID
-		if _, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), accountID); err != nil {
+		rs := s.RootModule().Resources[prefix]
+		accountID := rs.Primary.ID
+		if _, err := accounts.GetByID(octoClient, rs.Primary.Attributes["space_id"], accountID); err != nil {
 			return err
 		}
 
@@ -207,7 +218,7 @@ func testAccAzureSubscriptionAccountCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		if account, err := accounts.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID); err == nil {
+		if account, err := accounts.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID); err == nil {
 			return fmt.Errorf("Azure Subscription account (%s) still exists", account.GetID())
 		}
 	}

@@ -14,6 +14,7 @@ func TestAccOctopusDeployTeamBasic(t *testing.T) {
 	prefix := "octopusdeploy_team." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccTeamCheckDestroy,
@@ -28,7 +29,7 @@ func TestAccOctopusDeployTeamBasic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 					resource.TestCheckResourceAttrSet(prefix, "space_id"),
 				),
-				Config: testAccTeamBasic(localName, name, description),
+				Config: testAccTeamBasic(localName, name, description, space.ID),
 			},
 		},
 	})
@@ -40,6 +41,7 @@ func TestAccOctopusDeployTeamUpdate(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	newDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccTeamCheckDestroy,
@@ -52,7 +54,7 @@ func TestAccOctopusDeployTeamUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", description),
 				),
-				Config: testAccTeamBasic(localName, name, description),
+				Config: testAccTeamBasic(localName, name, description, space.ID),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -60,7 +62,7 @@ func TestAccOctopusDeployTeamUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", name),
 					resource.TestCheckResourceAttr(prefix, "description", newDescription),
 				),
-				Config: testAccTeamBasic(localName, name, newDescription),
+				Config: testAccTeamBasic(localName, name, newDescription, space.ID),
 			},
 		},
 	})
@@ -72,6 +74,7 @@ func TestAccOctopusDeployTeamWithUserRoleBlocks(t *testing.T) {
 	prefix := "octopusdeploy_team." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccTeamCheckDestroy,
@@ -85,7 +88,7 @@ func TestAccOctopusDeployTeamWithUserRoleBlocks(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "description", description),
 					resource.TestCheckResourceAttr(prefix, "user_role.#", "1"),
 				),
-				Config: testAccTeamWithUserRole(localName, name, description, userRoleName),
+				Config: testAccTeamWithUserRole(localName, name, description, userRoleName, space.ID),
 			},
 		},
 	})
@@ -122,6 +125,7 @@ func TestAccOctopusDeployTeamImport(t *testing.T) {
 	resourceName := "octopusdeploy_team." + localName
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccTeamCheckDestroy,
@@ -129,7 +133,7 @@ func TestAccOctopusDeployTeamImport(t *testing.T) {
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTeamBasic(localName, name, description),
+				Config: testAccTeamBasic(localName, name, description, space.ID),
 			},
 			{
 				ResourceName:      resourceName,
@@ -141,16 +145,16 @@ func TestAccOctopusDeployTeamImport(t *testing.T) {
 	})
 }
 
-func testAccTeamBasic(localName string, name string, description string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_team" "%s" {
+func testAccTeamBasic(localName string, name string, description string, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_team" "%s" {
 		name        = "%s"
 		description = "%s"
-		space_id    = "Spaces-1"
-	}`, localName, name, description)
+		space_id    = "%s"
+	}`, localName, name, description, spaceID)
 }
 
-func testAccTeamWithUserRole(localName string, name string, description string, userRoleName string) string {
-	return fmt.Sprintf(`
+func testAccTeamWithUserRole(localName string, name string, description string, userRoleName string, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 	resource "octopusdeploy_user_role" "%s" {
 		granted_space_permissions = ["AccountCreate"]
 		name = "%s"
@@ -159,12 +163,13 @@ func testAccTeamWithUserRole(localName string, name string, description string, 
 	resource "octopusdeploy_team" "%s" {
 		name        = "%s"
 		description = "%s"
-		
+		space_id    = "%s"
+
 		user_role {
-			space_id     = "Spaces-1"
+			space_id     = "%s"
 			user_role_id = octopusdeploy_user_role.%s.id
 		}
-	}`, userRoleName, userRoleName, localName, name, description, userRoleName)
+	}`, userRoleName, userRoleName, localName, name, description, spaceID, spaceID, userRoleName)
 }
 
 func testAccTeamWithExternalSecurityGroup(localName string, name string, description string, externalGroupId string, externalGroupName string) string {
@@ -207,6 +212,7 @@ func testAccTeamCheckDestroy(s *terraform.State) error {
 func TestAccOctopusDeployTeamScopedUserRoleNoConflict(t *testing.T) {
 	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testAccTeamCheckDestroy,
@@ -215,7 +221,7 @@ func TestAccOctopusDeployTeamScopedUserRoleNoConflict(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create team without user_role blocks
 			{
-				Config: testAccTeamWithoutUserRolesConfig(teamName),
+				Config: testAccTeamWithoutUserRolesConfig(teamName, space.ID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "name", teamName),
 					resource.TestCheckNoResourceAttr("octopusdeploy_team.test_team", "user_role.#"),
@@ -223,7 +229,7 @@ func TestAccOctopusDeployTeamScopedUserRoleNoConflict(t *testing.T) {
 			},
 			// Add standalone scoped_user_role resource
 			{
-				Config: testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName),
+				Config: testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName, space.ID),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "name", teamName),
 					resource.TestCheckResourceAttrSet("octopusdeploy_scoped_user_role.test_role", "id"),
@@ -232,13 +238,13 @@ func TestAccOctopusDeployTeamScopedUserRoleNoConflict(t *testing.T) {
 			},
 			// Apply again with no changes - should have no diff (this is the critical test)
 			{
-				Config:             testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName),
+				Config:             testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName, space.ID),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false, // This should pass with the fix
 			},
 			// Apply a third time to ensure stability
 			{
-				Config:             testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName),
+				Config:             testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName, space.ID),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false, // This should also pass with the fix
 			},
@@ -246,17 +252,18 @@ func TestAccOctopusDeployTeamScopedUserRoleNoConflict(t *testing.T) {
 	})
 }
 
-func testAccTeamWithoutUserRolesConfig(teamName string) string {
-	return fmt.Sprintf(`
+func testAccTeamWithoutUserRolesConfig(teamName, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 resource "octopusdeploy_team" "test_team" {
 	name        = "%s"
 	description = "Test team without user roles"
+	space_id    = "%s"
 	# Explicitly no user_role blocks
-}`, teamName)
+}`, teamName, spaceID)
 }
 
-func testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName string) string {
-	return fmt.Sprintf(`
+func testAccTeamWithStandaloneScopedUserRoleConfig(teamName, userRoleName, spaceID string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
 resource "octopusdeploy_user_role" "test_user_role" {
 	name = "%s"
 	description = "Test user role"
@@ -266,14 +273,15 @@ resource "octopusdeploy_user_role" "test_user_role" {
 resource "octopusdeploy_team" "test_team" {
 	name        = "%s"
 	description = "Test team without user roles"
+	space_id    = "%s"
 	# Explicitly no user_role blocks - standalone scoped_user_role should not conflict
 }
 
 resource "octopusdeploy_scoped_user_role" "test_role" {
 	team_id      = octopusdeploy_team.test_team.id
 	user_role_id = octopusdeploy_user_role.test_user_role.id
-	space_id     = "Spaces-1"
-}`, userRoleName, teamName)
+	space_id     = "%s"
+}`, userRoleName, teamName, spaceID, spaceID)
 }
 
 func testAccTeamImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {
