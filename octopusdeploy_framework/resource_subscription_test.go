@@ -95,7 +95,7 @@ func TestAccSubscriptionSlack(t *testing.T) {
 		CheckDestroy:             testAccSubscriptionCheckDestroy(resourceName),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSubscriptionSlackConfig(name, []string{"C0123"}, []string{"general"}, "Summary"),
+				Config: testAccSubscriptionSlackConfig(name, []string{"C0123"}, []string{"general"}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSubscriptionExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
@@ -103,17 +103,15 @@ func TestAccSubscriptionSlack(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_ids.0", "C0123"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_names.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_names.0", "general"),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_digest_format", "Summary"),
 					resource.TestCheckResourceAttrSet(resourceName, "event_notification_subscription.slack_frequency_period"),
 				),
 			},
 			{
-				Config: testAccSubscriptionSlackConfig(name, []string{"C0123", "C0456"}, []string{"general", "releases"}, "Detailed"),
+				Config: testAccSubscriptionSlackConfig(name, []string{"C0123", "C0456"}, []string{"general", "releases"}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSubscriptionExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_ids.#", "2"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_channel_ids.1", "C0456"),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.slack_digest_format", "Detailed"),
 				),
 			},
 			{
@@ -125,7 +123,7 @@ func TestAccSubscriptionSlack(t *testing.T) {
 	})
 }
 
-func testAccSubscriptionSlackConfig(resourceID string, channelIDs, channelNames []string, digestFormat string) string {
+func testAccSubscriptionSlackConfig(resourceID string, channelIDs, channelNames []string) string {
 	channelIDsList := "[]"
 	if len(channelIDs) > 0 {
 		channelIDsList = fmt.Sprintf(`["%s"]`, strings.Join(channelIDs, `", "`))
@@ -142,13 +140,12 @@ resource "octopusdeploy_subscription" "%s" {
   event_notification_subscription = {
     slack_channel_ids   = %s
     slack_channel_names = %s
-    slack_digest_format = "%s"
 
     filter = {
       event_categories = ["Modified"]
     }
   }
-}`, resourceID, resourceID, channelIDsList, channelNamesList, digestFormat)
+}`, resourceID, resourceID, channelIDsList, channelNamesList)
 }
 
 func testAccSubscriptionExists(n string) resource.TestCheckFunc {

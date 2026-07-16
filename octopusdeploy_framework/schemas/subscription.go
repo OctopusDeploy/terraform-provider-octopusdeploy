@@ -110,10 +110,8 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 						Build(),
 					"slack_digest_format": util.ResourceString().
 						Optional().
-						Computed().
-						Description("Format of Slack digest messages. Valid values: Summary, Detailed.").
-						Default("Summary").
-						Validators(stringvalidator.OneOf("Summary", "Detailed")).
+						Description("Deprecated and ignored. Slack digests always send a summary.").
+						Deprecated("slack_digest_format is no longer used and will be removed in a future release.").
 						Build(),
 					"webhook_uri": util.ResourceString().
 						Optional().
