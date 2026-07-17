@@ -87,10 +87,16 @@ func flattenProject(ctx context.Context, project *projects.Project, state *proje
 		if d := state.GitUsernamePasswordPersistenceSettings.ElementsAs(ctx, &stateList, false); !d.HasError() && len(stateList) > 0 {
 			if d := model.GitUsernamePasswordPersistenceSettings.ElementsAs(ctx, &modelList, false); !d.HasError() && len(modelList) > 0 {
 				modelList[0].Password = stateList[0].Password
+				modelList[0].InitialCommitBranch = stateList[0].InitialCommitBranch
 				model.GitUsernamePasswordPersistenceSettings, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: getGitUsernamePasswordPersistenceSettingsAttrTypes()}, modelList)
 			}
 		}
 	}
+
+	// Preserve initial_commit_branch from state (not returned by API, only used during VCS conversion)
+	preserveInitialCommitBranch(ctx, state.GitLibraryPersistenceSettings, &model.GitLibraryPersistenceSettings, getGitLibraryPersistenceSettingsAttrTypes())
+	preserveInitialCommitBranch(ctx, state.GitAnonymousPersistenceSettings, &model.GitAnonymousPersistenceSettings, getGitAnonymousPersistenceSettingsAttrTypes())
+	preserveInitialCommitBranch(ctx, state.GitGitHubAppPersistenceSettings, &model.GitGitHubAppPersistenceSettings, getGitGitHubAppPersistenceSettingsAttrTypes())
 
 	// Extension Settings
 	model.JiraServiceManagementExtensionSettings = flattenJiraServiceManagementExtensionSettings(nil)
@@ -110,6 +116,36 @@ func flattenProject(ctx context.Context, project *projects.Project, state *proje
 	}
 
 	return model, diags
+}
+
+// preserveInitialCommitBranch copies initial_commit_branch from state/plan to model.
+// The API doesn't return this value; it's only used during VCS conversion.
+func preserveInitialCommitBranch(ctx context.Context, stateList types.List, modelList *types.List, attrTypes map[string]attr.Type) {
+	if stateList.IsNull() || modelList.IsNull() {
+		return
+	}
+
+	var stateObjects, modelObjects []types.Object
+	if d := stateList.ElementsAs(ctx, &stateObjects, false); d.HasError() || len(stateObjects) == 0 {
+		return
+	}
+	if d := modelList.ElementsAs(ctx, &modelObjects, false); d.HasError() || len(modelObjects) == 0 {
+		return
+	}
+
+	stateAttrs := stateObjects[0].Attributes()
+	modelAttrs := modelObjects[0].Attributes()
+
+	if v, ok := stateAttrs["initial_commit_branch"]; ok {
+		modelAttrs["initial_commit_branch"] = v
+	}
+
+	newObj, diags := types.ObjectValue(attrTypes, modelAttrs)
+	if diags.HasError() {
+		return
+	}
+
+	*modelList = types.ListValueMust(types.ObjectType{AttrTypes: attrTypes}, []attr.Value{newObj})
 }
 
 func processPersistenceSettings(ctx context.Context, project *projects.Project, model *projectResourceModel) diag.Diagnostics {
@@ -197,9 +233,10 @@ func flattenGitPersistenceSettings(ctx context.Context, persistenceSettings proj
 	gitPersistenceSettings := persistenceSettings.(projects.GitPersistenceSettings)
 
 	baseAttrValues := map[string]attr.Value{
-		"base_path":      types.StringValue(gitPersistenceSettings.BasePath()),
-		"default_branch": types.StringValue(gitPersistenceSettings.DefaultBranch()),
-		"url":            types.StringValue(gitPersistenceSettings.URL().String()),
+		"base_path":             types.StringValue(gitPersistenceSettings.BasePath()),
+		"default_branch":        types.StringValue(gitPersistenceSettings.DefaultBranch()),
+		"url":                   types.StringValue(gitPersistenceSettings.URL().String()),
+		"initial_commit_branch": types.StringNull(),
 	}
 
 	protectedBranches, diags := types.SetValueFrom(ctx, types.StringType, gitPersistenceSettings.ProtectedBranchNamePatterns())
@@ -400,41 +437,45 @@ func getReleaseCreationStrategyAttrTypes() map[string]attr.Type {
 
 func getGitLibraryPersistenceSettingsAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"git_credential_id":  types.StringType,
-		"url":                types.StringType,
-		"base_path":          types.StringType,
-		"default_branch":     types.StringType,
-		"protected_branches": types.SetType{ElemType: types.StringType},
+		"git_credential_id":     types.StringType,
+		"url":                   types.StringType,
+		"base_path":             types.StringType,
+		"default_branch":        types.StringType,
+		"initial_commit_branch": types.StringType,
+		"protected_branches":    types.SetType{ElemType: types.StringType},
 	}
 }
 
 func getGitAnonymousPersistenceSettingsAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"url":                types.StringType,
-		"base_path":          types.StringType,
-		"default_branch":     types.StringType,
-		"protected_branches": types.SetType{ElemType: types.StringType},
+		"url":                   types.StringType,
+		"base_path":             types.StringType,
+		"default_branch":        types.StringType,
+		"initial_commit_branch": types.StringType,
+		"protected_branches":    types.SetType{ElemType: types.StringType},
 	}
 }
 
 func getGitGitHubAppPersistenceSettingsAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"github_connection_id": types.StringType,
-		"url":                  types.StringType,
-		"base_path":            types.StringType,
-		"default_branch":       types.StringType,
-		"protected_branches":   types.SetType{ElemType: types.StringType},
+		"github_connection_id":  types.StringType,
+		"url":                   types.StringType,
+		"base_path":             types.StringType,
+		"default_branch":        types.StringType,
+		"initial_commit_branch": types.StringType,
+		"protected_branches":    types.SetType{ElemType: types.StringType},
 	}
 }
 
 func getGitUsernamePasswordPersistenceSettingsAttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"url":                types.StringType,
-		"base_path":          types.StringType,
-		"default_branch":     types.StringType,
-		"protected_branches": types.SetType{ElemType: types.StringType},
-		"username":           types.StringType,
-		"password":           types.StringType,
+		"url":                   types.StringType,
+		"base_path":             types.StringType,
+		"default_branch":        types.StringType,
+		"initial_commit_branch": types.StringType,
+		"protected_branches":    types.SetType{ElemType: types.StringType},
+		"username":              types.StringType,
+		"password":              types.StringType,
 	}
 }
 

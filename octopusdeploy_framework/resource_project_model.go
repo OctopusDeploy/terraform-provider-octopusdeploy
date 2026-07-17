@@ -96,33 +96,37 @@ type templateModel struct {
 }
 
 type gitLibraryPersistenceSettingsModel struct {
-	GitCredentialID   types.String `tfsdk:"git_credential_id"`
-	URL               types.String `tfsdk:"url"`
-	BasePath          types.String `tfsdk:"base_path"`
-	DefaultBranch     types.String `tfsdk:"default_branch"`
-	ProtectedBranches types.Set    `tfsdk:"protected_branches"`
+	GitCredentialID     types.String `tfsdk:"git_credential_id"`
+	URL                 types.String `tfsdk:"url"`
+	BasePath            types.String `tfsdk:"base_path"`
+	DefaultBranch       types.String `tfsdk:"default_branch"`
+	ProtectedBranches   types.Set    `tfsdk:"protected_branches"`
+	InitialCommitBranch types.String `tfsdk:"initial_commit_branch"`
 }
 
 type gitUsernamePasswordPersistenceSettingsModel struct {
-	URL               types.String `tfsdk:"url"`
-	Username          types.String `tfsdk:"username"`
-	Password          types.String `tfsdk:"password"`
-	BasePath          types.String `tfsdk:"base_path"`
-	DefaultBranch     types.String `tfsdk:"default_branch"`
-	ProtectedBranches types.Set    `tfsdk:"protected_branches"`
+	URL                 types.String `tfsdk:"url"`
+	Username            types.String `tfsdk:"username"`
+	Password            types.String `tfsdk:"password"`
+	BasePath            types.String `tfsdk:"base_path"`
+	DefaultBranch       types.String `tfsdk:"default_branch"`
+	ProtectedBranches   types.Set    `tfsdk:"protected_branches"`
+	InitialCommitBranch types.String `tfsdk:"initial_commit_branch"`
 }
 
 type gitAnonymousPersistenceSettingsModel struct {
-	URL               types.String `tfsdk:"url"`
-	BasePath          types.String `tfsdk:"base_path"`
-	DefaultBranch     types.String `tfsdk:"default_branch"`
-	ProtectedBranches types.Set    `tfsdk:"protected_branches"`
+	URL                 types.String `tfsdk:"url"`
+	BasePath            types.String `tfsdk:"base_path"`
+	DefaultBranch       types.String `tfsdk:"default_branch"`
+	ProtectedBranches   types.Set    `tfsdk:"protected_branches"`
+	InitialCommitBranch types.String `tfsdk:"initial_commit_branch"`
 }
 
 type gitGitHubAppPersistenceSettingsModel struct {
-	GitHubConnectionID types.String `tfsdk:"github_connection_id"`
-	URL                types.String `tfsdk:"url"`
-	BasePath           types.String `tfsdk:"base_path"`
-	DefaultBranch      types.String `tfsdk:"default_branch"`
-	ProtectedBranches  types.Set    `tfsdk:"protected_branches"`
+	GitHubConnectionID  types.String `tfsdk:"github_connection_id"`
+	URL                 types.String `tfsdk:"url"`
+	BasePath            types.String `tfsdk:"base_path"`
+	DefaultBranch       types.String `tfsdk:"default_branch"`
+	ProtectedBranches   types.Set    `tfsdk:"protected_branches"`
+	InitialCommitBranch types.String `tfsdk:"initial_commit_branch"`
 }

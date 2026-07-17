@@ -3,7 +3,9 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
@@ -58,7 +60,14 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	if persistenceSettings != nil && persistenceSettings.Type() == projects.PersistenceSettingsTypeVersionControlled {
-		_, err := projects.ConvertToVCS(r.Client, createdProject, "Converting project to use VCS", "", persistenceSettings.(projects.GitPersistenceSettings))
+		var config projectResourceModel
+		resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		initialCommitBranch := getInitialCommitBranch(ctx, config)
+		tflog.Debug(ctx, fmt.Sprintf("Initial commit branch: %s", initialCommitBranch))
+		_, err := projects.ConvertToVCS(r.Client, createdProject, "Converting project to use VCS", initialCommitBranch, persistenceSettings.(projects.GitPersistenceSettings))
 		if err != nil {
 			resp.Diagnostics.AddError("Error converting project to VCS", err.Error())
 			_ = projects.DeleteByID(r.Client, plan.SpaceID.ValueString(), createdProject.GetID())
@@ -84,6 +93,44 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 
 	diags = resp.State.Set(ctx, flattenedProject)
 	resp.Diagnostics.Append(diags...)
+}
+
+func getInitialCommitBranch(ctx context.Context, model projectResourceModel) string {
+	if !model.GitLibraryPersistenceSettings.IsNull() {
+		tflog.Debug(ctx, "Getting initial commit branch from Git library persistence settings")
+		var gitLibrarySettingsList []gitLibraryPersistenceSettingsModel
+		diags := model.GitLibraryPersistenceSettings.ElementsAs(ctx, &gitLibrarySettingsList, false)
+		if !diags.HasError() && len(gitLibrarySettingsList) > 0 {
+			tflog.Debug(ctx, "Initial commit branch found in Git library persistence settings")
+			return gitLibrarySettingsList[0].InitialCommitBranch.ValueString()
+		}
+	} else if !model.GitUsernamePasswordPersistenceSettings.IsNull() {
+		tflog.Debug(ctx, "Getting initial commit branch from Git username/password persistence settings")
+		var gitUsernamePasswordSettingsList []gitUsernamePasswordPersistenceSettingsModel
+		diags := model.GitUsernamePasswordPersistenceSettings.ElementsAs(ctx, &gitUsernamePasswordSettingsList, false)
+		if !diags.HasError() && len(gitUsernamePasswordSettingsList) > 0 {
+			tflog.Debug(ctx, "Initial commit branch found in Git username/password persistence settings")
+			return gitUsernamePasswordSettingsList[0].InitialCommitBranch.ValueString()
+		}
+	} else if !model.GitAnonymousPersistenceSettings.IsNull() {
+		tflog.Debug(ctx, "Getting initial commit branch from Git anonymous persistence settings")
+		var gitAnonymousSettingsList []gitAnonymousPersistenceSettingsModel
+		diags := model.GitAnonymousPersistenceSettings.ElementsAs(ctx, &gitAnonymousSettingsList, false)
+		if !diags.HasError() && len(gitAnonymousSettingsList) > 0 {
+			tflog.Debug(ctx, "Initial commit branch found in Git anonymous persistence settings")
+			return gitAnonymousSettingsList[0].InitialCommitBranch.ValueString()
+		}
+	} else if !model.GitGitHubAppPersistenceSettings.IsNull() {
+		tflog.Debug(ctx, "Getting initial commit branch from Git GitHub app persistence settings")
+		var gitGitHubAppSettingsList []gitGitHubAppPersistenceSettingsModel
+		diags := model.GitGitHubAppPersistenceSettings.ElementsAs(ctx, &gitGitHubAppSettingsList, false)
+		if !diags.HasError() && len(gitGitHubAppSettingsList) > 0 {
+			tflog.Debug(ctx, "Initial commit branch found in Git GitHub app persistence settings")
+			return gitGitHubAppSettingsList[0].InitialCommitBranch.ValueString()
+		}
+	}
+
+	return ""
 }
 
 func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -144,7 +191,13 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	if updatedProject.PersistenceSettings != nil && updatedProject.PersistenceSettings.Type() == projects.PersistenceSettingsTypeVersionControlled {
 		if existingProject.PersistenceSettings == nil || existingProject.PersistenceSettings.Type() != projects.PersistenceSettingsTypeVersionControlled {
-			vcsProject, err := projects.ConvertToVCS(r.Client, existingProject, "Converting project to use VCS", "", updatedProject.PersistenceSettings.(projects.GitPersistenceSettings))
+			var config projectResourceModel
+			resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			initialCommitBranch := getInitialCommitBranch(ctx, config)
+			vcsProject, err := projects.ConvertToVCS(r.Client, existingProject, "Converting project to use VCS", initialCommitBranch, updatedProject.PersistenceSettings.(projects.GitPersistenceSettings))
 			if err != nil {
 				resp.Diagnostics.AddError("Error converting project to VCS", err.Error())
 				return

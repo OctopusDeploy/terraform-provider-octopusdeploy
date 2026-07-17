@@ -51,6 +51,30 @@ func (b *AttributeBuilder[T]) Optional() *AttributeBuilder[T] {
 	return b
 }
 
+func (b *AttributeBuilder[T]) WriteOnly() *AttributeBuilder[T] {
+	switch a := any(&b.attr).(type) {
+	case *schema.StringAttribute:
+		a.WriteOnly = true
+	case *schema.BoolAttribute:
+		a.WriteOnly = true
+	case *schema.Int64Attribute:
+		a.WriteOnly = true
+	case *schema.Int32Attribute:
+		a.WriteOnly = true
+	case *schema.Float64Attribute:
+		a.WriteOnly = true
+	case *schema.NumberAttribute:
+		a.WriteOnly = true
+	case *schema.ListAttribute:
+		a.WriteOnly = true
+	case *schema.MapAttribute:
+		a.WriteOnly = true
+	case *schema.ObjectAttribute:
+		a.WriteOnly = true
+	}
+	return b
+}
+
 func (b *AttributeBuilder[T]) Deprecated(deprecationMessage string) *AttributeBuilder[T] {
 	switch a := any(&b.attr).(type) {
 	case *schema.StringAttribute:
