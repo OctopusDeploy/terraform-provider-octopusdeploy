@@ -22,6 +22,7 @@ type approvalPolicyResource struct {
 
 var _ resource.Resource = &approvalPolicyResource{}
 var _ resource.ResourceWithImportState = &approvalPolicyResource{}
+var _ resource.ResourceWithValidateConfig = &approvalPolicyResource{}
 
 func NewApprovalPolicyResource() resource.Resource {
 	return &approvalPolicyResource{}
@@ -37,6 +38,53 @@ func (r *approvalPolicyResource) Schema(_ context.Context, _ resource.SchemaRequ
 
 func (r *approvalPolicyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	r.Config = ResourceConfiguration(req, resp)
+}
+
+// ValidateConfig enforces that the configured scope matches the scoping strategy:
+// tag_scopes with the "Tag" strategy and id_scopes with the "Id" strategy, and
+// that the two scope types are never set at the same time.
+func (r *approvalPolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config schemas.ApprovalPolicyResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	hasTagScopes := len(config.TagScopes) > 0
+	hasIdScopes := len(config.IdScopes) > 0
+
+	if hasTagScopes && hasIdScopes {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("id_scopes"),
+			"Conflicting approval policy scopes",
+			`Only one of "tag_scopes" or "id_scopes" may be set on an approval policy. Use "tag_scopes" with scoping_strategy "Tag", or "id_scopes" with scoping_strategy "Id".`,
+		)
+		return
+	}
+
+	// When the scoping strategy is known, the provided scope must match it.
+	if config.ScopingStrategy.IsNull() || config.ScopingStrategy.IsUnknown() {
+		return
+	}
+
+	switch config.ScopingStrategy.ValueString() {
+	case string(approvalpolicies.ApprovalPolicyScopingStrategyTag):
+		if hasIdScopes {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("id_scopes"),
+				"Scope does not match scoping strategy",
+				`"id_scopes" cannot be set when scoping_strategy is "Tag". Use "tag_scopes", or set scoping_strategy to "Id".`,
+			)
+		}
+	case string(approvalpolicies.ApprovalPolicyScopingStrategyId):
+		if hasTagScopes {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("tag_scopes"),
+				"Scope does not match scoping strategy",
+				`"tag_scopes" cannot be set when scoping_strategy is "Id". Use "id_scopes", or set scoping_strategy to "Tag".`,
+			)
+		}
+	}
 }
 
 func (r *approvalPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

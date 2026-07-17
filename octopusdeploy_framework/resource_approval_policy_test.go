@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalpolicies"
@@ -98,6 +99,89 @@ func testApprovalPolicyBasic(localName string, policyName string, minimumApprove
 		localName, policyName, minimumApproversRequired, localName,
 		localName, localName,
 	)
+}
+
+// TestAccApprovalPolicyScopeValidation verifies the config-time validation that
+// the provided scope matches the scoping strategy and that both scopes cannot be
+// set at once. All steps are plan-only and expect an error, so nothing is created.
+func TestAccApprovalPolicyScopeValidation(t *testing.T) {
+	policyName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      testApprovalPolicyBothScopes(policyName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`[Oo]nly one of`),
+			},
+			{
+				Config:      testApprovalPolicyScopeMismatch(policyName, "Id", true),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`cannot be set when scoping_strategy is`),
+			},
+			{
+				Config:      testApprovalPolicyScopeMismatch(policyName, "Tag", false),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`cannot be set when scoping_strategy is`),
+			},
+		},
+	})
+}
+
+func testApprovalPolicyBothScopes(policyName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_approval_policy" "test" {
+		name               = "%s"
+		approving_team_ids = ["Teams-1"]
+
+		tag_scopes = [
+			{
+				project_tags     = ["projects/example"]
+				environment_tags = ["environments/example"]
+			}
+		]
+
+		id_scopes = [
+			{
+				project_id      = "Projects-1"
+				environment_ids = ["Environments-1"]
+			}
+		]
+	}
+	`, policyName)
+}
+
+// testApprovalPolicyScopeMismatch builds a config whose scope does not match the
+// scoping strategy: strategy "Id" with tag_scopes (useTagScope=true) or strategy
+// "Tag" with id_scopes (useTagScope=false).
+func testApprovalPolicyScopeMismatch(policyName string, strategy string, useTagScope bool) string {
+	scopeBlock := `
+		id_scopes = [
+			{
+				project_id      = "Projects-1"
+				environment_ids = ["Environments-1"]
+			}
+		]`
+	if useTagScope {
+		scopeBlock = `
+		tag_scopes = [
+			{
+				project_tags     = ["projects/example"]
+				environment_tags = ["environments/example"]
+			}
+		]`
+	}
+
+	return fmt.Sprintf(`
+	resource "octopusdeploy_approval_policy" "test" {
+		name               = "%s"
+		scoping_strategy   = "%s"
+		approving_team_ids = ["Teams-1"]
+%s
+	}
+	`, policyName, strategy, scopeBlock)
 }
 
 func testApprovalPolicyExists(resourceName string) resource.TestCheckFunc {
