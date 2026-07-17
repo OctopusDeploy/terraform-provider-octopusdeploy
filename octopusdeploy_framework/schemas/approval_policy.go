@@ -161,7 +161,7 @@ func (a ApprovalPolicySchema) GetDatasourceSchema() datasourceSchema.Schema {
 							Computed:    true,
 						},
 						"scoping_strategy": datasourceSchema.StringAttribute{
-							Description: "The scoping strategy used by this approval policy.",
+							Description: "The scoping strategy used by this approval policy. Valid values are `\"Tag\"` or `\"Id\"`.",
 							Computed:    true,
 						},
 						"minimum_approvers_required": datasourceSchema.Int64Attribute{

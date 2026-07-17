@@ -41,7 +41,7 @@ Read-Only:
 - `is_disabled` (Boolean) Whether the policy is disabled.
 - `minimum_approvers_required` (Number) The minimum number of approvers required for this approval policy.
 - `name` (String) The name of this resource.
-- `scoping_strategy` (String) The scoping strategy used by this approval policy.
+- `scoping_strategy` (String) The scoping strategy used by this approval policy. Valid values are `"Tag"` or `"Id"`.
 - `space_id` (String) The space ID associated with this approval policy.
 - `tag_scopes` (Attributes List) A list of tag-based scopes this approval policy applies to. (see [below for nested schema](#nestedatt--approval_policies--tag_scopes))
 
