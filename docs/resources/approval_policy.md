@@ -53,5 +53,5 @@ Optional:
 
 Optional:
 
-- `environment_tags` (List of String) A list of environment tags for this scope.
-- `project_tags` (List of String) A list of project tags for this scope.
+- `environment_tags` (Set of String) A set of environment tags for this scope, specified as tag IDs (e.g. `TagSets-1/Tags-1`) or canonical tag names (e.g. `TagSet/Tag`). Canonical names are resolved to their tag IDs, which are what gets stored in state.
+- `project_tags` (Set of String) A set of project tags for this scope, specified as tag IDs (e.g. `TagSets-1/Tags-1`) or canonical tag names (e.g. `TagSet/Tag`). Canonical names are resolved to their tag IDs, which are what gets stored in state.
