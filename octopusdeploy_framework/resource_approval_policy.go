@@ -2,8 +2,10 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalpolicies"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tagsets"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
@@ -23,6 +25,7 @@ type approvalPolicyResource struct {
 var _ resource.Resource = &approvalPolicyResource{}
 var _ resource.ResourceWithImportState = &approvalPolicyResource{}
 var _ resource.ResourceWithValidateConfig = &approvalPolicyResource{}
+var _ resource.ResourceWithModifyPlan = &approvalPolicyResource{}
 
 func NewApprovalPolicyResource() resource.Resource {
 	return &approvalPolicyResource{}
@@ -85,6 +88,128 @@ func (r *approvalPolicyResource) ValidateConfig(ctx context.Context, req resourc
 			)
 		}
 	}
+}
+
+// ModifyPlan resolves tag_scopes references that are given as canonical tag
+// names (e.g. "TagSet/Tag") into their stable tag IDs (e.g. "TagSets-1/Tags-1"),
+// which is the form the API returns. Canonical names are not immutable (they
+// change when a tag or tag set is renamed), so storing IDs keeps state stable
+// across renames and avoids perpetual diffs. Values that are already IDs, or are
+// unknown at plan time, are left untouched.
+func (r *approvalPolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return // the resource is being destroyed; nothing to resolve
+	}
+	if r.Config == nil || r.Config.Client == nil {
+		return
+	}
+
+	// Read tag_scopes as a framework type first: it may contain unknown values
+	// (e.g. a tag created in the same apply and referenced by its id attribute),
+	// which cannot be decoded into the Go model. When any value is unknown, skip
+	// plan-time resolution and let it resolve naturally at apply.
+	var tagScopesList types.List
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("tag_scopes"), &tagScopesList)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if tagScopesList.IsNull() || tagScopesList.IsUnknown() || len(tagScopesList.Elements()) == 0 {
+		return
+	}
+	rawTagScopes, err := tagScopesList.ToTerraformValue(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("unable to inspect approval policy tag scopes", err.Error())
+		return
+	}
+	if !rawTagScopes.IsFullyKnown() {
+		return
+	}
+
+	var plan schemas.ApprovalPolicyResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() || len(plan.TagScopes) == 0 {
+		return
+	}
+
+	spaceID := plan.SpaceID.ValueString()
+	if spaceID == "" {
+		spaceID = r.Config.SpaceID
+	}
+
+	tagSets, err := tagsets.GetAll(r.Config.Client, spaceID)
+	if err != nil {
+		resp.Diagnostics.AddError("unable to resolve approval policy tags", err.Error())
+		return
+	}
+
+	nameToID := make(map[string]string)
+	validID := make(map[string]bool)
+	for _, ts := range tagSets {
+		for _, tag := range ts.Tags {
+			nameToID[tag.CanonicalTagName] = tag.ID
+			validID[tag.ID] = true
+		}
+	}
+
+	for i := range plan.TagScopes {
+		plan.TagScopes[i].ProjectTags = resolveApprovalPolicyTags(ctx, plan.TagScopes[i].ProjectTags, nameToID, validID, path.Root("tag_scopes").AtListIndex(i).AtName("project_tags"), &resp.Diagnostics)
+		plan.TagScopes[i].EnvironmentTags = resolveApprovalPolicyTags(ctx, plan.TagScopes[i].EnvironmentTags, nameToID, validID, path.Root("tag_scopes").AtListIndex(i).AtName("environment_tags"), &resp.Diagnostics)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Only update tag_scopes; setting the whole plan would disturb other
+	// Optional+Computed attributes and produce spurious "known after apply" diffs.
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("tag_scopes"), plan.TagScopes)...)
+}
+
+// resolveApprovalPolicyTags maps each element of a tag set to a stable tag ID,
+// translating canonical tag names to IDs and leaving IDs unchanged. Null or
+// unknown sets are returned as-is: an unknown set (for example a tag created in
+// the same apply and referenced by its id attribute) is resolved naturally at
+// apply. A known value that matches neither an existing tag ID nor canonical
+// name is an error — Terraform does not allow a configured value to be planned
+// as unknown, so a tag created in the same apply must be referenced by ID.
+func resolveApprovalPolicyTags(ctx context.Context, tags types.Set, nameToID map[string]string, validID map[string]bool, attrPath path.Path, diags *diag.Diagnostics) types.Set {
+	if tags.IsNull() || tags.IsUnknown() {
+		return tags
+	}
+
+	var values []string
+	diags.Append(tags.ElementsAs(ctx, &values, false)...)
+	if diags.HasError() {
+		return tags
+	}
+
+	resolved := make([]string, 0, len(values))
+	changed := false
+	for _, v := range values {
+		switch {
+		case validID[v]:
+			resolved = append(resolved, v)
+		default:
+			if id, ok := nameToID[v]; ok {
+				resolved = append(resolved, id)
+				changed = true
+			} else {
+				diags.AddAttributeError(
+					attrPath,
+					"Unknown tag reference",
+					fmt.Sprintf("%q is not a known tag ID or canonical tag name in this space. If the tag is created in the same apply, reference it by ID instead (for example octopusdeploy_tag.example.id).", v),
+				)
+				resolved = append(resolved, v)
+			}
+		}
+	}
+
+	if diags.HasError() || !changed {
+		return tags
+	}
+
+	newSet, d := types.SetValueFrom(ctx, types.StringType, resolved)
+	diags.Append(d...)
+	return newSet
 }
 
 func (r *approvalPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -301,10 +426,10 @@ func mapApprovalPolicyToState(ctx context.Context, state *schemas.ApprovalPolicy
 
 	var tagScopes []schemas.ApprovalPolicyTagScopeModel
 	for _, s := range policy.TagScopes {
-		projectTags, projectTagsDiags := stringListOrNull(ctx, s.ProjectTags)
+		projectTags, projectTagsDiags := stringSetOrNull(ctx, s.ProjectTags)
 		diags.Append(projectTagsDiags...)
 
-		environmentTags, environmentTagsDiags := stringListOrNull(ctx, s.EnvironmentTags)
+		environmentTags, environmentTagsDiags := stringSetOrNull(ctx, s.EnvironmentTags)
 		diags.Append(environmentTagsDiags...)
 
 		tagScopes = append(tagScopes, schemas.ApprovalPolicyTagScopeModel{
@@ -338,4 +463,13 @@ func stringListOrNull(ctx context.Context, values []string) (types.List, diag.Di
 		return types.ListNull(types.StringType), nil
 	}
 	return types.ListValueFrom(ctx, types.StringType, values)
+}
+
+// stringSetOrNull is the set-typed counterpart of stringListOrNull, used for the
+// order-insensitive tag scope collections.
+func stringSetOrNull(ctx context.Context, values []string) (types.Set, diag.Diagnostics) {
+	if len(values) == 0 {
+		return types.SetNull(types.StringType), nil
+	}
+	return types.SetValueFrom(ctx, types.StringType, values)
 }

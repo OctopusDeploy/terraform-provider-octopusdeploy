@@ -5,6 +5,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -18,8 +22,8 @@ var _ EntitySchema = ApprovalPolicySchema{}
 
 // ApprovalPolicyTagScopeModel represents a tag-based scope entry for an approval policy.
 type ApprovalPolicyTagScopeModel struct {
-	ProjectTags     types.List `tfsdk:"project_tags"`
-	EnvironmentTags types.List `tfsdk:"environment_tags"`
+	ProjectTags     types.Set `tfsdk:"project_tags"`
+	EnvironmentTags types.Set `tfsdk:"environment_tags"`
 }
 
 // ApprovalPolicyIdScopeModel represents an ID-based scope entry for an approval policy.
@@ -66,6 +70,9 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 				Description: "The description of this approval policy.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"scoping_strategy": resourceSchema.StringAttribute{
 				Description: "The scoping strategy used by this approval policy. Valid values are `\"Tag\"` or `\"Id\"`.",
@@ -74,21 +81,33 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 				Validators: []validator.String{
 					stringvalidator.OneOf("Tag", "Id"),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"minimum_approvers_required": resourceSchema.Int64Attribute{
 				Description: "The minimum number of approvers required for this approval policy.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"allow_self_approval": resourceSchema.BoolAttribute{
 				Description: "Whether the deployment creator may approve their own deployment.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"is_disabled": resourceSchema.BoolAttribute{
 				Description: "Whether the policy is disabled.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"approving_user_ids": resourceSchema.ListAttribute{
 				Description: "A list of user IDs that are eligible to approve deployments under this policy.",
@@ -105,14 +124,16 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 				Optional:    true,
 				NestedObject: resourceSchema.NestedAttributeObject{
 					Attributes: map[string]resourceSchema.Attribute{
-						"project_tags": resourceSchema.ListAttribute{
-							Description: "A list of project tags for this scope.",
+						"project_tags": resourceSchema.SetAttribute{
+							Description: "A set of project tags for this scope, specified as tag IDs (e.g. `TagSets-1/Tags-1`) or canonical tag names (e.g. `TagSet/Tag`). Canonical names are resolved to their tag IDs, which are what gets stored in state.",
 							Optional:    true,
+							Computed:    true,
 							ElementType: types.StringType,
 						},
-						"environment_tags": resourceSchema.ListAttribute{
-							Description: "A list of environment tags for this scope.",
+						"environment_tags": resourceSchema.SetAttribute{
+							Description: "A set of environment tags for this scope, specified as tag IDs (e.g. `TagSets-1/Tags-1`) or canonical tag names (e.g. `TagSet/Tag`). Canonical names are resolved to their tag IDs, which are what gets stored in state.",
 							Optional:    true,
+							Computed:    true,
 							ElementType: types.StringType,
 						},
 					},

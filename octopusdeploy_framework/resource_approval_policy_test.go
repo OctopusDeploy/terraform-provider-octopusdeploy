@@ -184,6 +184,98 @@ func testApprovalPolicyScopeMismatch(policyName string, strategy string, useTagS
 	`, policyName, strategy, scopeBlock)
 }
 
+// TestAccApprovalPolicyTagScopesResolveNames verifies that tag_scopes hold stable
+// tag IDs regardless of whether they are configured by ID or by canonical name.
+// Step 1 references same-apply tags by their id attribute (unknown at plan,
+// resolved at apply). Step 2 references the now-existing tags by canonical name;
+// the provider resolves those names to the same IDs, so there is no diff. The
+// TypeSetElemAttrPair checks assert the stored values equal the tags' IDs, which
+// only holds if resolution actually happened.
+func TestAccApprovalPolicyTagScopesResolveNames(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	policyName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_approval_policy." + localName
+	projectTagResource := "octopusdeploy_tag." + localName + "_project"
+	envTagResource := "octopusdeploy_tag." + localName + "_env"
+
+	checks := resource.ComposeTestCheckFunc(
+		testApprovalPolicyExists(prefix),
+		resource.TestCheckResourceAttr(prefix, "scoping_strategy", "Tag"),
+		resource.TestCheckResourceAttr(prefix, "tag_scopes.#", "1"),
+		resource.TestCheckResourceAttr(prefix, "tag_scopes.0.project_tags.#", "1"),
+		resource.TestCheckResourceAttr(prefix, "tag_scopes.0.environment_tags.#", "1"),
+		resource.TestCheckTypeSetElemAttrPair(prefix, "tag_scopes.0.project_tags.*", projectTagResource, "id"),
+		resource.TestCheckTypeSetElemAttrPair(prefix, "tag_scopes.0.environment_tags.*", envTagResource, "id"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testApprovalPolicyDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testApprovalPolicyTagScopes(localName, policyName, true),
+				Check:  checks,
+			},
+			{
+				Config: testApprovalPolicyTagScopes(localName, policyName, false),
+				Check:  checks,
+			},
+		},
+	})
+}
+
+// testApprovalPolicyTagScopes builds a Tag-scoped approval policy. When byID is
+// true the scopes reference the tags by their id attribute; otherwise they use
+// canonical tag names, which the provider must resolve to the tags' IDs.
+func testApprovalPolicyTagScopes(localName string, policyName string, byID bool) string {
+	projectTagRef := fmt.Sprintf(`"${octopusdeploy_tag_set.%[1]s.name}/${octopusdeploy_tag.%[1]s_project.name}"`, localName)
+	envTagRef := fmt.Sprintf(`"${octopusdeploy_tag_set.%[1]s.name}/${octopusdeploy_tag.%[1]s_env.name}"`, localName)
+	if byID {
+		projectTagRef = fmt.Sprintf("octopusdeploy_tag.%s_project.id", localName)
+		envTagRef = fmt.Sprintf("octopusdeploy_tag.%s_env.id", localName)
+	}
+
+	return fmt.Sprintf(`
+	resource "octopusdeploy_tag_set" "%[1]s" {
+		name        = "TagSet %[1]s"
+		description = "Tag set for approval policy acceptance test"
+		scopes      = ["Project", "Environment"]
+	}
+
+	resource "octopusdeploy_tag" "%[1]s_project" {
+		name        = "proj-%[1]s"
+		color       = "#111111"
+		tag_set_id  = octopusdeploy_tag_set.%[1]s.id
+	}
+
+	resource "octopusdeploy_tag" "%[1]s_env" {
+		name        = "env-%[1]s"
+		color       = "#222222"
+		tag_set_id  = octopusdeploy_tag_set.%[1]s.id
+	}
+
+	resource "octopusdeploy_team" "%[1]s" {
+		name        = "Test Team %[1]s"
+		description = "Team for approval policy acceptance test"
+	}
+
+	resource "octopusdeploy_approval_policy" "%[1]s" {
+		name                       = "%[2]s"
+		scoping_strategy           = "Tag"
+		minimum_approvers_required = 2
+		approving_team_ids         = [octopusdeploy_team.%[1]s.id]
+
+		tag_scopes = [
+			{
+				project_tags     = [%[3]s]
+				environment_tags = [%[4]s]
+			}
+		]
+	}
+	`, localName, policyName, projectTagRef, envTagRef)
+}
+
 func testApprovalPolicyExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		policyResource, ok := s.RootModule().Resources[resourceName]
