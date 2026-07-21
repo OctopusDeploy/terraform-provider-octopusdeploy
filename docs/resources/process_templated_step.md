@@ -148,7 +148,9 @@ resource "octopusdeploy_process_templated_step" "script" {
 
 Optional:
 
+- `dockerfile` (String) Dockerfile path for building the container image.
 - `feed_id` (String) Feed where the container will be pulled from.
+- `git_url` (String) Git URL of the container image source.
 - `image` (String) Image of the container with tag included.
 
 

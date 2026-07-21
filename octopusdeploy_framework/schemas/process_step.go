@@ -209,12 +209,16 @@ func resourceActionContainerAttribute() resourceSchema.SingleNestedAttribute {
 		Default: objectdefault.StaticValue(
 			types.ObjectValueMust(
 				map[string]attr.Type{
-					"feed_id": types.StringType,
-					"image":   types.StringType,
+					"feed_id":    types.StringType,
+					"image":      types.StringType,
+					"git_url":    types.StringType,
+					"dockerfile": types.StringType,
 				},
 				map[string]attr.Value{
-					"feed_id": types.StringValue(""),
-					"image":   types.StringValue(""),
+					"feed_id":    types.StringValue(""),
+					"image":      types.StringValue(""),
+					"git_url":    types.StringValue(""),
+					"dockerfile": types.StringValue(""),
 				},
 			),
 		),
