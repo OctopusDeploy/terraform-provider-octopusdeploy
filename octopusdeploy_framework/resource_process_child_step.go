@@ -3,6 +3,8 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
@@ -13,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"strings"
 )
 
 var _ resource.ResourceWithImportState = &processChildStepResource{}
@@ -289,7 +290,12 @@ func mapProcessChildStepActionFromState(ctx context.Context, state *schemas.Proc
 	action.Notes = state.Notes.ValueString()
 	action.WorkerPool = state.WorkerPoolID.ValueString()
 	action.WorkerPoolVariable = state.WorkerPoolVariable.ValueString()
-	action.Container = deployments.NewDeploymentActionContainer(state.Container.FeedID.ValueStringPointer(), state.Container.Image.ValueStringPointer())
+	action.Container = deployments.NewDeploymentActionContainer(
+		state.Container.FeedID.ValueStringPointer(),
+		state.Container.Image.ValueStringPointer(),
+		state.Container.GitUrl.ValueStringPointer(),
+		state.Container.Dockerfile.ValueStringPointer(),
+	)
 
 	diags := diag.Diagnostics{}
 

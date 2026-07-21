@@ -28,12 +28,16 @@ func TestExpandDeploymentActionContainer(t *testing.T) {
 	require.Nil(t, actual)
 
 	testMap[0] = map[string]interface{}{
-		"feed_id": "feeds-123",
-		"image":   "image-123",
+		"feed_id":    "feeds-123",
+		"image":      "image-123",
+		"git_url":    "https://example.com/repo.git",
+		"dockerfile": "Dockerfile",
 	}
 	expected := &deployments.DeploymentActionContainer{
-		FeedID: "feeds-123",
-		Image:  "image-123",
+		FeedID:     "feeds-123",
+		Image:      "image-123",
+		GitUrl:     "https://example.com/repo.git",
+		Dockerfile: "Dockerfile",
 	}
 	actual = expandContainer(testMap)
 

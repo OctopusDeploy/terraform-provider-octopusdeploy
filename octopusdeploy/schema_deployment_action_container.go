@@ -30,6 +30,14 @@ func expandContainer(values interface{}) *deployments.DeploymentActionContainer 
 		deploymentActionContainer.Image = image.(string)
 	}
 
+	if gitUrl := flattenedMap["git_url"]; gitUrl != nil {
+		deploymentActionContainer.GitUrl = gitUrl.(string)
+	}
+
+	if dockerfile := flattenedMap["dockerfile"]; dockerfile != nil {
+		deploymentActionContainer.Dockerfile = dockerfile.(string)
+	}
+
 	return deploymentActionContainer
 }
 
@@ -39,8 +47,10 @@ func flattenContainer(deploymentActionContainer *deployments.DeploymentActionCon
 	}
 
 	return []interface{}{map[string]interface{}{
-		"feed_id": deploymentActionContainer.FeedID,
-		"image":   deploymentActionContainer.Image,
+		"feed_id":    deploymentActionContainer.FeedID,
+		"image":      deploymentActionContainer.Image,
+		"git_url":    deploymentActionContainer.GitUrl,
+		"dockerfile": deploymentActionContainer.Dockerfile,
 	}}
 }
 
@@ -51,6 +61,14 @@ func getDeploymentActionContainerSchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 		},
 		"image": {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"git_url": {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"dockerfile": {
 			Optional: true,
 			Type:     schema.TypeString,
 		},
