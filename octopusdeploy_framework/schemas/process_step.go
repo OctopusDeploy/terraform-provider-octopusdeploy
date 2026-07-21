@@ -195,6 +195,14 @@ func resourceActionContainerAttribute() resourceSchema.SingleNestedAttribute {
 				Description("Image of the container with tag included.").
 				Optional().
 				Build(),
+			"git_url": util.ResourceString().
+				Description("Git URL of the container image source.").
+				Optional().
+				Build(),
+			"dockerfile": util.ResourceString().
+				Description("Dockerfile path for building the container image.").
+				Optional().
+				Build(),
 		},
 		Optional: true,
 		Computed: true,
