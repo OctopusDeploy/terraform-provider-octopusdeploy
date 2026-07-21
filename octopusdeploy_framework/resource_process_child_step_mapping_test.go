@@ -56,8 +56,10 @@ func TestAccMapProcessChildStepFromStateWithAllAttributes(t *testing.T) {
 			types.StringValue("Channels-1"),
 		}),
 		Container: &schemas.ProcessStepActionContainerModel{
-			FeedID: types.StringValue("Feeds-1"),
-			Image:  types.StringValue("docker.io/library/dummy:latest"),
+			FeedID:     types.StringValue("Feeds-1"),
+			Image:      types.StringValue("docker.io/library/dummy:latest"),
+			GitUrl:     types.StringValue(""),
+			Dockerfile: types.StringValue(""),
 		},
 		GitDependencies: types.MapValueMust(schemas.ProcessStepGitDependencyObjectType(), map[string]attr.Value{
 			"script-folder": types.ObjectValueMust(
@@ -288,8 +290,10 @@ func TestAccMapProcessChildStepToStateWithAllAttributes(t *testing.T) {
 			types.StringValue("Channels-1"),
 		}),
 		Container: &schemas.ProcessStepActionContainerModel{
-			FeedID: types.StringValue("Feeds-1"),
-			Image:  types.StringValue("docker.io/library/dummy:latest"),
+			FeedID:     types.StringValue("Feeds-1"),
+			Image:      types.StringValue("docker.io/library/dummy:latest"),
+			GitUrl:     types.StringValue(""),
+			Dockerfile: types.StringValue(""),
 		},
 		GitDependencies: types.MapValueMust(schemas.ProcessStepGitDependencyObjectType(), map[string]attr.Value{
 			gitDependency.Name: types.ObjectValueMust(
@@ -452,8 +456,10 @@ func TestAccMapProcessChildStepToStateWithAllAttributesForRunbooks(t *testing.T)
 			types.StringValue("Channels-1"),
 		}),
 		Container: &schemas.ProcessStepActionContainerModel{
-			FeedID: types.StringValue("Feeds-1"),
-			Image:  types.StringValue("docker.io/library/dummy:latest"),
+			FeedID:     types.StringValue("Feeds-1"),
+			Image:      types.StringValue("docker.io/library/dummy:latest"),
+			GitUrl:     types.StringValue(""),
+			Dockerfile: types.StringValue(""),
 		},
 		GitDependencies: types.MapValueMust(schemas.ProcessStepGitDependencyObjectType(), map[string]attr.Value{
 			gitDependency.Name: types.ObjectValueMust(
