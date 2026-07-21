@@ -144,7 +144,9 @@ Optional:
 
 Optional:
 
+- `dockerfile` (String)
 - `feed_id` (String)
+- `git_url` (String)
 - `image` (String)
 
 

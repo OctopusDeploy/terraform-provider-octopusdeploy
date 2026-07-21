@@ -32,6 +32,11 @@ type eventNotificationSubscriptionModel struct {
 	WebhookTimeout             types.String             `tfsdk:"webhook_timeout"`
 	WebhookHeaderKey           types.String             `tfsdk:"webhook_header_key"`
 	WebhookHeaderValue         types.String             `tfsdk:"webhook_header_value"`
+	SlackChannelIds            types.List               `tfsdk:"slack_channel_ids"`
+	SlackChannelNames          types.List               `tfsdk:"slack_channel_names"`
+	SlackFrequencyPeriod       types.String             `tfsdk:"slack_frequency_period"`
+	// Deprecated and ignored; not mapped to the API. Preserved from config/state so existing configs don't drift.
+	SlackDigestFormat types.String `tfsdk:"slack_digest_format"`
 }
 
 type subscriptionFilterModel struct {
@@ -170,6 +175,9 @@ func expandSubscription(model *subscriptionModel) *subscriptions.Subscription {
 	s.EventNotificationSubscription.WebhookTimeout = n.WebhookTimeout.ValueString()
 	s.EventNotificationSubscription.WebhookHeaderKey = n.WebhookHeaderKey.ValueString()
 	s.EventNotificationSubscription.WebhookHeaderValue = n.WebhookHeaderValue.ValueString()
+	s.EventNotificationSubscription.SlackChannelIds = util.ExpandStringList(n.SlackChannelIds)
+	s.EventNotificationSubscription.SlackChannelNames = util.ExpandStringList(n.SlackChannelNames)
+	s.EventNotificationSubscription.SlackFrequencyPeriod = n.SlackFrequencyPeriod.ValueString()
 	s.EventNotificationSubscription.EmailTeams = util.ExpandStringSet(n.EmailTeams)
 	s.EventNotificationSubscription.WebhookTeams = util.ExpandStringSet(n.WebhookTeams)
 	s.EventNotificationSubscription.Filter = expandSubscriptionFilter(n.Filter)
@@ -214,6 +222,9 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.EmailPriority = types.StringValue(apiN.EmailPriority)
 	n.EmailShowDatesInTimeZoneId = types.StringValue(apiN.EmailShowDatesInTimeZoneId)
 	n.WebhookTimeout = types.StringValue(apiN.WebhookTimeout)
+	n.SlackFrequencyPeriod = types.StringValue(apiN.SlackFrequencyPeriod)
+	n.SlackChannelIds = util.FlattenStringList(apiN.SlackChannelIds)
+	n.SlackChannelNames = util.FlattenStringList(apiN.SlackChannelNames)
 
 	// Optional-only fields: the API returns "" when unset. Preserve null in state so the
 	// plan value (null) stays consistent; only store a value when the API returned one.

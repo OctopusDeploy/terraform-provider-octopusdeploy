@@ -303,7 +303,12 @@ func mapProcessStepActionFromState(ctx context.Context, state *schemas.ProcessSt
 	action.Notes = state.Notes.ValueString()
 	action.WorkerPool = state.WorkerPoolID.ValueString()
 	action.WorkerPoolVariable = state.WorkerPoolVariable.ValueString()
-	action.Container = deployments.NewDeploymentActionContainer(state.Container.FeedID.ValueStringPointer(), state.Container.Image.ValueStringPointer())
+	action.Container = deployments.NewDeploymentActionContainer(
+		state.Container.FeedID.ValueStringPointer(),
+		state.Container.Image.ValueStringPointer(),
+		state.Container.GitUrl.ValueStringPointer(),
+		state.Container.Dockerfile.ValueStringPointer(),
+	)
 
 	diags := diag.Diagnostics{}
 
@@ -578,9 +583,21 @@ func mapDeploymentActionContainerToState(container *deployments.DeploymentAction
 		return nil
 	}
 
+	gitUrl := types.StringNull()
+	if container.GitUrl != "" {
+		gitUrl = types.StringValue(container.GitUrl)
+	}
+
+	dockerfile := types.StringNull()
+	if container.Dockerfile != "" {
+		dockerfile = types.StringValue(container.Dockerfile)
+	}
+
 	return &schemas.ProcessStepActionContainerModel{
-		FeedID: types.StringValue(container.FeedID),
-		Image:  types.StringValue(container.Image),
+		FeedID:     types.StringValue(container.FeedID),
+		Image:      types.StringValue(container.Image),
+		GitUrl:     gitUrl,
+		Dockerfile: dockerfile,
 	}
 }
 
