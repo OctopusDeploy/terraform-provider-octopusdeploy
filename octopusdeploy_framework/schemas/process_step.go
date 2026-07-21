@@ -177,8 +177,10 @@ type ProcessStepResourceModel struct {
 }
 
 type ProcessStepActionContainerModel struct {
-	FeedID types.String `tfsdk:"feed_id"`
-	Image  types.String `tfsdk:"image"`
+	FeedID     types.String `tfsdk:"feed_id"`
+	Image      types.String `tfsdk:"image"`
+	Dockerfile types.String `tfsdk:"dockerfile"`
+	GitUrl     types.String `tfsdk:"git_url"`
 }
 
 func resourceActionContainerAttribute() resourceSchema.SingleNestedAttribute {

@@ -303,7 +303,12 @@ func mapProcessStepActionFromState(ctx context.Context, state *schemas.ProcessSt
 	action.Notes = state.Notes.ValueString()
 	action.WorkerPool = state.WorkerPoolID.ValueString()
 	action.WorkerPoolVariable = state.WorkerPoolVariable.ValueString()
-	action.Container = deployments.NewDeploymentActionContainer(state.Container.FeedID.ValueStringPointer(), state.Container.Image.ValueStringPointer())
+	action.Container = deployments.NewDeploymentActionContainer(
+		state.Container.FeedID.ValueStringPointer(),
+		state.Container.Image.ValueStringPointer(),
+		state.Container.GitUrl.ValueStringPointer(),
+		state.Container.Dockerfile.ValueStringPointer(),
+	)
 
 	diags := diag.Diagnostics{}
 
@@ -579,8 +584,10 @@ func mapDeploymentActionContainerToState(container *deployments.DeploymentAction
 	}
 
 	return &schemas.ProcessStepActionContainerModel{
-		FeedID: types.StringValue(container.FeedID),
-		Image:  types.StringValue(container.Image),
+		FeedID:     types.StringValue(container.FeedID),
+		Image:      types.StringValue(container.Image),
+		GitUrl:     types.StringValue(container.GitUrl),
+		Dockerfile: types.StringValue(container.Dockerfile),
 	}
 }
 
