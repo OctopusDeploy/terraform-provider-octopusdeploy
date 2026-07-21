@@ -64,5 +64,13 @@ func getDeploymentActionContainerSchema() map[string]*schema.Schema {
 			Optional: true,
 			Type:     schema.TypeString,
 		},
+		"git_url": {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
+		"dockerfile": {
+			Optional: true,
+			Type:     schema.TypeString,
+		},
 	}
 }

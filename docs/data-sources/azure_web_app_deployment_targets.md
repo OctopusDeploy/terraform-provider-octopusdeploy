@@ -158,7 +158,9 @@ Read-Only:
 
 Read-Only:
 
+- `dockerfile` (String)
 - `feed_id` (String)
+- `git_url` (String)
 - `image` (String)
 
 
