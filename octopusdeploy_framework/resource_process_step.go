@@ -583,11 +583,21 @@ func mapDeploymentActionContainerToState(container *deployments.DeploymentAction
 		return nil
 	}
 
+	gitUrl := types.StringNull()
+	if container.GitUrl != "" {
+		gitUrl = types.StringValue(container.GitUrl)
+	}
+
+	dockerfile := types.StringNull()
+	if container.Dockerfile != "" {
+		dockerfile = types.StringValue(container.Dockerfile)
+	}
+
 	return &schemas.ProcessStepActionContainerModel{
 		FeedID:     types.StringValue(container.FeedID),
 		Image:      types.StringValue(container.Image),
-		GitUrl:     types.StringValue(container.GitUrl),
-		Dockerfile: types.StringValue(container.Dockerfile),
+		GitUrl:     gitUrl,
+		Dockerfile: dockerfile,
 	}
 }
 

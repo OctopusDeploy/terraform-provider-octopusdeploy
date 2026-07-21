@@ -217,8 +217,8 @@ func resourceActionContainerAttribute() resourceSchema.SingleNestedAttribute {
 				map[string]attr.Value{
 					"feed_id":    types.StringValue(""),
 					"image":      types.StringValue(""),
-					"git_url":    types.StringValue(""),
-					"dockerfile": types.StringValue(""),
+					"git_url":    types.StringNull(),
+					"dockerfile": types.StringNull(),
 				},
 			),
 		),
