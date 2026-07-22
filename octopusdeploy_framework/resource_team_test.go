@@ -284,6 +284,61 @@ resource "octopusdeploy_scoped_user_role" "test_role" {
 }`, userRoleName, teamName, spaceID, spaceID)
 }
 
+// Regression test for #180: a team update must not delete a standalone scoped user role.
+func TestAccOctopusDeployTeamUpdateKeepsStandaloneScopedUserRole(t *testing.T) {
+	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTeamCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, space.ID, "before update"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("octopusdeploy_scoped_user_role.test_role", "id"),
+				),
+			},
+			// Change the team description to force a team update; the standalone role must survive
+			{
+				Config: testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, space.ID, "after update"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "description", "after update"),
+					resource.TestCheckResourceAttrSet("octopusdeploy_scoped_user_role.test_role", "id"),
+				),
+			},
+			{
+				Config:             testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, space.ID, "after update"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, spaceID, description string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
+resource "octopusdeploy_user_role" "test_user_role" {
+	name = "%s"
+	description = "Test user role"
+	granted_space_permissions = ["EnvironmentView"]
+}
+
+resource "octopusdeploy_team" "test_team" {
+	name        = "%s"
+	description = "%s"
+	space_id    = "%s"
+}
+
+resource "octopusdeploy_scoped_user_role" "test_role" {
+	team_id      = octopusdeploy_team.test_team.id
+	user_role_id = octopusdeploy_user_role.test_user_role.id
+	space_id     = "%s"
+}`, userRoleName, teamName, description, spaceID, spaceID)
+}
+
 func testAccTeamImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]

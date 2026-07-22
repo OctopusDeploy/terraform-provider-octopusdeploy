@@ -11,6 +11,7 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -54,7 +55,8 @@ func (r *teamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	if err := r.updateUserRoles(ctx, plan, createdTeam); err != nil {
+	// On create there are no previously-managed roles, so nothing is eligible for removal.
+	if err := r.updateUserRoles(ctx, plan, createdTeam, types.SetNull(userRoleObjectType)); err != nil {
 		resp.Diagnostics.AddError("Error updating user roles for team", err.Error())
 		return
 	}
@@ -83,8 +85,9 @@ func (r *teamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 }
 
 func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan schemas.TeamModel
+	var plan, state schemas.TeamModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -96,13 +99,14 @@ func (r *teamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	if err := r.updateUserRoles(ctx, plan, updatedTeam); err != nil {
+	// Pass the prior state's user roles so removals are limited to roles this resource owned.
+	if err := r.updateUserRoles(ctx, plan, updatedTeam, state.UserRole); err != nil {
 		resp.Diagnostics.AddError("Error updating user roles for team", err.Error())
 		return
 	}
 
-	state := mapTeamResourceToState(ctx, updatedTeam, plan, r.Client)
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	newState := mapTeamResourceToState(ctx, updatedTeam, plan, r.Client)
+	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 }
 
 func (r *teamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -123,7 +127,7 @@ func (*teamResource) ImportState(ctx context.Context, req resource.ImportStateRe
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func (r *teamResource) updateUserRoles(ctx context.Context, model schemas.TeamModel, team *teams.Team) error {
+func (r *teamResource) updateUserRoles(ctx context.Context, model schemas.TeamModel, team *teams.Team, previousUserRoles types.Set) error {
 	newUserRoles := mapUserRoleSetStateToResource(ctx, team, model.UserRole)
 
 	existingUserRoles, err := r.Client.Teams.GetScopedUserRoles(*team, core.SkipTakeQuery{})
@@ -131,8 +135,12 @@ func (r *teamResource) updateUserRoles(ctx context.Context, model schemas.TeamMo
 		return fmt.Errorf("error getting existing user roles for team %s: %s", team.ID, err)
 	}
 
+	// Only remove roles previously managed by this team resource; leave roles managed by standalone
+	// octopusdeploy_scoped_user_role resources untouched (mirrors the read-path filter, see #180)
+	removableUserRoles := filterUserRolesByPreviousState(ctx, existingUserRoles.Items, previousUserRoles)
+
 	userRolesToAdd := findAddedScopedUserRoles(newUserRoles, existingUserRoles.Items)
-	userRolesToRemove := findRemovedScopedUserRoles(newUserRoles, existingUserRoles.Items)
+	userRolesToRemove := findRemovedScopedUserRoles(newUserRoles, removableUserRoles)
 	userRolesToEdit := findModifiedScopedUserRoles(newUserRoles, existingUserRoles.Items)
 
 	for _, userRole := range userRolesToAdd {
