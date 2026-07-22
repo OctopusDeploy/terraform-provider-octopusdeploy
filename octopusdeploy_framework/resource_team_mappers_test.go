@@ -110,3 +110,69 @@ func TestFilterUserRolesByPreviousState(t *testing.T) {
 		assert.Empty(t, result, "Should filter out roles that were not previously managed by the team")
 	})
 }
+
+// TestUpdateUserRolesRemovalOwnership guards updateUserRoles' removal-candidate selection.
+// Regression test for #180: updating a team must not delete externally-managed scoped user roles.
+func TestUpdateUserRolesRemovalOwnership(t *testing.T) {
+	ctx := context.Background()
+
+	newRole := func(id, userRoleID string) *userroles.ScopedUserRole {
+		r := userroles.NewScopedUserRole(userRoleID)
+		r.ID = id
+		return r
+	}
+
+	previousStateWithIDs := func(ids ...string) types.Set {
+		elems := make([]attr.Value, 0, len(ids))
+		for _, id := range ids {
+			elems = append(elems, types.ObjectValueMust(userRoleObjectType.AttrTypes, map[string]attr.Value{
+				"id":                types.StringValue(id),
+				"user_role_id":      types.StringValue("user-role-for-" + id),
+				"space_id":          types.StringValue("Spaces-1"),
+				"team_id":           types.StringValue("Teams-1"),
+				"environment_ids":   types.SetNull(types.StringType),
+				"project_group_ids": types.SetNull(types.StringType),
+				"project_ids":       types.SetNull(types.StringType),
+				"tenant_ids":        types.SetNull(types.StringType),
+			}))
+		}
+		return types.SetValueMust(userRoleObjectType, elems)
+	}
+
+	removalIDs := func(newUserRoles, serverRoles []*userroles.ScopedUserRole, previous types.Set) map[string]bool {
+		removable := filterUserRolesByPreviousState(ctx, serverRoles, previous)
+		toRemove := findRemovedScopedUserRoles(newUserRoles, removable)
+		ids := make(map[string]bool)
+		for _, r := range toRemove {
+			ids[r.ID] = true
+		}
+		return ids
+	}
+
+	t.Run("ShouldNotRemoveExternallyManagedRolesWhenTeamHasNoInlineRoles", func(t *testing.T) {
+		// Team resource declares no user_role blocks (newUserRoles empty) and never managed any
+		// (previous state null). All roles on the server belong to standalone resources.
+		external := []*userroles.ScopedUserRole{newRole("role-1", "ur-1"), newRole("role-2", "ur-2")}
+
+		ids := removalIDs(nil, external, types.SetNull(userRoleObjectType))
+		assert.Empty(t, ids, "must not delete scoped user roles managed outside the team resource")
+	})
+
+	t.Run("ShouldRemoveOnlyPreviouslyOwnedRolesDroppedFromConfig", func(t *testing.T) {
+		// Inline user_role user previously owned role-a and role-b, now keeps only role-a.
+		// role-ext is a standalone-managed role that also lives on the team.
+		roleA := newRole("role-a", "ur-a")
+		roleB := newRole("role-b", "ur-b")
+		roleExt := newRole("role-ext", "ur-ext")
+
+		newUserRoles := []*userroles.ScopedUserRole{roleA}
+		serverRoles := []*userroles.ScopedUserRole{roleA, roleB, roleExt}
+
+		ids := removalIDs(newUserRoles, serverRoles, previousStateWithIDs("role-a", "role-b"))
+
+		assert.True(t, ids["role-b"], "should remove role-b (previously owned, dropped from config)")
+		assert.False(t, ids["role-ext"], "must not remove externally-managed role-ext")
+		assert.False(t, ids["role-a"], "must not remove role-a (still in config)")
+		assert.Len(t, ids, 1)
+	})
+}
