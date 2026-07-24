@@ -166,9 +166,13 @@ func (r *builtInRateLimitingPolicyResource) Update(ctx context.Context, req reso
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// Delete is a no-op as built-in rate limiting policies cannot be deleted.
-func (r *builtInRateLimitingPolicyResource) Delete(_ context.Context, _ resource.DeleteRequest, _ *resource.DeleteResponse) {
-	// Intentionally empty.
+// Delete cannot remove a built-in policy, so it only drops the resource from state and warns that the policy's
+// last-applied settings remain on the server.
+func (r *builtInRateLimitingPolicyResource) Delete(_ context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
+	resp.Diagnostics.AddWarning(
+		"Built-in rate limiting policy removed from state",
+		"Built-in rate limiting policies cannot be deleted. The policy and its last-applied settings remain on the server.",
+	)
 }
 
 // ImportState identifies a policy by slug (anon/user/agent).
