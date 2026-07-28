@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/credentials"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/services"
@@ -67,9 +68,7 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	createdProject, err = projects.GetByID(r.Client, plan.SpaceID.ValueString(), createdProject.GetID())
-	if persistenceSettings != nil {
-		createdProject.PersistenceSettings = persistenceSettings
-	}
+	preserveGitPassword(createdProject.PersistenceSettings, persistenceSettings)
 
 	flattenedProject, diags := flattenProject(ctx, createdProject, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -104,9 +103,7 @@ func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, re
 		}
 		return
 	}
-	if persistenceSettings != nil {
-		project.PersistenceSettings = persistenceSettings
-	}
+	preserveGitPassword(project.PersistenceSettings, persistenceSettings)
 
 	flattenedProject, diags := flattenProject(ctx, project, &state)
 	resp.Diagnostics.Append(diags...)
@@ -125,6 +122,13 @@ func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, re
 func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan projectResourceModel
 	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var state projectResourceModel
+	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -172,17 +176,48 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 		updatedProject.VersioningStrategy = nil
 	}
 
+	// A default-branch change is a pointer update on the Project document. Read
+	// the target's DeploymentSettings before updating the Project so a missing or
+	// invalid OCL configuration cannot partially persist the new pointer.
+	if isCaC {
+		currentBranch, err := gitDefaultBranch(existingProject.PersistenceSettings)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error validating Config as Code default branch",
+				fmt.Sprintf("Could not determine the project's current default branch; the project was not updated: %s", err),
+			)
+			return
+		}
+
+		plannedBranch, err := gitDefaultBranch(updatedProject.PersistenceSettings)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error validating Config as Code default branch",
+				fmt.Sprintf("Could not determine the planned default branch; the project was not updated: %s", err),
+			)
+			return
+		}
+
+		if currentBranch != plannedBranch {
+			if _, err := r.Client.Deployments.GetDeploymentSettings(existingProject, plannedBranch); err != nil {
+				resp.Diagnostics.AddError(
+					"Error validating Config as Code default branch",
+					fmt.Sprintf("Config as Code configuration not found or unreadable on target branch %q; the project was not updated: %s", plannedBranch, err),
+				)
+				return
+			}
+		}
+	}
+
 	updatedProject, err = projects.Update(r.Client, updatedProject)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating project", err.Error())
 		return
 	}
 
-	if persistenceSettings != nil {
-		updatedProject.PersistenceSettings = persistenceSettings
-	}
+	preserveGitPassword(updatedProject.PersistenceSettings, persistenceSettings)
 
-	if isCaC {
+	if isCaC && caCDeploymentSettingsChanged(plan, state) {
 		if err := r.updateDeploymentSettingsForCaC(ctx, updatedProject, plan); err != nil {
 			resp.Diagnostics.AddError("Error updating deployment settings for CaC project", err.Error())
 			return
@@ -202,6 +237,46 @@ func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	diags = resp.State.Set(ctx, flattenedProject)
 	resp.Diagnostics.Append(diags...)
+}
+
+func caCDeploymentSettingsChanged(plan, state projectResourceModel) bool {
+	return !plan.DefaultGuidedFailureMode.Equal(state.DefaultGuidedFailureMode) ||
+		!plan.DefaultToSkipIfAlreadyInstalled.Equal(state.DefaultToSkipIfAlreadyInstalled) ||
+		!plan.DeploymentChangesTemplate.Equal(state.DeploymentChangesTemplate) ||
+		!plan.ReleaseNotesTemplate.Equal(state.ReleaseNotesTemplate) ||
+		!plan.ConnectivityPolicy.Equal(state.ConnectivityPolicy) ||
+		!plan.VersioningStrategy.Equal(state.VersioningStrategy)
+}
+
+func gitDefaultBranch(settings projects.PersistenceSettings) (string, error) {
+	gitSettings, ok := settings.(projects.GitPersistenceSettings)
+	if !ok {
+		return "", fmt.Errorf("expected Git persistence settings, got %T", settings)
+	}
+
+	branch := gitSettings.DefaultBranch()
+	if branch == "" {
+		return "", fmt.Errorf("Git persistence settings do not specify a default branch")
+	}
+
+	return branch, nil
+}
+
+func preserveGitPassword(remote, configured projects.PersistenceSettings) {
+	remoteGit, remoteIsGit := remote.(projects.GitPersistenceSettings)
+	configuredGit, configuredIsGit := configured.(projects.GitPersistenceSettings)
+	if !remoteIsGit || !configuredIsGit {
+		return
+	}
+
+	remoteCredential, remoteIsUsernamePassword := remoteGit.Credential().(*credentials.UsernamePassword)
+	configuredCredential, configuredIsUsernamePassword := configuredGit.Credential().(*credentials.UsernamePassword)
+	if !remoteIsUsernamePassword || !configuredIsUsernamePassword || configuredCredential.Password == nil {
+		return
+	}
+
+	remoteCredential.Password = configuredCredential.Password
+	remoteGit.SetCredential(remoteCredential)
 }
 
 func (r *projectResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
