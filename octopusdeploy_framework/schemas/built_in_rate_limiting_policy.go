@@ -27,8 +27,8 @@ func (s BuiltInRateLimitingPolicySchema) GetResourceSchema() resourceSchema.Sche
 				Description("Whether rate limiting is enforced for this policy.").
 				Required().
 				Build(),
-			"requests_per_hour": util.ResourceInt64().
-				Description("The request rate allowed per hour.").
+			"requests_per_minute": util.ResourceInt64().
+				Description("The request rate allowed per minute.").
 				Required().
 				Validators(int64validator.AtLeast(1)).
 				Build(),
@@ -50,12 +50,12 @@ func (s BuiltInRateLimitingPolicySchema) GetResourceSchema() resourceSchema.Sche
 }
 
 type BuiltInRateLimitingPolicyResourceModel struct {
-	ID              types.String `tfsdk:"id"`
-	Slug            types.String `tfsdk:"slug"`
-	IsEnabled       types.Bool   `tfsdk:"is_enabled"`
-	RequestsPerHour types.Int64  `tfsdk:"requests_per_hour"`
-	BurstLimit      types.Int64  `tfsdk:"burst_limit"`
-	AuditMode       types.Bool   `tfsdk:"audit_mode"`
-	Name            types.String `tfsdk:"name"`
-	ScopeType       types.String `tfsdk:"scope_type"`
+	ID                types.String `tfsdk:"id"`
+	Slug              types.String `tfsdk:"slug"`
+	IsEnabled         types.Bool   `tfsdk:"is_enabled"`
+	RequestsPerMinute types.Int64  `tfsdk:"requests_per_minute"`
+	BurstLimit        types.Int64  `tfsdk:"burst_limit"`
+	AuditMode         types.Bool   `tfsdk:"audit_mode"`
+	Name              types.String `tfsdk:"name"`
+	ScopeType         types.String `tfsdk:"scope_type"`
 }

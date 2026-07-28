@@ -83,7 +83,7 @@ func updateStateFromPolicy(data *schemas.BuiltInRateLimitingPolicyResourceModel,
 	data.Name = types.StringValue(policy.Name)
 	data.ScopeType = types.StringValue(policy.ScopeType.String())
 	data.IsEnabled = types.BoolValue(policy.IsEnabled)
-	data.RequestsPerHour = types.Int64Value(int64(policy.RequestsPerHour))
+	data.RequestsPerMinute = types.Int64Value(int64(policy.RequestsPerMinute))
 	data.BurstLimit = types.Int64Value(int64(policy.BurstLimit))
 	data.AuditMode = types.BoolValue(policy.AuditMode)
 }
@@ -182,12 +182,12 @@ func (r *builtInRateLimitingPolicyResource) ImportState(ctx context.Context, req
 
 func (r *builtInRateLimitingPolicyResource) modify(data schemas.BuiltInRateLimitingPolicyResourceModel, policy *ratelimitingpolicies.RateLimitingPolicy) (*ratelimitingpolicies.RateLimitingPolicy, error) {
 	return ratelimitingpolicies.Modify(r.Client, ratelimitingpolicies.ModifyRateLimitingPolicyCommand{
-		ID:              policy.ID,
-		Name:            policy.Name,
-		ScopeType:       policy.ScopeType,
-		IsEnabled:       data.IsEnabled.ValueBool(),
-		RequestsPerHour: int(data.RequestsPerHour.ValueInt64()),
-		BurstLimit:      int(data.BurstLimit.ValueInt64()),
-		AuditMode:       data.AuditMode.ValueBool(),
+		ID:                policy.ID,
+		Name:              policy.Name,
+		ScopeType:         policy.ScopeType,
+		IsEnabled:         data.IsEnabled.ValueBool(),
+		RequestsPerMinute: int(data.RequestsPerMinute.ValueInt64()),
+		BurstLimit:        int(data.BurstLimit.ValueInt64()),
+		AuditMode:         data.AuditMode.ValueBool(),
 	})
 }
