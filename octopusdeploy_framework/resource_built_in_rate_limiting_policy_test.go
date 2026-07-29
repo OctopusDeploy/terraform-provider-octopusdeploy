@@ -24,7 +24,7 @@ func TestAccOctopusDeployBuiltInRateLimitingPolicyBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "slug", "anon"),
 					resource.TestCheckResourceAttr(resourceName, "scope_type", "Unauthenticated"),
 					resource.TestCheckResourceAttr(resourceName, "is_enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "requests_per_hour", "5000"),
+					resource.TestCheckResourceAttr(resourceName, "requests_per_minute", "5000"),
 					resource.TestCheckResourceAttr(resourceName, "burst_limit", "100"),
 					resource.TestCheckResourceAttr(resourceName, "audit_mode", "false"),
 				),
@@ -48,12 +48,12 @@ func TestAccOctopusDeployBuiltInRateLimitingPolicyUpdate(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: builtInRateLimitingPolicyConfig("anon", "anon", true, 5000, 100, false),
-				Check:  resource.TestCheckResourceAttr(resourceName, "requests_per_hour", "5000"),
+				Check:  resource.TestCheckResourceAttr(resourceName, "requests_per_minute", "5000"),
 			},
 			{
 				Config: builtInRateLimitingPolicyConfig("anon", "anon", true, 8000, 200, true),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "requests_per_hour", "8000"),
+					resource.TestCheckResourceAttr(resourceName, "requests_per_minute", "8000"),
 					resource.TestCheckResourceAttr(resourceName, "burst_limit", "200"),
 					resource.TestCheckResourceAttr(resourceName, "audit_mode", "true"),
 				),
@@ -105,19 +105,19 @@ func TestAccOctopusDeployBuiltInRateLimitingPolicyReplaceOnSlugChange(t *testing
 	})
 }
 
-func builtInRateLimitingPolicyConfig(label, slug string, isEnabled bool, requestsPerHour, burstLimit int, auditMode bool) string {
+func builtInRateLimitingPolicyConfig(label, slug string, isEnabled bool, requestsPerMinute, burstLimit int, auditMode bool) string {
 	return fmt.Sprintf(
 		`resource "octopusdeploy_built_in_rate_limiting_policy" "%[1]s" {
-			slug              = "%[2]s"
-			is_enabled        = %[3]t
-			requests_per_hour = %[4]d
-			burst_limit       = %[5]d
-			audit_mode        = %[6]t
+			slug                = "%[2]s"
+			is_enabled          = %[3]t
+			requests_per_minute = %[4]d
+			burst_limit         = %[5]d
+			audit_mode          = %[6]t
 		}`,
 		label,
 		slug,
 		isEnabled,
-		requestsPerHour,
+		requestsPerMinute,
 		burstLimit,
 		auditMode)
 }
