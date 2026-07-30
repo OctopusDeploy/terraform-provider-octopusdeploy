@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -341,6 +342,8 @@ resource "octopusdeploy_scoped_user_role" "test_role" {
 
 // Over-correction guard for #180: dropping an inline user_role on update must still delete that role
 // server-side. The ownership narrowing must not stop removing roles the team resource genuinely owned.
+// The scoped-user-role count is asserted against the server API rather than Terraform state, because the
+// read path filters roles out of state and would otherwise hide a role that leaked server-side.
 func TestAccOctopusDeployTeamUpdateRemovesDroppedInlineUserRole(t *testing.T) {
 	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	space := NewTestSpace(t)
@@ -354,13 +357,15 @@ func TestAccOctopusDeployTeamUpdateRemovesDroppedInlineUserRole(t *testing.T) {
 				Config: testAccTeamWithInlineUserRoles(teamName, space.ID, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "user_role.#", "2"),
+					testAccCheckTeamScopedUserRoleCount("octopusdeploy_team.test_team", 2),
 				),
 			},
-			// Drop one inline user_role; the previously-owned role must be removed, leaving exactly one.
+			// Drop one inline user_role; the previously-owned role must be removed server-side, leaving one.
 			{
 				Config: testAccTeamWithInlineUserRoles(teamName, space.ID, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "user_role.#", "1"),
+					testAccCheckTeamScopedUserRoleCount("octopusdeploy_team.test_team", 1),
 				),
 			},
 			{
@@ -370,6 +375,33 @@ func TestAccOctopusDeployTeamUpdateRemovesDroppedInlineUserRole(t *testing.T) {
 			},
 		},
 	})
+}
+
+// testAccCheckTeamScopedUserRoleCount asserts the number of scoped user roles attached to the team on the
+// server, bypassing Terraform state so a role that leaked server-side cannot be masked by the read filter.
+func testAccCheckTeamScopedUserRoleCount(resourceName string, expected int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		team, err := octoClient.Teams.GetByID(rs.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("error retrieving team %s: %w", rs.Primary.ID, err)
+		}
+
+		roles, err := octoClient.Teams.GetScopedUserRoles(*team, core.SkipTakeQuery{})
+		if err != nil {
+			return fmt.Errorf("error retrieving scoped user roles for team %s: %w", rs.Primary.ID, err)
+		}
+
+		if len(roles.Items) != expected {
+			return fmt.Errorf("expected %d scoped user role(s) on team %s, got %d", expected, rs.Primary.ID, len(roles.Items))
+		}
+
+		return nil
+	}
 }
 
 func testAccTeamWithInlineUserRoles(teamName, spaceID string, includeSecond bool) string {
