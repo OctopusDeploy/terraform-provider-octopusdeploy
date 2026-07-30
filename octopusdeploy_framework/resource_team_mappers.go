@@ -232,6 +232,38 @@ func mapUserRoleSetResourceToState(ctx context.Context, userRoles []*userroles.S
 	return types.SetValueMust(userRoleObjectType, roleList)
 }
 
+// collectManagedUserRoleIDs returns the scoped-user-role ids recorded in prior state, and whether any element
+// carried a null/unknown id (ownership cannot be positively determined for those elements).
+func collectManagedUserRoleIDs(previousUserRolesState types.Set) (map[string]bool, bool) {
+	previouslyManagedIDs := make(map[string]bool)
+	hasUnknownIds := false
+
+	for _, element := range previousUserRolesState.Elements() {
+		objElement, ok := element.(types.Object)
+		if !ok {
+			continue
+		}
+		idAttr, exists := objElement.Attributes()["id"]
+		if !exists {
+			continue
+		}
+		idStr, ok := idAttr.(types.String)
+		if !ok {
+			continue
+		}
+		if idStr.IsNull() || idStr.IsUnknown() {
+			hasUnknownIds = true
+			continue
+		}
+		previouslyManagedIDs[idStr.ValueString()] = true
+	}
+
+	return previouslyManagedIDs, hasUnknownIds
+}
+
+// filterUserRolesByPreviousState is the read-path filter: it hides roles this resource did not manage from
+// state. When ownership is indeterminate (unknown state or a missing id), it deliberately returns every server
+// role so the refresh shows what exists. Do not use it to decide deletions, see filterRemovableUserRoles.
 func filterUserRolesByPreviousState(ctx context.Context, serverUserRoles []*userroles.ScopedUserRole, previousUserRolesState types.Set) []*userroles.ScopedUserRole {
 	if previousUserRolesState.IsNull() {
 		return []*userroles.ScopedUserRole{}
@@ -241,36 +273,9 @@ func filterUserRolesByPreviousState(ctx context.Context, serverUserRoles []*user
 		return serverUserRoles
 	}
 
-	previousElements := previousUserRolesState.Elements()
-
-	hasUnknownIds := false
-	for _, element := range previousElements {
-		if objElement, ok := element.(types.Object); ok {
-			attributes := objElement.Attributes()
-			if idAttr, exists := attributes["id"]; exists {
-				if idStr, ok := idAttr.(types.String); ok && (idStr.IsNull() || idStr.IsUnknown()) {
-					hasUnknownIds = true
-					break
-				}
-			}
-		}
-	}
-
+	previouslyManagedIDs, hasUnknownIds := collectManagedUserRoleIDs(previousUserRolesState)
 	if hasUnknownIds {
 		return serverUserRoles
-	}
-
-	previouslyManagedIDs := make(map[string]bool)
-
-	for _, element := range previousElements {
-		if objElement, ok := element.(types.Object); ok {
-			attributes := objElement.Attributes()
-			if idAttr, exists := attributes["id"]; exists {
-				if idStr, ok := idAttr.(types.String); ok && !idStr.IsNull() && !idStr.IsUnknown() {
-					previouslyManagedIDs[idStr.ValueString()] = true
-				}
-			}
-		}
 	}
 
 	var managedUserRoles []*userroles.ScopedUserRole
@@ -281,4 +286,25 @@ func filterUserRolesByPreviousState(ctx context.Context, serverUserRoles []*user
 	}
 
 	return managedUserRoles
+}
+
+// filterRemovableUserRoles is the write-path filter: it returns only the server roles this resource can
+// positively confirm it previously managed (their id appears in prior state), so those are the only roles a
+// team update may delete. Unlike the read-path fallback, an indeterminate prior state (null, unknown, or a
+// missing/unknown id) yields no removable roles, so an update can never delete a role it did not own (#180).
+func filterRemovableUserRoles(previousUserRolesState types.Set, serverUserRoles []*userroles.ScopedUserRole) []*userroles.ScopedUserRole {
+	if previousUserRolesState.IsNull() || previousUserRolesState.IsUnknown() {
+		return nil
+	}
+
+	previouslyManagedIDs, _ := collectManagedUserRoleIDs(previousUserRolesState)
+
+	var removableUserRoles []*userroles.ScopedUserRole
+	for _, serverRole := range serverUserRoles {
+		if serverRole.ID != "" && previouslyManagedIDs[serverRole.ID] {
+			removableUserRoles = append(removableUserRoles, serverRole)
+		}
+	}
+
+	return removableUserRoles
 }

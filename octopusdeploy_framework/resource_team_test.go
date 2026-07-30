@@ -339,6 +339,72 @@ resource "octopusdeploy_scoped_user_role" "test_role" {
 }`, userRoleName, teamName, description, spaceID, spaceID)
 }
 
+// Over-correction guard for #180: dropping an inline user_role on update must still delete that role
+// server-side. The ownership narrowing must not stop removing roles the team resource genuinely owned.
+func TestAccOctopusDeployTeamUpdateRemovesDroppedInlineUserRole(t *testing.T) {
+	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTeamCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTeamWithInlineUserRoles(teamName, space.ID, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "user_role.#", "2"),
+				),
+			},
+			// Drop one inline user_role; the previously-owned role must be removed, leaving exactly one.
+			{
+				Config: testAccTeamWithInlineUserRoles(teamName, space.ID, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "user_role.#", "1"),
+				),
+			},
+			{
+				Config:             testAccTeamWithInlineUserRoles(teamName, space.ID, false),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccTeamWithInlineUserRoles(teamName, spaceID string, includeSecond bool) string {
+	secondRole := ""
+	if includeSecond {
+		secondRole = fmt.Sprintf(`
+	user_role {
+		space_id     = "%s"
+		user_role_id = octopusdeploy_user_role.role_b.id
+	}`, spaceID)
+	}
+
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
+resource "octopusdeploy_user_role" "role_a" {
+	name                      = "%[1]s-a"
+	granted_space_permissions = ["EnvironmentView"]
+}
+
+resource "octopusdeploy_user_role" "role_b" {
+	name                      = "%[1]s-b"
+	granted_space_permissions = ["EnvironmentView"]
+}
+
+resource "octopusdeploy_team" "test_team" {
+	name        = "%[1]s"
+	description = "inline user role removal test"
+	space_id    = "%[2]s"
+
+	user_role {
+		space_id     = "%[2]s"
+		user_role_id = octopusdeploy_user_role.role_a.id
+	}%[3]s
+}`, teamName, spaceID, secondRole)
+}
+
 func testAccTeamImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]

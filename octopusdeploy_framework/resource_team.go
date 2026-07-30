@@ -135,12 +135,10 @@ func (r *teamResource) updateUserRoles(ctx context.Context, model schemas.TeamMo
 		return fmt.Errorf("error getting existing user roles for team %s: %s", team.ID, err)
 	}
 
-	// Only remove roles previously managed by this team resource; leave roles managed by standalone
-	// octopusdeploy_scoped_user_role resources untouched (mirrors the read-path filter, see #180)
-	removableUserRoles := filterUserRolesByPreviousState(ctx, existingUserRoles.Items, previousUserRoles)
-
 	userRolesToAdd := findAddedScopedUserRoles(newUserRoles, existingUserRoles.Items)
-	userRolesToRemove := findRemovedScopedUserRoles(newUserRoles, removableUserRoles)
+	// Only remove roles previously managed by this team resource; roles managed by standalone
+	// octopusdeploy_scoped_user_role resources are never previously-owned and are left untouched (#180)
+	userRolesToRemove := scopedUserRolesToRemove(newUserRoles, existingUserRoles.Items, previousUserRoles)
 	userRolesToEdit := findModifiedScopedUserRoles(newUserRoles, existingUserRoles.Items)
 
 	for _, userRole := range userRolesToAdd {
@@ -189,6 +187,15 @@ func findRemovedScopedUserRoles(newRoles, existingRoles []*userroles.ScopedUserR
 	return util.SliceFilter(existingRoles, func(existingRole *userroles.ScopedUserRole) bool {
 		return !util.SliceContains(newUserRoleIds, existingRole.ID)
 	})
+}
+
+// scopedUserRolesToRemove returns the roles a team update should delete: the roles this resource previously
+// managed (per prior state) that are no longer in the desired config. Removal candidates are narrowed to
+// previously-owned roles first, so roles managed by standalone octopusdeploy_scoped_user_role resources are
+// never deleted by a team create/update (#180).
+func scopedUserRolesToRemove(newUserRoles, existingUserRoles []*userroles.ScopedUserRole, previousUserRoles types.Set) []*userroles.ScopedUserRole {
+	removableUserRoles := filterRemovableUserRoles(previousUserRoles, existingUserRoles)
+	return findRemovedScopedUserRoles(newUserRoles, removableUserRoles)
 }
 
 // findModifiedScopedUserRoles returns roles from the first slice that have matching IDs in the second slice

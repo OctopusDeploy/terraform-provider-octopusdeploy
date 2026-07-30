@@ -111,11 +111,10 @@ func TestFilterUserRolesByPreviousState(t *testing.T) {
 	})
 }
 
-// TestUpdateUserRolesRemovalOwnership guards updateUserRoles' removal-candidate selection.
-// Regression test for #180: updating a team must not delete externally-managed scoped user roles.
+// TestUpdateUserRolesRemovalOwnership guards scopedUserRolesToRemove, the exact removal-candidate selection
+// updateUserRoles uses. Regression test for #180: updating a team must not delete externally-managed scoped
+// user roles, and must still delete roles it previously owned that are dropped from config.
 func TestUpdateUserRolesRemovalOwnership(t *testing.T) {
-	ctx := context.Background()
-
 	newRole := func(id, userRoleID string) *userroles.ScopedUserRole {
 		r := userroles.NewScopedUserRole(userRoleID)
 		r.ID = id
@@ -140,8 +139,7 @@ func TestUpdateUserRolesRemovalOwnership(t *testing.T) {
 	}
 
 	removalIDs := func(newUserRoles, serverRoles []*userroles.ScopedUserRole, previous types.Set) map[string]bool {
-		removable := filterUserRolesByPreviousState(ctx, serverRoles, previous)
-		toRemove := findRemovedScopedUserRoles(newUserRoles, removable)
+		toRemove := scopedUserRolesToRemove(newUserRoles, serverRoles, previous)
 		ids := make(map[string]bool)
 		for _, r := range toRemove {
 			ids[r.ID] = true
