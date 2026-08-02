@@ -253,12 +253,12 @@ func updateDataFromDockerContainerRegistryFeedForACR(data *schemas.AzureContaine
 // has been updated first.
 func ensureFeedIsAzureContainerRegistry(ctx context.Context, data *schemas.AzureContainerRegistryFeedTypeResourceModel, client *client.Client, resp *resource.UpdateResponse) error {
 	currentFeed, err := feeds.GetByID(client, data.SpaceID.ValueString(), data.ID.ValueString())
-	if currentFeed.GetFeedType() == "Docker" {
-		if err != nil {
-			resp.Diagnostics.AddError("unable to load Azure Container Registry feed", err.Error())
-			return err
-		}
+	if err != nil {
+		resp.Diagnostics.AddError("unable to load Azure Container Registry feed", err.Error())
+		return err
+	}
 
+	if currentFeed.GetFeedType() == "Docker" {
 		newAcrFeed, err := feeds.NewAzureContainerRegistry(
 			currentFeed.GetName(),
 			currentFeed.GetUsername(),
