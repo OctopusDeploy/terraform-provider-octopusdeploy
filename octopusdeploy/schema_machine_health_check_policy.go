@@ -90,7 +90,7 @@ func getMachineHealthCheckPolicySchema() map[string]*schema.Schema {
 			Default:     24 * time.Hour,
 			Optional:    true,
 			Type:        schema.TypeInt,
-			Description: "In nanoseconds.",
+			Description: "The time between automatic health checks, in nanoseconds. Defaults to 24 hours (86400000000000). Set this to 0 to never run automatic health checks.",
 		},
 		"health_check_type": {
 			Default:  "RunScript",
