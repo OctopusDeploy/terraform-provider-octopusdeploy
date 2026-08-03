@@ -5,7 +5,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"sort"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tenants"
@@ -75,6 +77,138 @@ func testAccTenantBasic(lifecycleLocalName string, lifecycleName string, project
 		project_id   = "${octopusdeploy_project.%s.id}"
 		environment_ids = ["${octopusdeploy_environment.%s.id}"]
 	}`, localName, description, name, isDisabled, localName, projectLocalName, environmentLocalName)
+}
+
+// Covers https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/236:
+// tags written in config have to reach the server, tags changed on the server have
+// to show up as drift, and an empty list has to clear them.
+func TestAccTenantTags(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := "octopusdeploy_tenant." + localName
+	firstTag := localName + "/first"
+	secondTag := localName + "/second"
+
+	var tenantID string
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTenantCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTenantWithTags(localName, "[octopusdeploy_tag.first.canonical_tag_name]"),
+				Check: resource.ComposeTestCheckFunc(
+					testTenantExists(resourceName),
+					captureTenantID(resourceName, &tenantID),
+					resource.TestCheckResourceAttr(resourceName, "tenant_tags.#", "1"),
+					testTenantTagsOnServer(resourceName, firstTag),
+				),
+			},
+			{
+				Config: testAccTenantWithTags(localName, "[octopusdeploy_tag.second.canonical_tag_name]"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tenant_tags.#", "1"),
+					testTenantTagsOnServer(resourceName, secondTag),
+				),
+			},
+			{
+				// Change the tags behind Terraform's back. The refresh has to notice
+				// and the apply has to put them back.
+				PreConfig: func() { setTenantTagsOutOfBand(t, &tenantID, firstTag) },
+				Config:    testAccTenantWithTags(localName, "[octopusdeploy_tag.second.canonical_tag_name]"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tenant_tags.#", "1"),
+					testTenantTagsOnServer(resourceName, secondTag),
+				),
+			},
+			{
+				Config: testAccTenantWithTags(localName, "[]"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tenant_tags.#", "0"),
+					testTenantTagsOnServer(resourceName),
+				),
+			},
+		},
+	})
+}
+
+func testAccTenantWithTags(localName string, tenantTags string) string {
+	return fmt.Sprintf(`
+		resource "octopusdeploy_tag_set" "%[1]s" {
+		  name = "%[1]s"
+		}
+
+		resource "octopusdeploy_tag" "first" {
+		  name        = "first"
+		  color       = "#6e6e6e"
+		  description = "First tenant tag"
+		  tag_set_id  = octopusdeploy_tag_set.%[1]s.id
+		}
+
+		resource "octopusdeploy_tag" "second" {
+		  name        = "second"
+		  color       = "#6e6e6e"
+		  description = "Second tenant tag"
+		  tag_set_id  = octopusdeploy_tag_set.%[1]s.id
+		}
+
+		resource "octopusdeploy_tenant" "%[1]s" {
+		  name        = "%[1]s"
+		  description = "Tenant tag test"
+
+		  tenant_tags = %[2]s
+		}
+	`, localName, tenantTags)
+}
+
+func captureTenantID(prefix string, tenantID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[prefix]
+		if !ok {
+			return fmt.Errorf("Not found: %s", prefix)
+		}
+
+		*tenantID = rs.Primary.ID
+
+		return nil
+	}
+}
+
+func setTenantTagsOutOfBand(t *testing.T, tenantID *string, tags ...string) {
+	tenant, err := tenants.GetByID(octoClient, octoClient.GetSpaceID(), *tenantID)
+	if err != nil {
+		t.Fatalf("unable to load tenant (%s) to change its tags out of band: %s", *tenantID, err)
+	}
+
+	tenant.TenantTags = tags
+	if _, err := tenants.Update(octoClient, tenant); err != nil {
+		t.Fatalf("unable to change the tags on tenant (%s) out of band: %s", *tenantID, err)
+	}
+}
+
+func testTenantTagsOnServer(prefix string, expected ...string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[prefix]
+		if !ok {
+			return fmt.Errorf("Not found: %s", prefix)
+		}
+
+		tenant, err := tenants.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		actual := append([]string{}, tenant.TenantTags...)
+		want := append([]string{}, expected...)
+		sort.Strings(actual)
+		sort.Strings(want)
+
+		if strings.Join(actual, ",") != strings.Join(want, ",") {
+			return fmt.Errorf("expected tenant tags %v on the server, got %v", want, actual)
+		}
+
+		return nil
+	}
 }
 
 func testTenantExists(prefix string) resource.TestCheckFunc {
