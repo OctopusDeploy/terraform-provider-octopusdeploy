@@ -550,14 +550,14 @@ func GetStepTemplateParameterResourceSchema(resourceType string) resourceSchema.
 		NestedObject: resourceSchema.NestedAttributeObject{
 			Attributes: map[string]resourceSchema.Attribute{
 				"default_value": util.ResourceString().
-					Description("A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.").
+					Description("A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference such as '#{MyVariable}'. Use this attribute for a variable reference even when display settings are set to 'Sensitive', because Octopus stores the reference itself rather than the secret it points at.").
 					Optional().
 					Computed().
 					Default(stringdefault.StaticString("")).
 					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
 				"default_sensitive_value": util.ResourceString().
-					Description("Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'").
+					Description("Use this attribute to set a literal secret as the default value for the parameter when display settings are set to 'Sensitive'. Do not use it for a variable reference such as '#{MyVariable}': the reference would be stored encrypted and would never resolve. Use 'default_value' for that instead.").
 					Optional().
 					Sensitive().
 					Build(),

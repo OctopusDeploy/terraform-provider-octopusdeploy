@@ -72,9 +72,11 @@ func TestValidateStepTemplateParameters_Valid(t *testing.T) {
 	}
 }
 
-func TestValidateStepTemplateParameters_SensitiveWithDefaultValue(t *testing.T) {
+// stepTemplateParameterModel builds a single parameter model for validation tests.
+// Pass types.StringNull() for either default to leave it unset.
+func stepTemplateParameterModel(controlType string, defaultValue attr.Value, defaultSensitiveValue attr.Value) *schemas.StepTemplateTypeResourceModel {
 	displaySettings, _ := types.MapValue(types.StringType, map[string]attr.Value{
-		"Octopus.ControlType": types.StringValue("Sensitive"),
+		"Octopus.ControlType": types.StringValue(controlType),
 	})
 
 	paramObj, _ := types.ObjectValue(
@@ -84,8 +86,8 @@ func TestValidateStepTemplateParameters_SensitiveWithDefaultValue(t *testing.T) 
 			"name":                    types.StringValue("TestParam"),
 			"label":                   types.StringValue("Test Parameter"),
 			"help_text":               types.StringValue("Help text"),
-			"default_value":           types.StringValue("default_sensitive_value"),
-			"default_sensitive_value": types.StringNull(),
+			"default_value":           defaultValue,
+			"default_sensitive_value": defaultSensitiveValue,
 			"display_settings":        displaySettings,
 		},
 	)
@@ -95,31 +97,105 @@ func TestValidateStepTemplateParameters_SensitiveWithDefaultValue(t *testing.T) 
 		[]attr.Value{paramObj},
 	)
 
-	data := &schemas.StepTemplateTypeResourceModel{
-		Parameters: paramList,
-	}
+	return &schemas.StepTemplateTypeResourceModel{Parameters: paramList}
+}
+
+func TestValidateStepTemplateParameters_SensitiveWithDefaultValue(t *testing.T) {
+	data := stepTemplateParameterModel("Sensitive", types.StringValue("hunter2"), types.StringNull())
 
 	diags := validateStepTemplateParameters(context.Background(), data)
 
-	if !diags.HasError() {
-		t.Fatal("expected error for sensitive parameter using default_value")
+	if diags.HasError() {
+		t.Fatalf("expected a warning rather than an error for a literal sensitive default, got: %v", diags)
+	}
+
+	if diags.WarningsCount() == 0 {
+		t.Fatal("expected a warning for sensitive parameter using default_value")
 	}
 
 	found := false
-	for _, diag := range diags {
-		if diag.Summary() == "Invalid step template parameter configuration" {
-			detail := diag.Detail()
-			if strings.Contains(detail, "Sensitive") &&
-				strings.Contains(detail, "default_value") &&
-				strings.Contains(detail, "default_sensitive_value") {
-				found = true
-				break
-			}
+	for _, diag := range diags.Warnings() {
+		detail := diag.Detail()
+		if strings.Contains(detail, "Sensitive") &&
+			strings.Contains(detail, "default_value") &&
+			strings.Contains(detail, "default_sensitive_value") {
+			found = true
+			break
 		}
 	}
 
 	if !found {
-		t.Error("expected diagnostic detail to mention Sensitive, default_value, and default_sensitive_value")
+		t.Error("expected warning detail to mention Sensitive, default_value, and default_sensitive_value")
+	}
+}
+
+func TestValidateStepTemplateParameters_SensitiveWithBindingDefaultValue(t *testing.T) {
+	bindings := []string{
+		"#{DefaultPasswordVariable}",
+		"  #{DefaultPasswordVariable}  ",
+		"prefix-#{DefaultPasswordVariable}",
+		"#{DefaultPasswordVariable}-suffix",
+		"#{First}#{Second}",
+		"#{DefaultPasswordVariable | ToUpper}",
+	}
+
+	for _, binding := range bindings {
+		t.Run(binding, func(t *testing.T) {
+			data := stepTemplateParameterModel("Sensitive", types.StringValue(binding), types.StringNull())
+
+			diags := validateStepTemplateParameters(context.Background(), data)
+
+			if diags.HasError() {
+				t.Fatalf("expected no error for a variable binding default, got: %v", diags)
+			}
+
+			if diags.WarningsCount() > 0 {
+				t.Errorf("expected no warning for a variable binding default, got: %v", diags.Warnings())
+			}
+		})
+	}
+}
+
+func TestValidateStepTemplateParameters_SensitiveWithBothDefaultValues(t *testing.T) {
+	data := stepTemplateParameterModel(
+		"Sensitive",
+		types.StringValue("#{DefaultPasswordVariable}"),
+		types.StringValue("hunter2"),
+	)
+
+	diags := validateStepTemplateParameters(context.Background(), data)
+
+	if !diags.HasError() {
+		t.Fatal("expected error when both default_value and default_sensitive_value are set")
+	}
+
+	found := false
+	for _, diag := range diags.Errors() {
+		detail := diag.Detail()
+		if strings.Contains(detail, "both") &&
+			strings.Contains(detail, "default_value") &&
+			strings.Contains(detail, "default_sensitive_value") {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Error("expected error detail to state that both default_value and default_sensitive_value are set")
+	}
+}
+
+func TestValidateStepTemplateParameters_SensitiveWithSensitiveValue(t *testing.T) {
+	data := stepTemplateParameterModel("Sensitive", types.StringNull(), types.StringValue("hunter2"))
+
+	diags := validateStepTemplateParameters(context.Background(), data)
+
+	if diags.HasError() {
+		t.Fatalf("expected no error for sensitive parameter using default_sensitive_value, got: %v", diags)
+	}
+
+	if diags.WarningsCount() > 0 {
+		t.Errorf("expected no warning for sensitive parameter using default_sensitive_value, got: %v", diags.Warnings())
 	}
 }
 
