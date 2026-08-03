@@ -207,7 +207,7 @@ func resourceActionContainerAttribute() resourceSchema.SingleNestedAttribute {
 		Optional: true,
 		Computed: true,
 		Default: objectdefault.StaticValue(
-			types.ObjectValueMust(
+			util.ObjectValue(
 				map[string]attr.Type{
 					"feed_id":    types.StringType,
 					"image":      types.StringType,

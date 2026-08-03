@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 )
 
 type ScriptModuleSchema struct{}
@@ -108,7 +109,7 @@ func FlattenScriptModule(scriptModule *variables.ScriptModule) attr.Value {
 		"variable_set_id": types.StringValue(scriptModule.VariableSetID),
 	}
 
-	return types.ObjectValueMust(ScriptModuleObjectType(), attrs)
+	return util.ObjectValue(ScriptModuleObjectType(), attrs)
 }
 
 func ScriptObjectType() types.ObjectType {
@@ -191,7 +192,7 @@ func MapFromScriptModuleToState(data *ScriptModuleResourceModel) *variables.Scri
 
 func flattenScript(scriptModule *variables.ScriptModule) []attr.Value {
 	return []attr.Value{
-		types.ObjectValueMust(map[string]attr.Type{
+		util.ObjectValue(map[string]attr.Type{
 			"body":   types.StringType,
 			"syntax": types.StringType,
 		}, map[string]attr.Value{

@@ -99,7 +99,7 @@ func MapFromVariablePromptOptions(variablePromptOptions *variables.VariablePromp
 		)
 	}
 
-	return types.ObjectValueMust(VariablePromptOptionsObjectType(), attrs)
+	return util.ObjectValue(VariablePromptOptionsObjectType(), attrs)
 }
 
 func MapFromDisplaySettings(displaySettings *resources.DisplaySettings) attr.Value {
@@ -121,7 +121,7 @@ func MapFromDisplaySettings(displaySettings *resources.DisplaySettings) attr.Val
 		)
 	}
 
-	return types.ObjectValueMust(
+	return util.ObjectValue(
 		VariableDisplaySettingsObjectType(),
 		attrs,
 	)
@@ -130,7 +130,7 @@ func MapFromDisplaySettings(displaySettings *resources.DisplaySettings) attr.Val
 func MapFromSelectOptions(selectOptions []*resources.SelectOption) []attr.Value {
 	options := make([]attr.Value, 0, len(selectOptions))
 	for _, option := range selectOptions {
-		options = append(options, types.ObjectValueMust(
+		options = append(options, util.ObjectValue(
 			VariableSelectOptionsObjectType(),
 			map[string]attr.Value{
 				VariableSchemaAttributeNames.Value:       types.StringValue(option.Value),
