@@ -26,6 +26,16 @@ func TestActionTemplatesCollectionUriTemplateSendsFilters(t *testing.T) {
 	require.Contains(t, uri, "/api/Spaces-1/actiontemplates")
 }
 
+func TestActionTemplatesCollectionUriTemplateSendsIdsAsCommaSeparatedList(t *testing.T) {
+	// The server matches a comma separated ids parameter, which is what the template
+	// expansion produces for a slice.
+	query := actiontemplates.Query{IDs: []string{"ActionTemplates-1", "ActionTemplates-2"}}
+
+	uri := expandActionTemplatesCollectionUri(t, query, "Spaces-1")
+
+	require.Contains(t, uri, "ids=ActionTemplates-1%2CActionTemplates-2")
+}
+
 func TestActionTemplatesCollectionUriTemplateHasNoIdPathSegment(t *testing.T) {
 	// A {/id} segment would expand into a single-resource path that cannot be decoded as a
 	// collection, so the collection template must not carry one.

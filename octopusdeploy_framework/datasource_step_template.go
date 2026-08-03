@@ -95,23 +95,30 @@ func (d *stepTemplateDataSource) Read(ctx context.Context, req datasource.ReadRe
 // has none. The API offers no exact-name filter, so the name narrows the result set through
 // partialName and the exact match is made here.
 func findStepTemplateByName(client newclient.Client, spaceID string, name string) (*actiontemplates.ActionTemplate, error) {
-	query := actiontemplates.Query{
+	actionTemplates, err := queryStepTemplates(client, spaceID, actiontemplates.Query{
 		PartialName: name,
 		Take:        math.MaxInt32,
-	}
-
-	actionTemplates, err := newclient.GetByQuery[actiontemplates.ActionTemplate](client, actionTemplatesCollectionUriTemplate, spaceID, query)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	for _, at := range actionTemplates.Items {
+	for _, at := range actionTemplates {
 		if at.Name == name {
 			return at, nil
 		}
 	}
 
 	return nil, nil
+}
+
+func queryStepTemplates(client newclient.Client, spaceID string, query actiontemplates.Query) ([]*actiontemplates.ActionTemplate, error) {
+	actionTemplates, err := newclient.GetByQuery[actiontemplates.ActionTemplate](client, actionTemplatesCollectionUriTemplate, spaceID, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return actionTemplates.Items, nil
 }
 
 func mapStepTemplateToDatasourceModel(data *schemas.StepTemplateTypeDataSourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
