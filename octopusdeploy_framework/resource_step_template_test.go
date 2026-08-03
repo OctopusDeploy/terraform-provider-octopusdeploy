@@ -117,6 +117,72 @@ func TestAccOctopusStepTemplateBasic(t *testing.T) {
 	})
 }
 
+// A sensitive parameter may default to a variable binding rather than a literal secret.
+// Octopus stores the binding as a plain value, so it belongs in default_value.
+func TestAccOctopusStepTemplateSensitiveParameterWithVariableBinding(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_step_template." + localName
+	name := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+	parameterName := acctest.RandStringFromCharSet(10, acctest.CharSetAlpha)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             func(s *terraform.State) error { return testStepTemplateDestroy(s, localName) },
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testStepTemplateSensitiveParameterWithVariableBinding(localName, name, parameterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "parameters.0.default_value", "#{DefaultPasswordVariable}"),
+					resource.TestCheckResourceAttr(prefix, "parameters.0.display_settings.Octopus.ControlType", "Sensitive"),
+				),
+			},
+			{
+				// Re-applying the same configuration must produce no diff, which proves the
+				// binding round-trips through the API instead of being stored encrypted.
+				Config: testStepTemplateSensitiveParameterWithVariableBinding(localName, name, parameterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "parameters.0.default_value", "#{DefaultPasswordVariable}"),
+				),
+			},
+		},
+	})
+}
+
+func testStepTemplateSensitiveParameterWithVariableBinding(localName string, name string, parameterName string) string {
+	return fmt.Sprintf(`
+		resource "octopusdeploy_step_template" "%s" {
+			action_type     = "Octopus.Script"
+			name            = "%s"
+			description     = "Sensitive parameter defaulting to a variable binding"
+			step_package_id = "Octopus.Script"
+			packages        = []
+			parameters      = [
+				{
+					default_value = "#{DefaultPasswordVariable}"
+					display_settings = {
+						"Octopus.ControlType" : "Sensitive"
+					}
+					help_text = "Password used by the script"
+					label     = "Password"
+					name      = "%s"
+					id        = "2f0c1a5c-0f5e-4a6d-9d33-0c0f0b1e2d34"
+				},
+			]
+			properties = {
+				"Octopus.Action.Script.ScriptBody" : "echo 'Hello World'"
+				"Octopus.Action.Script.ScriptSource" : "Inline"
+				"Octopus.Action.Script.Syntax" : "Bash"
+			}
+		}
+`,
+		localName,
+		name,
+		parameterName,
+	)
+}
+
 func testStepTemplateRunScriptBasic(data stepTemplateTestData) string {
 	return fmt.Sprintf(`
 		resource "octopusdeploy_step_template" "%s" {

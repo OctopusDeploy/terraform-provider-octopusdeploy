@@ -367,7 +367,8 @@ func TestStepTemplateParametersValidationWhenNonSensitiveDefaultValueSetForSensi
 
 	// Act
 	diags := validateStepTemplateParameters(ctx, &state)
-	assert.Equal(t, 1, len(diags.Errors()), "Expected diagnostics to contain errors")
+	assert.Equal(t, 0, len(diags.Errors()), "Expected a literal sensitive default to warn rather than error")
+	assert.Equal(t, 1, len(diags.Warnings()), "Expected diagnostics to contain a warning")
 }
 
 func TestStepTemplateParametersValidationWhenSensitiveDefaultValueSetForNonSensitiveControlType(t *testing.T) {

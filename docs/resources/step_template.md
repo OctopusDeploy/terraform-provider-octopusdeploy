@@ -130,8 +130,8 @@ Required:
 
 Optional:
 
-- `default_sensitive_value` (String, Sensitive) Use this attribute to set a sensitive default value for the parameter when display settings are set to 'Sensitive'
-- `default_value` (String) A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference.
+- `default_sensitive_value` (String, Sensitive) Use this attribute to set a literal secret as the default value for the parameter when display settings are set to 'Sensitive'. Do not use it for a variable reference such as '#{MyVariable}': the reference would be stored encrypted and would never resolve. Use 'default_value' for that instead.
+- `default_value` (String) A default value for the parameter, if applicable. This can be a hard-coded value or a variable reference such as '#{MyVariable}'. Use this attribute for a variable reference even when display settings are set to 'Sensitive', because Octopus stores the reference itself rather than the secret it points at.
 - `display_settings` (Map of String) The display settings for the parameter.
 - `help_text` (String) The help presented alongside the parameter input.
 - `label` (String) The label shown beside the parameter when presented in the deployment process. Example: `Server name`.

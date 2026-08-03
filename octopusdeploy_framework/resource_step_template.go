@@ -3,6 +3,8 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/gitdependencies"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
@@ -554,10 +556,24 @@ func validateStepTemplateParameterDefaultValue(param schemas.StepTemplateParamet
 	hasPlainValue := !param.DefaultValue.IsNull() && !param.DefaultValue.IsUnknown() && param.DefaultValue.ValueString() != ""
 	hasSensitiveValue := !param.DefaultSensitiveValue.IsNull() && !param.DefaultSensitiveValue.IsUnknown()
 
-	if isSensitive && hasPlainValue {
+	// Only one of the two attributes reaches the server: convertStepTemplateToParameters
+	// prefers 'default_sensitive_value' whenever it is set, silently dropping 'default_value'.
+	if isSensitive && hasPlainValue && hasSensitiveValue {
 		diags.AddError(
 			"Invalid step template parameter configuration",
-			fmt.Sprintf("Parameter '%s' has display setting 'Octopus.ControlType=Sensitive' but uses 'default_value' instead of 'default_sensitive_value'. Sensitive parameters should use the 'default_sensitive_value' attribute.", param.Name.ValueString()),
+			fmt.Sprintf("Parameter '%s' sets both 'default_value' and 'default_sensitive_value'. Set only one: 'default_value' for a variable binding such as '#{MyVariable}', or 'default_sensitive_value' for a literal secret.", param.Name.ValueString()),
+		)
+
+		return diags
+	}
+
+	// A variable binding is a pointer to a secret rather than a secret itself, so Octopus stores
+	// it as a plain value - that is what the Octopus UI writes for a sensitive parameter, and
+	// wrapping it as a sensitive value would encrypt the binding text so it never resolves.
+	if isSensitive && hasPlainValue && !isVariableBinding(param.DefaultValue.ValueString()) {
+		diags.AddWarning(
+			"Step template parameter may expose a secret",
+			fmt.Sprintf("Parameter '%s' has display setting 'Octopus.ControlType=Sensitive' and a literal 'default_value', which is stored unencrypted in Octopus and in Terraform state. Use 'default_sensitive_value' for a literal secret, or 'default_value' with a variable binding such as '#{MyVariable}'.", param.Name.ValueString()),
 		)
 
 		return diags
@@ -571,4 +587,11 @@ func validateStepTemplateParameterDefaultValue(param schemas.StepTemplateParamet
 	}
 
 	return diags
+}
+
+// isVariableBinding reports whether a default value contains an Octopus variable binding
+// expression. It only informs a warning, so partial bindings such as "prefix-#{MyVariable}"
+// are deliberately treated the same as a whole-value binding.
+func isVariableBinding(value string) bool {
+	return strings.Contains(value, "#{")
 }
