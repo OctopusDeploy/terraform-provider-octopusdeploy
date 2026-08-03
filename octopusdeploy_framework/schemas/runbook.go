@@ -27,6 +27,7 @@ import (
 )
 
 const RunbookResourceDescription = "runbook"
+const RunbookDataSourceName = "runbooks"
 
 var RunbookSchemaAttributeNames = struct {
 	ID                          string
@@ -142,7 +143,111 @@ type RunbookConnectivityPolicyModel struct {
 type RunbookSchema struct{}
 
 func (r RunbookSchema) GetDatasourceSchema() datasourceSchema.Schema {
-	return datasourceSchema.Schema{}
+	return datasourceSchema.Schema{
+		Description: "Provides information about existing Octopus Deploy runbooks.",
+		Attributes: map[string]datasourceSchema.Attribute{
+			"id": GetIdDatasourceSchema(true),
+			"space_id": util.DataSourceString().
+				Optional().
+				Description("A Space ID to filter by. Will revert what is specified on the provider if not set.").
+				Build(),
+			RunbookSchemaAttributeNames.ProjectID: util.DataSourceString().
+				Optional().
+				Description("A project ID to filter by. When set, only runbooks belonging to that project are returned.").
+				Build(),
+			"ids":          GetQueryIDsDatasourceSchema(),
+			"partial_name": GetQueryPartialNameDatasourceSchema(),
+			"skip":         GetQuerySkipDatasourceSchema(),
+			"take":         GetQueryTakeDatasourceSchema(),
+			"runbooks":     getRunbooksDatasourceAttribute(),
+		},
+	}
+}
+
+func getRunbooksDatasourceAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Description: "A list of runbooks that match the filter(s).",
+		Computed:    true,
+		Optional:    false,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				RunbookSchemaAttributeNames.ID:   util.DataSourceString().Computed().Build(),
+				RunbookSchemaAttributeNames.Name: util.DataSourceString().Computed().Description("The name of the runbook.").Build(),
+				RunbookSchemaAttributeNames.Description: util.DataSourceString().Computed().
+					Description("The description of the runbook.").Build(),
+				RunbookSchemaAttributeNames.ProjectID: util.DataSourceString().Computed().
+					Description("The project that this runbook belongs to.").Build(),
+				RunbookSchemaAttributeNames.SpaceID: util.DataSourceString().Computed().
+					Description("The space that this runbook belongs to.").Build(),
+				RunbookSchemaAttributeNames.RunbookProcessID: util.DataSourceString().Computed().
+					Description("The runbook process ID.").Build(),
+				RunbookSchemaAttributeNames.PublishedRunbookSnapshotID: util.DataSourceString().Computed().
+					Description("The published snapshot ID.").Build(),
+				RunbookSchemaAttributeNames.MultiTenancyMode: util.DataSourceString().Computed().
+					Description("The tenanted deployment mode of the runbook.").Build(),
+				RunbookSchemaAttributeNames.EnvironmentScope: util.DataSourceString().Computed().
+					Description("Determines how the runbook is scoped to environments.").Build(),
+				RunbookSchemaAttributeNames.Environments: util.DataSourceList(types.StringType).Computed().
+					Description(fmt.Sprintf("When %s is \"%s\", the environments the runbook can be run against.", RunbookSchemaAttributeNames.EnvironmentScope, environmentScopeNames.Specified)).Build(),
+				RunbookSchemaAttributeNames.DefaultGuidedFailureMode: util.DataSourceString().Computed().
+					Description("The runbook guided failure mode.").Build(),
+				RunbookSchemaAttributeNames.ForcePackageDownload: util.DataSourceBool().Computed().
+					Description("Whether packages are re-downloaded.").Build(),
+				RunbookSchemaAttributeNames.RunbookTags: util.DataSourceSet(types.StringType).Computed().
+					Description("The tags associated with this runbook.").Build(),
+				RunbookSchemaAttributeNames.ConnectivityPolicy:          getRunbookConnectivityPolicyDatasourceAttribute(),
+				RunbookSchemaAttributeNames.RetentionPolicy:             getLegacyRunbookRetentionPolicyDatasourceAttribute(),
+				RunbookSchemaAttributeNames.RetentionPolicyWithStrategy: getRunbookRetentionPolicyDatasourceAttribute(),
+			},
+		},
+	}
+}
+
+func getRunbookConnectivityPolicyDatasourceAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Description: "The connectivity policy of the runbook.",
+		Computed:    true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				runbookConnectivityPolicySchemeAttributeNames.AllowDeploymentsToNoTargets: util.DataSourceBool().Computed().Build(),
+				runbookConnectivityPolicySchemeAttributeNames.ExcludeUnhealthyTargets:     util.DataSourceBool().Computed().Build(),
+				runbookConnectivityPolicySchemeAttributeNames.SkipMachineBehavior:         util.DataSourceString().Computed().Build(),
+				runbookConnectivityPolicySchemeAttributeNames.TargetRoles:                 util.DataSourceList(types.StringType).Computed().Build(),
+			},
+		},
+	}
+}
+
+func getLegacyRunbookRetentionPolicyDatasourceAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Description: "The runbook retention policy, in the form kept for backwards compatibility.",
+		Computed:    true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				legacyRunbookRetentionPolicySchemeAttributeNames.QuantityToKeep: util.DataSourceInt64().Computed().
+					Description("How many runs to keep per environment.").Build(),
+				legacyRunbookRetentionPolicySchemeAttributeNames.ShouldKeepForever: util.DataSourceBool().Computed().
+					Description("Whether runs are never deleted.").Build(),
+			},
+		},
+	}
+}
+
+func getRunbookRetentionPolicyDatasourceAttribute() datasourceSchema.ListNestedAttribute {
+	return datasourceSchema.ListNestedAttribute{
+		Description: "The runbook retention policy, including its strategy.",
+		Computed:    true,
+		NestedObject: datasourceSchema.NestedAttributeObject{
+			Attributes: map[string]datasourceSchema.Attribute{
+				runbookRetentionPolicySchemeAttributeNames.QuantityToKeep: util.DataSourceInt64().Computed().
+					Description("The number of runs or days of runs kept, depending on the unit.").Build(),
+				runbookRetentionPolicySchemeAttributeNames.Strategy: util.DataSourceString().Computed().
+					Description("How retention is set. One of `Default`, `Forever` or `Count`.").Build(),
+				runbookRetentionPolicySchemeAttributeNames.Unit: util.DataSourceString().Computed().
+					Description("The unit of the quantity kept, either `Items` or `Days`.").Build(),
+			},
+		},
+	}
 }
 
 var _ EntitySchema = RunbookSchema{}
