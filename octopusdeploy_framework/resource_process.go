@@ -40,12 +40,27 @@ func (r *processResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *processResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	process, diags := loadProcessWrapperByProcessId(r.Config.Client, r.Config.SpaceID, request.ID)
+	spaceId, identifiers := splitImportSpaceID(request.ID)
+
+	if len(identifiers) != 1 {
+		response.Diagnostics.AddError(
+			"Incorrect Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: ProcessId or SpaceId:ProcessId (e.g. deploymentprocess-Projects-123 or Spaces-2:deploymentprocess-Projects-123). Got: %q", request.ID),
+		)
+		return
+	}
+
+	if spaceId == "" {
+		spaceId = r.Config.SpaceID
+	}
+
+	process, diags := loadProcessWrapperByProcessId(r.Config.Client, spaceId, identifiers[0])
 	if len(diags) > 0 {
 		response.Diagnostics.Append(diags...)
 		return
 	}
 
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("space_id"), process.GetSpaceID())...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("project_id"), process.GetProjectID())...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), process.GetID())...)
 }

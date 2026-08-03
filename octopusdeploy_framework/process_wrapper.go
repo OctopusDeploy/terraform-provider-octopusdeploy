@@ -33,6 +33,43 @@ type processWrapper interface { // Better name?
 	GetSteps() []*deployments.DeploymentStep
 }
 
+// spaceIdentifierPrefix is the prefix every Octopus space ID carries. Space IDs
+// never contain a colon, so an import identifier can be checked for a leading
+// space without depending on how many segments the rest of it has.
+const spaceIdentifierPrefix = "Spaces-"
+
+// splitImportSpaceID pulls an optional leading space off an import identifier and
+// returns it alongside the remaining segments. An identifier that does not start
+// with a space comes back unchanged with an empty space, so the identifiers
+// documented before spaces were supported keep working.
+func splitImportSpaceID(importID string) (string, []string) {
+	identifiers := strings.Split(importID, ":")
+
+	if len(identifiers) > 1 && strings.HasPrefix(identifiers[0], spaceIdentifierPrefix) {
+		return identifiers[0], identifiers[1:]
+	}
+
+	return "", identifiers
+}
+
+// describeSpaceScopedFailure explains which space was searched. The API answers a
+// lookup in the wrong space the same way it answers one for something that does
+// not exist, which is hard to act on when the space came from the provider rather
+// than from anything the practitioner wrote.
+func describeSpaceScopedFailure(client *client.Client, spaceId string, resourceId string, cause error) string {
+	searched := spaceId
+	source := "the import identifier"
+	if searched == "" {
+		searched = client.GetSpaceID()
+		source = "the provider"
+	}
+
+	return fmt.Sprintf(
+		"Could not find '%s' in space '%s' (taken from %s). If it belongs to another space, either configure the provider with that space_id or prefix the import identifier with the space, for example '%s2:%s'. Underlying error: %s",
+		resourceId, searched, source, spaceIdentifierPrefix, resourceId, cause,
+	)
+}
+
 func findDeploymentStepByID(steps []*deployments.DeploymentStep, stepID string) (*deployments.DeploymentStep, bool) {
 	for _, step := range steps {
 		if step.ID == stepID {
@@ -81,7 +118,7 @@ func loadProcessWrapper(client *client.Client, spaceId string, projectId string,
 	// Load corresponding project to check if it's version controlled
 	project, projectError := projects.GetByID(client, spaceId, projectId)
 	if projectError != nil {
-		diags.AddError("Unable to load project for the process", projectError.Error())
+		diags.AddError("Unable to load project for the process", describeSpaceScopedFailure(client, spaceId, projectId, projectError))
 		return nil, diags
 	}
 
