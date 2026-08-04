@@ -2,6 +2,7 @@ package octopusdeploy
 
 import (
 	"context"
+	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"log"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/filters"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/triggers"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -65,7 +67,7 @@ func resourceExternalFeedCreateReleaseTriggerCreate(ctx context.Context, d *sche
 		return diag.FromErr(err)
 	}
 
-	resource, err := client.ProjectTriggers.Add(projectTrigger)
+	resource, err := triggers.Add(client, projectTrigger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -83,17 +85,26 @@ func resourceExternalFeedCreateReleaseTriggerRead(ctx context.Context, d *schema
 	id := d.Id()
 
 	client := m.(*client.Client)
-	projectTrigger, err := client.ProjectTriggers.GetByID(id)
+	spaceId := d.Get("space_id").(string)
+	spaceId = util.Ternary(len(spaceId) > 0, spaceId, client.GetSpaceID())
+
+	projectTrigger, err := triggers.GetById(client, spaceId, id)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("unable to read external feed create release trigger (%s) in space %s: %w", id, spaceId, err))
 	}
 	if projectTrigger == nil {
 		d.SetId("")
 		return nil
 	}
 
-	action := projectTrigger.Action.(*actions.CreateReleaseAction)
-	filter := projectTrigger.Filter.(*filters.FeedTriggerFilter)
+	action, ok := projectTrigger.Action.(*actions.CreateReleaseAction)
+	if !ok {
+		return diag.Errorf("project trigger (%s) in space %s is not a create release trigger", id, spaceId)
+	}
+	filter, ok := projectTrigger.Filter.(*filters.FeedTriggerFilter)
+	if !ok {
+		return diag.Errorf("project trigger (%s) in space %s is not an external feed trigger", id, spaceId)
+	}
 
 	d.Set("name", projectTrigger.Name)
 	d.Set("space_id", projectTrigger.SpaceID)
@@ -114,7 +125,7 @@ func resourceExternalFeedCreateReleaseTriggerUpdate(ctx context.Context, d *sche
 	}
 	projectTrigger.ID = d.Id() // set ID so Octopus API knows which project trigger to update
 
-	resource, err := client.ProjectTriggers.Update(projectTrigger)
+	resource, err := triggers.Update(client, projectTrigger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -126,9 +137,12 @@ func resourceExternalFeedCreateReleaseTriggerUpdate(ctx context.Context, d *sche
 
 func resourceExternalFeedCreateReleaseTriggerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*client.Client)
-	err := client.ProjectTriggers.DeleteByID(d.Id())
+	spaceId := d.Get("space_id").(string)
+	spaceId = util.Ternary(len(spaceId) > 0, spaceId, client.GetSpaceID())
+
+	err := triggers.DeleteById(client, spaceId, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("unable to delete external feed create release trigger (%s) in space %s: %w", d.Id(), spaceId, err))
 	}
 
 	d.SetId("")
