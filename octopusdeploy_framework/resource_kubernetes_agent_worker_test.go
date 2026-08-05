@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/workers"
@@ -110,6 +111,49 @@ func TestAccOctopusDeployKubernetesAgentWorkerWithUpgradeLocked(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "upgrade_locked", "true"),
 				),
 				Config: testAccKubernetesAgentWorkerWithUpgradeLocked(localName, workerPoolLocalName, workerPoolName, name, uri, thumbprint),
+			},
+		},
+	})
+}
+
+// octopusdeploy_polling_subscription_id only ever generates uppercase subscription
+// IDs, while Octopus Server stores the URI with a lowercase host. Without diff
+// suppression on uri that mismatch surfaces as a permanent in-place update.
+// See https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/269.
+func TestAccOctopusDeployKubernetesAgentWorkerUriCasing(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_kubernetes_agent_worker." + localName
+
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	uri := "poll://ABCDEF0123456789/"
+	thumbprint := "1234567890ABCDEF1234567890ABCDEF12345678"
+
+	workerPoolLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	workerPoolName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	config := testAccKubernetesAgentWorkerBasic(localName, workerPoolLocalName, workerPoolName, name, uri, thumbprint)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccKubernetesAgentWorkerCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccKubernetesAgentWorkerExists(prefix),
+					resource.TestCheckResourceAttrWith(prefix, "uri", func(value string) error {
+						if !strings.EqualFold(value, uri) {
+							return fmt.Errorf("expected uri to match %q ignoring case, got %q", uri, value)
+						}
+						return nil
+					}),
+				),
+				Config: config,
+			},
+			{
+				Config:             config,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
 			},
 		},
 	})

@@ -16,7 +16,7 @@ func resourceKubernetesAgentWorker() *schema.Resource {
 		Description:   "This resource manages Kubernetes agent workers in Octopus Deploy.",
 		Importer:      getImporter(),
 		ReadContext:   resourceKubernetesAgentWorkerRead,
-		Schema:        getKubernetesAgentWorkerSchema(),
+		Schema:        getKubernetesAgentWorkerSchemaForResource(),
 		UpdateContext: resourceKubernetesAgentWorkerUpdate,
 	}
 }

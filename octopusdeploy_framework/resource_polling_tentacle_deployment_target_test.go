@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/machines"
@@ -37,6 +38,48 @@ func TestAccOctopusDeployPollingTentacleDeploymentTargetBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "roles.0", "polling-role"),
 				),
 				Config: testAccPollingTentacleDeploymentTargetBasic(localName, environmentLocalName, environmentName, name, tentacleUrl, thumbprint),
+			},
+		},
+	})
+}
+
+// Same casing mismatch as issue #269, reached through tentacle_url instead of uri:
+// octopusdeploy_polling_subscription_id generates uppercase subscription IDs and
+// Octopus Server stores the URI with a lowercase host.
+func TestAccOctopusDeployPollingTentacleDeploymentTargetTentacleUrlCasing(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_polling_tentacle_deployment_target." + localName
+
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tentacleUrl := "poll://ABCDEF0123456789/"
+	thumbprint := "1234567890ABCDEF1234567890ABCDEF12345678"
+
+	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	config := testAccPollingTentacleDeploymentTargetBasic(localName, environmentLocalName, environmentName, name, tentacleUrl, thumbprint)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccPollingTentacleDeploymentTargetCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccPollingTentacleDeploymentTargetExists(prefix),
+					resource.TestCheckResourceAttrWith(prefix, "tentacle_url", func(value string) error {
+						if !strings.EqualFold(value, tentacleUrl) {
+							return fmt.Errorf("expected tentacle_url to match %q ignoring case, got %q", tentacleUrl, value)
+						}
+						return nil
+					}),
+				),
+				Config: config,
+			},
+			{
+				Config:             config,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
 			},
 		},
 	})
