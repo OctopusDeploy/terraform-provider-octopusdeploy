@@ -91,7 +91,10 @@ func (r *tagTypeResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	tagCreate(ctx, data, resp.Diagnostics, r.Client)
+	tagCreate(ctx, data, &resp.Diagnostics, r.Client)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	tflog.Info(ctx, fmt.Sprintf("tag created (%s)", data.ID))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -117,14 +120,14 @@ func (t *tagTypeResource) Update(ctx context.Context, req resource.UpdateRequest
 	// if the tag is reassigned to another tag set
 	if !data.TagSetId.Equal(state.TagSetId) {
 		sourceTagSetID, destinationTagSetID := state.TagSetId.ValueString(), data.TagSetId.ValueString()
-		targetSpaceId := util.Ternary(data.TagSetSpaceId.ValueString() == "", data.TagSetSpaceId, state.TagSetSpaceId)
+		targetSpaceId := util.Ternary(data.TagSetSpaceId.ValueString() == "", state.TagSetSpaceId, data.TagSetSpaceId)
 		sourceTagSetSpaceID, destinationTagSetSpaceID := state.TagSetSpaceId.ValueString(), targetSpaceId.ValueString()
 
 		sourceTagSet, err := tagsets.GetByID(t.Client, sourceTagSetSpaceID, sourceTagSetID)
 		if err != nil {
 			// if spaceID has changed, tag has been deleted, recreate required
 			if !targetSpaceId.Equal(state.TagSetSpaceId) {
-				tagCreate(ctx, data, resp.Diagnostics, t.Client)
+				tagCreate(ctx, data, &resp.Diagnostics, t.Client)
 				if !resp.Diagnostics.HasError() {
 					resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 				}
@@ -293,24 +296,24 @@ func (r *tagTypeResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 }
 
-func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diag diag.Diagnostics, client *client.Client) diag.Diagnostics {
+func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diags *diag.Diagnostics, client *client.Client) {
 	tflog.Info(ctx, "creating tag")
 
 	tagSetID := data.TagSetId.ValueString()
 	tagSetSpaceID := data.TagSetSpaceId.ValueString()
 
 	tagSet, err := tagsets.GetByID(client, tagSetSpaceID, tagSetID)
-
 	if err != nil {
-		processUnknownTagSetError(ctx, data, err, &diag)
-		return diag
+		processUnknownTagSetError(ctx, data, err, diags)
+		return
 	}
 
 	name := data.Name.ValueString()
 
 	for _, tag := range tagSet.Tags {
 		if tag.Name == name {
-			diag.AddError(`the tag name '%s' is already in use by another tag in this tag set; tag names must be unique`, name)
+			diags.AddError("Tag name already exists", fmt.Sprintf("the tag name '%s' is already in use by another tag in this tag set; tag names must be unique", name))
+			return
 		}
 	}
 
@@ -322,11 +325,11 @@ func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diag diag.Di
 
 	updatedTagSet, err := tagsets.Update(client, tagSet)
 	if err != nil {
-		diag.AddError(`unable to update tag set`, err.Error())
-		return diag
+		diags.AddError(`unable to update tag set`, err.Error())
+		return
 	}
 
-	return findByIdOrNameAndSetTag(ctx, data, tag, updatedTagSet)
+	diags.Append(findByIdOrNameAndSetTag(ctx, data, tag, updatedTagSet)...)
 }
 
 func isTagUsedByTenants(ctx context.Context, octopus *client.Client, spaceID string, tag *tagsets.Tag) (bool, error) {
