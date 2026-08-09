@@ -195,7 +195,11 @@ func (s *spaceResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	// refresh from the api
-	updatedSpace, _ := spaces.GetByID(s.Client, state.ID.ValueString())
+	updatedSpace, err := spaces.GetByID(s.Client, state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("unable to re-read space", err.Error())
+		return
+	}
 	tflog.Debug(ctx, fmt.Sprintf("Update: updatedSpace: %+v", updatedSpace))
 
 	// update the plan for the managers teams

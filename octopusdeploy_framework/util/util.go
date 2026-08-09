@@ -374,13 +374,14 @@ func StringSlicesEqual(a, b []string) bool {
 		return false
 	}
 
-	aMap := make(map[string]bool)
+	counts := make(map[string]int, len(a))
 	for _, item := range a {
-		aMap[item] = true
+		counts[item]++
 	}
 
 	for _, item := range b {
-		if !aMap[item] {
+		counts[item]--
+		if counts[item] < 0 {
 			return false
 		}
 	}

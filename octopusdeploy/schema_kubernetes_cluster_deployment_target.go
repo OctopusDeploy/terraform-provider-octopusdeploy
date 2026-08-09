@@ -101,6 +101,10 @@ func flattenKubernetesClusterDeploymentTarget(deploymentTarget *machines.Deploym
 		flattenedDeploymentTarget["cluster_url"] = endpointResource.ClusterURL.String()
 	}
 
+	if endpointResource.Authentication == nil {
+		return flattenedDeploymentTarget
+	}
+
 	switch endpointResource.Authentication.GetAuthenticationType() {
 	case "KubernetesAws":
 		flattenedDeploymentTarget["aws_account_authentication"] = flattenKubernetesAwsAuthentication(endpointResource.Authentication.(*machines.KubernetesAwsAuthentication))
@@ -282,6 +286,10 @@ func setKubernetesClusterDeploymentTarget(ctx context.Context, d *schema.Resourc
 
 	if endpointResource.ClusterURL != nil {
 		d.Set("cluster_url", endpointResource.ClusterURL.String())
+	}
+
+	if endpointResource.Authentication == nil {
+		return nil
 	}
 
 	switch endpointResource.Authentication.GetAuthenticationType() {

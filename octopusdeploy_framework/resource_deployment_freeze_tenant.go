@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deploymentfreezes"
@@ -150,8 +151,8 @@ func (d *deploymentFreezeTenantResource) Update(ctx context.Context, req resourc
 
 	freeze, err := deploymentfreezes.GetById(d.Client, state.DeploymentFreezeID.ValueString())
 	if err != nil {
-		apiError := err.(*core.APIError)
-		if apiError.StatusCode != http.StatusNotFound {
+		var apiError *core.APIError
+		if !errors.As(err, &apiError) || apiError.StatusCode != http.StatusNotFound {
 			resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
 			return
 		}
@@ -205,11 +206,14 @@ func (d *deploymentFreezeTenantResource) Delete(ctx context.Context, req resourc
 
 	freeze, err := deploymentfreezes.GetById(d.Client, data.DeploymentFreezeID.ValueString())
 	if err != nil {
-		apiError := err.(*core.APIError)
-		if apiError.StatusCode != http.StatusNotFound {
-			resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		var apiError *core.APIError
+		if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
+			tflog.Debug(ctx, fmt.Sprintf("deployment freeze (%s) already deleted", data.DeploymentFreezeID.ValueString()))
+			util.Deleted(ctx, tenantDescription)
 			return
 		}
+		resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		return
 	}
 
 	// Remove the tenant scope
