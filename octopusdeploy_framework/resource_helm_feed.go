@@ -103,11 +103,11 @@ func (r *helmFeedTypeResource) Update(ctx context.Context, req resource.UpdateRe
 	tflog.Debug(ctx, fmt.Sprintf("updating helm feed '%s'", data.ID.ValueString()))
 
 	feed, err := createHelmResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load helm feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating Helm feed (%s)", data.ID))
 

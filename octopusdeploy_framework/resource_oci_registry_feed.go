@@ -46,6 +46,7 @@ func (r *ociRegistryFeedTypeResource) Create(ctx context.Context, req resource.C
 
 	feed, err := createOCIRegistryResourceFromData(data)
 	if err != nil {
+		resp.Diagnostics.AddError("unable to create OCI Registry feed", err.Error())
 		return
 	}
 
@@ -100,11 +101,11 @@ func (r *ociRegistryFeedTypeResource) Update(ctx context.Context, req resource.U
 	tflog.Debug(ctx, fmt.Sprintf("updating OCI Registry feed '%s'", data.ID.ValueString()))
 
 	feed, err := createOCIRegistryResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load OCI Registry feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating OCI Registry feed (%s)", data.ID))
 
