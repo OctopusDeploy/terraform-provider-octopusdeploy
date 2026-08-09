@@ -69,7 +69,9 @@ func (r *tagTypeResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	tagSet, err := tagsets.GetByID(r.Config.Client, tagSetSpaceID, tagSetID)
 	if err != nil {
-		processUnknownTagSetError(ctx, data, err, resp.Diagnostics)
+		processUnknownTagSetError(ctx, data, err, &resp.Diagnostics)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
 	}
 
 	tag := schemas.MapFromStateToTag(data)
@@ -200,7 +202,7 @@ func (t *tagTypeResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	tagSet, err := tagsets.GetByID(t.Client, tagSetSpaceID, tagSetID)
 	if err != nil {
-		processUnknownTagSetError(ctx, data, err, resp.Diagnostics)
+		processUnknownTagSetError(ctx, data, err, &resp.Diagnostics)
 		return
 	}
 
@@ -255,7 +257,7 @@ func (r *tagTypeResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	tagSet, err := tagsets.GetByID(r.Config.Client, tagSetSpaceID, tagSetID)
 	if err != nil {
-		processUnknownTagSetError(ctx, data, err, resp.Diagnostics)
+		processUnknownTagSetError(ctx, data, err, &resp.Diagnostics)
 		return
 	}
 
@@ -300,7 +302,7 @@ func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diag diag.Di
 	tagSet, err := tagsets.GetByID(client, tagSetSpaceID, tagSetID)
 
 	if err != nil {
-		processUnknownTagSetError(ctx, data, err, diag)
+		processUnknownTagSetError(ctx, data, err, &diag)
 		return diag
 	}
 
@@ -321,6 +323,7 @@ func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diag diag.Di
 	updatedTagSet, err := tagsets.Update(client, tagSet)
 	if err != nil {
 		diag.AddError(`unable to update tag set`, err.Error())
+		return diag
 	}
 
 	return findByIdOrNameAndSetTag(ctx, data, tag, updatedTagSet)
@@ -360,7 +363,7 @@ func findByIdOrNameAndSetTag(ctx context.Context, data *schemas.TagResourceModel
 	return nil
 }
 
-func processUnknownTagSetError(ctx context.Context, data *schemas.TagResourceModel, err error, diag diag.Diagnostics) {
+func processUnknownTagSetError(ctx context.Context, data *schemas.TagResourceModel, err error, diags *diag.Diagnostics) {
 	if err == nil {
 		return
 	}
@@ -373,7 +376,7 @@ func processUnknownTagSetError(ctx context.Context, data *schemas.TagResourceMod
 		}
 	}
 
-	diag.AddError("Processing unknown tag set failed", err.Error())
+	diags.AddError("Processing unknown tag set failed", err.Error())
 }
 
 func (t *tagTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

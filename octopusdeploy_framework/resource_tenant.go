@@ -105,6 +105,10 @@ func (r *tenantTypeResource) Update(ctx context.Context, req resource.UpdateRequ
 	tflog.Debug(ctx, fmt.Sprintf("updating tenant '%s'", data.ID.ValueString()))
 
 	tenantFromApi, err := tenants.GetByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("unable to load tenant", err.Error())
+		return
+	}
 
 	tenant, err := mapStateToTenant(ctx, data)
 	tenant.ID = state.ID.ValueString()
