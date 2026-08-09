@@ -152,10 +152,12 @@ func (d *deploymentFreezeTenantResource) Update(ctx context.Context, req resourc
 	freeze, err := deploymentfreezes.GetById(d.Client, state.DeploymentFreezeID.ValueString())
 	if err != nil {
 		var apiError *core.APIError
-		if !errors.As(err, &apiError) || apiError.StatusCode != http.StatusNotFound {
-			resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
+			resp.State.RemoveResource(ctx)
 			return
 		}
+		resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		return
 	}
 
 	// Remove old scope
