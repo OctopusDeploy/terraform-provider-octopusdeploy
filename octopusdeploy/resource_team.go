@@ -3,6 +3,7 @@ package octopusdeploy
 import (
 	"bytes"
 	"context"
+	goerrors "errors"
 	"fmt"
 	"log"
 	"sort"
@@ -175,8 +176,8 @@ func resourceTeamUpdateUserRoles(ctx context.Context, d *schema.ResourceData, m 
 					if userRole.ID != "" {
 						err := client.ScopedUserRoles.DeleteByID(userRole.ID)
 						if err != nil {
-							apiError := err.(*core.APIError)
-							if apiError.StatusCode != 404 {
+							var apiError *core.APIError
+							if !goerrors.As(err, &apiError) || apiError.StatusCode != 404 {
 								// It's already been deleted, maybe mixing with the independent resource?
 								return fmt.Errorf("error removing user role %s from team %s: %s", userRole.ID, team.ID, err)
 							}

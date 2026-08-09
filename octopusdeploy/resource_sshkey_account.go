@@ -67,7 +67,10 @@ func resourceSSHKeyAccountRead(ctx context.Context, d *schema.ResourceData, m in
 		return errors.ProcessApiError(ctx, d, err, "SSH key account")
 	}
 
-	sshKeyAccount := accountResource.(*accounts.SSHKeyAccount)
+	sshKeyAccount, ok := accountResource.(*accounts.SSHKeyAccount)
+	if !ok {
+		return diag.Errorf("account %s is not an SSH key account", d.Id())
+	}
 	if err := setSSHKeyAccount(ctx, d, sshKeyAccount); err != nil {
 		return diag.FromErr(err)
 	}

@@ -67,7 +67,10 @@ func resourceAmazonWebServicesOpenIDConnectAccountRead(ctx context.Context, d *s
 		return errors.ProcessApiError(ctx, d, err, "AWS OIDC account")
 	}
 
-	awsOIDCAccount := accountResource.(*accounts.AwsOIDCAccount)
+	awsOIDCAccount, ok := accountResource.(*accounts.AwsOIDCAccount)
+	if !ok {
+		return diag.Errorf("account %s is not an AWS OIDC account", d.Id())
+	}
 	if err := setAmazonWebServicesOpenIDConnectAccount(ctx, d, awsOIDCAccount); err != nil {
 		return diag.FromErr(err)
 	}

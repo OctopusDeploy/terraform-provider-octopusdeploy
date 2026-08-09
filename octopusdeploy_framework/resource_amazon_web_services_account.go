@@ -2,6 +2,8 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/accounts"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -77,7 +79,13 @@ func (r *amazonWebServicesAccountResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	newState := flattenAmazonWebServicesAccount(ctx, account.(*accounts.AmazonWebServicesAccount), state)
+	awsAccount, ok := account.(*accounts.AmazonWebServicesAccount)
+	if !ok {
+		resp.Diagnostics.AddError("unexpected account type", fmt.Sprintf("%s is not an AWS account", state.ID.ValueString()))
+		return
+	}
+
+	newState := flattenAmazonWebServicesAccount(ctx, awsAccount, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 	return
 }

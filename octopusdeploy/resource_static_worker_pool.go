@@ -70,7 +70,10 @@ func resourceStaticWorkerPoolRead(ctx context.Context, d *schema.ResourceData, m
 		return errors.ProcessApiError(ctx, d, err, "static worker pool")
 	}
 
-	staticWorkerPool := workerPoolResource.(*workerpools.StaticWorkerPool)
+	staticWorkerPool, ok := workerPoolResource.(*workerpools.StaticWorkerPool)
+	if !ok {
+		return diag.Errorf("worker pool %s is not a static worker pool", d.Id())
+	}
 	if err := setStaticWorkerPool(ctx, d, staticWorkerPool); err != nil {
 		return diag.FromErr(err)
 	}
