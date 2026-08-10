@@ -506,6 +506,15 @@ func GetStepTemplatePackageResourceSchema(resourceType string) resourceSchema.Li
 					Optional().
 					Computed().
 					Build(),
+				"version": resourceSchema.StringAttribute{
+					Description: "The version of the package to use. Only applies when the package's `selection_mode` property is `immediate`. Leave unset to leave the package version unpinned. If a version is pinned outside of Terraform (e.g. via the web UI), the pinned value is preserved across applies unless this attribute is explicitly changed.",
+					Optional:    true,
+					Computed:    true,
+					Default:     stringdefault.StaticString(""),
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+					},
+				},
 				"properties": resourceSchema.SingleNestedAttribute{
 					Description: "Properties for the package.",
 					Required:    true,

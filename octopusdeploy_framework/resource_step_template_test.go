@@ -20,6 +20,7 @@ type stepTemplatePackageTestData struct {
 	acquisitonLocation string
 	feedID             string
 	name               string
+	version            string
 	properties         stepTemplatePackagePropsTestData
 }
 
@@ -60,6 +61,7 @@ func TestAccOctopusStepTemplateBasic(t *testing.T) {
 				acquisitonLocation: "Server",
 				feedID:             "feeds-builtin",
 				name:               "mypackage",
+				version:            "1.0.0",
 				properties: stepTemplatePackagePropsTestData{
 					extract:       "True",
 					purpose:       "",
@@ -105,12 +107,16 @@ func TestAccOctopusStepTemplateBasic(t *testing.T) {
 				Config: testStepTemplateRunScriptBasic(data),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(prefix, "name", data.name),
+					resource.TestCheckResourceAttr(prefix, "packages.0.version", data.packages[0].version),
 				),
 			},
 			{
+				// This step changes the name only, leaving packages untouched. The pinned
+				// package version must survive this unrelated apply (see issue #290).
 				Config: testStepTemplateRunScriptUpdate(data),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(prefix, "name", data.name+"-updated"),
+					resource.TestCheckResourceAttr(prefix, "packages.0.version", data.packages[0].version),
 				),
 			},
 		},
@@ -130,6 +136,7 @@ func testStepTemplateRunScriptBasic(data stepTemplateTestData) string {
 					acquisition_location = "%s"
 					feed_id = "%s"
 					name = "%s"
+					version = "%s"
 					properties = {
 						extract = "%s"
 						purpose = "%s"
@@ -175,6 +182,7 @@ func testStepTemplateRunScriptBasic(data stepTemplateTestData) string {
 		data.packages[0].acquisitonLocation,
 		data.packages[0].feedID,
 		data.packages[0].name,
+		data.packages[0].version,
 		data.packages[0].properties.extract,
 		data.packages[0].properties.purpose,
 		data.packages[0].properties.selectionMode,
