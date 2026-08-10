@@ -67,6 +67,7 @@ Read-Only:
 - `name` (String)
 - `package_id` (String)
 - `properties` (Object) (see [below for nested schema](#nestedobjatt--step_template--packages--properties))
+- `version` (String)
 
 <a id="nestedobjatt--step_template--packages--properties"></a>
 ### Nested Schema for `step_template.packages.properties`

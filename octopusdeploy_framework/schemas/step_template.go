@@ -45,6 +45,7 @@ type StepTemplatePackageType struct {
 	Name                types.String `tfsdk:"name"`
 	FeedID              types.String `tfsdk:"feed_id"`
 	PackageID           types.String `tfsdk:"package_id"`
+	Version             types.String `tfsdk:"version"`
 	Properties          types.Object `tfsdk:"properties"`
 }
 
@@ -210,6 +211,7 @@ func GetStepTemplatePackageTypeAttributes() map[string]attr.Type {
 		"name":                 types.StringType,
 		"feed_id":              types.StringType,
 		"package_id":           types.StringType,
+		"version":              types.StringType,
 		"properties":           types.ObjectType{AttrTypes: GetStepTemplatePackagePropertiesTypeAttributes()},
 	}
 }

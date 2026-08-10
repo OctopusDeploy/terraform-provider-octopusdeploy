@@ -316,6 +316,94 @@ func TestMapStepTemplateParametersToStateSensitive(t *testing.T) {
 	assert.Equal(t, expectedState, state)
 }
 
+func TestMapStepTemplatePackagesFromStateIncludesVersion(t *testing.T) {
+	ctx := context.Background()
+
+	packageConfig := types.ObjectValueMust(
+		schemas.GetStepTemplatePackageTypeAttributes(),
+		map[string]attr.Value{
+			"id":                   types.StringValue(""),
+			"acquisition_location": types.StringValue("Server"),
+			"name":                 types.StringValue("mypackage"),
+			"feed_id":              types.StringValue("feeds-builtin"),
+			"package_id":           types.StringValue("force"),
+			"version":              types.StringValue("1.2.3"),
+			"properties": types.ObjectValueMust(
+				schemas.GetStepTemplatePackagePropertiesTypeAttributes(),
+				map[string]attr.Value{
+					"extract":                types.StringValue("True"),
+					"package_parameter_name": types.StringValue(""),
+					"purpose":                types.StringValue(""),
+					"selection_mode":         types.StringValue("immediate"),
+				},
+			),
+		},
+	)
+
+	state := schemas.StepTemplateTypeResourceModel{
+		SpaceID:         types.StringValue("Spaces-1"),
+		Name:            types.StringValue("Basic Template"),
+		ActionType:      types.StringValue("Octopus.Script"),
+		StepPackageId:   types.StringValue("Octopus.Script"),
+		Packages:        types.ListValueMust(schemas.StepTemplatePackageObjectType(), []attr.Value{packageConfig}),
+		GitDependencies: types.ListValueMust(schemas.StepTemplateGitDependencyObjectType(), []attr.Value{}),
+		Parameters:      types.ListValueMust(schemas.StepTemplateParameterObjectType(), []attr.Value{}),
+		Properties: types.MapValueMust(types.StringType, map[string]attr.Value{
+			"Octopus.Action.Script.ScriptBody": types.StringValue("Write-Host 'Test'"),
+		}),
+	}
+
+	// Act
+	template, diags := mapStepTemplateResourceModelToActionTemplate(ctx, state)
+	assert.False(t, diags.HasError(), "Expected no errors in diagnostics")
+
+	// A pinned package version must be forwarded to the API; omitting it causes
+	// the Octopus Server to clear any version pin configured outside of Terraform.
+	assert.Equal(t, 1, len(template.Packages))
+	assert.Equal(t, "1.2.3", template.Packages[0].Version)
+}
+
+func TestMapStepTemplatePackagesToStateIncludesVersion(t *testing.T) {
+	ctx := context.Background()
+
+	pkgRef := packages.PackageReference{
+		AcquisitionLocation: "Server",
+		Name:                "mypackage",
+		FeedID:              "feeds-builtin",
+		PackageID:           "force",
+		Version:             "1.2.3",
+		Properties: map[string]string{
+			"Extract":              "True",
+			"Purpose":              "",
+			"PackageParameterName": "",
+			"SelectionMode":        "immediate",
+		},
+	}
+	pkgRef.ID = "PackageReferences-1"
+
+	template := &actiontemplates.ActionTemplate{
+		SpaceID:         "Spaces-1",
+		ActionType:      "Octopus.Script",
+		Name:            "Basic Template",
+		Packages:        []packages.PackageReference{pkgRef},
+		GitDependencies: []gitdependencies.GitDependency{},
+		Parameters:      []actiontemplates.ActionTemplateParameter{},
+		Properties:      map[string]core.PropertyValue{},
+	}
+	template.SetID("StepTemplates-22")
+
+	// Act
+	state := schemas.StepTemplateTypeResourceModel{}
+	diags := mapStepTemplateToResourceModel(ctx, &state, template)
+	assert.False(t, diags.HasError(), "Expected no errors in diagnostics")
+
+	packageElements := make([]schemas.StepTemplatePackageType, 0, len(state.Packages.Elements()))
+	diags = state.Packages.ElementsAs(ctx, &packageElements, false)
+	assert.False(t, diags.HasError(), "Expected no errors converting packages from state")
+	assert.Equal(t, 1, len(packageElements))
+	assert.Equal(t, "1.2.3", packageElements[0].Version.ValueString(), "Pinned package version returned by the API must be reflected in state")
+}
+
 func TestStepTemplateParametersValidationWhenNonSensitiveDefaultValueSetForSensitiveControlType(t *testing.T) {
 	ctx := context.Background()
 
