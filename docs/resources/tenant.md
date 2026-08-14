@@ -18,7 +18,7 @@ This resource manages tenants in Octopus Deploy.
 
 ### Optional
 
-- `cloned_from_tenant_id` (String) The ID of the tenant from which this tenant was cloned.
+- `cloned_from_tenant_id` (String) The ID of the tenant from which this tenant was cloned. Changing this forces a new tenant to be created.
 - `description` (String) The description of this tenant.
 - `is_disabled` (Boolean) The disabled status of this tenant.
 - `space_id` (String) The space ID associated with this tenant.
