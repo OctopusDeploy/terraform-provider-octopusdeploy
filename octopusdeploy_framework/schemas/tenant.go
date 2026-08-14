@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -138,10 +139,13 @@ func (t TenantSchema) GetResourceSchema() resourceSchema.Schema {
 		Description: "This resource manages tenants in Octopus Deploy.",
 		Attributes: map[string]resourceSchema.Attribute{
 			"cloned_from_tenant_id": resourceSchema.StringAttribute{
-				Description: "The ID of the tenant from which this tenant was cloned.",
+				Description: "The ID of the tenant from which this tenant was cloned. Changing this forces a new tenant to be created.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString(""),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"description": GetDescriptionResourceSchema("tenant"),
 			"id":          GetIdResourceSchema(),
