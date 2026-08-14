@@ -123,7 +123,128 @@ func TestAccOctopusStepTemplateBasic(t *testing.T) {
 	})
 }
 
+// TestAccOctopusStepTemplatePreservesExternallyPinnedVersion covers the scenario
+// from issue #290: a package version pinned outside Terraform (e.g. via the web
+// UI) must survive a `terraform apply` that leaves `version` unset in config and
+// only changes an unrelated attribute.
+func TestAccOctopusStepTemplatePreservesExternallyPinnedVersion(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_step_template." + localName
+	var actionTemplateID string
+	const pinnedVersion = "1.2.3"
+
+	data := stepTemplateTestData{
+		localName:     localName,
+		prefix:        prefix,
+		actionType:    "Octopus.Script",
+		name:          acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+		description:   acctest.RandStringFromCharSet(20, acctest.CharSetAlpha),
+		stepPackageID: "Octopus.Script",
+		packages: []stepTemplatePackageTestData{
+			{
+				packageID:          "force",
+				acquisitonLocation: "Server",
+				feedID:             "feeds-builtin",
+				name:               "mypackage",
+				properties: stepTemplatePackagePropsTestData{
+					extract:       "True",
+					purpose:       "",
+					selectionMode: "immediate",
+				},
+			},
+		},
+		parameters: []stepTemplateParamTestData{
+			{
+				defaultValue: "Hello World",
+				displaySettings: map[string]string{
+					"Octopus.ControlType": "SingleLineText",
+				},
+				helpText: acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+				label:    acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+				name:     acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+				id:       "621e1584-cdf3-4b67-9204-fc82430c908c",
+			},
+			{
+				defaultValue: "Hello Earth",
+				displaySettings: map[string]string{
+					"Octopus.ControlType": "SingleLineText",
+				},
+				helpText: acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+				label:    acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+				name:     acctest.RandStringFromCharSet(10, acctest.CharSetAlpha),
+				id:       "cd731d21-669a-42e1-81af-048681fd5c69",
+			},
+		},
+		properties: map[string]string{
+			"Octopus.Action.Script.ScriptBody":   "echo 'Hello World'",
+			"Octopus.Action.Script.ScriptSource": "Inline",
+			"Octopus.Action.Script.Syntax":       "Bash",
+		},
+	}
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             func(s *terraform.State) error { return testStepTemplateDestroy(s, localName) },
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				// version is left unset in config - nothing pinned yet.
+				Config: testStepTemplateRunScriptBasic(data),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCaptureActionTemplateID(prefix, &actionTemplateID),
+					resource.TestCheckResourceAttr(prefix, "name", data.name),
+					resource.TestCheckResourceAttr(prefix, "packages.0.version", ""),
+				),
+			},
+			{
+				// Pin a package version directly via the API between plans,
+				// simulating a change made through the web UI. The config still
+				// leaves `version` unset - per the schema's own description that
+				// should preserve whatever is pinned server-side. It must survive
+				// this unrelated apply (name change only).
+				PreConfig: func() {
+					if actionTemplateID == "" {
+						t.Fatal("action template ID was not captured")
+					}
+					at, err := actiontemplates.GetByID(octoClient, octoClient.GetSpaceID(), actionTemplateID)
+					if err != nil {
+						t.Fatalf("read action template before external pin: %s", err)
+					}
+					at.Packages[0].Version = pinnedVersion
+					if _, err := actiontemplates.Update(octoClient, at); err != nil {
+						t.Fatalf("pin package version outside Terraform: %s", err)
+					}
+				},
+				Config: testStepTemplateRunScriptUpdate(data),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "name", data.name+"-updated"),
+					resource.TestCheckResourceAttr(prefix, "packages.0.version", pinnedVersion),
+				),
+			},
+		},
+	})
+}
+
+func testAccCaptureActionTemplateID(resourceName string, actionTemplateID *string) resource.TestCheckFunc {
+	return func(state *terraform.State) error {
+		resourceState, ok := state.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("step template resource %q was not found in Terraform state", resourceName)
+		}
+		*actionTemplateID = resourceState.Primary.ID
+		if *actionTemplateID == "" {
+			return fmt.Errorf("step template resource %q has an empty ID", resourceName)
+		}
+		return nil
+	}
+}
+
 func testStepTemplateRunScriptBasic(data stepTemplateTestData) string {
+	versionAttr := ""
+	if data.packages[0].version != "" {
+		versionAttr = fmt.Sprintf(`version = "%s"`, data.packages[0].version)
+	}
+
 	return fmt.Sprintf(`
 		resource "octopusdeploy_step_template" "%s" {
 			action_type     = "%s"
@@ -136,7 +257,7 @@ func testStepTemplateRunScriptBasic(data stepTemplateTestData) string {
 					acquisition_location = "%s"
 					feed_id = "%s"
 					name = "%s"
-					version = "%s"
+					%s
 					properties = {
 						extract = "%s"
 						purpose = "%s"
@@ -182,7 +303,7 @@ func testStepTemplateRunScriptBasic(data stepTemplateTestData) string {
 		data.packages[0].acquisitonLocation,
 		data.packages[0].feedID,
 		data.packages[0].name,
-		data.packages[0].version,
+		versionAttr,
 		data.packages[0].properties.extract,
 		data.packages[0].properties.purpose,
 		data.packages[0].properties.selectionMode,
