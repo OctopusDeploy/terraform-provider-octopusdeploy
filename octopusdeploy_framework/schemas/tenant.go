@@ -139,7 +139,7 @@ func (t TenantSchema) GetResourceSchema() resourceSchema.Schema {
 		Description: "This resource manages tenants in Octopus Deploy.",
 		Attributes: map[string]resourceSchema.Attribute{
 			"cloned_from_tenant_id": resourceSchema.StringAttribute{
-				Description: "The ID of the tenant from which this tenant was cloned. Changing this forces a new tenant to be created.",
+				Description: "The ID of an existing tenant to clone this tenant from. Can only be set at creation time; changing it destroys and recreates this tenant.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString(""),
