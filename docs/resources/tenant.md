@@ -22,7 +22,7 @@ This resource manages tenants in Octopus Deploy.
 - `description` (String) The description of this tenant.
 - `is_disabled` (Boolean) The disabled status of this tenant.
 - `space_id` (String) The space ID associated with this tenant.
-- `tenant_tags` (Set of String) A list of tenant tags associated with this resource.
+- `tenant_tags` (Set of String) A list of tenant tags associated with this resource. Set this to an empty list to remove every tag from the tenant. Removing the attribute from your configuration instead leaves the existing tags in place and unmanaged.
 
 ### Read-Only
 

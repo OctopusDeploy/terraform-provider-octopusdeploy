@@ -156,7 +156,7 @@ func (t TenantSchema) GetResourceSchema() resourceSchema.Schema {
 			"name":     GetNameResourceSchema(true),
 			"space_id": GetSpaceIdResourceSchema("tenant"),
 			"tenant_tags": resourceSchema.SetAttribute{
-				Description: "A list of tenant tags associated with this resource.",
+				Description: "A list of tenant tags associated with this resource. Set this to an empty list to remove every tag from the tenant. Removing the attribute from your configuration instead leaves the existing tags in place and unmanaged.",
 				ElementType: types.StringType,
 				Optional:    true,
 				Computed:    true,

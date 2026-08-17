@@ -9,10 +9,10 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -105,6 +105,10 @@ func (r *tenantTypeResource) Update(ctx context.Context, req resource.UpdateRequ
 	tflog.Debug(ctx, fmt.Sprintf("updating tenant '%s'", data.ID.ValueString()))
 
 	tenantFromApi, err := tenants.GetByID(r.Config.Client, data.SpaceID.ValueString(), data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("unable to load tenant", err.Error())
+		return
+	}
 
 	tenant, err := mapStateToTenant(ctx, data)
 	tenant.ID = state.ID.ValueString()
@@ -154,12 +158,14 @@ func mapStateToTenant(ctx context.Context, data *schemas.TenantModel) (*tenants.
 	tenant.IsDisabled = data.IsDisabled.ValueBool()
 	tenant.SpaceID = data.SpaceID.ValueString()
 
-	convertedTenantTags, diags := util.SetToStringArray(ctx, data.TenantTags)
-	if diags.HasError() {
-		tflog.Error(ctx, fmt.Sprintf("Error converting tenant tags: %v\n", diags))
-	}
+	if !data.TenantTags.IsUnknown() {
+		convertedTenantTags, diags := util.SetToStringArray(ctx, data.TenantTags)
+		if diags.HasError() {
+			tflog.Error(ctx, fmt.Sprintf("Error converting tenant tags: %v\n", diags))
+		}
 
-	tenant.TenantTags = convertedTenantTags
+		tenant.TenantTags = convertedTenantTags
+	}
 
 	return tenant, nil
 }
@@ -172,12 +178,28 @@ func mapTenantToState(ctx context.Context, data *schemas.TenantModel, tenant *te
 	data.SpaceID = types.StringValue(tenant.SpaceID)
 	data.Name = types.StringValue(tenant.Name)
 
-	convertedTenantTags, diags := util.SetToStringArray(ctx, data.TenantTags)
-	if diags.HasError() {
-		tflog.Error(ctx, fmt.Sprintf("Error converting tenant tags: %v\n", diags))
+	data.TenantTags = flattenTenantTags(tenant.TenantTags, data.TenantTags)
+}
+
+// flattenTenantTags maps the tags the API returned onto state. A null set stays
+// null so an attribute that was never set stays unset, but an existing empty set
+// is kept empty rather than collapsing to null - every tenant without tags holds
+// an empty set in state today, and flipping that to null would show up as a diff
+// for every one of them.
+func flattenTenantTags(tags []string, current types.Set) types.Set {
+	if len(tags) == 0 {
+		if current.IsNull() {
+			return types.SetNull(types.StringType)
+		}
+		return types.SetValueMust(types.StringType, []attr.Value{})
 	}
 
-	data.TenantTags = basetypes.SetValue(util.FlattenStringList(convertedTenantTags))
+	values := make([]attr.Value, 0, len(tags))
+	for _, tag := range tags {
+		values = append(values, types.StringValue(tag))
+	}
+
+	return types.SetValueMust(types.StringType, values)
 }
 
 func (*tenantTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
