@@ -68,6 +68,7 @@ func PackagesObjectType() map[string]attr.Type {
 		"id":                   types.StringType,
 		"name":                 types.StringType,
 		"package_id":           types.StringType,
+		"version":              types.StringType,
 		"properties": types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"extract":                types.StringType,
@@ -294,6 +295,11 @@ func GetReadOnlyStepTemplatePackageResourceSchema() rs.ListNestedAttribute {
 					Build(),
 				"package_id": util.ResourceString().
 					Description("The ID of the package to use.").
+					Computed().
+					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+					Build(),
+				"version": util.ResourceString().
+					Description("The version of the package to use. Only applies when the package's `selection_mode` property is `immediate`.").
 					Computed().
 					PlanModifiers(stringplanmodifier.UseStateForUnknown()).
 					Build(),
