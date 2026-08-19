@@ -68,7 +68,8 @@ Optional:
 
 - `health_check_cron` (String)
 - `health_check_cron_timezone` (String)
-- `health_check_interval` (Number) In nanoseconds.
+- `health_check_interval` (Number) In nanoseconds. Defaults to 24 hours. Ignored unless health_check_schedule_type is Interval.
+- `health_check_schedule_type` (String) The health check schedule: Interval, Cron, or Never. Defaults to Cron when health_check_cron is set, otherwise Interval. Set to Never to disable automatic health checks.
 - `health_check_type` (String)
 
 <a id="nestedblock--machine_health_check_policy--bash_health_check_policy"></a>
