@@ -1,6 +1,7 @@
 package octopusdeploy
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -17,8 +18,7 @@ func healthCheckPolicySet(values map[string]interface{}) *schema.Set {
 		"bash_health_check_policy":       []interface{}{},
 		"health_check_cron":              "",
 		"health_check_cron_timezone":     "UTC",
-		"health_check_interval":          0,
-		"health_check_schedule_type":     "",
+		"health_check_interval":          int(24 * time.Hour),
 		"health_check_type":              "RunScript",
 		"powershell_health_check_policy": []interface{}{},
 	}
@@ -29,11 +29,11 @@ func healthCheckPolicySet(values map[string]interface{}) *schema.Set {
 	return schema.NewSet(schema.HashResource(resource), []interface{}{block})
 }
 
-func TestExpandDefaultsToIntervalWhenNothingSpecified(t *testing.T) {
+func TestExpandKeepsConfiguredInterval(t *testing.T) {
 	policy := expandMachineHealthCheckPolicy(healthCheckPolicySet(nil))
 
 	require.NotNil(t, policy)
-	assert.Equal(t, 24*time.Hour, policy.HealthCheckInterval, "omitting the interval must keep the historic 24h default")
+	assert.Equal(t, 24*time.Hour, policy.HealthCheckInterval)
 	assert.Empty(t, policy.HealthCheckCron)
 }
 
@@ -44,6 +44,16 @@ func TestExpandHonoursExplicitInterval(t *testing.T) {
 
 	require.NotNil(t, policy)
 	assert.Equal(t, 6*time.Hour, policy.HealthCheckInterval)
+	assert.Empty(t, policy.HealthCheckCron)
+}
+
+func TestExpandZeroIntervalMeansNoHealthChecks(t *testing.T) {
+	policy := expandMachineHealthCheckPolicy(healthCheckPolicySet(map[string]interface{}{
+		"health_check_interval": 0,
+	}))
+
+	require.NotNil(t, policy)
+	assert.Equal(t, time.Duration(0), policy.HealthCheckInterval)
 	assert.Empty(t, policy.HealthCheckCron)
 }
 
@@ -60,7 +70,7 @@ func TestExpandCronOmitsInterval(t *testing.T) {
 func TestExpandCronWinsOverExplicitInterval(t *testing.T) {
 	policy := expandMachineHealthCheckPolicy(healthCheckPolicySet(map[string]interface{}{
 		"health_check_cron":     "0 0 0 1 1 * 2099",
-		"health_check_interval": int(24 * time.Hour),
+		"health_check_interval": int(6 * time.Hour),
 	}))
 
 	require.NotNil(t, policy)
@@ -68,68 +78,65 @@ func TestExpandCronWinsOverExplicitInterval(t *testing.T) {
 	assert.Equal(t, time.Duration(0), policy.HealthCheckInterval)
 }
 
-func TestExpandNeverOmitsBoth(t *testing.T) {
-	policy := expandMachineHealthCheckPolicy(healthCheckPolicySet(map[string]interface{}{
-		"health_check_schedule_type": healthCheckScheduleTypeNever,
-	}))
-
-	require.NotNil(t, policy)
-	assert.Empty(t, policy.HealthCheckCron)
-	assert.Equal(t, time.Duration(0), policy.HealthCheckInterval)
-}
-
-func TestExpandNeverIgnoresLeftoverIntervalAndCron(t *testing.T) {
-	policy := expandMachineHealthCheckPolicy(healthCheckPolicySet(map[string]interface{}{
-		"health_check_schedule_type": healthCheckScheduleTypeNever,
-		"health_check_cron":          "0 0 0 1 1 * 2099",
-		"health_check_interval":      int(24 * time.Hour),
-	}))
-
-	require.NotNil(t, policy)
-	assert.Empty(t, policy.HealthCheckCron)
-	assert.Equal(t, time.Duration(0), policy.HealthCheckInterval)
-}
-
-func TestExpandExplicitIntervalTypeIgnoresCron(t *testing.T) {
-	policy := expandMachineHealthCheckPolicy(healthCheckPolicySet(map[string]interface{}{
-		"health_check_schedule_type": healthCheckScheduleTypeInterval,
-		"health_check_cron":          "0 0 0 1 1 * 2099",
-		"health_check_interval":      int(time.Hour),
-	}))
-
-	require.NotNil(t, policy)
-	assert.Empty(t, policy.HealthCheckCron)
-	assert.Equal(t, time.Hour, policy.HealthCheckInterval)
-}
-
-func TestFlattenDerivesScheduleType(t *testing.T) {
+// The expanded struct is only half the contract: a zero interval is correct solely because the
+// client omits it. Sending "00:00:00" instead would health check every target roughly every minute.
+func TestExpandedPolicyOmitsIntervalOnTheWire(t *testing.T) {
 	for _, testCase := range []struct {
-		name     string
-		interval time.Duration
-		cron     string
-		expected string
+		name  string
+		block map[string]interface{}
 	}{
-		{"interval", 24 * time.Hour, "", healthCheckScheduleTypeInterval},
-		{"cron", 0, "0 0 0 1 1 * 2099", healthCheckScheduleTypeCron},
-		{"never", 0, "", healthCheckScheduleTypeNever},
-		{"interval wins when the server somehow returns both", 24 * time.Hour, "0 0 * * *", healthCheckScheduleTypeInterval},
+		{"no health checks", map[string]interface{}{"health_check_interval": 0}},
+		{"cron schedule", map[string]interface{}{"health_check_cron": "0 0 0 1 1 * 2099"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			policy := machinepolicies.NewMachineHealthCheckPolicy()
-			policy.HealthCheckInterval = testCase.interval
-			policy.HealthCheckCron = testCase.cron
+			policy := expandMachineHealthCheckPolicy(healthCheckPolicySet(testCase.block))
 
-			flattened := flattenMachineHealthCheckPolicy(policy)
+			data, err := json.Marshal(policy)
+			require.NoError(t, err)
 
-			require.Len(t, flattened, 1)
-			assert.Equal(t, testCase.expected, flattened[0].(map[string]interface{})["health_check_schedule_type"])
+			var fields map[string]interface{}
+			require.NoError(t, json.Unmarshal(data, &fields))
+
+			_, present := fields["HealthCheckInterval"]
+			assert.False(t, present, "HealthCheckInterval must be absent, not \"00:00:00\"")
 		})
 	}
 }
 
-func TestResolveHealthCheckScheduleType(t *testing.T) {
-	assert.Equal(t, healthCheckScheduleTypeInterval, resolveHealthCheckScheduleType("", ""))
-	assert.Equal(t, healthCheckScheduleTypeCron, resolveHealthCheckScheduleType("", "0 0 * * *"))
-	assert.Equal(t, healthCheckScheduleTypeNever, resolveHealthCheckScheduleType(healthCheckScheduleTypeNever, "0 0 * * *"))
-	assert.Equal(t, healthCheckScheduleTypeInterval, resolveHealthCheckScheduleType(healthCheckScheduleTypeInterval, "0 0 * * *"))
+func TestFlattenRoundTripsThroughExpand(t *testing.T) {
+	resource := &schema.Resource{Schema: getMachineHealthCheckPolicySchema()}
+
+	for _, testCase := range []struct {
+		name             string
+		interval         time.Duration
+		cron             string
+		expectedInterval time.Duration
+		expectedCron     string
+	}{
+		{"no health checks", 0, "", 0, ""},
+		{"cron", 0, "0 0 0 1 1 * 2099", 0, "0 0 0 1 1 * 2099"},
+		{"interval", 6 * time.Hour, "", 6 * time.Hour, ""},
+		{"policy carrying both keeps the cron", 24 * time.Hour, "0 0 0 1 1 * 2099", 0, "0 0 0 1 1 * 2099"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			original := machinepolicies.NewMachineHealthCheckPolicy()
+			original.HealthCheckInterval = testCase.interval
+			original.HealthCheckCron = testCase.cron
+
+			flattened := flattenMachineHealthCheckPolicy(original)
+
+			// The script policy blocks carry pointers that the set hasher cannot serialize, and
+			// they are not part of the schedule being round tripped.
+			block := flattened[0].(map[string]interface{})
+			block["bash_health_check_policy"] = []interface{}{}
+			block["powershell_health_check_policy"] = []interface{}{}
+			block["health_check_interval"] = int(original.HealthCheckInterval)
+
+			reExpanded := expandMachineHealthCheckPolicy(schema.NewSet(schema.HashResource(resource), []interface{}{block}))
+
+			require.NotNil(t, reExpanded)
+			assert.Equal(t, testCase.expectedInterval, reExpanded.HealthCheckInterval)
+			assert.Equal(t, testCase.expectedCron, reExpanded.HealthCheckCron)
+		})
+	}
 }
