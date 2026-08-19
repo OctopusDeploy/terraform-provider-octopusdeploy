@@ -21,8 +21,7 @@ jobs:
 
       - name: Check for new SDK resources or datasources
         run: |
-          # Tests are not compiled into the provider, so they cannot introduce a resource or datasource.
-          git diff --name-status origin/main..${{ vars.GITHUB_REF }} | grep '^A' | grep '^A\s\+octopusdeploy/' | grep -v '_test\.go$' > new_files.txt || true
+          git diff --name-status origin/main..${{ vars.GITHUB_REF }} | grep '^A' | grep '^A\s\+octopusdeploy/' > new_files.txt || true
           if [ -s new_files.txt ]; then
             echo "New files were found in the 'octopusdeploy/' directory."
             cat new_files.txt
