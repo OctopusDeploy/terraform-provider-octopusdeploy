@@ -49,6 +49,7 @@ func (r *awsElasticContainerRegistryFeedTypeResource) Create(ctx context.Context
 
 	awsElasticContainerRegistryFeed, err := createAwsElasticContainerRegistryResourceFromData(data, ctx)
 	if err != nil {
+		resp.Diagnostics.AddError("unable to create aws elastic container registry", err.Error())
 		return
 	}
 
@@ -87,7 +88,11 @@ func (r *awsElasticContainerRegistryFeedTypeResource) Read(ctx context.Context, 
 		return
 	}
 
-	awsElasticContainerRegistryFeed := feed.(*feeds.AwsElasticContainerRegistry)
+	awsElasticContainerRegistryFeed, ok := feed.(*feeds.AwsElasticContainerRegistry)
+	if !ok {
+		resp.Diagnostics.AddError("unexpected feed type", fmt.Sprintf("%s is not an AWS Elastic Container Registry feed", data.ID.ValueString()))
+		return
+	}
 	updateDataFromAwsElasticContainerRegistryFeed(data, data.SpaceID.ValueString(), awsElasticContainerRegistryFeed)
 
 	util.Read(ctx, resourceDescription, data.GetID())
@@ -105,11 +110,11 @@ func (r *awsElasticContainerRegistryFeedTypeResource) Update(ctx context.Context
 	util.Update(ctx, resourceDescription, data)
 
 	feed, err := createAwsElasticContainerRegistryResourceFromData(data, ctx)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load aws elastic container registry feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	client := r.Config.Client
 	updatedFeed, err := feeds.Update(client, feed)
@@ -201,6 +206,8 @@ func updateDataFromAwsElasticContainerRegistryFeed(data *schemas.AwsElasticConta
 			RoleArn:         types.StringValue(feed.OidcAuthentication.RoleArn),
 			SubjectKey:      util.FlattenStringList(feed.OidcAuthentication.SubjectKeys),
 		}
+	} else {
+		data.OidcAuthentication = nil
 	}
 }
 
