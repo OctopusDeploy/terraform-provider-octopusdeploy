@@ -268,24 +268,45 @@ func (r *lifecycleTypeResource) Delete(ctx context.Context, req resource.DeleteR
 
 func handleUnitCasing(lifecycleFromGo *lifecycles.Lifecycle, lifecycleInState *lifecycles.Lifecycle) {
 	// Set state to the casing provided in the desired state, as the Api will always return capitalised units
-	lifecycleFromGo.ReleaseRetentionPolicy = updateUnitsFromGoToMatchStateCasing(lifecycleFromGo.ReleaseRetentionPolicy, lifecycleInState.ReleaseRetentionPolicy.Unit)
-	lifecycleFromGo.TentacleRetentionPolicy = updateUnitsFromGoToMatchStateCasing(lifecycleFromGo.TentacleRetentionPolicy, lifecycleInState.TentacleRetentionPolicy.Unit)
-
-	if len(lifecycleInState.Phases) == 0 {
-		return
-	}
+	lifecycleFromGo.ReleaseRetentionPolicy = updateUnitsFromGoToMatchStateCasing(lifecycleFromGo.ReleaseRetentionPolicy, retentionUnit(lifecycleInState.ReleaseRetentionPolicy))
+	lifecycleFromGo.TentacleRetentionPolicy = updateUnitsFromGoToMatchStateCasing(lifecycleFromGo.TentacleRetentionPolicy, retentionUnit(lifecycleInState.TentacleRetentionPolicy))
 
 	for i, phaseFromGo := range lifecycleFromGo.Phases {
+		// The server can return more phases than state knows about, and a phase in
+		// state carries no retention at all when the configuration leaves it out.
+		if i >= len(lifecycleInState.Phases) {
+			break
+		}
+
+		phaseInState := lifecycleInState.Phases[i]
+		if phaseInState == nil {
+			continue
+		}
+
 		if phaseFromGo.ReleaseRetentionPolicy != nil && phaseFromGo.ReleaseRetentionPolicy.Unit != "" {
-			phaseFromGo.ReleaseRetentionPolicy = updateUnitsFromGoToMatchStateCasing(phaseFromGo.ReleaseRetentionPolicy, lifecycleInState.Phases[i].ReleaseRetentionPolicy.Unit)
+			phaseFromGo.ReleaseRetentionPolicy = updateUnitsFromGoToMatchStateCasing(phaseFromGo.ReleaseRetentionPolicy, retentionUnit(phaseInState.ReleaseRetentionPolicy))
 		}
 		if phaseFromGo.TentacleRetentionPolicy != nil && phaseFromGo.TentacleRetentionPolicy.Unit != "" {
-			phaseFromGo.TentacleRetentionPolicy = updateUnitsFromGoToMatchStateCasing(phaseFromGo.TentacleRetentionPolicy, lifecycleInState.Phases[i].TentacleRetentionPolicy.Unit)
+			phaseFromGo.TentacleRetentionPolicy = updateUnitsFromGoToMatchStateCasing(phaseFromGo.TentacleRetentionPolicy, retentionUnit(phaseInState.TentacleRetentionPolicy))
 		}
 	}
 }
 
+// retentionUnit reads the unit from a retention policy that may not be there. An
+// empty unit matches nothing, so the value the API returned is left as it is.
+func retentionUnit(retentionPeriod *core.RetentionPeriod) string {
+	if retentionPeriod == nil {
+		return ""
+	}
+
+	return retentionPeriod.Unit
+}
+
 func updateUnitsFromGoToMatchStateCasing(retentionPeriodFromGo *core.RetentionPeriod, unitInState string) *core.RetentionPeriod {
+	if retentionPeriodFromGo == nil {
+		return nil
+	}
+
 	if strings.EqualFold(retentionPeriodFromGo.Unit, unitInState) {
 		replacementForRetentionFromGo := core.RetentionPeriod{
 			QuantityToKeep:    retentionPeriodFromGo.QuantityToKeep,
