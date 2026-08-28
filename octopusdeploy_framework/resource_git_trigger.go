@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/filters"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/triggers"
@@ -68,10 +69,16 @@ func (r *gitTriggerResource) Create(ctx context.Context, req resource.CreateRequ
 
 	projectTrigger := triggers.NewProjectTrigger(data.Name.ValueString(), data.Description.ValueString(), data.IsDisabled.ValueBool(), project, action, filter)
 
-	createdGitTrigger, err := client.ProjectTriggers.Add(projectTrigger)
+	createdGitTrigger, err := triggers.Add(client, projectTrigger)
 
 	if err != nil {
 		resp.Diagnostics.AddError("unable to create Git trigger", err.Error())
+		return
+	}
+
+	createdFilter, ok := createdGitTrigger.Filter.(*filters.GitTriggerFilter)
+	if !ok {
+		resp.Diagnostics.AddError("unable to create Git trigger", fmt.Sprintf("project trigger (%s) is not a Git trigger", createdGitTrigger.GetID()))
 		return
 	}
 
@@ -80,7 +87,7 @@ func (r *gitTriggerResource) Create(ctx context.Context, req resource.CreateRequ
 	data.ProjectId = types.StringValue(createdGitTrigger.ProjectID)
 	data.SpaceId = types.StringValue(createdGitTrigger.SpaceID)
 	data.IsDisabled = types.BoolValue(createdGitTrigger.IsDisabled)
-	data.Sources = convertGitTriggerSourcesToList(createdGitTrigger.Filter.(*filters.GitTriggerFilter).Sources)
+	data.Sources = convertGitTriggerSourcesToList(createdFilter.Sources)
 
 	tflog.Info(ctx, fmt.Sprintf("Git trigger created (%s)", data.ID))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -97,11 +104,19 @@ func (r *gitTriggerResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	client := r.Config.Client
 
-	gitTrigger, err := client.ProjectTriggers.GetByID(data.ID.ValueString())
+	spaceId := gitTriggerSpaceID(client, data)
+
+	gitTrigger, err := triggers.GetById(client, spaceId, data.ID.ValueString())
 	if err != nil {
 		if err := errors.ProcessApiErrorV2(ctx, resp, data, err, "error retrieving Git Trigger"); err != nil {
 			resp.Diagnostics.AddError("unable to load Git Trigger", err.Error())
 		}
+		return
+	}
+
+	filter, ok := gitTrigger.Filter.(*filters.GitTriggerFilter)
+	if !ok {
+		resp.Diagnostics.AddError("unable to load Git Trigger", fmt.Sprintf("project trigger (%s) in space %s is not a Git trigger", data.ID.ValueString(), spaceId))
 		return
 	}
 
@@ -110,7 +125,7 @@ func (r *gitTriggerResource) Read(ctx context.Context, req resource.ReadRequest,
 	data.ProjectId = types.StringValue(gitTrigger.ProjectID)
 	data.SpaceId = types.StringValue(gitTrigger.SpaceID)
 	data.IsDisabled = types.BoolValue(gitTrigger.IsDisabled)
-	data.Sources = convertGitTriggerSourcesToList(gitTrigger.Filter.(*filters.GitTriggerFilter).Sources)
+	data.Sources = convertGitTriggerSourcesToList(filter.Sources)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -127,7 +142,9 @@ func (r *gitTriggerResource) Update(ctx context.Context, req resource.UpdateRequ
 
 	client := r.Config.Client
 
-	gitTrigger, err := client.ProjectTriggers.GetByID(data.ID.ValueString())
+	spaceId := gitTriggerSpaceID(client, data)
+
+	gitTrigger, err := triggers.GetById(client, spaceId, data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load Git Trigger", err.Error())
 		return
@@ -146,7 +163,25 @@ func (r *gitTriggerResource) Update(ctx context.Context, req resource.UpdateRequ
 	updatedGitTrigger := triggers.NewProjectTrigger(data.Name.ValueString(), data.Description.ValueString(), data.IsDisabled.ValueBool(), project, action, filter)
 	updatedGitTrigger.ID = gitTrigger.ID
 
-	updatedGitTrigger, err = client.ProjectTriggers.Update(updatedGitTrigger)
+	updatedGitTrigger, err = triggers.Update(client, updatedGitTrigger)
+	if err != nil {
+		resp.Diagnostics.AddError("unable to update Git Trigger", err.Error())
+		return
+	}
+
+	updatedFilter, ok := updatedGitTrigger.Filter.(*filters.GitTriggerFilter)
+	if !ok {
+		resp.Diagnostics.AddError("unable to update Git Trigger", fmt.Sprintf("project trigger (%s) in space %s is not a Git trigger", updatedGitTrigger.GetID(), spaceId))
+		return
+	}
+
+	data.ID = types.StringValue(updatedGitTrigger.GetID())
+	data.Name = types.StringValue(updatedGitTrigger.Name)
+	data.ProjectId = types.StringValue(updatedGitTrigger.ProjectID)
+	data.SpaceId = types.StringValue(updatedGitTrigger.SpaceID)
+	data.IsDisabled = types.BoolValue(updatedGitTrigger.IsDisabled)
+	data.Sources = convertGitTriggerSourcesToList(updatedFilter.Sources)
+
 	tflog.Info(ctx, fmt.Sprintf("Git Trigger updated (%s)", data.ID))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -162,10 +197,19 @@ func (r *gitTriggerResource) Delete(ctx context.Context, req resource.DeleteRequ
 
 	client := r.Config.Client
 
-	if err := client.ProjectTriggers.DeleteByID(data.ID.ValueString()); err != nil {
+	spaceId := gitTriggerSpaceID(client, &data)
+
+	if err := triggers.DeleteById(client, spaceId, data.ID.ValueString()); err != nil {
 		resp.Diagnostics.AddError("unable to delete Git Trigger", err.Error())
 		return
 	}
+}
+
+// gitTriggerSpaceID resolves the space the trigger lives in, falling back to
+// the space the provider was configured for when the resource doesn't set one.
+func gitTriggerSpaceID(client *client.Client, data *schemas.GitTriggerResourceModel) string {
+	spaceId := data.SpaceId.ValueString()
+	return util.Ternary(len(spaceId) > 0, spaceId, client.GetSpaceID())
 }
 
 func convertListToGitTriggerSources(list types.List) []filters.GitTriggerSource {
