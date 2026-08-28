@@ -87,25 +87,18 @@ func mapTeamResourceToState(ctx context.Context, team *teams.Team, model schemas
 
 	// Temporary workaround to avoid errors due to differences in validation behaviour between SDKv2 and TPF providers.
 	// TODO: mark as read-only after deprecation phase.
+	// A known value is left as the practitioner configured it.
 	if model.CanBeDeleted.IsUnknown() {
 		model.CanBeDeleted = types.BoolNull()
-	} else {
-		model.CanBeDeleted = model.CanBeDeleted
 	}
 	if model.CanBeRenamed.IsUnknown() {
 		model.CanBeRenamed = types.BoolNull()
-	} else {
-		model.CanBeRenamed = model.CanBeRenamed
 	}
 	if model.CanChangeMembers.IsUnknown() {
 		model.CanChangeMembers = types.BoolNull()
-	} else {
-		model.CanChangeMembers = model.CanChangeMembers
 	}
 	if model.CanChangeRoles.IsUnknown() {
 		model.CanChangeRoles = types.BoolNull()
-	} else {
-		model.CanChangeRoles = model.CanChangeRoles
 	}
 
 	userRoles, err := client.Teams.GetScopedUserRoles(*team, core.SkipTakeQuery{})
