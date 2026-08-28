@@ -143,7 +143,7 @@ func FlattenTemplates(actionTemplateParameters []actiontemplates.ActionTemplateP
 			"label":            util.Ternary(actionTemplateParams.Label != "", types.StringValue(actionTemplateParams.Label), types.StringNull()),
 			"name":             types.StringValue(actionTemplateParams.Name),
 		}
-		actionTemplateList = append(actionTemplateList, types.ObjectValueMust(TemplateObjectType(), attrs))
+		actionTemplateList = append(actionTemplateList, util.ObjectValue(TemplateObjectType(), attrs))
 	}
 	return types.ListValueMust(types.ObjectType{AttrTypes: TemplateObjectType()}, actionTemplateList)
 }

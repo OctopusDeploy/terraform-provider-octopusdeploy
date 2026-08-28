@@ -247,7 +247,7 @@ func MapIdentityClaims(claims map[string]users.IdentityClaim) []attr.Value {
 			"name":                 types.StringValue(key),
 			"value":                types.StringValue(claim.Value),
 		}
-		claimsList = append(claimsList, types.ObjectValueMust(IdentityClaimObjectType(), claimMap))
+		claimsList = append(claimsList, util.ObjectValue(IdentityClaimObjectType(), claimMap))
 	}
 	return claimsList
 }
@@ -259,7 +259,7 @@ func MapIdentities(identities []users.Identity) []attr.Value {
 			"provider": types.StringValue(identity.IdentityProviderName),
 			"claim":    types.SetValueMust(types.ObjectType{AttrTypes: IdentityClaimObjectType()}, MapIdentityClaims(identity.Claims)),
 		}
-		identitiesList = append(identitiesList, types.ObjectValueMust(IdentityObjectType(), identityMap))
+		identitiesList = append(identitiesList, util.ObjectValue(IdentityObjectType(), identityMap))
 	}
 	return identitiesList
 }

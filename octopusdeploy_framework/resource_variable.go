@@ -302,10 +302,12 @@ func mapVariableToState(data *schemas.VariableTypeResourceModel, variable *varia
 	}
 
 	if !data.Prompt.IsNull() {
-		data.Prompt = types.ListValueMust(
-			types.ObjectType{AttrTypes: schemas.VariablePromptOptionsObjectType()},
-			[]attr.Value{schemas.MapFromVariablePromptOptions(variable.Prompt, data.Prompt)},
-		)
+		promptType := types.ObjectType{AttrTypes: schemas.VariablePromptOptionsObjectType()}
+		if prompt := schemas.MapFromVariablePromptOptions(variable.Prompt, data.Prompt); prompt != nil {
+			data.Prompt = types.ListValueMust(promptType, []attr.Value{prompt})
+		} else {
+			data.Prompt = types.ListNull(promptType)
+		}
 	}
 
 	if variable.Scope.IsEmpty() {
