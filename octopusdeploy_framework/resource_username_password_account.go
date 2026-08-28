@@ -73,7 +73,13 @@ func (r *usernamePasswordAccountResource) Read(ctx context.Context, req resource
 		return
 	}
 
-	newState := flattenUsernamePasswordAccount(ctx, account.(*accounts.UsernamePasswordAccount), state)
+	usernamePasswordAccount, ok := account.(*accounts.UsernamePasswordAccount)
+	if !ok {
+		resp.Diagnostics.AddError("Unexpected account type", fmt.Sprintf("Expected username password account, got: %T", account))
+		return
+	}
+
+	newState := flattenUsernamePasswordAccount(ctx, usernamePasswordAccount, state)
 	resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 }
 
