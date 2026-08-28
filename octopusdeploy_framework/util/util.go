@@ -368,19 +368,22 @@ func SliceFind[T any](slice []T, predicate func(T) bool) *T {
 	return nil
 }
 
-// StringSlicesEqual compares two string slices for equality (ignoring order)
+// StringSlicesEqual compares two string slices for equality (ignoring order).
+// Values must appear the same number of times in both slices, so slices that
+// share the same distinct values but repeat them differently are not equal.
 func StringSlicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
 
-	aMap := make(map[string]bool)
+	counts := make(map[string]int, len(a))
 	for _, item := range a {
-		aMap[item] = true
+		counts[item]++
 	}
 
 	for _, item := range b {
-		if !aMap[item] {
+		counts[item]--
+		if counts[item] < 0 {
 			return false
 		}
 	}
