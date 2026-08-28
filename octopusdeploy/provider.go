@@ -2,6 +2,12 @@ package octopusdeploy
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -77,6 +83,12 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Type:        schema.TypeString,
 			},
+			"access_token_file": {
+				DefaultFunc: schema.EnvDefaultFunc("OCTOPUS_ACCESS_TOKEN_FILE", nil),
+				Description: "Path to a file containing the OIDC access token. The file is re-read on authentication failure, enabling automatic token refresh for long-running operations.",
+				Optional:    true,
+				Type:        schema.TypeString,
+			},
 			"space_id": {
 				Description: "The space ID to target",
 				Optional:    true,
@@ -96,6 +108,24 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 	if spaceID, ok := d.GetOk("space_id"); ok {
 		config.SpaceID = spaceID.(string)
+	}
+	if tokenFile, ok := d.GetOk("access_token_file"); ok {
+		config.AccessTokenFile = tokenFile.(string)
+	}
+
+	// If access_token_file set but no access_token provided, read initial token from file
+	if config.AccessTokenFile != "" && config.AccessToken == "" {
+		data, err := os.ReadFile(config.AccessTokenFile)
+		if err != nil {
+			return nil, diag.FromErr(fmt.Errorf("failed to read access token file: %w", err))
+		}
+		config.AccessToken = strings.TrimSpace(string(data))
+	}
+
+	// Create token refresh transport for Bearer auth (not API key)
+	if config.APIKey == "" && config.AccessToken != "" {
+		transport := internal.NewTokenRefreshTransport(config.AccessToken, config.AccessTokenFile, "OCTOPUS_ACCESS_TOKEN")
+		config.HttpClient = &http.Client{Transport: transport}
 	}
 
 	return config.Client()

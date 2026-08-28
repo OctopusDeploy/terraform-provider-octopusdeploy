@@ -2,19 +2,23 @@ package octopusdeploy
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 // Config holds Address and the APIKey of the Octopus Deploy server
 type Config struct {
-	Address     string
-	APIKey      string
-	AccessToken string
-	SpaceID     string
+	Address         string
+	APIKey          string
+	AccessToken     string
+	AccessTokenFile string
+	SpaceID         string
+	HttpClient      *http.Client
 }
 
 // Client returns a new Octopus Deploy client
@@ -36,6 +40,15 @@ func (c *Config) Client() (*client.Client, diag.Diagnostics) {
 		}
 	}
 
+	// Wire token refresh callback so HttpSession stays in sync
+	if c.HttpClient != nil {
+		if transport, ok := c.HttpClient.Transport.(*internal.TokenRefreshTransport); ok {
+			transport.SetOnTokenRefreshed(func(newToken string) {
+				octopus.HttpSession().DefaultHeaders["Authorization"] = "Bearer " + newToken
+			})
+		}
+	}
+
 	return octopus, nil
 }
 
@@ -54,7 +67,7 @@ func getClientForSpace(c *Config, spaceID string) (*client.Client, error) {
 		return nil, err
 	}
 
-	return client.NewClientWithCredentials(nil, apiURL, credential, spaceID, "TerraformProvider")
+	return client.NewClientWithCredentials(c.HttpClient, apiURL, credential, spaceID, "TerraformProvider")
 }
 
 func getApiCredential(c *Config) (client.ICredential, error) {
