@@ -62,6 +62,8 @@ Read-Only:
 - `id` (String)
 - `tag` (String)
 - `version_range` (String)
+- `version_tag_regex` (String)
+- `versioning_strategy` (String)
 
 <a id="nestedobjatt--channels--rule--action_package"></a>
 ### Nested Schema for `channels.rule.action_package`

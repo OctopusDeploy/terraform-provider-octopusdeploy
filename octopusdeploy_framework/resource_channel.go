@@ -265,6 +265,14 @@ func expandChannelRuleFromAttrs(attrs map[string]attr.Value) channels.ChannelRul
 		channelRule.VersionRange = v.ValueString()
 	}
 
+	if v, ok := attrs["versioning_strategy"].(types.String); ok && !v.IsNull() {
+		channelRule.VersioningStrategy = v.ValueString()
+	}
+
+	if v, ok := attrs["version_tag_regex"].(types.String); ok && !v.IsNull() {
+		channelRule.VersionTagRegex = v.ValueString()
+	}
+
 	if v, ok := attrs["action_package"].(types.List); ok && !v.IsNull() {
 		channelRule.ActionPackages = expandChannelRuleDeploymentActionPackagesFromList(v)
 	}
@@ -426,10 +434,12 @@ func flattenDeploymentActionGitDependencies(actions []gitdependencies.Deployment
 
 func flattenChannelRule(rule *channels.ChannelRule) types.Object {
 	return types.ObjectValueMust(getChannelRuleAttrTypes(), map[string]attr.Value{
-		"action_package": flattenChannelRuleDeploymentActionPackages(rule.ActionPackages),
-		"id":             types.StringValue(rule.ID),
-		"tag":            util.StringOrNull(rule.Tag),
-		"version_range":  util.StringOrNull(rule.VersionRange),
+		"action_package":      flattenChannelRuleDeploymentActionPackages(rule.ActionPackages),
+		"id":                  types.StringValue(rule.ID),
+		"tag":                 util.StringOrNull(rule.Tag),
+		"version_range":       util.StringOrNull(rule.VersionRange),
+		"versioning_strategy": util.StringOrNull(rule.VersioningStrategy),
+		"version_tag_regex":   util.StringOrNull(rule.VersionTagRegex),
 	})
 
 }
@@ -462,9 +472,11 @@ func getChannelRuleAttrTypes() map[string]attr.Type {
 				AttrTypes: getChannelRuleDeploymentActionPackageAttrTypes(),
 			},
 		},
-		"id":            types.StringType,
-		"tag":           types.StringType,
-		"version_range": types.StringType,
+		"id":                  types.StringType,
+		"tag":                 types.StringType,
+		"version_range":       types.StringType,
+		"versioning_strategy": types.StringType,
+		"version_tag_regex":   types.StringType,
 	}
 }
 
