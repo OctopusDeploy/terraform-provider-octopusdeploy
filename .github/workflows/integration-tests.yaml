@@ -10,6 +10,15 @@ name: Tests
     branches:
       - main
 
+env:
+  # Tag the test framework starts the MSSQL container with. testcontainers only
+  # pulls when the image is absent locally, so the pre-pulled tag is reused
+  # without hitting the registry.
+  MSSQL_TAG: 2019-latest
+  # Immutable digest of MSSQL_TAG as of 2026-06-10, used to pin the pull so the
+  # build is deterministic. Re-resolve to take SQL Server patches.
+  MSSQL_PINNED: 2019-latest@sha256:5b89fce40832a459ad4d634e9d588ae1e4496e664d9a4a9f8baeed6949b53fef
+
 jobs:
   tests:
     name: Test
@@ -88,7 +97,12 @@ jobs:
       - name: Pre-pull container images
         run: |
           docker pull docker.packages.octopushq.com/octopusdeploy/octopusdeploy
-          docker pull mcr.microsoft.com/mssql/server:2019-latest
+          # Pull MSSQL by digest for determinism, then apply the plain MSSQL_TAG
+          # the test framework starts the container with. A digest pull does not
+          # reliably create the plain tag on all Docker engines, so tag it
+          # ourselves.
+          docker pull "mcr.microsoft.com/mssql/server:${MSSQL_PINNED}"
+          docker tag "mcr.microsoft.com/mssql/server:${MSSQL_PINNED}" "mcr.microsoft.com/mssql/server:${MSSQL_TAG}"
       - name: Test
         run: |
           GOBIN=$PWD/bin go install gotest.tools/gotestsum@latest
@@ -103,6 +117,14 @@ jobs:
           OCTOTESTVERSION: latest
           OCTOTESTIMAGEURL: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
           OCTOTESTRETRYCOUNT: 0
+          OCTO_MSSQLTAG: ${{ env.MSSQL_TAG }}
+          # The test framework terminates its own containers and CI runs on
+          # ephemeral runners, so the testcontainers reaper (ryuk) is unneeded.
+          # Disabling it removes a Docker Hub pull that was timing out and
+          # failing the suite (Get "https://registry-1.docker.io/v2/": context
+          # deadline exceeded), and avoids anonymous Hub rate limits across the
+          # parallel jobs.
+          TESTCONTAINERS_RYUK_DISABLED: true
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v4
