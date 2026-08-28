@@ -52,7 +52,7 @@ resource "octopusdeploy_kubernetes_agent_deployment_target" "tenanted_agent" {
 - `name` (String) The name of this resource.
 - `roles` (List of String) A list of target roles that are associated to this Kubernetes agent.
 - `thumbprint` (String) The thumbprint of the Kubernetes agent's certificate used by server to verify the identity of the agent. This is the same thumbprint that was used when installing the agent.
-- `uri` (String) The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent.
+- `uri` (String) The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent. Casing is not significant; Octopus Server stores the URI with a lowercase host.
 
 ### Optional
 

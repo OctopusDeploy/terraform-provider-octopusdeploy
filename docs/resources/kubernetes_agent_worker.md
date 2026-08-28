@@ -38,7 +38,7 @@ resource "octopusdeploy_kubernetes_agent_worker" "optionals" {
 
 - `name` (String) The name of this resource.
 - `thumbprint` (String) The thumbprint of the Kubernetes agent's certificate used by server to verify the identity of the agent. This is the same thumbprint that was used when installing the agent.
-- `uri` (String) The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent.
+- `uri` (String) The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent. Casing is not significant; Octopus Server stores the URI with a lowercase host.
 - `worker_pool_ids` (List of String) A list of worker pool Ids specifying the pools in which this worker belongs
 
 ### Optional
