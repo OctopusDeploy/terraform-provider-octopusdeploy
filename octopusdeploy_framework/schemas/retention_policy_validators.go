@@ -40,19 +40,19 @@ func (r *strategyAttributeValidator) ValidateString(ctx context.Context, req val
 		return
 	}
 
-	if strategy.Equal(types.StringValue("Count")) && (req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown()) {
+	if strategy.Equal(types.StringValue(r.strategy)) && (req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown()) {
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
 			"Missing Required Field",
-			fmt.Sprintf("%s is required when the strategy is 'Count'.", req.Path),
+			fmt.Sprintf("Attribute %s is required when the strategy is '%s'.", req.Path, r.strategy),
 		)
 		return
 	}
-	if strategy.Equal(types.StringValue("Forever")) && !req.ConfigValue.IsNull() {
+	if !strategy.Equal(types.StringValue(r.strategy)) && !req.ConfigValue.IsNull() {
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
 			"Invalid Field",
-			fmt.Sprintf("%s must not be set when the strategy is 'Forever'.", req.Path),
+			fmt.Sprintf("Attribute %s must not be set when the strategy is '%s'.", req.Path, strategy),
 		)
 		return
 	}
