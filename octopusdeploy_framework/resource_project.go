@@ -68,6 +68,10 @@ func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	createdProject, err = projects.GetByID(r.Client, plan.SpaceID.ValueString(), createdProject.GetID())
+	if err != nil {
+		resp.Diagnostics.AddError("Error reading created project", err.Error())
+		return
+	}
 	preserveGitPassword(createdProject.PersistenceSettings, persistenceSettings)
 
 	flattenedProject, diags := flattenProject(ctx, createdProject, &plan)
