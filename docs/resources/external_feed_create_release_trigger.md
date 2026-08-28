@@ -70,3 +70,5 @@ Import is supported using the following syntax:
 ```shell
 terraform import [options] octopusdeploy_external_feed_create_release_trigger.<name> <trigger-id>
 ```
+
+The import ID carries no space, so the trigger is looked up in the space the provider is configured for. To import a trigger from another space, configure the provider for that space.
