@@ -55,7 +55,12 @@ func (r *tenantTypeResource) Create(ctx context.Context, req resource.CreateRequ
 
 	tflog.Info(ctx, fmt.Sprintf("creating Tenant: %s", tenant.Name))
 
-	createdTenant, err := tenants.Add(r.Config.Client, tenant)
+	var createdTenant *tenants.Tenant
+	if data.ClonedFromTenantId.ValueString() != "" {
+		createdTenant, err = r.cloneTenant(ctx, data, tenant)
+	} else {
+		createdTenant, err = tenants.Add(r.Config.Client, tenant)
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("unable to create tenant", err.Error())
 		return
@@ -65,6 +70,43 @@ func (r *tenantTypeResource) Create(ctx context.Context, req resource.CreateRequ
 
 	tflog.Info(ctx, fmt.Sprintf("Tenant created (%s)", data.ID))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// cloneTenant clones an existing tenant, then applies the configured values the clone endpoint does not accept.
+func (r *tenantTypeResource) cloneTenant(ctx context.Context, data *schemas.TenantModel, tenant *tenants.Tenant) (*tenants.Tenant, error) {
+	octopus := r.Config.Client
+	if tenant.SpaceID != "" && tenant.SpaceID != octopus.GetSpaceID() {
+		spaceClient, err := getClientForSpace(r.Config, ctx, tenant.SpaceID)
+		if err != nil {
+			return nil, err
+		}
+		octopus = spaceClient
+	}
+
+	source := &tenants.Tenant{}
+	source.ID = data.ClonedFromTenantId.ValueString()
+
+	tflog.Info(ctx, fmt.Sprintf("cloning Tenant from (%s)", source.GetID()))
+
+	clonedTenant, err := octopus.Tenants.Clone(source, tenants.TenantCloneRequest{
+		Name:        tenant.Name,
+		Description: tenant.Description,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	tenant.ID = clonedTenant.GetID()
+	tenant.SpaceID = clonedTenant.SpaceID
+	tenant.ProjectEnvironments = clonedTenant.ProjectEnvironments
+	if data.TenantTags.IsUnknown() {
+		tenant.TenantTags = clonedTenant.TenantTags
+	}
+	if data.IsDisabled.IsUnknown() {
+		tenant.IsDisabled = clonedTenant.IsDisabled
+	}
+
+	return tenants.Update(r.Config.Client, tenant)
 }
 
 func (r *tenantTypeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -171,13 +213,7 @@ func mapTenantToState(ctx context.Context, data *schemas.TenantModel, tenant *te
 	data.IsDisabled = types.BoolValue(tenant.IsDisabled)
 	data.SpaceID = types.StringValue(tenant.SpaceID)
 	data.Name = types.StringValue(tenant.Name)
-
-	convertedTenantTags, diags := util.SetToStringArray(ctx, data.TenantTags)
-	if diags.HasError() {
-		tflog.Error(ctx, fmt.Sprintf("Error converting tenant tags: %v\n", diags))
-	}
-
-	data.TenantTags = basetypes.SetValue(util.FlattenStringList(convertedTenantTags))
+	data.TenantTags = basetypes.SetValue(util.FlattenStringList(tenant.TenantTags))
 }
 
 func (*tenantTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

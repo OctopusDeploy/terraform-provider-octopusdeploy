@@ -68,7 +68,7 @@ Optional:
 
 - `health_check_cron` (String)
 - `health_check_cron_timezone` (String)
-- `health_check_interval` (Number) In nanoseconds.
+- `health_check_interval` (Number) In nanoseconds. Set to 0 to perform no automatic health checks. Ignored when health_check_cron is set.
 - `health_check_type` (String)
 
 <a id="nestedblock--machine_health_check_policy--bash_health_check_policy"></a>

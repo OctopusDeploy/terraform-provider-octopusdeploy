@@ -24,6 +24,7 @@ resource "octopusdeploy_step_template" "example" {
       acquisition_location = "Server"
       feed_id = module.predefined.feeds.built_in
       name = "My Scripts"
+      version = "1.0.0"
       properties = {
         extract = "True"
         purpose = ""
@@ -100,6 +101,7 @@ Optional:
 
 - `acquisition_location` (String) Acquisition location for the package.
 - `package_id` (String) The ID of the package to use.
+- `version` (String) The version of the package to use. Only applies when the package's `selection_mode` property is `immediate`. Leave unset to leave the package version unpinned. If a version is pinned outside of Terraform (e.g. via the web UI), the pinned value is preserved across applies unless this attribute is explicitly changed.
 
 Read-Only:
 

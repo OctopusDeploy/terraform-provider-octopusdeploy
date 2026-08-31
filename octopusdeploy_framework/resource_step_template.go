@@ -242,6 +242,7 @@ func mapStepTemplateResourceModelToActionTemplate(ctx context.Context, data sche
 				Properties:          pkgProps,
 				Name:                val.Name.ValueString(),
 				PackageID:           val.PackageID.ValueString(),
+				Version:             val.Version.ValueString(),
 			}
 			pkgRef.ID = val.ID.ValueString()
 			at.Packages[i] = pkgRef
@@ -447,6 +448,7 @@ func convertStepTemplatePackageAttribute(atp packages.PackageReference) (types.O
 		"name":                 types.StringValue(atp.Name),
 		"feed_id":              types.StringValue(atp.FeedID),
 		"package_id":           types.StringValue(atp.PackageID),
+		"version":              types.StringValue(atp.Version),
 		"properties":           props,
 	})
 }
@@ -517,12 +519,12 @@ func validateStepTemplateParameters(ctx context.Context, data *schemas.StepTempl
 	diags := diag.Diagnostics{}
 
 	if data.Parameters.IsUnknown() {
-        return diags
-    }
+		return diags
+	}
 
 	if data.Parameters.IsNull() {
-        return diags
-    }
+		return diags
+	}
 
 	parameters := make([]schemas.StepTemplateParameterType, 0, len(data.Parameters.Elements()))
 	appendDiags := data.Parameters.ElementsAs(ctx, &parameters, false)

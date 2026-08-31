@@ -27,18 +27,23 @@ func expandMachineHealthCheckPolicy(values interface{}) *machinepolicies.Machine
 		}
 	}
 
-	if v, ok := flattenedMap["health_check_cron"]; ok {
-		machineHealthCheckPolicy.HealthCheckCron = v.(string)
-	}
-
 	if v, ok := flattenedMap["health_check_cron_timezone"]; ok {
 		if s := v.(string); len(s) > 0 {
 			machineHealthCheckPolicy.HealthCheckCronTimezone = s
 		}
 	}
 
-	if v, ok := flattenedMap["health_check_interval"]; ok {
-		machineHealthCheckPolicy.HealthCheckInterval = time.Duration(v.(int))
+	cron, _ := flattenedMap["health_check_cron"].(string)
+	interval, _ := flattenedMap["health_check_interval"].(int)
+
+	// The server picks the schedule from which fields are present, so send only one:
+	// a cron, or an interval, or neither for no automatic health checks.
+	if cron != "" {
+		machineHealthCheckPolicy.HealthCheckCron = cron
+		machineHealthCheckPolicy.HealthCheckInterval = 0
+	} else {
+		machineHealthCheckPolicy.HealthCheckCron = ""
+		machineHealthCheckPolicy.HealthCheckInterval = time.Duration(interval)
 	}
 
 	if v, ok := flattenedMap["health_check_type"]; ok {
@@ -90,7 +95,7 @@ func getMachineHealthCheckPolicySchema() map[string]*schema.Schema {
 			Default:     24 * time.Hour,
 			Optional:    true,
 			Type:        schema.TypeInt,
-			Description: "In nanoseconds.",
+			Description: "In nanoseconds. Set to 0 to perform no automatic health checks. Ignored when health_check_cron is set.",
 		},
 		"health_check_type": {
 			Default:  "RunScript",

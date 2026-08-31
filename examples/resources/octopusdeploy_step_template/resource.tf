@@ -9,6 +9,7 @@ resource "octopusdeploy_step_template" "example" {
       acquisition_location = "Server"
       feed_id = module.predefined.feeds.built_in
       name = "My Scripts"
+      version = "1.0.0"
       properties = {
         extract = "True"
         purpose = ""
