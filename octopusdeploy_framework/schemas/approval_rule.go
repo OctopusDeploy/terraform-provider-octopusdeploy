@@ -13,27 +13,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const ApprovalPolicyResourceDescription = "approval policy"
-const ApprovalPolicyDataSourceDescription = "approval policies"
+const ApprovalRuleResourceDescription = "approval rule"
+const ApprovalRuleDataSourceDescription = "approval rules"
 
-type ApprovalPolicySchema struct{}
+type ApprovalRuleSchema struct{}
 
-var _ EntitySchema = ApprovalPolicySchema{}
+var _ EntitySchema = ApprovalRuleSchema{}
 
-// ApprovalPolicyTagScopeModel represents a tag-based scope entry for an approval policy.
-type ApprovalPolicyTagScopeModel struct {
+// ApprovalRuleTagScopeModel represents a tag-based scope entry for an approval rule.
+type ApprovalRuleTagScopeModel struct {
 	ProjectTags     types.Set `tfsdk:"project_tags"`
 	EnvironmentTags types.Set `tfsdk:"environment_tags"`
 }
 
-// ApprovalPolicyIdScopeModel represents an ID-based scope entry for an approval policy.
-type ApprovalPolicyIdScopeModel struct {
+// ApprovalRuleIdScopeModel represents an ID-based scope entry for an approval rule.
+type ApprovalRuleIdScopeModel struct {
 	ProjectID      types.String `tfsdk:"project_id"`
 	EnvironmentIDs types.List   `tfsdk:"environment_ids"`
 }
 
-// ApprovalPolicyResourceModel represents the octopusdeploy_approval_policy resource defined in Terraform configuration.
-type ApprovalPolicyResourceModel struct {
+// ApprovalRuleResourceModel represents the octopusdeploy_approval_rule resource defined in Terraform configuration.
+type ApprovalRuleResourceModel struct {
 	SpaceID                  types.String                  `tfsdk:"space_id"`
 	Name                     types.String                  `tfsdk:"name"`
 	Description              types.String                  `tfsdk:"description"`
@@ -43,31 +43,31 @@ type ApprovalPolicyResourceModel struct {
 	IsDisabled               types.Bool                    `tfsdk:"is_disabled"`
 	ApprovingUserIDs         types.List                    `tfsdk:"approving_user_ids"`
 	ApprovingTeamIDs         types.List                    `tfsdk:"approving_team_ids"`
-	TagScopes                []ApprovalPolicyTagScopeModel `tfsdk:"tag_scopes"`
-	IdScopes                 []ApprovalPolicyIdScopeModel  `tfsdk:"id_scopes"`
+	TagScopes                []ApprovalRuleTagScopeModel `tfsdk:"tag_scopes"`
+	IdScopes                 []ApprovalRuleIdScopeModel  `tfsdk:"id_scopes"`
 
 	ResourceModel
 }
 
-// ApprovalPoliciesDataSourceModel represents the octopusdeploy_approval_policies data source defined in Terraform configuration.
-type ApprovalPoliciesDataSourceModel struct {
+// ApprovalRulesDataSourceModel represents the octopusdeploy_approval_rules data source defined in Terraform configuration.
+type ApprovalRulesDataSourceModel struct {
 	ID               types.String `tfsdk:"id"`
 	SpaceID          types.String `tfsdk:"space_id"`
 	PartialName      types.String `tfsdk:"partial_name"`
 	Skip             types.Int64  `tfsdk:"skip"`
 	Take             types.Int64  `tfsdk:"take"`
-	ApprovalPolicies types.List   `tfsdk:"approval_policies"`
+	ApprovalRules types.List   `tfsdk:"approval_rules"`
 }
 
-func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
+func (a ApprovalRuleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
-		Description: "This resource manages approval policies in Octopus Deploy.",
+		Description: "This resource manages approval rules in Octopus Deploy.",
 		Attributes: map[string]resourceSchema.Attribute{
 			"id":       GetIdResourceSchema(),
-			"space_id": GetSpaceIdResourceSchema(ApprovalPolicyResourceDescription),
+			"space_id": GetSpaceIdResourceSchema(ApprovalRuleResourceDescription),
 			"name":     GetNameResourceSchema(true),
 			"description": resourceSchema.StringAttribute{
-				Description: "The description of this approval policy.",
+				Description: "The description of this approval rule.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
@@ -75,7 +75,7 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 				},
 			},
 			"scoping_strategy": resourceSchema.StringAttribute{
-				Description: "The scoping strategy used by this approval policy. Valid values are `\"Tag\"` or `\"Id\"`.",
+				Description: "The scoping strategy used by this approval rule. Valid values are `\"Tag\"` or `\"Id\"`.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
@@ -86,7 +86,7 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 				},
 			},
 			"minimum_approvers_required": resourceSchema.Int64Attribute{
-				Description: "The minimum number of approvers required for this approval policy.",
+				Description: "The minimum number of approvers required for this approval rule.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.Int64{
@@ -120,7 +120,7 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 				ElementType: types.StringType,
 			},
 			"tag_scopes": resourceSchema.ListNestedAttribute{
-				Description: "A list of tag-based scopes this approval policy applies to. Used when `scoping_strategy` is `\"Tag\"`.",
+				Description: "A list of tag-based scopes this approval rule applies to. Used when `scoping_strategy` is `\"Tag\"`.",
 				Optional:    true,
 				NestedObject: resourceSchema.NestedAttributeObject{
 					Attributes: map[string]resourceSchema.Attribute{
@@ -140,7 +140,7 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 				},
 			},
 			"id_scopes": resourceSchema.ListNestedAttribute{
-				Description: "A list of ID-based scopes this approval policy applies to. Used when `scoping_strategy` is `\"Id\"`.",
+				Description: "A list of ID-based scopes this approval rule applies to. Used when `scoping_strategy` is `\"Id\"`.",
 				Optional:    true,
 				NestedObject: resourceSchema.NestedAttributeObject{
 					Attributes: map[string]resourceSchema.Attribute{
@@ -160,33 +160,33 @@ func (a ApprovalPolicySchema) GetResourceSchema() resourceSchema.Schema {
 	}
 }
 
-func (a ApprovalPolicySchema) GetDatasourceSchema() datasourceSchema.Schema {
+func (a ApprovalRuleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 	return datasourceSchema.Schema{
-		Description: util.GetDataSourceDescription(ApprovalPolicyDataSourceDescription),
+		Description: util.GetDataSourceDescription(ApprovalRuleDataSourceDescription),
 		Attributes: map[string]datasourceSchema.Attribute{
 			"id":           GetIdDatasourceSchema(true),
-			"space_id":     GetSpaceIdDatasourceSchema(ApprovalPolicyResourceDescription, false),
+			"space_id":     GetSpaceIdDatasourceSchema(ApprovalRuleResourceDescription, false),
 			"partial_name": GetQueryPartialNameDatasourceSchema(),
 			"skip":         GetQuerySkipDatasourceSchema(),
 			"take":         GetQueryTakeDatasourceSchema(),
-			"approval_policies": datasourceSchema.ListNestedAttribute{
-				Description: "A list of approval policies that match the filter(s).",
+			"approval_rules": datasourceSchema.ListNestedAttribute{
+				Description: "A list of approval rules that match the filter(s).",
 				Computed:    true,
 				NestedObject: datasourceSchema.NestedAttributeObject{
 					Attributes: map[string]datasourceSchema.Attribute{
 						"id":       GetIdDatasourceSchema(true),
-						"space_id": GetSpaceIdDatasourceSchema(ApprovalPolicyResourceDescription, true),
+						"space_id": GetSpaceIdDatasourceSchema(ApprovalRuleResourceDescription, true),
 						"name":     GetReadonlyNameDatasourceSchema(),
 						"description": datasourceSchema.StringAttribute{
-							Description: "The description of this approval policy.",
+							Description: "The description of this approval rule.",
 							Computed:    true,
 						},
 						"scoping_strategy": datasourceSchema.StringAttribute{
-							Description: "The scoping strategy used by this approval policy. Valid values are `\"Tag\"` or `\"Id\"`.",
+							Description: "The scoping strategy used by this approval rule. Valid values are `\"Tag\"` or `\"Id\"`.",
 							Computed:    true,
 						},
 						"minimum_approvers_required": datasourceSchema.Int64Attribute{
-							Description: "The minimum number of approvers required for this approval policy.",
+							Description: "The minimum number of approvers required for this approval rule.",
 							Computed:    true,
 						},
 						"allow_self_approval": datasourceSchema.BoolAttribute{
@@ -208,7 +208,7 @@ func (a ApprovalPolicySchema) GetDatasourceSchema() datasourceSchema.Schema {
 							ElementType: types.StringType,
 						},
 						"tag_scopes": datasourceSchema.ListNestedAttribute{
-							Description: "A list of tag-based scopes this approval policy applies to.",
+							Description: "A list of tag-based scopes this approval rule applies to.",
 							Computed:    true,
 							NestedObject: datasourceSchema.NestedAttributeObject{
 								Attributes: map[string]datasourceSchema.Attribute{
@@ -226,7 +226,7 @@ func (a ApprovalPolicySchema) GetDatasourceSchema() datasourceSchema.Schema {
 							},
 						},
 						"id_scopes": datasourceSchema.ListNestedAttribute{
-							Description: "A list of ID-based scopes this approval policy applies to.",
+							Description: "A list of ID-based scopes this approval rule applies to.",
 							Computed:    true,
 							NestedObject: datasourceSchema.NestedAttributeObject{
 								Attributes: map[string]datasourceSchema.Attribute{

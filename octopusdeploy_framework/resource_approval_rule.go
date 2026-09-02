@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalpolicies"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalrules"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tagsets"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -16,38 +16,38 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const approvalPolicyResourceName = "approval_policy"
+const approvalRuleResourceName = "approval_rule"
 
-type approvalPolicyResource struct {
+type approvalRuleResource struct {
 	*Config
 }
 
-var _ resource.Resource = &approvalPolicyResource{}
-var _ resource.ResourceWithImportState = &approvalPolicyResource{}
-var _ resource.ResourceWithValidateConfig = &approvalPolicyResource{}
-var _ resource.ResourceWithModifyPlan = &approvalPolicyResource{}
+var _ resource.Resource = &approvalRuleResource{}
+var _ resource.ResourceWithImportState = &approvalRuleResource{}
+var _ resource.ResourceWithValidateConfig = &approvalRuleResource{}
+var _ resource.ResourceWithModifyPlan = &approvalRuleResource{}
 
-func NewApprovalPolicyResource() resource.Resource {
-	return &approvalPolicyResource{}
+func NewApprovalRuleResource() resource.Resource {
+	return &approvalRuleResource{}
 }
 
-func (r *approvalPolicyResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = util.GetTypeName(approvalPolicyResourceName)
+func (r *approvalRuleResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = util.GetTypeName(approvalRuleResourceName)
 }
 
-func (r *approvalPolicyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schemas.ApprovalPolicySchema{}.GetResourceSchema()
+func (r *approvalRuleResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schemas.ApprovalRuleSchema{}.GetResourceSchema()
 }
 
-func (r *approvalPolicyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *approvalRuleResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	r.Config = ResourceConfiguration(req, resp)
 }
 
 // ValidateConfig enforces that the configured scope matches the scoping strategy:
 // tag_scopes with the "Tag" strategy and id_scopes with the "Id" strategy, and
 // that the two scope types are never set at the same time.
-func (r *approvalPolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var config schemas.ApprovalPolicyResourceModel
+func (r *approvalRuleResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config schemas.ApprovalRuleResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -59,8 +59,8 @@ func (r *approvalPolicyResource) ValidateConfig(ctx context.Context, req resourc
 	if hasTagScopes && hasIdScopes {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("id_scopes"),
-			"Conflicting approval policy scopes",
-			`Only one of "tag_scopes" or "id_scopes" may be set on an approval policy. Use "tag_scopes" with scoping_strategy "Tag", or "id_scopes" with scoping_strategy "Id".`,
+			"Conflicting approval rule scopes",
+			`Only one of "tag_scopes" or "id_scopes" may be set on an approval rule. Use "tag_scopes" with scoping_strategy "Tag", or "id_scopes" with scoping_strategy "Id".`,
 		)
 		return
 	}
@@ -71,7 +71,7 @@ func (r *approvalPolicyResource) ValidateConfig(ctx context.Context, req resourc
 	}
 
 	switch config.ScopingStrategy.ValueString() {
-	case string(approvalpolicies.ApprovalPolicyScopingStrategyTag):
+	case string(approvalrules.ApprovalRuleScopingStrategyTag):
 		if hasIdScopes {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("id_scopes"),
@@ -79,7 +79,7 @@ func (r *approvalPolicyResource) ValidateConfig(ctx context.Context, req resourc
 				`"id_scopes" cannot be set when scoping_strategy is "Tag". Use "tag_scopes", or set scoping_strategy to "Id".`,
 			)
 		}
-	case string(approvalpolicies.ApprovalPolicyScopingStrategyId):
+	case string(approvalrules.ApprovalRuleScopingStrategyId):
 		if hasTagScopes {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("tag_scopes"),
@@ -96,7 +96,7 @@ func (r *approvalPolicyResource) ValidateConfig(ctx context.Context, req resourc
 // change when a tag or tag set is renamed), so storing IDs keeps state stable
 // across renames and avoids perpetual diffs. Values that are already IDs, or are
 // unknown at plan time, are left untouched.
-func (r *approvalPolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (r *approvalRuleResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if req.Plan.Raw.IsNull() {
 		return // the resource is being destroyed; nothing to resolve
 	}
@@ -118,14 +118,14 @@ func (r *approvalPolicyResource) ModifyPlan(ctx context.Context, req resource.Mo
 	}
 	rawTagScopes, err := tagScopesList.ToTerraformValue(ctx)
 	if err != nil {
-		resp.Diagnostics.AddError("unable to inspect approval policy tag scopes", err.Error())
+		resp.Diagnostics.AddError("unable to inspect approval rule tag scopes", err.Error())
 		return
 	}
 	if !rawTagScopes.IsFullyKnown() {
 		return
 	}
 
-	var plan schemas.ApprovalPolicyResourceModel
+	var plan schemas.ApprovalRuleResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() || len(plan.TagScopes) == 0 {
 		return
@@ -138,7 +138,7 @@ func (r *approvalPolicyResource) ModifyPlan(ctx context.Context, req resource.Mo
 
 	tagSets, err := tagsets.GetAll(r.Config.Client, spaceID)
 	if err != nil {
-		resp.Diagnostics.AddError("unable to resolve approval policy tags", err.Error())
+		resp.Diagnostics.AddError("unable to resolve approval rule tags", err.Error())
 		return
 	}
 
@@ -152,8 +152,8 @@ func (r *approvalPolicyResource) ModifyPlan(ctx context.Context, req resource.Mo
 	}
 
 	for i := range plan.TagScopes {
-		plan.TagScopes[i].ProjectTags = resolveApprovalPolicyTags(ctx, plan.TagScopes[i].ProjectTags, nameToID, validID, path.Root("tag_scopes").AtListIndex(i).AtName("project_tags"), &resp.Diagnostics)
-		plan.TagScopes[i].EnvironmentTags = resolveApprovalPolicyTags(ctx, plan.TagScopes[i].EnvironmentTags, nameToID, validID, path.Root("tag_scopes").AtListIndex(i).AtName("environment_tags"), &resp.Diagnostics)
+		plan.TagScopes[i].ProjectTags = resolveApprovalRuleTags(ctx, plan.TagScopes[i].ProjectTags, nameToID, validID, path.Root("tag_scopes").AtListIndex(i).AtName("project_tags"), &resp.Diagnostics)
+		plan.TagScopes[i].EnvironmentTags = resolveApprovalRuleTags(ctx, plan.TagScopes[i].EnvironmentTags, nameToID, validID, path.Root("tag_scopes").AtListIndex(i).AtName("environment_tags"), &resp.Diagnostics)
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -164,14 +164,14 @@ func (r *approvalPolicyResource) ModifyPlan(ctx context.Context, req resource.Mo
 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("tag_scopes"), plan.TagScopes)...)
 }
 
-// resolveApprovalPolicyTags maps each element of a tag set to a stable tag ID,
+// resolveApprovalRuleTags maps each element of a tag set to a stable tag ID,
 // translating canonical tag names to IDs and leaving IDs unchanged. Null or
 // unknown sets are returned as-is: an unknown set (for example a tag created in
 // the same apply and referenced by its id attribute) is resolved naturally at
 // apply. A known value that matches neither an existing tag ID nor canonical
 // name is an error — Terraform does not allow a configured value to be planned
 // as unknown, so a tag created in the same apply must be referenced by ID.
-func resolveApprovalPolicyTags(ctx context.Context, tags types.Set, nameToID map[string]string, validID map[string]bool, attrPath path.Path, diags *diag.Diagnostics) types.Set {
+func resolveApprovalRuleTags(ctx context.Context, tags types.Set, nameToID map[string]string, validID map[string]bool, attrPath path.Path, diags *diag.Diagnostics) types.Set {
 	if tags.IsNull() || tags.IsUnknown() {
 		return tags
 	}
@@ -212,11 +212,11 @@ func resolveApprovalPolicyTags(ctx context.Context, tags types.Set, nameToID map
 	return newSet
 }
 
-func (r *approvalPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *approvalRuleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	internal.Mutex.Lock()
 	defer internal.Mutex.Unlock()
 
-	var plan *schemas.ApprovalPolicyResourceModel
+	var plan *schemas.ApprovalRuleResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -226,19 +226,19 @@ func (r *approvalPolicyResource) Create(ctx context.Context, req resource.Create
 		plan.SpaceID = types.StringValue(r.Config.SpaceID)
 	}
 
-	policy, diags := mapApprovalPolicyFromState(plan)
+	policy, diags := mapApprovalRuleFromState(plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	createdPolicy, err := approvalpolicies.Add(r.Config.Client, plan.SpaceID.ValueString(), policy)
+	createdPolicy, err := approvalrules.Add(r.Config.Client, plan.SpaceID.ValueString(), policy)
 	if err != nil {
-		resp.Diagnostics.AddError("error while creating approval policy", err.Error())
+		resp.Diagnostics.AddError("error while creating approval rule", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(mapApprovalPolicyToState(ctx, plan, createdPolicy)...)
+	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, plan, createdPolicy)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -246,11 +246,11 @@ func (r *approvalPolicyResource) Create(ctx context.Context, req resource.Create
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (r *approvalPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *approvalRuleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	internal.Mutex.Lock()
 	defer internal.Mutex.Unlock()
 
-	var state *schemas.ApprovalPolicyResourceModel
+	var state *schemas.ApprovalRuleResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -260,15 +260,15 @@ func (r *approvalPolicyResource) Read(ctx context.Context, req resource.ReadRequ
 		state.SpaceID = types.StringValue(r.Config.SpaceID)
 	}
 
-	policy, err := approvalpolicies.GetByID(r.Config.Client, state.SpaceID.ValueString(), state.GetID())
+	policy, err := approvalrules.GetByID(r.Config.Client, state.SpaceID.ValueString(), state.GetID())
 	if err != nil {
-		if err := errors.ProcessApiErrorV2(ctx, resp, state, err, "approval policy"); err != nil {
-			resp.Diagnostics.AddError("unable to load approval policy", err.Error())
+		if err := errors.ProcessApiErrorV2(ctx, resp, state, err, "approval rule"); err != nil {
+			resp.Diagnostics.AddError("unable to load approval rule", err.Error())
 		}
 		return
 	}
 
-	resp.Diagnostics.Append(mapApprovalPolicyToState(ctx, state, policy)...)
+	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, state, policy)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -276,11 +276,11 @@ func (r *approvalPolicyResource) Read(ctx context.Context, req resource.ReadRequ
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
-func (r *approvalPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *approvalRuleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	internal.Mutex.Lock()
 	defer internal.Mutex.Unlock()
 
-	var plan *schemas.ApprovalPolicyResourceModel
+	var plan *schemas.ApprovalRuleResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -290,20 +290,20 @@ func (r *approvalPolicyResource) Update(ctx context.Context, req resource.Update
 		plan.SpaceID = types.StringValue(r.Config.SpaceID)
 	}
 
-	policy, diags := mapApprovalPolicyFromState(plan)
+	policy, diags := mapApprovalRuleFromState(plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	policy.SetID(plan.ID.ValueString())
 
-	updatedPolicy, err := approvalpolicies.Update(r.Config.Client, plan.SpaceID.ValueString(), policy)
+	updatedPolicy, err := approvalrules.Update(r.Config.Client, plan.SpaceID.ValueString(), policy)
 	if err != nil {
-		resp.Diagnostics.AddError("error while updating approval policy", err.Error())
+		resp.Diagnostics.AddError("error while updating approval rule", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(mapApprovalPolicyToState(ctx, plan, updatedPolicy)...)
+	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, plan, updatedPolicy)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -311,11 +311,11 @@ func (r *approvalPolicyResource) Update(ctx context.Context, req resource.Update
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
-func (r *approvalPolicyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *approvalRuleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	internal.Mutex.Lock()
 	defer internal.Mutex.Unlock()
 
-	var state *schemas.ApprovalPolicyResourceModel
+	var state *schemas.ApprovalRuleResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -325,20 +325,20 @@ func (r *approvalPolicyResource) Delete(ctx context.Context, req resource.Delete
 		state.SpaceID = types.StringValue(r.Config.SpaceID)
 	}
 
-	err := approvalpolicies.DeleteByID(r.Config.Client, state.SpaceID.ValueString(), state.GetID())
+	err := approvalrules.DeleteByID(r.Config.Client, state.SpaceID.ValueString(), state.GetID())
 	if err != nil {
-		resp.Diagnostics.AddError("unable to delete approval policy", err.Error())
+		resp.Diagnostics.AddError("unable to delete approval rule", err.Error())
 		return
 	}
 
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *approvalPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *approvalRuleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func mapApprovalPolicyFromState(state *schemas.ApprovalPolicyResourceModel) (*approvalpolicies.ApprovalPolicy, diag.Diagnostics) {
+func mapApprovalRuleFromState(state *schemas.ApprovalRuleResourceModel) (*approvalrules.ApprovalRule, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var approvingUserIDs []string
@@ -351,7 +351,7 @@ func mapApprovalPolicyFromState(state *schemas.ApprovalPolicyResourceModel) (*ap
 		diags.Append(state.ApprovingTeamIDs.ElementsAs(context.Background(), &approvingTeamIDs, false)...)
 	}
 
-	tagScopes := make([]approvalpolicies.ApprovalPolicyTagScope, 0, len(state.TagScopes))
+	tagScopes := make([]approvalrules.ApprovalRuleTagScope, 0, len(state.TagScopes))
 	for _, s := range state.TagScopes {
 		var projectTags []string
 		if !s.ProjectTags.IsNull() {
@@ -363,20 +363,20 @@ func mapApprovalPolicyFromState(state *schemas.ApprovalPolicyResourceModel) (*ap
 			diags.Append(s.EnvironmentTags.ElementsAs(context.Background(), &environmentTags, false)...)
 		}
 
-		tagScopes = append(tagScopes, approvalpolicies.ApprovalPolicyTagScope{
+		tagScopes = append(tagScopes, approvalrules.ApprovalRuleTagScope{
 			ProjectTags:     projectTags,
 			EnvironmentTags: environmentTags,
 		})
 	}
 
-	idScopes := make([]approvalpolicies.ApprovalPolicyIdScope, 0, len(state.IdScopes))
+	idScopes := make([]approvalrules.ApprovalRuleIdScope, 0, len(state.IdScopes))
 	for _, s := range state.IdScopes {
 		var environmentIDs []string
 		if !s.EnvironmentIDs.IsNull() {
 			diags.Append(s.EnvironmentIDs.ElementsAs(context.Background(), &environmentIDs, false)...)
 		}
 
-		idScopes = append(idScopes, approvalpolicies.ApprovalPolicyIdScope{
+		idScopes = append(idScopes, approvalrules.ApprovalRuleIdScope{
 			ProjectId:      s.ProjectID.ValueString(),
 			EnvironmentIds: environmentIDs,
 		})
@@ -386,11 +386,11 @@ func mapApprovalPolicyFromState(state *schemas.ApprovalPolicyResourceModel) (*ap
 		return nil, diags
 	}
 
-	policy := &approvalpolicies.ApprovalPolicy{
+	policy := &approvalrules.ApprovalRule{
 		SpaceID:                  state.SpaceID.ValueString(),
 		Name:                     state.Name.ValueString(),
 		Description:              state.Description.ValueString(),
-		ScopingStrategy:          approvalpolicies.ApprovalPolicyScopingStrategy(state.ScopingStrategy.ValueString()),
+		ScopingStrategy:          approvalrules.ApprovalRuleScopingStrategy(state.ScopingStrategy.ValueString()),
 		TagScopes:                tagScopes,
 		IdScopes:                 idScopes,
 		MinimumApproversRequired: int(state.MinimumApproversRequired.ValueInt64()),
@@ -404,7 +404,7 @@ func mapApprovalPolicyFromState(state *schemas.ApprovalPolicyResourceModel) (*ap
 	return policy, diags
 }
 
-func mapApprovalPolicyToState(ctx context.Context, state *schemas.ApprovalPolicyResourceModel, policy *approvalpolicies.ApprovalPolicy) diag.Diagnostics {
+func mapApprovalRuleToState(ctx context.Context, state *schemas.ApprovalRuleResourceModel, policy *approvalrules.ApprovalRule) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(policy.GetID())
@@ -424,7 +424,7 @@ func mapApprovalPolicyToState(ctx context.Context, state *schemas.ApprovalPolicy
 	diags.Append(listDiags...)
 	state.ApprovingTeamIDs = approvingTeamIDs
 
-	var tagScopes []schemas.ApprovalPolicyTagScopeModel
+	var tagScopes []schemas.ApprovalRuleTagScopeModel
 	for _, s := range policy.TagScopes {
 		projectTags, projectTagsDiags := stringSetOrNull(ctx, s.ProjectTags)
 		diags.Append(projectTagsDiags...)
@@ -432,19 +432,19 @@ func mapApprovalPolicyToState(ctx context.Context, state *schemas.ApprovalPolicy
 		environmentTags, environmentTagsDiags := stringSetOrNull(ctx, s.EnvironmentTags)
 		diags.Append(environmentTagsDiags...)
 
-		tagScopes = append(tagScopes, schemas.ApprovalPolicyTagScopeModel{
+		tagScopes = append(tagScopes, schemas.ApprovalRuleTagScopeModel{
 			ProjectTags:     projectTags,
 			EnvironmentTags: environmentTags,
 		})
 	}
 	state.TagScopes = tagScopes
 
-	var idScopes []schemas.ApprovalPolicyIdScopeModel
+	var idScopes []schemas.ApprovalRuleIdScopeModel
 	for _, s := range policy.IdScopes {
 		environmentIDs, environmentIDsDiags := stringListOrNull(ctx, s.EnvironmentIds)
 		diags.Append(environmentIDsDiags...)
 
-		idScopes = append(idScopes, schemas.ApprovalPolicyIdScopeModel{
+		idScopes = append(idScopes, schemas.ApprovalRuleIdScopeModel{
 			ProjectID:      types.StringValue(s.ProjectId),
 			EnvironmentIDs: environmentIDs,
 		})

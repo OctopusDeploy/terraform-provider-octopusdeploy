@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalpolicies"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalrules"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -13,55 +13,55 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const approvalPolicyDatasourceName = "approval_policies"
+const approvalRuleDatasourceName = "approval_rules"
 
-type approvalPolicyDataSource struct {
+type approvalRuleDataSource struct {
 	*Config
 }
 
-func NewApprovalPolicyDataSource() datasource.DataSource {
-	return &approvalPolicyDataSource{}
+func NewApprovalRuleDataSource() datasource.DataSource {
+	return &approvalRuleDataSource{}
 }
 
-var _ datasource.DataSource = &approvalPolicyDataSource{}
-var _ datasource.DataSourceWithConfigure = &approvalPolicyDataSource{}
+var _ datasource.DataSource = &approvalRuleDataSource{}
+var _ datasource.DataSourceWithConfigure = &approvalRuleDataSource{}
 
-func (d *approvalPolicyDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *approvalRuleDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	d.Config = DataSourceConfiguration(req, resp)
 }
 
-func (d *approvalPolicyDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = util.GetTypeName(approvalPolicyDatasourceName)
+func (d *approvalRuleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = util.GetTypeName(approvalRuleDatasourceName)
 }
 
-func (d *approvalPolicyDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = schemas.ApprovalPolicySchema{}.GetDatasourceSchema()
+func (d *approvalRuleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schemas.ApprovalRuleSchema{}.GetDatasourceSchema()
 }
 
-func (d *approvalPolicyDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data schemas.ApprovalPoliciesDataSourceModel
+func (d *approvalRuleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data schemas.ApprovalRulesDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	query := approvalpolicies.ApprovalPoliciesQuery{
+	query := approvalrules.ApprovalRulesQuery{
 		PartialName: data.PartialName.ValueString(),
 		Skip:        int(data.Skip.ValueInt64()),
 		Take:        int(data.Take.ValueInt64()),
 	}
 
-	util.DatasourceReading(ctx, "approval policies", query)
+	util.DatasourceReading(ctx, "approval rules", query)
 
-	existingPolicies, err := approvalpolicies.Get(d.Client, data.SpaceID.ValueString(), query)
+	existingPolicies, err := approvalrules.Get(d.Client, data.SpaceID.ValueString(), query)
 	if err != nil {
-		resp.Diagnostics.AddError("unable to load approval policies", err.Error())
+		resp.Diagnostics.AddError("unable to load approval rules", err.Error())
 		return
 	}
 
 	flattenedPolicies := []interface{}{}
 	for _, policy := range existingPolicies.Items {
-		flattenedPolicy, diags := mapApprovalPolicyToAttribute(ctx, policy)
+		flattenedPolicy, diags := mapApprovalRuleToAttribute(ctx, policy)
 		if diags.HasError() {
 			resp.Diagnostics.Append(diags...)
 			return
@@ -70,11 +70,11 @@ func (d *approvalPolicyDataSource) Read(ctx context.Context, req datasource.Read
 	}
 
 	data.ID = types.StringValue("Approval Policies " + time.Now().UTC().String())
-	data.ApprovalPolicies, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: approvalPolicyObjectType()}, flattenedPolicies)
+	data.ApprovalRules, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: approvalRuleObjectType()}, flattenedPolicies)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.ApprovalPolicy) (attr.Value, diag.Diagnostics) {
+func mapApprovalRuleToAttribute(ctx context.Context, policy *approvalrules.ApprovalRule) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	approvingUserIDs, listDiags := stringListOrNull(ctx, policy.ApprovingUserIds)
@@ -91,7 +91,7 @@ func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.
 		environmentTags, environmentTagsDiags := stringListOrNull(ctx, scope.EnvironmentTags)
 		diags.Append(environmentTagsDiags...)
 
-		tagScope, tagScopeDiags := types.ObjectValue(approvalPolicyTagScopeObjectType(), map[string]attr.Value{
+		tagScope, tagScopeDiags := types.ObjectValue(approvalRuleTagScopeObjectType(), map[string]attr.Value{
 			"project_tags":     projectTags,
 			"environment_tags": environmentTags,
 		})
@@ -99,7 +99,7 @@ func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.
 		tagScopes = append(tagScopes, tagScope)
 	}
 
-	tagScopesList, tagScopesDiags := types.ListValue(types.ObjectType{AttrTypes: approvalPolicyTagScopeObjectType()}, tagScopes)
+	tagScopesList, tagScopesDiags := types.ListValue(types.ObjectType{AttrTypes: approvalRuleTagScopeObjectType()}, tagScopes)
 	diags.Append(tagScopesDiags...)
 
 	idScopes := make([]attr.Value, 0, len(policy.IdScopes))
@@ -107,7 +107,7 @@ func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.
 		environmentIDs, environmentIDsDiags := stringListOrNull(ctx, scope.EnvironmentIds)
 		diags.Append(environmentIDsDiags...)
 
-		idScope, idScopeDiags := types.ObjectValue(approvalPolicyIdScopeObjectType(), map[string]attr.Value{
+		idScope, idScopeDiags := types.ObjectValue(approvalRuleIdScopeObjectType(), map[string]attr.Value{
 			"project_id":      types.StringValue(scope.ProjectId),
 			"environment_ids": environmentIDs,
 		})
@@ -115,7 +115,7 @@ func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.
 		idScopes = append(idScopes, idScope)
 	}
 
-	idScopesList, idScopesDiags := types.ListValue(types.ObjectType{AttrTypes: approvalPolicyIdScopeObjectType()}, idScopes)
+	idScopesList, idScopesDiags := types.ListValue(types.ObjectType{AttrTypes: approvalRuleIdScopeObjectType()}, idScopes)
 	diags.Append(idScopesDiags...)
 
 	if diags.HasError() {
@@ -137,24 +137,24 @@ func mapApprovalPolicyToAttribute(ctx context.Context, policy *approvalpolicies.
 		"id_scopes":                  idScopesList,
 	}
 
-	return types.ObjectValueMust(approvalPolicyObjectType(), attrs), diags
+	return types.ObjectValueMust(approvalRuleObjectType(), attrs), diags
 }
 
-func approvalPolicyTagScopeObjectType() map[string]attr.Type {
+func approvalRuleTagScopeObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"project_tags":     types.ListType{ElemType: types.StringType},
 		"environment_tags": types.ListType{ElemType: types.StringType},
 	}
 }
 
-func approvalPolicyIdScopeObjectType() map[string]attr.Type {
+func approvalRuleIdScopeObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"project_id":      types.StringType,
 		"environment_ids": types.ListType{ElemType: types.StringType},
 	}
 }
 
-func approvalPolicyObjectType() map[string]attr.Type {
+func approvalRuleObjectType() map[string]attr.Type {
 	return map[string]attr.Type{
 		"id":                         types.StringType,
 		"space_id":                   types.StringType,
@@ -166,7 +166,7 @@ func approvalPolicyObjectType() map[string]attr.Type {
 		"is_disabled":                types.BoolType,
 		"approving_user_ids":         types.ListType{ElemType: types.StringType},
 		"approving_team_ids":         types.ListType{ElemType: types.StringType},
-		"tag_scopes":                 types.ListType{ElemType: types.ObjectType{AttrTypes: approvalPolicyTagScopeObjectType()}},
-		"id_scopes":                  types.ListType{ElemType: types.ObjectType{AttrTypes: approvalPolicyIdScopeObjectType()}},
+		"tag_scopes":                 types.ListType{ElemType: types.ObjectType{AttrTypes: approvalRuleTagScopeObjectType()}},
+		"id_scopes":                  types.ListType{ElemType: types.ObjectType{AttrTypes: approvalRuleIdScopeObjectType()}},
 	}
 }

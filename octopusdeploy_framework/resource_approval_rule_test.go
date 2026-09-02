@@ -5,29 +5,29 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalpolicies"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/approvalrules"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccApprovalPolicyBasic(t *testing.T) {
+func TestAccApprovalRuleBasic(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	prefix := "octopusdeploy_approval_policy." + localName
+	prefix := "octopusdeploy_approval_rule." + localName
 
-	policyName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	updatedPolicyName := policyName + "-updated"
+	ruleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	updatedRuleName := ruleName + "-updated"
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testApprovalPolicyDestroy,
+		CheckDestroy:             testApprovalRuleDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testApprovalPolicyBasic(localName, policyName, 2),
+				Config: testApprovalRuleBasic(localName, ruleName, 2),
 				Check: resource.ComposeTestCheckFunc(
-					testApprovalPolicyExists(prefix),
-					resource.TestCheckResourceAttr(prefix, "name", policyName),
+					testApprovalRuleExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", ruleName),
 					resource.TestCheckResourceAttr(prefix, "minimum_approvers_required", "2"),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
 					resource.TestCheckResourceAttr(prefix, "scoping_strategy", "Id"),
@@ -37,10 +37,10 @@ func TestAccApprovalPolicyBasic(t *testing.T) {
 				),
 			},
 			{
-				Config: testApprovalPolicyBasic(localName, updatedPolicyName, 1),
+				Config: testApprovalRuleBasic(localName, updatedRuleName, 1),
 				Check: resource.ComposeTestCheckFunc(
-					testApprovalPolicyExists(prefix),
-					resource.TestCheckResourceAttr(prefix, "name", updatedPolicyName),
+					testApprovalRuleExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", updatedRuleName),
 					resource.TestCheckResourceAttr(prefix, "minimum_approvers_required", "1"),
 					resource.TestCheckResourceAttr(prefix, "scoping_strategy", "Id"),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
@@ -50,11 +50,11 @@ func TestAccApprovalPolicyBasic(t *testing.T) {
 	})
 }
 
-func testApprovalPolicyBasic(localName string, policyName string, minimumApproversRequired int) string {
+func testApprovalRuleBasic(localName string, ruleName string, minimumApproversRequired int) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_project_group" "%s" {
 		name        = "Test Project Group %s"
-		description = "Project group for approval policy acceptance test"
+		description = "Project group for approval rule acceptance test"
 	}
 
 	resource "octopusdeploy_lifecycle" "%s" {
@@ -69,15 +69,15 @@ func testApprovalPolicyBasic(localName string, policyName string, minimumApprove
 
 	resource "octopusdeploy_environment" "%s" {
 		name        = "Test Environment %s"
-		description = "Environment for approval policy acceptance test"
+		description = "Environment for approval rule acceptance test"
 	}
 
 	resource "octopusdeploy_team" "%s" {
 		name        = "Test Team %s"
-		description = "Team for approval policy acceptance test"
+		description = "Team for approval rule acceptance test"
 	}
 
-	resource "octopusdeploy_approval_policy" "%s" {
+	resource "octopusdeploy_approval_rule" "%s" {
 		name                        = "%s"
 		minimum_approvers_required  = %d
 		scoping_strategy            = "Id"
@@ -96,33 +96,33 @@ func testApprovalPolicyBasic(localName string, policyName string, minimumApprove
 		localName, localName, localName, localName,
 		localName, localName,
 		localName, localName,
-		localName, policyName, minimumApproversRequired, localName,
+		localName, ruleName, minimumApproversRequired, localName,
 		localName, localName,
 	)
 }
 
-// TestAccApprovalPolicyScopeValidation verifies the config-time validation that
+// TestAccApprovalRuleScopeValidation verifies the config-time validation that
 // the provided scope matches the scoping strategy and that both scopes cannot be
 // set at once. All steps are plan-only and expect an error, so nothing is created.
-func TestAccApprovalPolicyScopeValidation(t *testing.T) {
-	policyName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+func TestAccApprovalRuleScopeValidation(t *testing.T) {
+	ruleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config:      testApprovalPolicyBothScopes(policyName),
+				Config:      testApprovalRuleBothScopes(ruleName),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`[Oo]nly one of`),
 			},
 			{
-				Config:      testApprovalPolicyScopeMismatch(policyName, "Id", true),
+				Config:      testApprovalRuleScopeMismatch(ruleName, "Id", true),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`cannot be set when scoping_strategy is`),
 			},
 			{
-				Config:      testApprovalPolicyScopeMismatch(policyName, "Tag", false),
+				Config:      testApprovalRuleScopeMismatch(ruleName, "Tag", false),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`cannot be set when scoping_strategy is`),
 			},
@@ -130,9 +130,9 @@ func TestAccApprovalPolicyScopeValidation(t *testing.T) {
 	})
 }
 
-func testApprovalPolicyBothScopes(policyName string) string {
+func testApprovalRuleBothScopes(ruleName string) string {
 	return fmt.Sprintf(`
-	resource "octopusdeploy_approval_policy" "test" {
+	resource "octopusdeploy_approval_rule" "test" {
 		name               = "%s"
 		approving_team_ids = ["Teams-1"]
 
@@ -150,13 +150,13 @@ func testApprovalPolicyBothScopes(policyName string) string {
 			}
 		]
 	}
-	`, policyName)
+	`, ruleName)
 }
 
-// testApprovalPolicyScopeMismatch builds a config whose scope does not match the
+// testApprovalRuleScopeMismatch builds a config whose scope does not match the
 // scoping strategy: strategy "Id" with tag_scopes (useTagScope=true) or strategy
 // "Tag" with id_scopes (useTagScope=false).
-func testApprovalPolicyScopeMismatch(policyName string, strategy string, useTagScope bool) string {
+func testApprovalRuleScopeMismatch(ruleName string, strategy string, useTagScope bool) string {
 	scopeBlock := `
 		id_scopes = [
 			{
@@ -175,31 +175,31 @@ func testApprovalPolicyScopeMismatch(policyName string, strategy string, useTagS
 	}
 
 	return fmt.Sprintf(`
-	resource "octopusdeploy_approval_policy" "test" {
+	resource "octopusdeploy_approval_rule" "test" {
 		name               = "%s"
 		scoping_strategy   = "%s"
 		approving_team_ids = ["Teams-1"]
 %s
 	}
-	`, policyName, strategy, scopeBlock)
+	`, ruleName, strategy, scopeBlock)
 }
 
-// TestAccApprovalPolicyTagScopesResolveNames verifies that tag_scopes hold stable
+// TestAccApprovalRuleTagScopesResolveNames verifies that tag_scopes hold stable
 // tag IDs regardless of whether they are configured by ID or by canonical name.
 // Step 1 references same-apply tags by their id attribute (unknown at plan,
 // resolved at apply). Step 2 references the now-existing tags by canonical name;
 // the provider resolves those names to the same IDs, so there is no diff. The
 // TypeSetElemAttrPair checks assert the stored values equal the tags' IDs, which
 // only holds if resolution actually happened.
-func TestAccApprovalPolicyTagScopesResolveNames(t *testing.T) {
+func TestAccApprovalRuleTagScopesResolveNames(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	policyName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	prefix := "octopusdeploy_approval_policy." + localName
+	ruleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_approval_rule." + localName
 	projectTagResource := "octopusdeploy_tag." + localName + "_project"
 	envTagResource := "octopusdeploy_tag." + localName + "_env"
 
 	checks := resource.ComposeTestCheckFunc(
-		testApprovalPolicyExists(prefix),
+		testApprovalRuleExists(prefix),
 		resource.TestCheckResourceAttr(prefix, "scoping_strategy", "Tag"),
 		resource.TestCheckResourceAttr(prefix, "tag_scopes.#", "1"),
 		resource.TestCheckResourceAttr(prefix, "tag_scopes.0.project_tags.#", "1"),
@@ -209,26 +209,26 @@ func TestAccApprovalPolicyTagScopesResolveNames(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testApprovalPolicyDestroy,
+		CheckDestroy:             testApprovalRuleDestroy,
 		PreCheck:                 func() { TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testApprovalPolicyTagScopes(localName, policyName, true),
+				Config: testApprovalRuleTagScopes(localName, ruleName, true),
 				Check:  checks,
 			},
 			{
-				Config: testApprovalPolicyTagScopes(localName, policyName, false),
+				Config: testApprovalRuleTagScopes(localName, ruleName, false),
 				Check:  checks,
 			},
 		},
 	})
 }
 
-// testApprovalPolicyTagScopes builds a Tag-scoped approval policy. When byID is
+// testApprovalRuleTagScopes builds a Tag-scoped approval rule. When byID is
 // true the scopes reference the tags by their id attribute; otherwise they use
 // canonical tag names, which the provider must resolve to the tags' IDs.
-func testApprovalPolicyTagScopes(localName string, policyName string, byID bool) string {
+func testApprovalRuleTagScopes(localName string, ruleName string, byID bool) string {
 	projectTagRef := fmt.Sprintf(`"${octopusdeploy_tag_set.%[1]s.name}/${octopusdeploy_tag.%[1]s_project.name}"`, localName)
 	envTagRef := fmt.Sprintf(`"${octopusdeploy_tag_set.%[1]s.name}/${octopusdeploy_tag.%[1]s_env.name}"`, localName)
 	if byID {
@@ -239,7 +239,7 @@ func testApprovalPolicyTagScopes(localName string, policyName string, byID bool)
 	return fmt.Sprintf(`
 	resource "octopusdeploy_tag_set" "%[1]s" {
 		name        = "TagSet %[1]s"
-		description = "Tag set for approval policy acceptance test"
+		description = "Tag set for approval rule acceptance test"
 		scopes      = ["Project", "Environment"]
 	}
 
@@ -257,10 +257,10 @@ func testApprovalPolicyTagScopes(localName string, policyName string, byID bool)
 
 	resource "octopusdeploy_team" "%[1]s" {
 		name        = "Test Team %[1]s"
-		description = "Team for approval policy acceptance test"
+		description = "Team for approval rule acceptance test"
 	}
 
-	resource "octopusdeploy_approval_policy" "%[1]s" {
+	resource "octopusdeploy_approval_rule" "%[1]s" {
 		name                       = "%[2]s"
 		scoping_strategy           = "Tag"
 		minimum_approvers_required = 2
@@ -273,35 +273,35 @@ func testApprovalPolicyTagScopes(localName string, policyName string, byID bool)
 			}
 		]
 	}
-	`, localName, policyName, projectTagRef, envTagRef)
+	`, localName, ruleName, projectTagRef, envTagRef)
 }
 
-func testApprovalPolicyExists(resourceName string) resource.TestCheckFunc {
+func testApprovalRuleExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		policyResource, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return fmt.Errorf("not found: %s", resourceName)
 		}
 
-		_, err := approvalpolicies.GetByID(octoClient, octoClient.GetSpaceID(), policyResource.Primary.ID)
+		_, err := approvalrules.GetByID(octoClient, octoClient.GetSpaceID(), policyResource.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve approval policy (%s): %s", policyResource.Primary.ID, err.Error())
+			return fmt.Errorf("failed to retrieve approval rule (%s): %s", policyResource.Primary.ID, err.Error())
 		}
 
 		return nil
 	}
 }
 
-func testApprovalPolicyDestroy(s *terraform.State) error {
+func testApprovalRuleDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "octopusdeploy_approval_policy" {
+		if rs.Type != "octopusdeploy_approval_rule" {
 			continue
 		}
 
-		approvalPolicy, err := approvalpolicies.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID)
+		approvalRule, err := approvalrules.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID)
 		if err == nil {
-			if approvalPolicy != nil {
-				return fmt.Errorf("approval policy (%s) still exists", approvalPolicy.Name)
+			if approvalRule != nil {
+				return fmt.Errorf("approval rule (%s) still exists", approvalRule.Name)
 			}
 		}
 	}
