@@ -18,9 +18,9 @@ func TestAccOctopusDeployProjectGroupBasic(t *testing.T) {
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testProjectGroupCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testProjectGroupCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -41,14 +41,14 @@ func TestAccOctopusDeployProjectGroupUpdate(t *testing.T) {
 
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	
+
 	newName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	newDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testProjectGroupCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testProjectGroupCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -77,9 +77,9 @@ func TestAccOctopusDeployProjectGroupMinimal(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testProjectGroupCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testProjectGroupCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -102,9 +102,9 @@ func TestAccOctopusDeployProjectGroupImport(t *testing.T) {
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testProjectGroupCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testProjectGroupCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Config: testProjectGroupBasic(localName, name, description),

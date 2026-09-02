@@ -34,15 +34,16 @@ type ApprovalRuleIdScopeModel struct {
 
 // ApprovalRuleResourceModel represents the octopusdeploy_approval_rule resource defined in Terraform configuration.
 type ApprovalRuleResourceModel struct {
-	SpaceID                  types.String                  `tfsdk:"space_id"`
-	Name                     types.String                  `tfsdk:"name"`
-	Description              types.String                  `tfsdk:"description"`
-	ScopingStrategy          types.String                  `tfsdk:"scoping_strategy"`
-	MinimumApproversRequired types.Int64                   `tfsdk:"minimum_approvers_required"`
-	AllowSelfApproval        types.Bool                    `tfsdk:"allow_self_approval"`
-	IsDisabled               types.Bool                    `tfsdk:"is_disabled"`
-	ApprovingUserIDs         types.List                    `tfsdk:"approving_user_ids"`
-	ApprovingTeamIDs         types.List                    `tfsdk:"approving_team_ids"`
+	SpaceID                  types.String                `tfsdk:"space_id"`
+	Name                     types.String                `tfsdk:"name"`
+	Description              types.String                `tfsdk:"description"`
+	ScopingStrategy          types.String                `tfsdk:"scoping_strategy"`
+	TenantApprovalStrategy   types.String                `tfsdk:"tenant_approval_strategy"`
+	MinimumApproversRequired types.Int64                 `tfsdk:"minimum_approvers_required"`
+	AllowSelfApproval        types.Bool                  `tfsdk:"allow_self_approval"`
+	IsDisabled               types.Bool                  `tfsdk:"is_disabled"`
+	ApprovingUserIDs         types.List                  `tfsdk:"approving_user_ids"`
+	ApprovingTeamIDs         types.List                  `tfsdk:"approving_team_ids"`
 	TagScopes                []ApprovalRuleTagScopeModel `tfsdk:"tag_scopes"`
 	IdScopes                 []ApprovalRuleIdScopeModel  `tfsdk:"id_scopes"`
 
@@ -51,11 +52,11 @@ type ApprovalRuleResourceModel struct {
 
 // ApprovalRulesDataSourceModel represents the octopusdeploy_approval_rules data source defined in Terraform configuration.
 type ApprovalRulesDataSourceModel struct {
-	ID               types.String `tfsdk:"id"`
-	SpaceID          types.String `tfsdk:"space_id"`
-	PartialName      types.String `tfsdk:"partial_name"`
-	Skip             types.Int64  `tfsdk:"skip"`
-	Take             types.Int64  `tfsdk:"take"`
+	ID            types.String `tfsdk:"id"`
+	SpaceID       types.String `tfsdk:"space_id"`
+	PartialName   types.String `tfsdk:"partial_name"`
+	Skip          types.Int64  `tfsdk:"skip"`
+	Take          types.Int64  `tfsdk:"take"`
 	ApprovalRules types.List   `tfsdk:"approval_rules"`
 }
 
@@ -85,6 +86,17 @@ func (a ApprovalRuleSchema) GetResourceSchema() resourceSchema.Schema {
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"tenant_approval_strategy": resourceSchema.StringAttribute{
+				Description: "Determines how tenanted deployments are gated by this approval rule. Valid values are `\"PerRelease\"`, where one change request covers every tenant of a release, or `\"PerTenant\"`, where each tenant has its own change request. Defaults to `\"PerRelease\"`. When several rules apply to a deployment the most restrictive value wins.",
+				Optional:    true,
+				Computed:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("PerRelease", "PerTenant"),
+				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"minimum_approvers_required": resourceSchema.Int64Attribute{
 				Description: "The minimum number of approvers required for this approval rule.",
 				Optional:    true,
@@ -102,7 +114,7 @@ func (a ApprovalRuleSchema) GetResourceSchema() resourceSchema.Schema {
 				},
 			},
 			"is_disabled": resourceSchema.BoolAttribute{
-				Description: "Whether the policy is disabled.",
+				Description: "Whether the rule is disabled.",
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []planmodifier.Bool{
@@ -110,12 +122,12 @@ func (a ApprovalRuleSchema) GetResourceSchema() resourceSchema.Schema {
 				},
 			},
 			"approving_user_ids": resourceSchema.ListAttribute{
-				Description: "A list of user IDs that are eligible to approve deployments under this policy.",
+				Description: "A list of user IDs that are eligible to approve deployments under this rule.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
 			"approving_team_ids": resourceSchema.ListAttribute{
-				Description: "A list of team IDs that are eligible to approve deployments under this policy.",
+				Description: "A list of team IDs that are eligible to approve deployments under this rule.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -185,6 +197,10 @@ func (a ApprovalRuleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 							Description: "The scoping strategy used by this approval rule. Valid values are `\"Tag\"` or `\"Id\"`.",
 							Computed:    true,
 						},
+						"tenant_approval_strategy": datasourceSchema.StringAttribute{
+							Description: "Determines how tenanted deployments are gated by this approval rule. Valid values are `\"PerRelease\"` or `\"PerTenant\"`.",
+							Computed:    true,
+						},
 						"minimum_approvers_required": datasourceSchema.Int64Attribute{
 							Description: "The minimum number of approvers required for this approval rule.",
 							Computed:    true,
@@ -194,16 +210,16 @@ func (a ApprovalRuleSchema) GetDatasourceSchema() datasourceSchema.Schema {
 							Computed:    true,
 						},
 						"is_disabled": datasourceSchema.BoolAttribute{
-							Description: "Whether the policy is disabled.",
+							Description: "Whether the rule is disabled.",
 							Computed:    true,
 						},
 						"approving_user_ids": datasourceSchema.ListAttribute{
-							Description: "A list of user IDs that are eligible to approve deployments under this policy.",
+							Description: "A list of user IDs that are eligible to approve deployments under this rule.",
 							Computed:    true,
 							ElementType: types.StringType,
 						},
 						"approving_team_ids": datasourceSchema.ListAttribute{
-							Description: "A list of team IDs that are eligible to approve deployments under this policy.",
+							Description: "A list of team IDs that are eligible to approve deployments under this rule.",
 							Computed:    true,
 							ElementType: types.StringType,
 						},

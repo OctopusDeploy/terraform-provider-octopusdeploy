@@ -31,6 +31,7 @@ func TestAccApprovalRuleBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "minimum_approvers_required", "2"),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
 					resource.TestCheckResourceAttr(prefix, "scoping_strategy", "Id"),
+					resource.TestCheckResourceAttr(prefix, "tenant_approval_strategy", "PerRelease"),
 					resource.TestCheckResourceAttrSet(prefix, "approving_team_ids.0"),
 					resource.TestCheckResourceAttr(prefix, "id_scopes.#", "1"),
 					resource.TestCheckResourceAttrSet(prefix, "id_scopes.0.project_id"),
@@ -43,11 +44,59 @@ func TestAccApprovalRuleBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "name", updatedRuleName),
 					resource.TestCheckResourceAttr(prefix, "minimum_approvers_required", "1"),
 					resource.TestCheckResourceAttr(prefix, "scoping_strategy", "Id"),
+					resource.TestCheckResourceAttr(prefix, "tenant_approval_strategy", "PerRelease"),
 					resource.TestCheckResourceAttr(prefix, "is_disabled", "false"),
 				),
 			},
 		},
 	})
+}
+
+// TestAccApprovalRuleTenantApprovalStrategy verifies that the tenant approval
+// strategy round-trips and can be changed in place. A disabled rule is used so
+// no scopes are required and nothing is actually gated.
+func TestAccApprovalRuleTenantApprovalStrategy(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	ruleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_approval_rule." + localName
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testApprovalRuleDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testApprovalRuleTenantStrategy(localName, ruleName, "PerTenant"),
+				Check: resource.ComposeTestCheckFunc(
+					testApprovalRuleExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "tenant_approval_strategy", "PerTenant"),
+				),
+			},
+			{
+				Config: testApprovalRuleTenantStrategy(localName, ruleName, "PerRelease"),
+				Check: resource.ComposeTestCheckFunc(
+					testApprovalRuleExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "tenant_approval_strategy", "PerRelease"),
+				),
+			},
+		},
+	})
+}
+
+func testApprovalRuleTenantStrategy(localName string, ruleName string, tenantStrategy string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_team" "%[1]s" {
+		name        = "Test Team %[1]s"
+		description = "Team for approval rule acceptance test"
+	}
+
+	resource "octopusdeploy_approval_rule" "%[1]s" {
+		name                     = "%[2]s"
+		is_disabled              = true
+		tenant_approval_strategy = "%[3]s"
+		approving_team_ids       = [octopusdeploy_team.%[1]s.id]
+	}
+	`, localName, ruleName, tenantStrategy)
 }
 
 func testApprovalRuleBasic(localName string, ruleName string, minimumApproversRequired int) string {
@@ -278,14 +327,14 @@ func testApprovalRuleTagScopes(localName string, ruleName string, byID bool) str
 
 func testApprovalRuleExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		policyResource, ok := s.RootModule().Resources[resourceName]
+		ruleResource, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return fmt.Errorf("not found: %s", resourceName)
 		}
 
-		_, err := approvalrules.GetByID(octoClient, octoClient.GetSpaceID(), policyResource.Primary.ID)
+		_, err := approvalrules.GetByID(octoClient, octoClient.GetSpaceID(), ruleResource.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("failed to retrieve approval rule (%s): %s", policyResource.Primary.ID, err.Error())
+			return fmt.Errorf("failed to retrieve approval rule (%s): %s", ruleResource.Primary.ID, err.Error())
 		}
 
 		return nil

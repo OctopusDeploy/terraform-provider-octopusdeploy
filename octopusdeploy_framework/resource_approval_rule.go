@@ -226,19 +226,19 @@ func (r *approvalRuleResource) Create(ctx context.Context, req resource.CreateRe
 		plan.SpaceID = types.StringValue(r.Config.SpaceID)
 	}
 
-	policy, diags := mapApprovalRuleFromState(plan)
+	rule, diags := mapApprovalRuleFromState(plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	createdPolicy, err := approvalrules.Add(r.Config.Client, plan.SpaceID.ValueString(), policy)
+	createdRule, err := approvalrules.Add(r.Config.Client, plan.SpaceID.ValueString(), rule)
 	if err != nil {
 		resp.Diagnostics.AddError("error while creating approval rule", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, plan, createdPolicy)...)
+	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, plan, createdRule)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -260,7 +260,7 @@ func (r *approvalRuleResource) Read(ctx context.Context, req resource.ReadReques
 		state.SpaceID = types.StringValue(r.Config.SpaceID)
 	}
 
-	policy, err := approvalrules.GetByID(r.Config.Client, state.SpaceID.ValueString(), state.GetID())
+	rule, err := approvalrules.GetByID(r.Config.Client, state.SpaceID.ValueString(), state.GetID())
 	if err != nil {
 		if err := errors.ProcessApiErrorV2(ctx, resp, state, err, "approval rule"); err != nil {
 			resp.Diagnostics.AddError("unable to load approval rule", err.Error())
@@ -268,7 +268,7 @@ func (r *approvalRuleResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, state, policy)...)
+	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, state, rule)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -290,20 +290,20 @@ func (r *approvalRuleResource) Update(ctx context.Context, req resource.UpdateRe
 		plan.SpaceID = types.StringValue(r.Config.SpaceID)
 	}
 
-	policy, diags := mapApprovalRuleFromState(plan)
+	rule, diags := mapApprovalRuleFromState(plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	policy.SetID(plan.ID.ValueString())
+	rule.SetID(plan.ID.ValueString())
 
-	updatedPolicy, err := approvalrules.Update(r.Config.Client, plan.SpaceID.ValueString(), policy)
+	updatedRule, err := approvalrules.Update(r.Config.Client, plan.SpaceID.ValueString(), rule)
 	if err != nil {
 		resp.Diagnostics.AddError("error while updating approval rule", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, plan, updatedPolicy)...)
+	resp.Diagnostics.Append(mapApprovalRuleToState(ctx, plan, updatedRule)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -386,11 +386,12 @@ func mapApprovalRuleFromState(state *schemas.ApprovalRuleResourceModel) (*approv
 		return nil, diags
 	}
 
-	policy := &approvalrules.ApprovalRule{
+	rule := &approvalrules.ApprovalRule{
 		SpaceID:                  state.SpaceID.ValueString(),
 		Name:                     state.Name.ValueString(),
 		Description:              state.Description.ValueString(),
 		ScopingStrategy:          approvalrules.ApprovalRuleScopingStrategy(state.ScopingStrategy.ValueString()),
+		TenantApprovalStrategy:   approvalrules.TenantApprovalStrategy(state.TenantApprovalStrategy.ValueString()),
 		TagScopes:                tagScopes,
 		IdScopes:                 idScopes,
 		MinimumApproversRequired: int(state.MinimumApproversRequired.ValueInt64()),
@@ -399,33 +400,34 @@ func mapApprovalRuleFromState(state *schemas.ApprovalRuleResourceModel) (*approv
 		ApprovingUserIds:         approvingUserIDs,
 		ApprovingTeamIds:         approvingTeamIDs,
 	}
-	policy.ID = state.ID.ValueString()
+	rule.ID = state.ID.ValueString()
 
-	return policy, diags
+	return rule, diags
 }
 
-func mapApprovalRuleToState(ctx context.Context, state *schemas.ApprovalRuleResourceModel, policy *approvalrules.ApprovalRule) diag.Diagnostics {
+func mapApprovalRuleToState(ctx context.Context, state *schemas.ApprovalRuleResourceModel, rule *approvalrules.ApprovalRule) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	state.ID = types.StringValue(policy.GetID())
-	state.SpaceID = types.StringValue(policy.SpaceID)
-	state.Name = types.StringValue(policy.Name)
-	state.Description = types.StringValue(policy.Description)
-	state.ScopingStrategy = types.StringValue(string(policy.ScopingStrategy))
-	state.MinimumApproversRequired = types.Int64Value(int64(policy.MinimumApproversRequired))
-	state.AllowSelfApproval = types.BoolValue(policy.AllowSelfApproval)
-	state.IsDisabled = types.BoolValue(policy.IsDisabled)
+	state.ID = types.StringValue(rule.GetID())
+	state.SpaceID = types.StringValue(rule.SpaceID)
+	state.Name = types.StringValue(rule.Name)
+	state.Description = types.StringValue(rule.Description)
+	state.ScopingStrategy = types.StringValue(string(rule.ScopingStrategy))
+	state.TenantApprovalStrategy = types.StringValue(string(rule.TenantApprovalStrategy))
+	state.MinimumApproversRequired = types.Int64Value(int64(rule.MinimumApproversRequired))
+	state.AllowSelfApproval = types.BoolValue(rule.AllowSelfApproval)
+	state.IsDisabled = types.BoolValue(rule.IsDisabled)
 
-	approvingUserIDs, listDiags := stringListOrNull(ctx, policy.ApprovingUserIds)
+	approvingUserIDs, listDiags := stringListOrNull(ctx, rule.ApprovingUserIds)
 	diags.Append(listDiags...)
 	state.ApprovingUserIDs = approvingUserIDs
 
-	approvingTeamIDs, listDiags := stringListOrNull(ctx, policy.ApprovingTeamIds)
+	approvingTeamIDs, listDiags := stringListOrNull(ctx, rule.ApprovingTeamIds)
 	diags.Append(listDiags...)
 	state.ApprovingTeamIDs = approvingTeamIDs
 
 	var tagScopes []schemas.ApprovalRuleTagScopeModel
-	for _, s := range policy.TagScopes {
+	for _, s := range rule.TagScopes {
 		projectTags, projectTagsDiags := stringSetOrNull(ctx, s.ProjectTags)
 		diags.Append(projectTagsDiags...)
 
@@ -440,7 +442,7 @@ func mapApprovalRuleToState(ctx context.Context, state *schemas.ApprovalRuleReso
 	state.TagScopes = tagScopes
 
 	var idScopes []schemas.ApprovalRuleIdScopeModel
-	for _, s := range policy.IdScopes {
+	for _, s := range rule.IdScopes {
 		environmentIDs, environmentIDsDiags := stringListOrNull(ctx, s.EnvironmentIds)
 		diags.Append(environmentIDsDiags...)
 

@@ -53,38 +53,38 @@ func (d *approvalRuleDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	util.DatasourceReading(ctx, "approval rules", query)
 
-	existingPolicies, err := approvalrules.Get(d.Client, data.SpaceID.ValueString(), query)
+	existingRules, err := approvalrules.Get(d.Client, data.SpaceID.ValueString(), query)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load approval rules", err.Error())
 		return
 	}
 
-	flattenedPolicies := []interface{}{}
-	for _, policy := range existingPolicies.Items {
-		flattenedPolicy, diags := mapApprovalRuleToAttribute(ctx, policy)
+	flattenedRules := []interface{}{}
+	for _, rule := range existingRules.Items {
+		flattenedRule, diags := mapApprovalRuleToAttribute(ctx, rule)
 		if diags.HasError() {
 			resp.Diagnostics.Append(diags...)
 			return
 		}
-		flattenedPolicies = append(flattenedPolicies, flattenedPolicy)
+		flattenedRules = append(flattenedRules, flattenedRule)
 	}
 
-	data.ID = types.StringValue("Approval Policies " + time.Now().UTC().String())
-	data.ApprovalRules, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: approvalRuleObjectType()}, flattenedPolicies)
+	data.ID = types.StringValue("Approval Rules " + time.Now().UTC().String())
+	data.ApprovalRules, _ = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: approvalRuleObjectType()}, flattenedRules)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func mapApprovalRuleToAttribute(ctx context.Context, policy *approvalrules.ApprovalRule) (attr.Value, diag.Diagnostics) {
+func mapApprovalRuleToAttribute(ctx context.Context, rule *approvalrules.ApprovalRule) (attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	approvingUserIDs, listDiags := stringListOrNull(ctx, policy.ApprovingUserIds)
+	approvingUserIDs, listDiags := stringListOrNull(ctx, rule.ApprovingUserIds)
 	diags.Append(listDiags...)
 
-	approvingTeamIDs, listDiags := stringListOrNull(ctx, policy.ApprovingTeamIds)
+	approvingTeamIDs, listDiags := stringListOrNull(ctx, rule.ApprovingTeamIds)
 	diags.Append(listDiags...)
 
-	tagScopes := make([]attr.Value, 0, len(policy.TagScopes))
-	for _, scope := range policy.TagScopes {
+	tagScopes := make([]attr.Value, 0, len(rule.TagScopes))
+	for _, scope := range rule.TagScopes {
 		projectTags, projectTagsDiags := stringListOrNull(ctx, scope.ProjectTags)
 		diags.Append(projectTagsDiags...)
 
@@ -102,8 +102,8 @@ func mapApprovalRuleToAttribute(ctx context.Context, policy *approvalrules.Appro
 	tagScopesList, tagScopesDiags := types.ListValue(types.ObjectType{AttrTypes: approvalRuleTagScopeObjectType()}, tagScopes)
 	diags.Append(tagScopesDiags...)
 
-	idScopes := make([]attr.Value, 0, len(policy.IdScopes))
-	for _, scope := range policy.IdScopes {
+	idScopes := make([]attr.Value, 0, len(rule.IdScopes))
+	for _, scope := range rule.IdScopes {
 		environmentIDs, environmentIDsDiags := stringListOrNull(ctx, scope.EnvironmentIds)
 		diags.Append(environmentIDsDiags...)
 
@@ -123,14 +123,15 @@ func mapApprovalRuleToAttribute(ctx context.Context, policy *approvalrules.Appro
 	}
 
 	attrs := map[string]attr.Value{
-		"id":                         types.StringValue(policy.GetID()),
-		"space_id":                   types.StringValue(policy.SpaceID),
-		"name":                       types.StringValue(policy.Name),
-		"description":                types.StringValue(policy.Description),
-		"scoping_strategy":           types.StringValue(string(policy.ScopingStrategy)),
-		"minimum_approvers_required": types.Int64Value(int64(policy.MinimumApproversRequired)),
-		"allow_self_approval":        types.BoolValue(policy.AllowSelfApproval),
-		"is_disabled":                types.BoolValue(policy.IsDisabled),
+		"id":                         types.StringValue(rule.GetID()),
+		"space_id":                   types.StringValue(rule.SpaceID),
+		"name":                       types.StringValue(rule.Name),
+		"description":                types.StringValue(rule.Description),
+		"scoping_strategy":           types.StringValue(string(rule.ScopingStrategy)),
+		"tenant_approval_strategy":   types.StringValue(string(rule.TenantApprovalStrategy)),
+		"minimum_approvers_required": types.Int64Value(int64(rule.MinimumApproversRequired)),
+		"allow_self_approval":        types.BoolValue(rule.AllowSelfApproval),
+		"is_disabled":                types.BoolValue(rule.IsDisabled),
 		"approving_user_ids":         approvingUserIDs,
 		"approving_team_ids":         approvingTeamIDs,
 		"tag_scopes":                 tagScopesList,
@@ -161,6 +162,7 @@ func approvalRuleObjectType() map[string]attr.Type {
 		"name":                       types.StringType,
 		"description":                types.StringType,
 		"scoping_strategy":           types.StringType,
+		"tenant_approval_strategy":   types.StringType,
 		"minimum_approvers_required": types.Int64Type,
 		"allow_self_approval":        types.BoolType,
 		"is_disabled":                types.BoolType,
