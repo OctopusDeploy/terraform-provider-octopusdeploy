@@ -177,8 +177,10 @@ type ProcessStepResourceModel struct {
 }
 
 type ProcessStepActionContainerModel struct {
-	FeedID types.String `tfsdk:"feed_id"`
-	Image  types.String `tfsdk:"image"`
+	FeedID     types.String `tfsdk:"feed_id"`
+	Image      types.String `tfsdk:"image"`
+	Dockerfile types.String `tfsdk:"dockerfile"`
+	GitUrl     types.String `tfsdk:"git_url"`
 }
 
 func resourceActionContainerAttribute() resourceSchema.SingleNestedAttribute {
@@ -193,18 +195,30 @@ func resourceActionContainerAttribute() resourceSchema.SingleNestedAttribute {
 				Description("Image of the container with tag included.").
 				Optional().
 				Build(),
+			"git_url": util.ResourceString().
+				Description("Git URL of the container image source.").
+				Optional().
+				Build(),
+			"dockerfile": util.ResourceString().
+				Description("Dockerfile path for building the container image.").
+				Optional().
+				Build(),
 		},
 		Optional: true,
 		Computed: true,
 		Default: objectdefault.StaticValue(
 			types.ObjectValueMust(
 				map[string]attr.Type{
-					"feed_id": types.StringType,
-					"image":   types.StringType,
+					"feed_id":    types.StringType,
+					"image":      types.StringType,
+					"git_url":    types.StringType,
+					"dockerfile": types.StringType,
 				},
 				map[string]attr.Value{
-					"feed_id": types.StringValue(""),
-					"image":   types.StringValue(""),
+					"feed_id":    types.StringValue(""),
+					"image":      types.StringValue(""),
+					"git_url":    types.StringNull(),
+					"dockerfile": types.StringNull(),
 				},
 			),
 		),

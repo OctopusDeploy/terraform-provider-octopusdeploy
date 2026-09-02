@@ -160,6 +160,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewDeploymentFreezeTenantResource,
 		NewGitTriggerResource,
 		NewBuiltInTriggerResource,
+		NewWebhookTriggerResource,
 		NewProcessResource,
 		NewProcessStepResource,
 		NewProcessStepsOrderResource,
@@ -178,6 +179,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewSpaceDefaultRunbookRetentionPolicyResource,
 		NewPlatformHubVersionControlUsernamePasswordSettingsResource,
 		NewPlatformHubVersionControlAnonymousSettingsResource,
+		NewBuiltInRateLimitingPolicyResource,
 	}
 }
 

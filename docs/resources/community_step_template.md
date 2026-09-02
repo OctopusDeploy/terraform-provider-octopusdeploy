@@ -45,6 +45,7 @@ Read-Only:
 - `name` (String) Package name.
 - `package_id` (String) The ID of the package to use.
 - `properties` (Attributes) Properties for the package. (see [below for nested schema](#nestedatt--packages--properties))
+- `version` (String) The version of the package to use. Only applies when the package's `selection_mode` property is `immediate`.
 
 <a id="nestedatt--packages--properties"></a>
 ### Nested Schema for `packages.properties`

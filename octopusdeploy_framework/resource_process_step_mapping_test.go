@@ -61,8 +61,10 @@ func TestAccMapProcessStepFromStateWithAllAttributes(t *testing.T) {
 			types.StringValue("Channels-1"),
 		}),
 		Container: &schemas.ProcessStepActionContainerModel{
-			FeedID: types.StringValue("Feeds-1"),
-			Image:  types.StringValue("docker.io/library/dummy:latest"),
+			FeedID:     types.StringValue("Feeds-1"),
+			Image:      types.StringValue("docker.io/library/dummy:latest"),
+			GitUrl:     types.StringNull(),
+			Dockerfile: types.StringNull(),
 		},
 		GitDependencies: types.MapValueMust(schemas.ProcessStepGitDependencyObjectType(), map[string]attr.Value{
 			"script-folder": types.ObjectValueMust(
@@ -200,7 +202,7 @@ func TestAccMapProcessStepFromStateForScriptStep(t *testing.T) {
 		Environments:         types.SetValueMust(types.StringType, []attr.Value{}),
 		ExcludedEnvironments: types.SetValueMust(types.StringType, []attr.Value{}),
 		Channels:             types.SetValueMust(types.StringType, []attr.Value{}),
-		Container:            &schemas.ProcessStepActionContainerModel{FeedID: types.StringValue(""), Image: types.StringValue("")},
+		Container:            &schemas.ProcessStepActionContainerModel{FeedID: types.StringValue(""), Image: types.StringValue(""), GitUrl: types.StringValue(""), Dockerfile: types.StringNull()},
 		GitDependencies:      types.MapValueMust(schemas.ProcessStepGitDependencyObjectType(), map[string]attr.Value{}),
 		Packages:             types.MapValueMust(schemas.ProcessStepPackageReferenceObjectType(), map[string]attr.Value{}),
 		ExecutionProperties: types.MapValueMust(types.StringType, map[string]attr.Value{
@@ -372,8 +374,10 @@ func TestAccMapProcessStepToStateWithAllAttributes(t *testing.T) {
 			types.StringValue("Channels-1"),
 		}),
 		Container: &schemas.ProcessStepActionContainerModel{
-			FeedID: types.StringValue("Feeds-1"),
-			Image:  types.StringValue("docker.io/library/dummy:latest"),
+			FeedID:     types.StringValue("Feeds-1"),
+			Image:      types.StringValue("docker.io/library/dummy:latest"),
+			GitUrl:     types.StringNull(),
+			Dockerfile: types.StringNull(),
 		},
 		GitDependencies: types.MapValueMust(schemas.ProcessStepGitDependencyObjectType(), map[string]attr.Value{
 			gitDependency.Name: types.ObjectValueMust(
@@ -542,8 +546,10 @@ func TestAccMapProcessStepToStateWithAllAttributesForRunbook(t *testing.T) {
 			types.StringValue("Channels-1"),
 		}),
 		Container: &schemas.ProcessStepActionContainerModel{
-			FeedID: types.StringValue("Feeds-1"),
-			Image:  types.StringValue("docker.io/library/dummy:latest"),
+			FeedID:     types.StringValue("Feeds-1"),
+			Image:      types.StringValue("docker.io/library/dummy:latest"),
+			GitUrl:     types.StringNull(),
+			Dockerfile: types.StringNull(),
 		},
 		GitDependencies: types.MapValueMust(schemas.ProcessStepGitDependencyObjectType(), map[string]attr.Value{
 			gitDependency.Name: types.ObjectValueMust(

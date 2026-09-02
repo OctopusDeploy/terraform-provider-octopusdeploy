@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"testing"
@@ -54,6 +55,91 @@ func TestAccTenantBasic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccTenantClone(t *testing.T) {
+	firstSourceLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	secondSourceLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	firstSourceResourceName := "octopusdeploy_tenant." + firstSourceLocalName
+	secondSourceResourceName := "octopusdeploy_tenant." + secondSourceLocalName
+	resourceName := "octopusdeploy_tenant." + localName
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTenantCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testTenantExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttrPair(resourceName, "cloned_from_tenant_id", firstSourceResourceName, "id"),
+					testTenantClonedFrom(resourceName, firstSourceResourceName),
+				),
+				Config: testAccTenantClone(firstSourceLocalName, secondSourceLocalName, localName, name, description, firstSourceLocalName),
+			},
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testTenantExists(resourceName),
+					resource.TestCheckResourceAttrPair(resourceName, "cloned_from_tenant_id", secondSourceResourceName, "id"),
+					testTenantClonedFrom(resourceName, secondSourceResourceName),
+				),
+				Config: testAccTenantClone(firstSourceLocalName, secondSourceLocalName, localName, name, description, secondSourceLocalName),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(resourceName, plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
+			},
+		},
+	})
+}
+
+func testAccTenantClone(firstSourceLocalName string, secondSourceLocalName string, localName string, name string, description string, cloneFromLocalName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_tenant" "%s" {
+		name = "%s"
+	}
+
+	resource "octopusdeploy_tenant" "%s" {
+		name = "%s"
+	}
+
+	resource "octopusdeploy_tenant" "%s" {
+		name                  = "%s"
+		description           = "%s"
+		cloned_from_tenant_id = octopusdeploy_tenant.%s.id
+	}`, firstSourceLocalName, firstSourceLocalName, secondSourceLocalName, secondSourceLocalName, localName, name, description, cloneFromLocalName)
+}
+
+func testTenantClonedFrom(prefix string, sourcePrefix string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[prefix]
+		if !ok {
+			return fmt.Errorf("Not found: %s", prefix)
+		}
+
+		source, ok := s.RootModule().Resources[sourcePrefix]
+		if !ok {
+			return fmt.Errorf("Not found: %s", sourcePrefix)
+		}
+
+		tenant, err := tenants.GetByID(octoClient, octoClient.GetSpaceID(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		if tenant.ClonedFromTenantID != source.Primary.ID {
+			return fmt.Errorf("tenant (%s) was cloned from %q, expected %q", tenant.GetID(), tenant.ClonedFromTenantID, source.Primary.ID)
+		}
+
+		return nil
+	}
 }
 
 func testAccTenantBasic(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, projectLocalName string, projectName string, projectDescription string, environmentLocalName string, environmentName string, localName string, name string, description string, isDisabled bool) string {

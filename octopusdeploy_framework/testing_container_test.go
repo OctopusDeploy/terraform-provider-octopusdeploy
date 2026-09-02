@@ -36,6 +36,9 @@ func TestMain(m *testing.M) {
 			CustomEnvironment: map[string]string{
 				"OCTOPUS__FeatureToggles__DeploymentFreezeByTenantFeatureToggle": "true",
 				"OCTOPUS__FeatureToggles__ExternalOidcFeedsFeatureToggle":        "true",
+				"OCTOPUS__FeatureToggles__RateLimitingV2FeatureToggle":           "true",
+				"OCTOPUS__FeatureToggles__WebhookTriggersFeatureToggle":          "true",
+				"DISABLE_RATE_LIMITING":                                          "Y",
 			},
 		}
 

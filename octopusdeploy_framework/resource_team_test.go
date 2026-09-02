@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -282,6 +283,158 @@ resource "octopusdeploy_scoped_user_role" "test_role" {
 	user_role_id = octopusdeploy_user_role.test_user_role.id
 	space_id     = "%s"
 }`, userRoleName, teamName, spaceID, spaceID)
+}
+
+// Regression test for #180: a team update must not delete a standalone scoped user role.
+func TestAccOctopusDeployTeamUpdateKeepsStandaloneScopedUserRole(t *testing.T) {
+	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	userRoleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTeamCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, space.ID, "before update"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("octopusdeploy_scoped_user_role.test_role", "id"),
+				),
+			},
+			// Change the team description to force a team update; the standalone role must survive
+			{
+				Config: testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, space.ID, "after update"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "description", "after update"),
+					resource.TestCheckResourceAttrSet("octopusdeploy_scoped_user_role.test_role", "id"),
+				),
+			},
+			{
+				Config:             testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, space.ID, "after update"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccTeamWithStandaloneScopedUserRoleConfigDesc(teamName, userRoleName, spaceID, description string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
+resource "octopusdeploy_user_role" "test_user_role" {
+	name = "%s"
+	description = "Test user role"
+	granted_space_permissions = ["EnvironmentView"]
+}
+
+resource "octopusdeploy_team" "test_team" {
+	name        = "%s"
+	description = "%s"
+	space_id    = "%s"
+}
+
+resource "octopusdeploy_scoped_user_role" "test_role" {
+	team_id      = octopusdeploy_team.test_team.id
+	user_role_id = octopusdeploy_user_role.test_user_role.id
+	space_id     = "%s"
+}`, userRoleName, teamName, description, spaceID, spaceID)
+}
+
+// Over-correction guard for #180: dropping an inline user_role on update must still delete that role
+// server-side. The ownership narrowing must not stop removing roles the team resource genuinely owned.
+// The scoped-user-role count is asserted against the server API rather than Terraform state, because the
+// read path filters roles out of state and would otherwise hide a role that leaked server-side.
+func TestAccOctopusDeployTeamUpdateRemovesDroppedInlineUserRole(t *testing.T) {
+	teamName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTeamCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTeamWithInlineUserRoles(teamName, space.ID, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "user_role.#", "2"),
+					testAccCheckTeamScopedUserRoleCount("octopusdeploy_team.test_team", 2),
+				),
+			},
+			// Drop one inline user_role; the previously-owned role must be removed server-side, leaving one.
+			{
+				Config: testAccTeamWithInlineUserRoles(teamName, space.ID, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("octopusdeploy_team.test_team", "user_role.#", "1"),
+					testAccCheckTeamScopedUserRoleCount("octopusdeploy_team.test_team", 1),
+				),
+			},
+			{
+				Config:             testAccTeamWithInlineUserRoles(teamName, space.ID, false),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+// testAccCheckTeamScopedUserRoleCount asserts the number of scoped user roles attached to the team on the
+// server, bypassing Terraform state so a role that leaked server-side cannot be masked by the read filter.
+func testAccCheckTeamScopedUserRoleCount(resourceName string, expected int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		team, err := octoClient.Teams.GetByID(rs.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("error retrieving team %s: %w", rs.Primary.ID, err)
+		}
+
+		roles, err := octoClient.Teams.GetScopedUserRoles(*team, core.SkipTakeQuery{})
+		if err != nil {
+			return fmt.Errorf("error retrieving scoped user roles for team %s: %w", rs.Primary.ID, err)
+		}
+
+		if len(roles.Items) != expected {
+			return fmt.Errorf("expected %d scoped user role(s) on team %s, got %d", expected, rs.Primary.ID, len(roles.Items))
+		}
+
+		return nil
+	}
+}
+
+func testAccTeamWithInlineUserRoles(teamName, spaceID string, includeSecond bool) string {
+	secondRole := ""
+	if includeSecond {
+		secondRole = fmt.Sprintf(`
+	user_role {
+		space_id     = "%s"
+		user_role_id = octopusdeploy_user_role.role_b.id
+	}`, spaceID)
+	}
+
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
+resource "octopusdeploy_user_role" "role_a" {
+	name                      = "%[1]s-a"
+	granted_space_permissions = ["EnvironmentView"]
+}
+
+resource "octopusdeploy_user_role" "role_b" {
+	name                      = "%[1]s-b"
+	granted_space_permissions = ["EnvironmentView"]
+}
+
+resource "octopusdeploy_team" "test_team" {
+	name        = "%[1]s"
+	description = "inline user role removal test"
+	space_id    = "%[2]s"
+
+	user_role {
+		space_id     = "%[2]s"
+		user_role_id = octopusdeploy_user_role.role_a.id
+	}%[3]s
+}`, teamName, spaceID, secondRole)
 }
 
 func testAccTeamImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {

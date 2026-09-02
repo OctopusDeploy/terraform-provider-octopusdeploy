@@ -384,3 +384,119 @@ func TestExpandGitUsernamePasswordPersistenceSettings(t *testing.T) {
 	require.NotNil(t, upCred.Password.NewValue)
 	assert.Equal(t, "secret", *upCred.Password.NewValue)
 }
+
+func TestCaCDeploymentSettingsChanged(t *testing.T) {
+	connectivityType := types.ObjectType{AttrTypes: getConnectivityPolicyAttrTypes()}
+	versioningType := types.ObjectType{AttrTypes: getVersioningStrategyAttrTypes()}
+	baseline := projectResourceModel{
+		DefaultGuidedFailureMode:        types.StringValue("EnvironmentDefault"),
+		DefaultToSkipIfAlreadyInstalled: types.BoolValue(false),
+		DeploymentChangesTemplate:       types.StringValue("changes"),
+		ReleaseNotesTemplate:            types.StringValue("notes"),
+		ConnectivityPolicy:              types.ListNull(connectivityType),
+		VersioningStrategy:              types.ListNull(versioningType),
+	}
+
+	assert.False(t, caCDeploymentSettingsChanged(baseline, baseline))
+
+	tests := map[string]func(*projectResourceModel){
+		"guided failure mode": func(model *projectResourceModel) {
+			model.DefaultGuidedFailureMode = types.StringValue("Off")
+		},
+		"skip if installed": func(model *projectResourceModel) {
+			model.DefaultToSkipIfAlreadyInstalled = types.BoolValue(true)
+		},
+		"deployment changes template": func(model *projectResourceModel) {
+			model.DeploymentChangesTemplate = types.StringValue("updated changes")
+		},
+		"release notes template": func(model *projectResourceModel) {
+			model.ReleaseNotesTemplate = types.StringValue("updated notes")
+		},
+		"connectivity policy": func(model *projectResourceModel) {
+			model.ConnectivityPolicy = types.ListValueMust(connectivityType, []attr.Value{})
+		},
+		"versioning strategy": func(model *projectResourceModel) {
+			model.VersioningStrategy = types.ListValueMust(versioningType, []attr.Value{})
+		},
+	}
+
+	for name, mutate := range tests {
+		t.Run(name, func(t *testing.T) {
+			plan := baseline
+			mutate(&plan)
+			assert.True(t, caCDeploymentSettingsChanged(plan, baseline))
+		})
+	}
+}
+
+func TestGitDefaultBranchRequiresConfiguredGitBranch(t *testing.T) {
+	repositoryURL, err := url.Parse("https://github.com/example/repository")
+	require.NoError(t, err)
+
+	validSettings := projects.NewGitPersistenceSettings(
+		".octopus",
+		credentials.NewAnonymous(),
+		"feature/cac",
+		nil,
+		repositoryURL,
+	)
+	emptyBranchSettings := projects.NewGitPersistenceSettings(
+		".octopus",
+		credentials.NewAnonymous(),
+		"",
+		nil,
+		repositoryURL,
+	)
+
+	branch, err := gitDefaultBranch(validSettings)
+	require.NoError(t, err)
+	assert.Equal(t, "feature/cac", branch)
+
+	for name, settings := range map[string]projects.PersistenceSettings{
+		"missing settings":  nil,
+		"database settings": projects.NewDatabasePersistenceSettings(),
+		"empty branch":      emptyBranchSettings,
+	} {
+		t.Run(name, func(t *testing.T) {
+			branch, err := gitDefaultBranch(settings)
+			assert.Error(t, err)
+			assert.Empty(t, branch)
+		})
+	}
+}
+
+func TestPreserveGitPasswordDoesNotReplaceRemoteMetadata(t *testing.T) {
+	remoteURL, err := url.Parse("https://github.com/example/remote")
+	require.NoError(t, err)
+	configuredURL, err := url.Parse("https://github.com/example/configured")
+	require.NoError(t, err)
+
+	remote := projects.NewGitPersistenceSettings(
+		".remote",
+		credentials.NewUsernamePassword("remote-user", nil),
+		"remote-main",
+		[]string{"remote-protected"},
+		remoteURL,
+	)
+	configured := projects.NewGitPersistenceSettings(
+		".configured",
+		credentials.NewUsernamePassword("configured-user", core.NewSensitiveValue("secret")),
+		"configured-main",
+		[]string{"configured-protected"},
+		configuredURL,
+	)
+
+	preserveGitPassword(remote, configured)
+
+	assert.Equal(t, ".remote", remote.BasePath())
+	assert.Equal(t, "remote-main", remote.DefaultBranch())
+	assert.Equal(t, []string{"remote-protected"}, remote.ProtectedBranchNamePatterns())
+	assert.Equal(t, remoteURL.String(), remote.URL().String())
+
+	credential, ok := remote.Credential().(*credentials.UsernamePassword)
+	require.True(t, ok)
+	assert.Equal(t, "remote-user", credential.Username)
+	require.NotNil(t, credential.Password)
+	require.NotNil(t, credential.Password.NewValue)
+	assert.Equal(t, "secret", *credential.Password.NewValue)
+}
