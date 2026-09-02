@@ -17,7 +17,7 @@ func TestAccOctopusDeployKubernetesAgentWorkerBasic(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	uri := "poll://abcdef0123456789/"
 	thumbprint := "1234567890ABCDEF1234567890ABCDEF12345678"
-	
+
 	workerPoolLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	workerPoolName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
@@ -94,7 +94,7 @@ func TestAccOctopusDeployKubernetesAgentWorkerWithUpgradeLocked(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	uri := "poll://abcdef0123456789/"
 	thumbprint := "1234567890ABCDEF1234567890ABCDEF12345678"
-	
+
 	workerPoolLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	workerPoolName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
@@ -122,7 +122,7 @@ func TestAccOctopusDeployKubernetesAgentWorkerImport(t *testing.T) {
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	uri := "poll://abcdef0123456789/"
 	thumbprint := "1234567890ABCDEF1234567890ABCDEF12345678"
-	
+
 	workerPoolLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	workerPoolName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
