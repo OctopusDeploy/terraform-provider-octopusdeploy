@@ -345,6 +345,8 @@ func (t *tenantCommonVariableResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
+	state.SpaceID = types.StringValue(spaceID)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -496,6 +498,8 @@ func (t *tenantCommonVariableResource) Update(ctx context.Context, req resource.
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	plan.SpaceID = types.StringValue(spaceID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
