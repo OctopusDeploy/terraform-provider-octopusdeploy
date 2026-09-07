@@ -272,9 +272,11 @@ func expandTeamsWebhooks(list types.List) []subscriptions.TeamsWebhookSubscripti
 }
 
 func flattenTeamsWebhooks(api []subscriptions.TeamsWebhookSubscriptionTarget, existing types.List) types.List {
-	nullList := types.ListValueMust(types.ObjectType{AttrTypes: teamsWebhookAttrTypes}, []attr.Value{})
 	if len(api) == 0 {
-		return nullList
+		if existing.IsNull() || existing.IsUnknown() {
+			return types.ListNull(types.ObjectType{AttrTypes: teamsWebhookAttrTypes})
+		}
+		return types.ListValueMust(types.ObjectType{AttrTypes: teamsWebhookAttrTypes}, []attr.Value{})
 	}
 
 	// URL is write-only: the API never returns it. Preserve existing URLs from state by id.

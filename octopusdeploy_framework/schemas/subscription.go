@@ -115,7 +115,6 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 						Build(),
 					"teams_webhooks": resourceSchema.ListNestedAttribute{
 						Optional:    true,
-						Computed:    true,
 						Description: "Microsoft Teams channels to post to via incoming webhooks.",
 						NestedObject: resourceSchema.NestedAttributeObject{
 							Attributes: map[string]resourceSchema.Attribute{
