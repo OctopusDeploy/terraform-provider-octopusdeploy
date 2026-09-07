@@ -237,7 +237,9 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.SlackFrequencyPeriod = types.StringValue(apiN.SlackFrequencyPeriod)
 	n.SlackChannelIds = util.FlattenStringList(apiN.SlackChannelIds)
 	n.SlackChannelNames = util.FlattenStringList(apiN.SlackChannelNames)
-	n.TeamsFrequencyPeriod = types.StringValue(apiN.TeamsFrequencyPeriod)
+	if apiN.TeamsFrequencyPeriod != "" {
+		n.TeamsFrequencyPeriod = types.StringValue(apiN.TeamsFrequencyPeriod)
+	}
 	n.TeamsWebhooks = flattenTeamsWebhooks(apiN.TeamsWebhooks, n.TeamsWebhooks)
 
 	// Optional-only fields: the API returns "" when unset. Preserve null in state so the
