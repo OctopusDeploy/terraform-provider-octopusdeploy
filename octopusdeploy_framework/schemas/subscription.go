@@ -113,7 +113,7 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 						Description("Deprecated and ignored. Slack digests always send a summary.").
 						Deprecated("slack_digest_format is no longer used and will be removed in a future release.").
 						Build(),
-					"teams_webhooks": resourceSchema.ListNestedAttribute{
+					"teams_channels": resourceSchema.ListNestedAttribute{
 						Optional:    true,
 						Description: "Microsoft Teams channels to post to via incoming webhooks.",
 						NestedObject: resourceSchema.NestedAttributeObject{
@@ -127,7 +127,7 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 									Required().
 									Description("Display name for this Teams channel.").
 									Build(),
-								"url": util.ResourceString().
+								"webhook_url": util.ResourceString().
 									Required().
 									Sensitive().
 									Description("Incoming webhook URL for this Teams channel.").

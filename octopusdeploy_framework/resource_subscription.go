@@ -15,10 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-var teamsWebhookAttrTypes = map[string]attr.Type{
-	"id":   types.StringType,
-	"name": types.StringType,
-	"url":  types.StringType,
+var teamsChannelAttrTypes = map[string]attr.Type{
+	"id":          types.StringType,
+	"name":        types.StringType,
+	"webhook_url": types.StringType,
 }
 
 type subscriptionModel struct {
@@ -45,7 +45,7 @@ type eventNotificationSubscriptionModel struct {
 	SlackFrequencyPeriod       types.String             `tfsdk:"slack_frequency_period"`
 	// Deprecated and ignored; not mapped to the API. Preserved from config/state so existing configs don't drift.
 	SlackDigestFormat          types.String             `tfsdk:"slack_digest_format"`
-	TeamsWebhooks              types.List               `tfsdk:"teams_webhooks"`
+	TeamsChannels              types.List               `tfsdk:"teams_channels"`
 	TeamsFrequencyPeriod       types.String             `tfsdk:"teams_frequency_period"`
 }
 
@@ -188,7 +188,7 @@ func expandSubscription(model *subscriptionModel) *subscriptions.Subscription {
 	s.EventNotificationSubscription.SlackChannelIds = util.ExpandStringList(n.SlackChannelIds)
 	s.EventNotificationSubscription.SlackChannelNames = util.ExpandStringList(n.SlackChannelNames)
 	s.EventNotificationSubscription.SlackFrequencyPeriod = n.SlackFrequencyPeriod.ValueString()
-	s.EventNotificationSubscription.TeamsChannels = expandTeamsWebhooks(n.TeamsWebhooks)
+	s.EventNotificationSubscription.TeamsChannels = expandTeamsChannels(n.TeamsChannels)
 	s.EventNotificationSubscription.TeamsFrequencyPeriod = n.TeamsFrequencyPeriod.ValueString()
 	s.EventNotificationSubscription.EmailTeams = util.ExpandStringSet(n.EmailTeams)
 	s.EventNotificationSubscription.WebhookTeams = util.ExpandStringSet(n.WebhookTeams)
@@ -240,7 +240,7 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	if apiN.TeamsFrequencyPeriod != "" {
 		n.TeamsFrequencyPeriod = types.StringValue(apiN.TeamsFrequencyPeriod)
 	}
-	n.TeamsWebhooks = flattenTeamsWebhooks(apiN.TeamsChannels, n.TeamsWebhooks)
+	n.TeamsChannels = flattenTeamsChannels(apiN.TeamsChannels, n.TeamsChannels)
 
 	// Optional-only fields: the API returns "" when unset. Preserve null in state so the
 	// plan value (null) stays consistent; only store a value when the API returned one.
@@ -254,7 +254,7 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.Filter = flattenSubscriptionFilter(apiN.Filter, n.Filter)
 }
 
-func expandTeamsWebhooks(list types.List) []subscriptions.TeamsChannelSubscriptionTarget {
+func expandTeamsChannels(list types.List) []subscriptions.TeamsChannelSubscriptionTarget {
 	if list.IsNull() || list.IsUnknown() {
 		return []subscriptions.TeamsChannelSubscriptionTarget{}
 	}
@@ -265,7 +265,7 @@ func expandTeamsWebhooks(list types.List) []subscriptions.TeamsChannelSubscripti
 			Id:   attrs["id"].(types.String).ValueString(),
 			Name: attrs["name"].(types.String).ValueString(),
 		}
-		if u := attrs["url"].(types.String); !u.IsNull() && !u.IsUnknown() {
+		if u := attrs["webhook_url"].(types.String); !u.IsNull() && !u.IsUnknown() {
 			t.WebhookUrl = core.NewSensitiveValue(u.ValueString())
 		}
 		result = append(result, t)
@@ -273,21 +273,21 @@ func expandTeamsWebhooks(list types.List) []subscriptions.TeamsChannelSubscripti
 	return result
 }
 
-func flattenTeamsWebhooks(api []subscriptions.TeamsChannelSubscriptionTarget, existing types.List) types.List {
+func flattenTeamsChannels(api []subscriptions.TeamsChannelSubscriptionTarget, existing types.List) types.List {
 	if len(api) == 0 {
 		if existing.IsNull() || existing.IsUnknown() {
-			return types.ListNull(types.ObjectType{AttrTypes: teamsWebhookAttrTypes})
+			return types.ListNull(types.ObjectType{AttrTypes: teamsChannelAttrTypes})
 		}
-		return types.ListValueMust(types.ObjectType{AttrTypes: teamsWebhookAttrTypes}, []attr.Value{})
+		return types.ListValueMust(types.ObjectType{AttrTypes: teamsChannelAttrTypes}, []attr.Value{})
 	}
 
-	// URL is write-only: the API never returns it. Preserve existing URLs from state by id.
+	// WebhookUrl is write-only: the API never returns it. Preserve existing values from state by id.
 	existingURLs := map[string]string{}
 	if !existing.IsNull() && !existing.IsUnknown() {
 		for _, elem := range existing.Elements() {
 			attrs := elem.(types.Object).Attributes()
 			id := attrs["id"].(types.String).ValueString()
-			if u, ok := attrs["url"].(types.String); ok && !u.IsNull() {
+			if u, ok := attrs["webhook_url"].(types.String); ok && !u.IsNull() {
 				existingURLs[id] = u.ValueString()
 			}
 		}
@@ -299,13 +299,13 @@ func flattenTeamsWebhooks(api []subscriptions.TeamsChannelSubscriptionTarget, ex
 		if u, ok := existingURLs[w.Id]; ok {
 			urlValue = types.StringValue(u)
 		}
-		elements = append(elements, types.ObjectValueMust(teamsWebhookAttrTypes, map[string]attr.Value{
-			"id":   types.StringValue(w.Id),
-			"name": types.StringValue(w.Name),
-			"url":  urlValue,
+		elements = append(elements, types.ObjectValueMust(teamsChannelAttrTypes, map[string]attr.Value{
+			"id":          types.StringValue(w.Id),
+			"name":        types.StringValue(w.Name),
+			"webhook_url": urlValue,
 		}))
 	}
-	return types.ListValueMust(types.ObjectType{AttrTypes: teamsWebhookAttrTypes}, elements)
+	return types.ListValueMust(types.ObjectType{AttrTypes: teamsChannelAttrTypes}, elements)
 }
 
 func flattenSubscriptionFilter(api *subscriptions.EventNotificationSubscriptionFilter, existing *subscriptionFilterModel) *subscriptionFilterModel {

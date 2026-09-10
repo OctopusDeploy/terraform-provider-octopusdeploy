@@ -44,7 +44,7 @@ Optional:
 - `slack_digest_format` (String, Deprecated) Deprecated and ignored. Slack digests always send a summary.
 - `slack_frequency_period` (String) How often to send Slack digests (e.g. '01:00:00' for hourly).
 - `teams_frequency_period` (String) How often to send Teams digests (e.g. '01:00:00' for hourly).
-- `teams_webhooks` (Attributes List) Microsoft Teams channels to post to via incoming webhooks. (see [below for nested schema](#nestedatt--event_notification_subscription--teams_webhooks))
+- `teams_channels` (Attributes List) Microsoft Teams channels to post to via incoming webhooks. (see [below for nested schema](#nestedatt--event_notification_subscription--teams_channels))
 - `webhook_header_key` (String) Custom header key to include in webhook requests.
 - `webhook_header_value` (String, Sensitive) Custom header value to include in webhook requests.
 - `webhook_teams` (Set of String) Team IDs to notify via webhook.
@@ -68,11 +68,11 @@ Optional:
 - `users` (List of String) Filter by user IDs.
 
 
-<a id="nestedatt--event_notification_subscription--teams_webhooks"></a>
-### Nested Schema for `event_notification_subscription.teams_webhooks`
+<a id="nestedatt--event_notification_subscription--teams_channels"></a>
+### Nested Schema for `event_notification_subscription.teams_channels`
 
 Required:
 
 - `id` (String) A unique identifier for this Teams channel.
 - `name` (String) Display name for this Teams channel.
-- `url` (String, Sensitive) Incoming webhook URL for this Teams channel.
+- `webhook_url` (String, Sensitive) Incoming webhook URL for this Teams channel.

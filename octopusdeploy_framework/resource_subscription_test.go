@@ -133,50 +133,50 @@ func TestAccSubscriptionTeams(t *testing.T) {
 		CheckDestroy:             testAccSubscriptionCheckDestroy(resourceName),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSubscriptionTeamsConfig(name, []teamsWebhook{{"id-1", "general", "https://example.com/webhook1"}}),
+				Config: testAccSubscriptionTeamsConfig(name, []teamsChannel{{"id-1", "general", "https://example.com/webhook1"}}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSubscriptionExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", name),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_webhooks.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_webhooks.0.id", "id-1"),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_webhooks.0.name", "general"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.id", "id-1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.name", "general"),
 					resource.TestCheckResourceAttrSet(resourceName, "event_notification_subscription.teams_frequency_period"),
 				),
 			},
 			{
-				Config: testAccSubscriptionTeamsConfig(name, []teamsWebhook{{"id-1", "general", "https://example.com/webhook1"}, {"id-2", "releases", "https://example.com/webhook2"}}),
+				Config: testAccSubscriptionTeamsConfig(name, []teamsChannel{{"id-1", "general", "https://example.com/webhook1"}, {"id-2", "releases", "https://example.com/webhook2"}}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSubscriptionExists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_webhooks.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_webhooks.1.id", "id-2"),
-					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_webhooks.1.name", "releases"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.id", "id-2"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.name", "releases"),
 				),
 			},
 			{
 				ResourceName:            resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"event_notification_subscription.teams_webhooks"},
+				ImportStateVerifyIgnore: []string{"event_notification_subscription.teams_channels"},
 			},
 		},
 	})
 }
 
-type teamsWebhook struct {
-	ID   string
-	Name string
-	URL  string
+type teamsChannel struct {
+	ID         string
+	Name       string
+	WebhookUrl string
 }
 
-func testAccSubscriptionTeamsConfig(resourceID string, webhooks []teamsWebhook) string {
-	var webhookBlocks strings.Builder
-	for _, w := range webhooks {
-		webhookBlocks.WriteString(fmt.Sprintf(`
+func testAccSubscriptionTeamsConfig(resourceID string, channels []teamsChannel) string {
+	var channelBlocks strings.Builder
+	for _, c := range channels {
+		channelBlocks.WriteString(fmt.Sprintf(`
     {
-      id   = %q
-      name = %q
-      url  = %q
-    },`, w.ID, w.Name, w.URL))
+      id          = %q
+      name        = %q
+      webhook_url = %q
+    },`, c.ID, c.Name, c.WebhookUrl))
 	}
 
 	return fmt.Sprintf(`
@@ -184,14 +184,14 @@ resource "octopusdeploy_subscription" "%s" {
   name = "%s"
 
   event_notification_subscription = {
-    teams_webhooks = [%s
+    teams_channels = [%s
     ]
 
     filter = {
       event_categories = ["Modified"]
     }
   }
-}`, resourceID, resourceID, webhookBlocks.String())
+}`, resourceID, resourceID, channelBlocks.String())
 }
 
 func testAccSubscriptionSlackConfig(resourceID string, channelIDs, channelNames []string) string {
