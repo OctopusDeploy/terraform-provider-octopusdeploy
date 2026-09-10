@@ -123,6 +123,83 @@ func TestAccSubscriptionSlack(t *testing.T) {
 	})
 }
 
+func TestAccSubscriptionTeams(t *testing.T) {
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := "octopusdeploy_subscription." + name
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy:             testAccSubscriptionCheckDestroy(resourceName),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSubscriptionTeamsConfig(name, []teamsChannel{{"id-1", "general", "https://example.com/webhook1"}}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSubscriptionExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.id", "id-1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.name", "general"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.webhook_url", "https://example.com/webhook1"),
+					resource.TestCheckResourceAttrSet(resourceName, "event_notification_subscription.teams_frequency_period"),
+				),
+			},
+			{
+				Config: testAccSubscriptionTeamsConfig(name, []teamsChannel{{"id-1", "general", "https://example.com/webhook1"}, {"id-2", "releases", "https://example.com/webhook2"}}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSubscriptionExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.webhook_url", "https://example.com/webhook1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.id", "id-2"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.name", "releases"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.webhook_url", "https://example.com/webhook2"),
+				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{
+					"event_notification_subscription.teams_channels.0.webhook_url",
+					"event_notification_subscription.teams_channels.1.webhook_url",
+				},
+			},
+		},
+	})
+}
+
+type teamsChannel struct {
+	ID         string
+	Name       string
+	WebhookUrl string
+}
+
+func testAccSubscriptionTeamsConfig(resourceID string, channels []teamsChannel) string {
+	var channelBlocks strings.Builder
+	for _, c := range channels {
+		channelBlocks.WriteString(fmt.Sprintf(`
+    {
+      id          = %q
+      name        = %q
+      webhook_url = %q
+    },`, c.ID, c.Name, c.WebhookUrl))
+	}
+
+	return fmt.Sprintf(`
+resource "octopusdeploy_subscription" "%s" {
+  name = "%s"
+
+  event_notification_subscription = {
+    teams_channels = [%s
+    ]
+
+    filter = {
+      event_categories = ["Modified"]
+    }
+  }
+}`, resourceID, resourceID, channelBlocks.String())
+}
+
 func testAccSubscriptionSlackConfig(resourceID string, channelIDs, channelNames []string) string {
 	channelIDsList := "[]"
 	if len(channelIDs) > 0 {
