@@ -188,7 +188,7 @@ func expandSubscription(model *subscriptionModel) *subscriptions.Subscription {
 	s.EventNotificationSubscription.SlackChannelIds = util.ExpandStringList(n.SlackChannelIds)
 	s.EventNotificationSubscription.SlackChannelNames = util.ExpandStringList(n.SlackChannelNames)
 	s.EventNotificationSubscription.SlackFrequencyPeriod = n.SlackFrequencyPeriod.ValueString()
-	s.EventNotificationSubscription.TeamsWebhooks = expandTeamsWebhooks(n.TeamsWebhooks)
+	s.EventNotificationSubscription.TeamsChannels = expandTeamsWebhooks(n.TeamsWebhooks)
 	s.EventNotificationSubscription.TeamsFrequencyPeriod = n.TeamsFrequencyPeriod.ValueString()
 	s.EventNotificationSubscription.EmailTeams = util.ExpandStringSet(n.EmailTeams)
 	s.EventNotificationSubscription.WebhookTeams = util.ExpandStringSet(n.WebhookTeams)
@@ -240,7 +240,7 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	if apiN.TeamsFrequencyPeriod != "" {
 		n.TeamsFrequencyPeriod = types.StringValue(apiN.TeamsFrequencyPeriod)
 	}
-	n.TeamsWebhooks = flattenTeamsWebhooks(apiN.TeamsWebhooks, n.TeamsWebhooks)
+	n.TeamsWebhooks = flattenTeamsWebhooks(apiN.TeamsChannels, n.TeamsWebhooks)
 
 	// Optional-only fields: the API returns "" when unset. Preserve null in state so the
 	// plan value (null) stays consistent; only store a value when the API returned one.
@@ -254,26 +254,26 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.Filter = flattenSubscriptionFilter(apiN.Filter, n.Filter)
 }
 
-func expandTeamsWebhooks(list types.List) []subscriptions.TeamsWebhookSubscriptionTarget {
+func expandTeamsWebhooks(list types.List) []subscriptions.TeamsChannelSubscriptionTarget {
 	if list.IsNull() || list.IsUnknown() {
-		return []subscriptions.TeamsWebhookSubscriptionTarget{}
+		return []subscriptions.TeamsChannelSubscriptionTarget{}
 	}
-	result := make([]subscriptions.TeamsWebhookSubscriptionTarget, 0, len(list.Elements()))
+	result := make([]subscriptions.TeamsChannelSubscriptionTarget, 0, len(list.Elements()))
 	for _, elem := range list.Elements() {
 		attrs := elem.(types.Object).Attributes()
-		t := subscriptions.TeamsWebhookSubscriptionTarget{
+		t := subscriptions.TeamsChannelSubscriptionTarget{
 			Id:   attrs["id"].(types.String).ValueString(),
 			Name: attrs["name"].(types.String).ValueString(),
 		}
 		if u := attrs["url"].(types.String); !u.IsNull() && !u.IsUnknown() {
-			t.Url = core.NewSensitiveValue(u.ValueString())
+			t.WebhookUrl = core.NewSensitiveValue(u.ValueString())
 		}
 		result = append(result, t)
 	}
 	return result
 }
 
-func flattenTeamsWebhooks(api []subscriptions.TeamsWebhookSubscriptionTarget, existing types.List) types.List {
+func flattenTeamsWebhooks(api []subscriptions.TeamsChannelSubscriptionTarget, existing types.List) types.List {
 	if len(api) == 0 {
 		if existing.IsNull() || existing.IsUnknown() {
 			return types.ListNull(types.ObjectType{AttrTypes: teamsWebhookAttrTypes})
