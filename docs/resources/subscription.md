@@ -43,8 +43,8 @@ Optional:
 - `slack_channel_names` (List of String) Display names for the channels in slack_channel_ids, in the same order. If a name is omitted, the channel ID is shown instead.
 - `slack_digest_format` (String, Deprecated) Deprecated and ignored. Slack digests always send a summary.
 - `slack_frequency_period` (String) How often to send Slack digests (e.g. '01:00:00' for hourly).
-- `teams_frequency_period` (String) How often to send Teams digests (e.g. '01:00:00' for hourly).
 - `teams_channels` (Attributes List) Microsoft Teams channels to post to via incoming webhooks. (see [below for nested schema](#nestedatt--event_notification_subscription--teams_channels))
+- `teams_frequency_period` (String) How often to send Teams digests (e.g. '01:00:00' for hourly).
 - `webhook_header_key` (String) Custom header key to include in webhook requests.
 - `webhook_header_value` (String, Sensitive) Custom header value to include in webhook requests.
 - `webhook_teams` (Set of String) Team IDs to notify via webhook.
