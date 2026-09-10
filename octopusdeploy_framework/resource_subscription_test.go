@@ -140,6 +140,7 @@ func TestAccSubscriptionTeams(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.id", "id-1"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.name", "general"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.webhook_url", "https://example.com/webhook1"),
 					resource.TestCheckResourceAttrSet(resourceName, "event_notification_subscription.teams_frequency_period"),
 				),
 			},
@@ -148,15 +149,20 @@ func TestAccSubscriptionTeams(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccSubscriptionExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.webhook_url", "https://example.com/webhook1"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.id", "id-2"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.name", "releases"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.1.webhook_url", "https://example.com/webhook2"),
 				),
 			},
 			{
 				ResourceName:            resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"event_notification_subscription.teams_channels"},
+				ImportStateVerifyIgnore: []string{
+					"event_notification_subscription.teams_channels.0.webhook_url",
+					"event_notification_subscription.teams_channels.1.webhook_url",
+				},
 			},
 		},
 	})
