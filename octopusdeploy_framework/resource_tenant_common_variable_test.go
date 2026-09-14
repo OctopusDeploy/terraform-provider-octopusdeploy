@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tenants"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -613,4 +614,210 @@ func testAccTenantCommonVariableCheckDestroyV2(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+// TestAccTenantCommonVariableImportV1
+// Covers the existing v1 import not having a space id, failing v2 updates after the import.
+func TestAccTenantCommonVariableImportV1(t *testing.T) {
+	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	librarySetLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	librarySetName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tenantLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tenantName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	variableLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resourceName := "octopusdeploy_tenant_common_variable." + variableLocalName
+	importedValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	updatedValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	var ids tenantCommonVariableIDs
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTenantCommonVariableCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTenantCommonVariableImportV1Dependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, librarySetLocalName, librarySetName, tenantLocalName, tenantName),
+				Check: testAccCaptureTenantCommonVariableIDs(
+					"octopusdeploy_tenant."+tenantLocalName,
+					"octopusdeploy_library_variable_set."+librarySetLocalName,
+					&ids,
+				),
+			},
+			{
+				// Create the variable V1, and import
+				PreConfig: func() {
+					if err := createTenantCommonVariableV1(ids, importedValue); err != nil {
+						t.Fatalf("create tenant common variable outside Terraform: %s", err)
+					}
+				},
+				Config:             testAccTenantCommonVariableImportV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, librarySetLocalName, librarySetName, tenantLocalName, tenantName, variableLocalName, importedValue),
+				ResourceName:       resourceName,
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return ids.v1ImportID(), nil
+				},
+				ImportStateCheck: testAccCheckImportedTenantCommonVariableHasSpaceID(&ids),
+			},
+			{
+				// The genuine update that used to fail.
+				Config: testAccTenantCommonVariableImportV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, librarySetLocalName, librarySetName, tenantLocalName, tenantName, variableLocalName, updatedValue),
+				Check: resource.ComposeTestCheckFunc(
+					testTenantCommonVariableExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "value", updatedValue),
+					testAccCheckTenantCommonVariableSpaceID(resourceName, &ids),
+				),
+			},
+		},
+	})
+}
+
+type tenantCommonVariableIDs struct {
+	spaceID              string
+	tenantID             string
+	libraryVariableSetID string
+	templateID           string
+}
+
+func (s tenantCommonVariableIDs) v1ImportID() string {
+	return strings.Join([]string{s.tenantID, s.libraryVariableSetID, s.templateID}, ":")
+}
+
+func testAccCaptureTenantCommonVariableIDs(tenantResourceName string, librarySetResourceName string, ids *tenantCommonVariableIDs) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		attribute := func(resourceName string, key string) (string, error) {
+			rs, ok := s.RootModule().Resources[resourceName]
+			if !ok {
+				return "", fmt.Errorf("resource %q was not found in Terraform state", resourceName)
+			}
+			value := rs.Primary.Attributes[key]
+			if value == "" && key == "id" {
+				value = rs.Primary.ID
+			}
+			if value == "" {
+				return "", fmt.Errorf("resource %q has no %s", resourceName, key)
+			}
+			return value, nil
+		}
+
+		var err error
+		if ids.tenantID, err = attribute(tenantResourceName, "id"); err != nil {
+			return err
+		}
+		if ids.libraryVariableSetID, err = attribute(librarySetResourceName, "id"); err != nil {
+			return err
+		}
+		if ids.templateID, err = attribute(librarySetResourceName, "template.0.id"); err != nil {
+			return err
+		}
+		if ids.spaceID, err = attribute(tenantResourceName, "space_id"); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func createTenantCommonVariableV1(ids tenantCommonVariableIDs, value string) error {
+	tenant, err := tenants.GetByID(octoClient, ids.spaceID, ids.tenantID)
+	if err != nil {
+		return err
+	}
+
+	tenantVariables, err := octoClient.Tenants.GetVariables(tenant)
+	if err != nil {
+		return err
+	}
+
+	libraryVariable, ok := tenantVariables.LibraryVariables[ids.libraryVariableSetID]
+	if !ok {
+		return fmt.Errorf("tenant %s is not connected to library variable set %s", ids.tenantID, ids.libraryVariableSetID)
+	}
+
+	libraryVariable.Variables[ids.templateID] = core.NewPropertyValue(value, false)
+
+	_, err = octoClient.Tenants.UpdateVariables(tenant, tenantVariables)
+	return err
+}
+
+func testAccCheckImportedTenantCommonVariableHasSpaceID(ids *tenantCommonVariableIDs) resource.ImportStateCheckFunc {
+	return func(states []*terraform.InstanceState) error {
+		for _, state := range states {
+			if state.Ephemeral.Type != "octopusdeploy_tenant_common_variable" {
+				continue
+			}
+
+			if spaceID := state.Attributes["space_id"]; spaceID != ids.spaceID {
+				return fmt.Errorf("imported tenant common variable has space_id %q, want %q", spaceID, ids.spaceID)
+			}
+			return nil
+		}
+
+		return fmt.Errorf("imported state does not contain a tenant common variable")
+	}
+}
+
+func testAccCheckTenantCommonVariableSpaceID(resourceName string, ids *tenantCommonVariableIDs) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		return resource.TestCheckResourceAttr(resourceName, "space_id", ids.spaceID)(s)
+	}
+}
+
+func testTenantCommonVariable(localName string, librarySetLocalName string, tenantLocalName string, value string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_tenant_common_variable" "%[1]s" {
+		library_variable_set_id = octopusdeploy_library_variable_set.%[2]s.id
+		template_id             = octopusdeploy_library_variable_set.%[2]s.template[0].id
+		tenant_id               = octopusdeploy_tenant.%[3]s.id
+		value                   = "%[4]s"
+		depends_on              = [octopusdeploy_tenant_project.project_environment]
+	}`, localName, librarySetLocalName, tenantLocalName, value)
+}
+
+func testAccTenantCommonVariableImportV1(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, projectLocalName string, projectName string, environmentLocalName string, environmentName string, librarySetLocalName string, librarySetName string, tenantLocalName string, tenantName string, variableLocalName string, value string) string {
+	return testAccTenantCommonVariableImportV1Dependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, librarySetLocalName, librarySetName, tenantLocalName, tenantName) + "\n" +
+		testTenantCommonVariable(variableLocalName, librarySetLocalName, tenantLocalName, value)
+}
+
+func testAccTenantCommonVariableImportV1Dependencies(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, projectLocalName string, projectName string, environmentLocalName string, environmentName string, librarySetLocalName string, librarySetName string, tenantLocalName string, tenantName string) string {
+	return testAccLifecycle(lifecycleLocalName, lifecycleName) + "\n" +
+		testAccProjectGroup(projectGroupLocalName, projectGroupName) + "\n" +
+		testAccEnvironment(environmentLocalName, environmentName, acctest.RandStringFromCharSet(20, acctest.CharSetAlpha), false, acctest.RandIntRange(1, 10), false) + "\n" +
+		fmt.Sprintf(`resource "octopusdeploy_library_variable_set" "%[1]s" {
+		name = "%[2]s"
+
+		template {
+			name          = "common variable template name"
+			label         = "common variable template label"
+			default_value = "default"
+
+			display_settings = {
+				"Octopus.ControlType" = "SingleLineText"
+			}
+		}
+	}
+
+	resource "octopusdeploy_project" "%[3]s" {
+		included_library_variable_sets = [octopusdeploy_library_variable_set.%[1]s.id]
+		lifecycle_id                   = octopusdeploy_lifecycle.%[4]s.id
+		name                           = "%[5]s"
+		project_group_id               = octopusdeploy_project_group.%[6]s.id
+	}
+
+	resource "octopusdeploy_tenant" "%[7]s" {
+		name = "%[8]s"
+	}
+
+	resource "octopusdeploy_tenant_project" "project_environment" {
+		tenant_id       = octopusdeploy_tenant.%[7]s.id
+		project_id      = octopusdeploy_project.%[3]s.id
+		environment_ids = [octopusdeploy_environment.%[9]s.id]
+	}`, librarySetLocalName, librarySetName, projectLocalName, lifecycleLocalName, projectName, projectGroupLocalName, tenantLocalName, tenantName, environmentLocalName)
 }

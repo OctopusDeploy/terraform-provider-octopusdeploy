@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tenants"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/variables"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -621,4 +622,202 @@ func testAccTenantProjectVariableCheckDestroyV2(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+// TestAccTenantProjectVariableImportV1
+// Covers the existing v1 import not having a space id, failing v2 updates after the import.
+func TestAccTenantProjectVariableImportV1(t *testing.T) {
+	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tenantLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	tenantName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	variableLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	resourceName := "octopusdeploy_tenant_project_variable." + variableLocalName
+	importedValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	updatedValue := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	var ids tenantProjectVariableIDs
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccTenantProjectVariableCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTenantProjectVariableImportV1Dependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, tenantLocalName, tenantName),
+				Check: testAccCaptureTenantProjectVariableIDs(
+					"octopusdeploy_tenant."+tenantLocalName,
+					"octopusdeploy_project."+projectLocalName,
+					"octopusdeploy_environment."+environmentLocalName,
+					&ids,
+				),
+			},
+			{
+				// Create the variable V1, and import
+				PreConfig: func() {
+					if err := createTenantProjectVariableV1(ids, importedValue); err != nil {
+						t.Fatalf("create tenant project variable outside Terraform: %s", err)
+					}
+				},
+				Config:             testAccTenantProjectVariableImportV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, tenantLocalName, tenantName, variableLocalName, importedValue),
+				ResourceName:       resourceName,
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateIdFunc: func(*terraform.State) (string, error) {
+					return ids.v1ImportID(), nil
+				},
+				ImportStateCheck: testAccCheckImportedTenantProjectVariableHasSpaceID(&ids),
+			},
+			{
+				Config: testAccTenantProjectVariableImportV1(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, tenantLocalName, tenantName, variableLocalName, updatedValue),
+				Check: resource.ComposeTestCheckFunc(
+					testTenantProjectVariableExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "value", updatedValue),
+					testAccCheckTenantProjectVariableSpaceID(resourceName, &ids),
+				),
+			},
+		},
+	})
+}
+
+type tenantProjectVariableIDs struct {
+	spaceID       string
+	tenantID      string
+	projectID     string
+	environmentID string
+	templateID    string
+}
+
+func (s tenantProjectVariableIDs) v1ImportID() string {
+	return strings.Join([]string{s.tenantID, s.projectID, s.environmentID, s.templateID}, ":")
+}
+
+func testAccCaptureTenantProjectVariableIDs(tenantResourceName string, projectResourceName string, environmentResourceName string, ids *tenantProjectVariableIDs) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		attribute := func(resourceName string, key string) (string, error) {
+			rs, ok := s.RootModule().Resources[resourceName]
+			if !ok {
+				return "", fmt.Errorf("resource %q was not found in Terraform state", resourceName)
+			}
+			value := rs.Primary.Attributes[key]
+			if value == "" {
+				if key == "id" {
+					value = rs.Primary.ID
+				}
+				if value == "" {
+					return "", fmt.Errorf("resource %q has no %s", resourceName, key)
+				}
+			}
+			return value, nil
+		}
+
+		var err error
+		if ids.tenantID, err = attribute(tenantResourceName, "id"); err != nil {
+			return err
+		}
+		if ids.projectID, err = attribute(projectResourceName, "id"); err != nil {
+			return err
+		}
+		if ids.environmentID, err = attribute(environmentResourceName, "id"); err != nil {
+			return err
+		}
+		if ids.templateID, err = attribute(projectResourceName, "template.0.id"); err != nil {
+			return err
+		}
+		if ids.spaceID, err = attribute(tenantResourceName, "space_id"); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func createTenantProjectVariableV1(ids tenantProjectVariableIDs, value string) error {
+	tenant, err := tenants.GetByID(octoClient, ids.spaceID, ids.tenantID)
+	if err != nil {
+		return err
+	}
+
+	tenantVariables, err := octoClient.Tenants.GetVariables(tenant)
+	if err != nil {
+		return err
+	}
+
+	projectVariable, ok := tenantVariables.ProjectVariables[ids.projectID]
+	if !ok {
+		return fmt.Errorf("tenant %s is not connected to project %s", ids.tenantID, ids.projectID)
+	}
+
+	environment, ok := projectVariable.Variables[ids.environmentID]
+	if !ok {
+		return fmt.Errorf("tenant %s is not connected to environment %s", ids.tenantID, ids.environmentID)
+	}
+
+	environment[ids.templateID] = core.NewPropertyValue(value, false)
+
+	_, err = octoClient.Tenants.UpdateVariables(tenant, tenantVariables)
+	return err
+}
+
+func testAccCheckImportedTenantProjectVariableHasSpaceID(ids *tenantProjectVariableIDs) resource.ImportStateCheckFunc {
+	return func(states []*terraform.InstanceState) error {
+		for _, state := range states {
+			if state.Ephemeral.Type != "octopusdeploy_tenant_project_variable" {
+				continue
+			}
+
+			if spaceID := state.Attributes["space_id"]; spaceID != ids.spaceID {
+				return fmt.Errorf("imported tenant project variable has space_id %q, want %q", spaceID, ids.spaceID)
+			}
+			return nil
+		}
+
+		return fmt.Errorf("imported state does not contain a tenant project variable")
+	}
+}
+
+func testAccCheckTenantProjectVariableSpaceID(resourceName string, ids *tenantProjectVariableIDs) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		return resource.TestCheckResourceAttr(resourceName, "space_id", ids.spaceID)(s)
+	}
+}
+
+func testAccTenantProjectVariableImportV1(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, projectLocalName string, projectName string, environmentLocalName string, environmentName string, tenantLocalName string, tenantName string, variableLocalName string, value string) string {
+	return testAccTenantProjectVariableImportV1Dependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, environmentLocalName, environmentName, tenantLocalName, tenantName) + "\n" +
+		testTenantProjectVariable(variableLocalName, environmentLocalName, projectLocalName, tenantLocalName, projectLocalName, value)
+}
+
+func testAccTenantProjectVariableImportV1Dependencies(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, projectLocalName string, projectName string, environmentLocalName string, environmentName string, tenantLocalName string, tenantName string) string {
+	return testAccLifecycle(lifecycleLocalName, lifecycleName) + "\n" +
+		testAccProjectGroup(projectGroupLocalName, projectGroupName) + "\n" +
+		testAccEnvironment(environmentLocalName, environmentName, acctest.RandStringFromCharSet(20, acctest.CharSetAlpha), false, acctest.RandIntRange(0, 10), false) + "\n" +
+		fmt.Sprintf(`resource "octopusdeploy_project" "%s" {
+		lifecycle_id     = octopusdeploy_lifecycle.%s.id
+		name             = "%s"
+		project_group_id = octopusdeploy_project_group.%s.id
+
+		template {
+			name  = "project variable template name"
+			label = "project variable template label"
+
+			display_settings = {
+				"Octopus.ControlType" = "SingleLineText"
+			}
+		}
+	}`, projectLocalName, lifecycleLocalName, projectName, projectGroupLocalName) + "\n" +
+		fmt.Sprintf(`resource "octopusdeploy_tenant" "%s" {
+		name = "%s"
+	}
+
+	resource "octopusdeploy_tenant_project" "project_environment" {
+		tenant_id       = octopusdeploy_tenant.%s.id
+		project_id      = octopusdeploy_project.%s.id
+		environment_ids = [octopusdeploy_environment.%s.id]
+	}`, tenantLocalName, tenantName, tenantLocalName, projectLocalName, environmentLocalName)
 }
