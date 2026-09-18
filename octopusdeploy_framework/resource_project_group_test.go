@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projectgroups"
@@ -94,6 +95,33 @@ func TestAccOctopusDeployProjectGroupMinimal(t *testing.T) {
 	})
 }
 
+func TestAccOctopusDeployProjectGroupSlugOnCreate(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_project_group." + localName
+
+	// A name that does not slugify to the configured slug: without the slug being sent on
+	// create, the server derives "<name>-group" and the apply fails with "Provider produced
+	// inconsistent result after apply".
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha) + " Group"
+	slug := strings.ToLower(acctest.RandStringFromCharSet(20, acctest.CharSetAlpha))
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testProjectGroupCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testOctopusDeployProjectGroupExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "name", name),
+					resource.TestCheckResourceAttr(prefix, "slug", slug),
+				),
+				Config: testProjectGroupWithSlug(localName, name, slug),
+			},
+		},
+	})
+}
+
 func TestAccOctopusDeployProjectGroupImport(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_project_group." + localName
@@ -132,6 +160,13 @@ func testProjectGroupMinimal(localName string, name string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_project_group" "%s" {
 		name = "%s"
 	}`, localName, name)
+}
+
+func testProjectGroupWithSlug(localName string, name string, slug string) string {
+	return fmt.Sprintf(`resource "octopusdeploy_project_group" "%s" {
+		name = "%s"
+		slug = "%s"
+	}`, localName, name, slug)
 }
 
 func testOctopusDeployProjectGroupExists(resourceName string) resource.TestCheckFunc {
