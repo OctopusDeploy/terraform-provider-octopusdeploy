@@ -139,6 +139,7 @@ func TestAccSubscriptionTeams(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.id", "id-1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.type", "Webhook"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.name", "general"),
 					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.teams_channels.0.webhook_url", "https://example.com/webhook1"),
 					resource.TestCheckResourceAttrSet(resourceName, "event_notification_subscription.teams_frequency_period"),

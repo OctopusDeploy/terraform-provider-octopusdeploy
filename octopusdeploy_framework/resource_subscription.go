@@ -17,8 +17,12 @@ import (
 
 var teamsChannelAttrTypes = map[string]attr.Type{
 	"id":          types.StringType,
+	"type":        types.StringType,
 	"name":        types.StringType,
 	"webhook_url": types.StringType,
+	"channel_id":  types.StringType,
+	"team_id":     types.StringType,
+	"team_name":   types.StringType,
 }
 
 type subscriptionModel struct {
@@ -237,9 +241,7 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.SlackFrequencyPeriod = types.StringValue(apiN.SlackFrequencyPeriod)
 	n.SlackChannelIds = util.FlattenStringList(apiN.SlackChannelIds)
 	n.SlackChannelNames = util.FlattenStringList(apiN.SlackChannelNames)
-	if apiN.TeamsFrequencyPeriod != "" {
-		n.TeamsFrequencyPeriod = types.StringValue(apiN.TeamsFrequencyPeriod)
-	}
+	n.TeamsFrequencyPeriod = types.StringValue(apiN.TeamsFrequencyPeriod)
 	n.TeamsChannels = flattenTeamsChannels(apiN.TeamsChannels, n.TeamsChannels)
 
 	// Optional-only fields: the API returns "" when unset. Preserve null in state so the
@@ -263,10 +265,23 @@ func expandTeamsChannels(list types.List) []subscriptions.TeamsChannelSubscripti
 		attrs := elem.(types.Object).Attributes()
 		t := subscriptions.TeamsChannelSubscriptionTarget{
 			Id:   attrs["id"].(types.String).ValueString(),
+			Type: attrs["type"].(types.String).ValueString(),
 			Name: attrs["name"].(types.String).ValueString(),
 		}
 		if u := attrs["webhook_url"].(types.String); !u.IsNull() && !u.IsUnknown() {
 			t.WebhookUrl = core.NewSensitiveValue(u.ValueString())
+		}
+		if v := attrs["channel_id"].(types.String); !v.IsNull() && !v.IsUnknown() {
+			s := v.ValueString()
+			t.ChannelId = &s
+		}
+		if v := attrs["team_id"].(types.String); !v.IsNull() && !v.IsUnknown() {
+			s := v.ValueString()
+			t.TeamId = &s
+		}
+		if v := attrs["team_name"].(types.String); !v.IsNull() && !v.IsUnknown() {
+			s := v.ValueString()
+			t.TeamName = &s
 		}
 		result = append(result, t)
 	}
@@ -282,27 +297,52 @@ func flattenTeamsChannels(api []subscriptions.TeamsChannelSubscriptionTarget, ex
 	}
 
 	// WebhookUrl is write-only: the API never returns it. Preserve existing values from state by id.
-	existingURLs := map[string]string{}
+	type existingState struct {
+		webhookURL string
+	}
+	existingByID := map[string]existingState{}
 	if !existing.IsNull() && !existing.IsUnknown() {
 		for _, elem := range existing.Elements() {
 			attrs := elem.(types.Object).Attributes()
 			id := attrs["id"].(types.String).ValueString()
+			s := existingState{}
 			if u, ok := attrs["webhook_url"].(types.String); ok && !u.IsNull() {
-				existingURLs[id] = u.ValueString()
+				s.webhookURL = u.ValueString()
 			}
+			existingByID[id] = s
 		}
 	}
 
 	elements := make([]attr.Value, 0, len(api))
 	for _, w := range api {
 		urlValue := types.StringNull()
-		if u, ok := existingURLs[w.Id]; ok {
-			urlValue = types.StringValue(u)
+		if s, ok := existingByID[w.Id]; ok && s.webhookURL != "" {
+			urlValue = types.StringValue(s.webhookURL)
+		}
+		channelType := w.Type
+		if channelType == "" {
+			channelType = "Webhook"
+		}
+		channelIDValue := types.StringNull()
+		if w.ChannelId != nil {
+			channelIDValue = types.StringValue(*w.ChannelId)
+		}
+		teamIDValue := types.StringNull()
+		if w.TeamId != nil {
+			teamIDValue = types.StringValue(*w.TeamId)
+		}
+		teamNameValue := types.StringNull()
+		if w.TeamName != nil {
+			teamNameValue = types.StringValue(*w.TeamName)
 		}
 		elements = append(elements, types.ObjectValueMust(teamsChannelAttrTypes, map[string]attr.Value{
 			"id":          types.StringValue(w.Id),
+			"type":        types.StringValue(channelType),
 			"name":        types.StringValue(w.Name),
 			"webhook_url": urlValue,
+			"channel_id":  channelIDValue,
+			"team_id":     teamIDValue,
+			"team_name":   teamNameValue,
 		}))
 	}
 	return types.ListValueMust(types.ObjectType{AttrTypes: teamsChannelAttrTypes}, elements)
