@@ -55,6 +55,10 @@ func (r *projectGroupTypeResource) Create(
 		SpaceID:     data.SpaceID.ValueString(),
 	}
 
+	if !data.Slug.IsNull() && !data.Slug.IsUnknown() {
+		newGroup.Slug = data.Slug.ValueString()
+	}
+
 	group, err := projectgroups.Add(r.Config.Client, &newGroup)
 	if err != nil {
 		resp.Diagnostics.AddError("unable to create project group", err.Error())

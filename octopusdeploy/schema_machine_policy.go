@@ -153,7 +153,7 @@ func getMachinePolicySchema() map[string]*schema.Schema {
 			Default:     5 * time.Minute,
 			Optional:    true,
 			Type:        schema.TypeInt,
-			Description: "In nanoseconds.",
+			Description: "In nanoseconds. Minimum value: 10000000000 (10 seconds). Maximum value: 1800000000000 (30 minutes).",
 		},
 		"description": getDescriptionSchema("machine policy"),
 		"id":          getIDSchema(),
@@ -201,7 +201,7 @@ func getMachinePolicySchema() map[string]*schema.Schema {
 			Default:     2 * time.Minute,
 			Optional:    true,
 			Type:        schema.TypeInt,
-			Description: "In nanoseconds.",
+			Description: "In nanoseconds. Minimum value: 10000000000 (10 seconds). Maximum value: 1800000000000 (30 minutes).",
 		},
 		"space_id": getSpaceIDSchema(),
 	}
