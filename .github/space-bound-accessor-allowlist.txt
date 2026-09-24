@@ -1,0 +1,19 @@
+# Files still calling the space-bound client accessors,
+# client.<Service>.GetByID(id) / client.<Service>.DeleteByID(id).
+#
+# Those resolve their path from the space the provider was configured for, so a
+# resource that has its own space_id ends up reading and deleting in the wrong
+# space. See https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/25
+#
+# Prefer the package level helpers, which take the space explicitly:
+#
+#   triggers.GetById(client, spaceID, id)
+#   triggers.DeleteById(client, spaceID, id)
+#   projects.GetByID(client, spaceID, id)
+#
+# Take a file off this list when its calls are converted. Nothing new should be
+# added to it.
+octopusdeploy/resource_external_feed_create_release_trigger.go
+octopusdeploy/resource_project_deployment_target_trigger.go
+octopusdeploy/resource_team.go
+octopusdeploy_framework/resource_git_trigger.go
