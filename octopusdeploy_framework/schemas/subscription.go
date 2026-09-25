@@ -128,6 +128,7 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 									Computed().
 									Description("Channel type: 'Webhook' for incoming webhook URLs, 'AppChannel' for channels via the Octopus Teams app. Defaults to 'Webhook'.").
 									Default("Webhook").
+									Validators(stringvalidator.OneOf("Webhook", "AppChannel")).
 									Build(),
 								"name": util.ResourceString().
 									Required().
