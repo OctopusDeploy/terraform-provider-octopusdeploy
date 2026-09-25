@@ -113,6 +113,53 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 						Description("Deprecated and ignored. Slack digests always send a summary.").
 						Deprecated("slack_digest_format is no longer used and will be removed in a future release.").
 						Build(),
+					"teams_channels": resourceSchema.ListNestedAttribute{
+						Optional:    true,
+						Description: "Microsoft Teams destinations to post to. Each entry is either a webhook channel (webhook_url set) or an app channel (channel_id, team_id, team_name set).",
+						NestedObject: resourceSchema.NestedAttributeObject{
+							Attributes: map[string]resourceSchema.Attribute{
+								"id": util.ResourceString().
+									Required().
+									Description("A unique identifier for this Teams channel entry.").
+									Validators(stringvalidator.LengthAtLeast(1)).
+									Build(),
+								"type": util.ResourceString().
+									Optional().
+									Computed().
+									Description("Channel type: 'Webhook' for incoming webhook URLs, 'AppChannel' for channels via the Octopus Teams app. Defaults to 'Webhook'.").
+									Default("Webhook").
+									Validators(stringvalidator.OneOf("Webhook", "AppChannel")).
+									Build(),
+								"name": util.ResourceString().
+									Required().
+									Description("Display name for this Teams channel.").
+									Build(),
+								"webhook_url": util.ResourceString().
+									Optional().
+									Sensitive().
+									Description("Incoming webhook URL. Set for Webhook-type channels; omit for AppChannel.").
+									Build(),
+								"channel_id": util.ResourceString().
+									Optional().
+									Description("Teams channel ID (e.g. '19:...@thread.tacv2'). Set for AppChannel-type entries.").
+									Build(),
+								"team_id": util.ResourceString().
+									Optional().
+									Description("Teams team ID (GUID). Set for AppChannel-type entries.").
+									Build(),
+								"team_name": util.ResourceString().
+									Optional().
+									Description("Teams team display name. Set for AppChannel-type entries.").
+									Build(),
+							},
+						},
+					},
+					"teams_frequency_period": util.ResourceString().
+						Optional().
+						Computed().
+						Description("How often to send Teams digests (e.g. '01:00:00' for hourly).").
+						Default("01:00:00").
+						Build(),
 					"webhook_uri": util.ResourceString().
 						Optional().
 						Description("URI to send webhook notifications to.").
