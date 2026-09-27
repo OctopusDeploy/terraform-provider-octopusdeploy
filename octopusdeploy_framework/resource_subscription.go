@@ -3,15 +3,27 @@ package octopusdeploy_framework
 import (
 	"context"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/subscriptions"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+var teamsChannelAttrTypes = map[string]attr.Type{
+	"id":          types.StringType,
+	"type":        types.StringType,
+	"name":        types.StringType,
+	"webhook_url": types.StringType,
+	"channel_id":  types.StringType,
+	"team_id":     types.StringType,
+	"team_name":   types.StringType,
+}
 
 type subscriptionModel struct {
 	Name                          types.String                        `tfsdk:"name"`
@@ -36,7 +48,9 @@ type eventNotificationSubscriptionModel struct {
 	SlackChannelNames          types.List               `tfsdk:"slack_channel_names"`
 	SlackFrequencyPeriod       types.String             `tfsdk:"slack_frequency_period"`
 	// Deprecated and ignored; not mapped to the API. Preserved from config/state so existing configs don't drift.
-	SlackDigestFormat types.String `tfsdk:"slack_digest_format"`
+	SlackDigestFormat          types.String             `tfsdk:"slack_digest_format"`
+	TeamsChannels              types.List               `tfsdk:"teams_channels"`
+	TeamsFrequencyPeriod       types.String             `tfsdk:"teams_frequency_period"`
 }
 
 type subscriptionFilterModel struct {
@@ -178,6 +192,8 @@ func expandSubscription(model *subscriptionModel) *subscriptions.Subscription {
 	s.EventNotificationSubscription.SlackChannelIds = util.ExpandStringList(n.SlackChannelIds)
 	s.EventNotificationSubscription.SlackChannelNames = util.ExpandStringList(n.SlackChannelNames)
 	s.EventNotificationSubscription.SlackFrequencyPeriod = n.SlackFrequencyPeriod.ValueString()
+	s.EventNotificationSubscription.TeamsChannels = expandTeamsChannels(n.TeamsChannels)
+	s.EventNotificationSubscription.TeamsFrequencyPeriod = n.TeamsFrequencyPeriod.ValueString()
 	s.EventNotificationSubscription.EmailTeams = util.ExpandStringSet(n.EmailTeams)
 	s.EventNotificationSubscription.WebhookTeams = util.ExpandStringSet(n.WebhookTeams)
 	s.EventNotificationSubscription.Filter = expandSubscriptionFilter(n.Filter)
@@ -225,6 +241,8 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.SlackFrequencyPeriod = types.StringValue(apiN.SlackFrequencyPeriod)
 	n.SlackChannelIds = util.FlattenStringList(apiN.SlackChannelIds)
 	n.SlackChannelNames = util.FlattenStringList(apiN.SlackChannelNames)
+	n.TeamsFrequencyPeriod = types.StringValue(apiN.TeamsFrequencyPeriod)
+	n.TeamsChannels = flattenTeamsChannels(apiN.TeamsChannels, n.TeamsChannels)
 
 	// Optional-only fields: the API returns "" when unset. Preserve null in state so the
 	// plan value (null) stays consistent; only store a value when the API returned one.
@@ -236,6 +254,98 @@ func flattenSubscription(api *subscriptions.Subscription, model *subscriptionMod
 	n.EmailTeams = util.FlattenStringSet(apiN.EmailTeams, n.EmailTeams)
 	n.WebhookTeams = util.FlattenStringSet(apiN.WebhookTeams, n.WebhookTeams)
 	n.Filter = flattenSubscriptionFilter(apiN.Filter, n.Filter)
+}
+
+func expandTeamsChannels(list types.List) []subscriptions.TeamsChannelSubscriptionTarget {
+	if list.IsNull() || list.IsUnknown() {
+		return []subscriptions.TeamsChannelSubscriptionTarget{}
+	}
+	result := make([]subscriptions.TeamsChannelSubscriptionTarget, 0, len(list.Elements()))
+	for _, elem := range list.Elements() {
+		attrs := elem.(types.Object).Attributes()
+		t := subscriptions.TeamsChannelSubscriptionTarget{
+			Id:   attrs["id"].(types.String).ValueString(),
+			Type: attrs["type"].(types.String).ValueString(),
+			Name: attrs["name"].(types.String).ValueString(),
+		}
+		if u := attrs["webhook_url"].(types.String); !u.IsNull() && !u.IsUnknown() {
+			t.WebhookUrl = core.NewSensitiveValue(u.ValueString())
+		}
+		if v := attrs["channel_id"].(types.String); !v.IsNull() && !v.IsUnknown() {
+			s := v.ValueString()
+			t.ChannelId = &s
+		}
+		if v := attrs["team_id"].(types.String); !v.IsNull() && !v.IsUnknown() {
+			s := v.ValueString()
+			t.TeamId = &s
+		}
+		if v := attrs["team_name"].(types.String); !v.IsNull() && !v.IsUnknown() {
+			s := v.ValueString()
+			t.TeamName = &s
+		}
+		result = append(result, t)
+	}
+	return result
+}
+
+func flattenTeamsChannels(api []subscriptions.TeamsChannelSubscriptionTarget, existing types.List) types.List {
+	if len(api) == 0 {
+		if existing.IsNull() || existing.IsUnknown() {
+			return types.ListNull(types.ObjectType{AttrTypes: teamsChannelAttrTypes})
+		}
+		return types.ListValueMust(types.ObjectType{AttrTypes: teamsChannelAttrTypes}, []attr.Value{})
+	}
+
+	// WebhookUrl is write-only: the API never returns it. Preserve existing values from state by id.
+	type existingState struct {
+		webhookURL string
+	}
+	existingByID := map[string]existingState{}
+	if !existing.IsNull() && !existing.IsUnknown() {
+		for _, elem := range existing.Elements() {
+			attrs := elem.(types.Object).Attributes()
+			id := attrs["id"].(types.String).ValueString()
+			s := existingState{}
+			if u, ok := attrs["webhook_url"].(types.String); ok && !u.IsNull() {
+				s.webhookURL = u.ValueString()
+			}
+			existingByID[id] = s
+		}
+	}
+
+	elements := make([]attr.Value, 0, len(api))
+	for _, w := range api {
+		urlValue := types.StringNull()
+		if s, ok := existingByID[w.Id]; ok && s.webhookURL != "" {
+			urlValue = types.StringValue(s.webhookURL)
+		}
+		channelType := w.Type
+		if channelType == "" {
+			channelType = "Webhook"
+		}
+		channelIDValue := types.StringNull()
+		if w.ChannelId != nil {
+			channelIDValue = types.StringValue(*w.ChannelId)
+		}
+		teamIDValue := types.StringNull()
+		if w.TeamId != nil {
+			teamIDValue = types.StringValue(*w.TeamId)
+		}
+		teamNameValue := types.StringNull()
+		if w.TeamName != nil {
+			teamNameValue = types.StringValue(*w.TeamName)
+		}
+		elements = append(elements, types.ObjectValueMust(teamsChannelAttrTypes, map[string]attr.Value{
+			"id":          types.StringValue(w.Id),
+			"type":        types.StringValue(channelType),
+			"name":        types.StringValue(w.Name),
+			"webhook_url": urlValue,
+			"channel_id":  channelIDValue,
+			"team_id":     teamIDValue,
+			"team_name":   teamNameValue,
+		}))
+	}
+	return types.ListValueMust(types.ObjectType{AttrTypes: teamsChannelAttrTypes}, elements)
 }
 
 func flattenSubscriptionFilter(api *subscriptions.EventNotificationSubscriptionFilter, existing *subscriptionFilterModel) *subscriptionFilterModel {
