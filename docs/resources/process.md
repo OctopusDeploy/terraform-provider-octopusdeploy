@@ -191,7 +191,7 @@ resource "octopusdeploy_process_step" "deploy_microservice" {
       acquisition_location = ""
       properties = {
         "PackageParameterName" = "db-package"
-        "SelectionMode"        = "deferred"
+        "SelectionMode"        = "immediate"
       }
     }
   }
