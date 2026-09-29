@@ -1,0 +1,43 @@
+name: Prevent space-bound client accessors
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  detect-space-bound-accessors:
+    name: Prevent Space-Bound Accessors
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for space-bound GetByID and DeleteByID calls
+        run: |
+          allowlist=.github/space-bound-accessor-allowlist.txt
+
+          matches=$(grep -rEn 'client\.[A-Za-z]+\.(GetByID|DeleteByID)\(' \
+            octopusdeploy octopusdeploy_framework \
+            --include='*.go' | grep -v '_test\.go:' || true)
+
+          violations=""
+          while IFS= read -r match; do
+            [ -z "$match" ] && continue
+            file="${match%%:*}"
+            if ! grep -qxF "$file" "$allowlist"; then
+              violations="${violations}${match}"$'\n'
+            fi
+          done <<< "$matches"
+
+          if [ -n "$violations" ]; then
+            echo "$violations"
+            echo "::error::client.<Service>.GetByID / DeleteByID resolve their path from the space the provider was configured for, so a resource with its own space_id reads and deletes in the wrong space. Use the package level helpers that take the space explicitly, for example triggers.GetById(client, spaceID, id) or projects.GetByID(client, spaceID, id). See $allowlist."
+            exit 1
+          fi
+
+          echo "::notice::No new space-bound accessor calls detected."
