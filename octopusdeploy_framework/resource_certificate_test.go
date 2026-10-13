@@ -71,7 +71,7 @@ func TestAccOctopusDeployCertificateReplace(t *testing.T) {
 						return nil
 					},
 				),
-				Config: testCertificateBasic(localName, name, originalCertificateData, password),
+				Config: testCertificateReplace(localName, name, originalCertificateData, password),
 			},
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -94,7 +94,7 @@ func TestAccOctopusDeployCertificateReplace(t *testing.T) {
 						return nil
 					},
 				),
-				Config: testCertificateBasic(localName, name, replacementCertificateData, password),
+				Config: testCertificateReplace(localName, name, replacementCertificateData, password),
 			},
 		},
 	})
@@ -171,6 +171,18 @@ resource "octopusdeploy_certificate" "%s" {
       index(local.environments[*].key, scope)
     ].id
   ]
+}
+`, localName, certificateData, name, password)
+}
+
+// testCertificateReplace has no environment scoping: Octopus keeps the replaced certificate as an
+// archived copy that Terraform doesn't manage, and its scoping would block deleting the environments.
+func testCertificateReplace(localName string, name string, certificateData string, password string) string {
+	return fmt.Sprintf(`
+resource "octopusdeploy_certificate" "%s" {
+  certificate_data = "%s"
+  name             = "%s"
+  password         = "%s"
 }
 `, localName, certificateData, name, password)
 }
