@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -104,7 +105,6 @@ func TestAccOctopusDeploySpaceDefaultLifecycle_AdoptRenamed(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_space_default_lifecycle." + localName
 	renamedName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	otherName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	var spaceID, defaultLifecycleID string
 
@@ -121,7 +121,7 @@ func TestAccOctopusDeploySpaceDefaultLifecycle_AdoptRenamed(t *testing.T) {
 				},
 			},
 			{
-				// Rename the default lifecycle and add another lifecycle, so it can no longer be found by name
+				// Rename the default lifecycle and give its name to another lifecycle, so that it cannot be found by name
 				PreConfig: func() {
 					all, err := lifecycles.GetAll(octoClient, spaceID)
 					if err != nil || len(all) != 1 {
@@ -134,7 +134,7 @@ func TestAccOctopusDeploySpaceDefaultLifecycle_AdoptRenamed(t *testing.T) {
 						t.Fatalf("unable to rename default lifecycle: %v", err)
 					}
 
-					other := lifecycles.NewLifecycle(otherName)
+					other := lifecycles.NewLifecycle(schemas.SpaceDefaultLifecycleName)
 					other.SpaceID = spaceID
 					if _, err := lifecycles.Add(octoClient, other); err != nil {
 						t.Fatalf("unable to add lifecycle: %v", err)

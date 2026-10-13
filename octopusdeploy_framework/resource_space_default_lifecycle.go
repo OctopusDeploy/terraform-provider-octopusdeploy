@@ -198,13 +198,8 @@ func (r *spaceDefaultLifecycleResource) findSpaceDefaultLifecycle(spaceID string
 	if err != nil {
 		return nil, err
 	}
-	for _, l := range all {
-		if l.Name == schemas.SpaceDefaultLifecycleName {
-			return l, nil
-		}
-	}
-
-	// The default lifecycle may have been renamed. It is created together with the space, so fall back to the oldest lifecycle.
+	// The default lifecycle is created together with the space, so it is the oldest lifecycle. Its name cannot be relied on,
+	// as it may have been renamed and another lifecycle may since have been given the name.
 	var oldest *lifecycles.Lifecycle
 	oldestNumber := 0
 	for _, l := range all {
@@ -213,10 +208,17 @@ func (r *spaceDefaultLifecycleResource) findSpaceDefaultLifecycle(spaceID string
 			oldest, oldestNumber = l, number
 		}
 	}
-	if oldest == nil {
-		return nil, fmt.Errorf("could not find the default lifecycle in space '%s'", spaceID)
+	if oldest != nil {
+		return oldest, nil
 	}
-	return oldest, nil
+
+	// Fall back to the name when the lifecycle IDs cannot be ordered.
+	for _, l := range all {
+		if l.Name == schemas.SpaceDefaultLifecycleName {
+			return l, nil
+		}
+	}
+	return nil, fmt.Errorf("could not find the default lifecycle in space '%s'", spaceID)
 }
 
 // lifecycleIDNumber returns the numeric part of a lifecycle ID such as "Lifecycles-42".

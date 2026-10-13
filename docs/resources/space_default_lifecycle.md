@@ -4,7 +4,7 @@ page_title: "octopusdeploy_space_default_lifecycle Resource - terraform-provider
 subcategory: ""
 description: |-
   Manages the Default Lifecycle that Octopus creates automatically with a space.
-  The lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space (the lifecycle named Default Lifecycle, or the oldest lifecycle of the space when it has been renamed), and destroying it removes its phases, so that referenced environments can be deleted, and removes it from the Terraform state. The lifecycle itself is deleted together with the space.
+  The lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space (the oldest lifecycle of the space, which is the one created with it, even if it has since been renamed), and destroying it removes its phases, so that referenced environments can be deleted, and removes it from the Terraform state. The lifecycle itself is deleted together with the space.
   Compatible with Octopus 2025.3 and later.
 ---
 
@@ -12,7 +12,7 @@ description: |-
 
 Manages the `Default Lifecycle` that Octopus creates automatically with a space.
 
-The lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space (the lifecycle named `Default Lifecycle`, or the oldest lifecycle of the space when it has been renamed), and destroying it removes its phases, so that referenced environments can be deleted, and removes it from the Terraform state. The lifecycle itself is deleted together with the space.
+The lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space (the oldest lifecycle of the space, which is the one created with it, even if it has since been renamed), and destroying it removes its phases, so that referenced environments can be deleted, and removes it from the Terraform state. The lifecycle itself is deleted together with the space.
 
 Compatible with Octopus 2025.3 and later.
 

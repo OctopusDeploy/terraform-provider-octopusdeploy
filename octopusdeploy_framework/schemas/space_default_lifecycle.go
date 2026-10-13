@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"context"
+	"math"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -77,7 +78,7 @@ func SpaceDefaultLifecyclePhaseAttrTypes() map[string]attr.Type {
 func (s SpaceDefaultLifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
 		MarkdownDescription: "Manages the `" + SpaceDefaultLifecycleName + "` that Octopus creates automatically with a space." +
-			"\n\nThe lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space (the lifecycle named `" + SpaceDefaultLifecycleName + "`, or the oldest lifecycle of the space when it has been renamed), " +
+			"\n\nThe lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space (the oldest lifecycle of the space, which is the one created with it, even if it has since been renamed), " +
 			"and destroying it removes its phases, so that referenced environments can be deleted, and removes it from the Terraform state. The lifecycle itself is deleted together with the space." +
 			"\n\nCompatible with Octopus 2025.3 and later.",
 		Attributes: map[string]resourceSchema.Attribute{
@@ -121,6 +122,7 @@ func (s SpaceDefaultLifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 						"minimum_environments_before_promotion": util.ResourceInt64().
 							Optional().Computed().
 							Default(int64(0)).
+							Validators(int64validator.Between(0, math.MaxInt32)).
 							Description("The number of units required before a release can enter the next phase. If 0, all environments are required.").
 							Build(),
 						"is_optional_phase": util.ResourceBool().
@@ -163,7 +165,7 @@ func getSpaceDefaultLifecycleRetentionSchema(description string) resourceSchema.
 				Build(),
 			"quantity_to_keep": util.ResourceInt64().
 				Optional().
-				Validators(int64validator.AtLeast(1)).
+				Validators(int64validator.Between(1, math.MaxInt32)).
 				Description("The number of days/releases to keep. Required when `strategy` is `Count`.").
 				Build(),
 			"unit": util.ResourceString().
