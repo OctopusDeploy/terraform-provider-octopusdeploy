@@ -42,7 +42,7 @@ func (s *spaceResource) Configure(_ context.Context, req resource.ConfigureReque
 }
 
 func (s *spaceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data schemas.SpaceModel
+	var data schemas.SpaceResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -109,13 +109,23 @@ func (s *spaceResource) Create(ctx context.Context, req resource.CreateRequest, 
 	effectiveTeams := s.getEffectiveTeams(ctx, createdSpace)
 	data.SpaceManagersTeams = types.SetValueMust(types.StringType, effectiveTeams)
 
+	defaultLifecycle, diags := s.applySpaceDefaultLifecycle(ctx, createdSpace.ID, "", data.DefaultLifecycle)
+	if diags.HasError() {
+		// the space exists at this point, so keep it in state to allow it to be cleaned up
+		resp.Diagnostics.Append(diags...)
+		data.DefaultLifecycle = types.ObjectNull(schemas.SpaceDefaultLifecycleAttrTypes())
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+	data.DefaultLifecycle = defaultLifecycle
+
 	tflog.Debug(ctx, fmt.Sprintf("state space %#v", data))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	util.Created(ctx, "space")
 }
 
 func (s *spaceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data schemas.SpaceModel
+	var data schemas.SpaceResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -142,13 +152,20 @@ func (s *spaceResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	effectiveTeams := s.getEffectiveTeams(ctx, spaceResult)
 	data.SpaceManagersTeams = types.SetValueMust(types.StringType, effectiveTeams)
 
+	defaultLifecycle, diags := s.readSpaceDefaultLifecycle(ctx, spaceResult.ID, data.DefaultLifecycle)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	data.DefaultLifecycle = defaultLifecycle
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 	tflog.Info(ctx, fmt.Sprintf("space read (%s)", data.ID))
 }
 
 func (s *spaceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	// read plan and state
-	var plan, state schemas.SpaceModel
+	var plan, state schemas.SpaceResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -210,6 +227,13 @@ func (s *spaceResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	effectiveTeams := s.getEffectiveTeams(ctx, updatedSpace)
 	plan.SpaceManagersTeams = types.SetValueMust(types.StringType, effectiveTeams)
 
+	defaultLifecycle, diags := s.applySpaceDefaultLifecycle(ctx, spaceResult.ID, getSpaceDefaultLifecycleID(ctx, state.DefaultLifecycle), plan.DefaultLifecycle)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	plan.DefaultLifecycle = defaultLifecycle
+
 	// save plan to state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -223,7 +247,7 @@ func (s *spaceResource) getEffectiveTeams(ctx context.Context, updatedSpace *spa
 }
 
 func (s *spaceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data schemas.SpaceModel
+	var data schemas.SpaceResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return

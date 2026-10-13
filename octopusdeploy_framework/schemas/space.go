@@ -28,6 +28,12 @@ type SpaceModel struct {
 	ResourceModel
 }
 
+// SpaceResourceModel extends SpaceModel with attributes only available on the resource.
+type SpaceResourceModel struct {
+	SpaceModel
+	DefaultLifecycle types.Object `tfsdk:"default_lifecycle"`
+}
+
 func (s SpaceSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
 		Description: "This resource manages spaces in Octopus Deploy.",
@@ -60,6 +66,7 @@ func (s SpaceSchema) GetResourceSchema() resourceSchema.Schema {
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
 			},
+			"default_lifecycle": getSpaceDefaultLifecycleResourceSchema(),
 		},
 	}
 }
