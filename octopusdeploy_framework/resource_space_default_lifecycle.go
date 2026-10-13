@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
@@ -157,9 +158,22 @@ func (r *spaceDefaultLifecycleResource) Delete(ctx context.Context, req resource
 	}
 }
 
-// ImportState accepts the ID of the space; the default lifecycle of that space is looked up on read.
+// ImportState accepts either "<space-id>", in which case the default lifecycle of that space is looked up on read,
+// or "<space-id>:<lifecycle-id>" to import a specific lifecycle, e.g. one that has been renamed.
 func (r *spaceDefaultLifecycleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("space_id"), req, resp)
+	spaceID, lifecycleID, hasLifecycleID := strings.Cut(req.ID, ":")
+	if spaceID == "" || (hasLifecycleID && lifecycleID == "") {
+		resp.Diagnostics.AddError(
+			"Invalid import ID",
+			fmt.Sprintf("Expected an import ID in the format '<space-id>' or '<space-id>:<lifecycle-id>', got '%s'.", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("space_id"), spaceID)...)
+	if hasLifecycleID {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), lifecycleID)...)
+	}
 }
 
 func (r *spaceDefaultLifecycleResource) update(ctx context.Context, existing *lifecycles.Lifecycle, plan *schemas.SpaceDefaultLifecycleResourceModel) diag.Diagnostics {
@@ -189,10 +203,33 @@ func (r *spaceDefaultLifecycleResource) findSpaceDefaultLifecycle(spaceID string
 			return l, nil
 		}
 	}
-	if len(all) == 1 {
-		return all[0], nil
+
+	// The default lifecycle may have been renamed. It is created together with the space, so fall back to the oldest lifecycle.
+	var oldest *lifecycles.Lifecycle
+	oldestNumber := 0
+	for _, l := range all {
+		number, ok := lifecycleIDNumber(l.GetID())
+		if ok && (oldest == nil || number < oldestNumber) {
+			oldest, oldestNumber = l, number
+		}
 	}
-	return nil, fmt.Errorf("could not find a lifecycle named '%s' in space '%s'", schemas.SpaceDefaultLifecycleName, spaceID)
+	if oldest == nil {
+		return nil, fmt.Errorf("could not find the default lifecycle in space '%s'", spaceID)
+	}
+	return oldest, nil
+}
+
+// lifecycleIDNumber returns the numeric part of a lifecycle ID such as "Lifecycles-42".
+func lifecycleIDNumber(id string) (int, bool) {
+	index := strings.LastIndex(id, "-")
+	if index < 0 {
+		return 0, false
+	}
+	number, err := strconv.Atoi(id[index+1:])
+	if err != nil {
+		return 0, false
+	}
+	return number, true
 }
 
 func isNotFound(err error) bool {

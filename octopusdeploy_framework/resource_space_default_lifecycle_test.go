@@ -84,6 +84,70 @@ func TestAccOctopusDeploySpaceDefaultLifecycle_WithPhases(t *testing.T) {
 					return rs.Primary.Attributes["space_id"], nil
 				},
 			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources[resourceName]
+					if !ok {
+						return "", fmt.Errorf("Not found: %s", resourceName)
+					}
+					return rs.Primary.Attributes["space_id"] + ":" + rs.Primary.ID, nil
+				},
+			},
+		},
+	})
+}
+
+func TestAccOctopusDeploySpaceDefaultLifecycle_AdoptRenamed(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := "octopusdeploy_space_default_lifecycle." + localName
+	renamedName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	otherName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	var spaceID, defaultLifecycleID string
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testSpaceCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		Steps: []resource.TestStep{
+			{
+				Config: testSpaceDefaultLifecycleSpace(localName),
+				Check: func(s *terraform.State) error {
+					spaceID = s.RootModule().Resources["octopusdeploy_space."+localName].Primary.ID
+					return nil
+				},
+			},
+			{
+				// Rename the default lifecycle and add another lifecycle, so it can no longer be found by name
+				PreConfig: func() {
+					all, err := lifecycles.GetAll(octoClient, spaceID)
+					if err != nil || len(all) != 1 {
+						t.Fatalf("expected exactly one lifecycle in space %s: %v", spaceID, err)
+					}
+					defaultLifecycle := all[0]
+					defaultLifecycleID = defaultLifecycle.GetID()
+					defaultLifecycle.Name = renamedName
+					if _, err := lifecycles.Update(octoClient, defaultLifecycle); err != nil {
+						t.Fatalf("unable to rename default lifecycle: %v", err)
+					}
+
+					other := lifecycles.NewLifecycle(otherName)
+					other.SpaceID = spaceID
+					if _, err := lifecycles.Add(octoClient, other); err != nil {
+						t.Fatalf("unable to add lifecycle: %v", err)
+					}
+				},
+				Config: testSpaceDefaultLifecycleEmpty(localName),
+				Check: resource.ComposeTestCheckFunc(
+					func(s *terraform.State) error {
+						return resource.TestCheckResourceAttr(resourceName, "id", defaultLifecycleID)(s)
+					},
+					resource.TestCheckResourceAttr(resourceName, "name", renamedName),
+				),
+			},
 		},
 	})
 }

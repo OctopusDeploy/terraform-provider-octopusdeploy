@@ -77,7 +77,7 @@ func SpaceDefaultLifecyclePhaseAttrTypes() map[string]attr.Type {
 func (s SpaceDefaultLifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 	return resourceSchema.Schema{
 		MarkdownDescription: "Manages the `" + SpaceDefaultLifecycleName + "` that Octopus creates automatically with a space." +
-			"\n\nThe lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space, " +
+			"\n\nThe lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space (the lifecycle named `" + SpaceDefaultLifecycleName + "`, or the oldest lifecycle of the space when it has been renamed), " +
 			"and destroying it removes its phases, so that referenced environments can be deleted, and removes it from the Terraform state. The lifecycle itself is deleted together with the space." +
 			"\n\nCompatible with Octopus 2025.3 and later.",
 		Attributes: map[string]resourceSchema.Attribute{
