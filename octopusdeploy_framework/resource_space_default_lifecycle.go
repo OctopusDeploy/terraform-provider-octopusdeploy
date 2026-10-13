@@ -30,6 +30,7 @@ type spaceDefaultLifecycleResource struct {
 
 var _ resource.Resource = &spaceDefaultLifecycleResource{}
 var _ resource.ResourceWithImportState = &spaceDefaultLifecycleResource{}
+var _ resource.ResourceWithModifyPlan = &spaceDefaultLifecycleResource{}
 
 func NewSpaceDefaultLifecycleResource() resource.Resource {
 	return &spaceDefaultLifecycleResource{}
@@ -48,6 +49,55 @@ func (r *spaceDefaultLifecycleResource) Configure(_ context.Context, req resourc
 	if r.Config != nil {
 		resp.Diagnostics.Append(r.Config.EnsureResourceCompatibilityByVersion(spaceDefaultLifecycleResourceName, "2025.3")...)
 	}
+}
+
+// ModifyPlan matches the planned phases to the phases in state by name. Elements of a nested list are otherwise
+// correlated by position, which would give an inserted or reordered phase the ID of a different phase.
+func (r *spaceDefaultLifecycleResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() {
+		return
+	}
+
+	var plan, state schemas.SpaceDefaultLifecycleResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() || plan.Phases.IsNull() || plan.Phases.IsUnknown() {
+		return
+	}
+
+	var planned, prior []schemas.SpaceDefaultLifecyclePhaseModel
+	resp.Diagnostics.Append(plan.Phases.ElementsAs(ctx, &planned, false)...)
+	if !state.Phases.IsNull() && !state.Phases.IsUnknown() {
+		resp.Diagnostics.Append(state.Phases.ElementsAs(ctx, &prior, false)...)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	priorIDs := map[string][]string{}
+	for _, p := range prior {
+		if isKnown(p.ID) {
+			priorIDs[p.Name.ValueString()] = append(priorIDs[p.Name.ValueString()], p.ID.ValueString())
+		}
+	}
+	for i := range planned {
+		planned[i].ID = types.StringUnknown()
+		if !isKnown(planned[i].Name) {
+			continue
+		}
+		// Phases with the same name are matched in order
+		if ids := priorIDs[planned[i].Name.ValueString()]; len(ids) > 0 {
+			planned[i].ID = types.StringValue(ids[0])
+			priorIDs[planned[i].Name.ValueString()] = ids[1:]
+		}
+	}
+
+	phases, diags := types.ListValueFrom(ctx, spaceDefaultLifecyclePhaseObjectType, planned)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("phases"), phases)...)
 }
 
 // The default lifecycle cannot be created via the API; Octopus creates it with the space.
@@ -260,14 +310,32 @@ func expandSpaceDefaultLifecycle(ctx context.Context, existing *lifecycles.Lifec
 		existing.TentacleRetentionPolicy = core.SpaceDefaultRetentionPeriod()
 	}
 
+	existingPhases := existing.Phases
 	existing.Phases = []*lifecycles.Phase{}
 	if !model.Phases.IsNull() && !model.Phases.IsUnknown() {
 		var phaseModels []schemas.SpaceDefaultLifecyclePhaseModel
 		diags.Append(model.Phases.ElementsAs(ctx, &phaseModels, false)...)
+
+		// Phases without a planned ID (for example when adopting the lifecycle) keep the ID of an existing phase with the same name
+		usedIDs := map[string]bool{}
+		for _, p := range phaseModels {
+			if isKnown(p.ID) {
+				usedIDs[p.ID.ValueString()] = true
+			}
+		}
+
 		for _, p := range phaseModels {
 			phase := lifecycles.NewPhase(p.Name.ValueString())
 			if isKnown(p.ID) {
 				phase.ID = p.ID.ValueString()
+			} else {
+				for _, e := range existingPhases {
+					if e.Name == phase.Name && !usedIDs[e.ID] {
+						phase.ID = e.ID
+						usedIDs[e.ID] = true
+						break
+					}
+				}
 			}
 			phase.AutomaticDeploymentTargets = util.ExpandStringList(p.AutomaticDeploymentTargets)
 			phase.OptionalDeploymentTargets = util.ExpandStringList(p.OptionalDeploymentTargets)

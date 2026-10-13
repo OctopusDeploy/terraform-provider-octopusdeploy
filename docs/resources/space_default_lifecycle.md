@@ -104,7 +104,7 @@ Optional:
 
 Read-Only:
 
-- `id` (String) The unique ID for this phase.
+- `id` (String) The unique ID for this phase. Phases are matched to their existing IDs by name, so renaming a phase replaces it with a new phase.
 
 <a id="nestedatt--phases--release_retention_with_strategy"></a>
 ### Nested Schema for `phases.release_retention_with_strategy`

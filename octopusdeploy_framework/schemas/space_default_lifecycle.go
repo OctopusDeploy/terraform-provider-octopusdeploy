@@ -105,8 +105,7 @@ func (s SpaceDefaultLifecycleSchema) GetResourceSchema() resourceSchema.Schema {
 					Attributes: map[string]resourceSchema.Attribute{
 						"id": util.ResourceString().
 							Computed().
-							Description("The unique ID for this phase.").
-							PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+							Description("The unique ID for this phase. Phases are matched to their existing IDs by name, so renaming a phase replaces it with a new phase.").
 							Build(),
 						"name": util.ResourceString().Required().Description("The name of this phase.").Build(),
 						"automatic_deployment_targets": util.ResourceList(types.StringType).

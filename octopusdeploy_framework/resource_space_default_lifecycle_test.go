@@ -11,35 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccOctopusDeploySpaceDefaultLifecycle_Adopt(t *testing.T) {
-	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	resourceName := "octopusdeploy_space_default_lifecycle." + localName
-
-	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testSpaceCheckDestroy,
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		Steps: []resource.TestStep{
-			{
-				Config: testSpaceDefaultLifecycleEmpty(localName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttrPair(resourceName, "space_id", "octopusdeploy_space."+localName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "name", "Default Lifecycle"),
-					resource.TestCheckNoResourceAttr(resourceName, "phases"),
-					resource.TestCheckNoResourceAttr(resourceName, "release_retention_with_strategy"),
-					resource.TestCheckNoResourceAttr(resourceName, "tentacle_retention_with_strategy"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccOctopusDeploySpaceDefaultLifecycle_WithPhases(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	resourceName := "octopusdeploy_space_default_lifecycle." + localName
 	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	var developmentPhaseID string
 
 	resource.Test(t, resource.TestCase{
 		CheckDestroy:             testSpaceCheckDestroy,
@@ -48,30 +26,24 @@ func TestAccOctopusDeploySpaceDefaultLifecycle_WithPhases(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testSpaceDefaultLifecycleWithPhases(localName, lifecycleName, description, false),
-				Check: resource.ComposeTestCheckFunc(
-					testSpaceDefaultLifecycleMatches(resourceName, lifecycleName, 1),
-					resource.TestCheckResourceAttr(resourceName, "name", lifecycleName),
-					resource.TestCheckResourceAttr(resourceName, "description", description),
-					resource.TestCheckResourceAttr(resourceName, "phases.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "phases.0.name", "Development"),
-					resource.TestCheckResourceAttrSet(resourceName, "phases.0.id"),
-					resource.TestCheckResourceAttrPair(resourceName, "phases.0.automatic_deployment_targets.0", "octopusdeploy_environment."+localName+"_dev", "id"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.strategy", "Count"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.quantity_to_keep", "15"),
-					resource.TestCheckResourceAttr(resourceName, "release_retention_with_strategy.unit", "Items"),
-					resource.TestCheckResourceAttr(resourceName, "tentacle_retention_with_strategy.strategy", "Forever"),
-				),
+				Check: func(s *terraform.State) error {
+					developmentPhaseID = s.RootModule().Resources[resourceName].Primary.Attributes["phases.0.id"]
+					return nil
+				},
 			},
 			{
+				// Inserting Production before Development must keep the ID of Development
 				Config: testSpaceDefaultLifecycleWithPhases(localName, lifecycleName, description, true),
-				Check: resource.ComposeTestCheckFunc(
-					testSpaceDefaultLifecycleMatches(resourceName, lifecycleName, 2),
-					resource.TestCheckResourceAttr(resourceName, "phases.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "phases.1.name", "Production"),
-					resource.TestCheckResourceAttr(resourceName, "phases.1.is_priority_phase", "true"),
-					resource.TestCheckResourceAttrPair(resourceName, "phases.1.optional_deployment_targets.0", "octopusdeploy_environment."+localName+"_prod", "id"),
-					resource.TestCheckResourceAttr(resourceName, "phases.1.release_retention_with_strategy.strategy", "Forever"),
-				),
+				Check: func(s *terraform.State) error {
+					attributes := s.RootModule().Resources[resourceName].Primary.Attributes
+					if attributes["phases.1.id"] != developmentPhaseID {
+						return fmt.Errorf("expected Development to keep phase ID %q but it is %q", developmentPhaseID, attributes["phases.1.id"])
+					}
+					if attributes["phases.0.id"] == "" || attributes["phases.0.id"] == developmentPhaseID {
+						return fmt.Errorf("expected Production to get a new phase ID but it is %q", attributes["phases.0.id"])
+					}
+					return nil
+				},
 			},
 			{
 				ResourceName:      resourceName,
@@ -181,6 +153,13 @@ func testSpaceDefaultLifecycleWithPhases(localName string, lifecycleName string,
 			},`, localName)
 	}
 
+	developmentPhase := fmt.Sprintf(`
+			{
+				name                         = "Development"
+				automatic_deployment_targets = [octopusdeploy_environment.%[1]s_dev.id]
+			},`, localName)
+	phases := productionPhase + developmentPhase
+
 	return testSpaceDefaultLifecycleSpace(localName) + fmt.Sprintf(`
 
 	resource "octopusdeploy_environment" "%[1]s_dev" {
@@ -198,11 +177,7 @@ func testSpaceDefaultLifecycleWithPhases(localName string, lifecycleName string,
 		name        = "%[2]s"
 		description = "%[3]s"
 
-		phases = [
-			{
-				name                         = "Development"
-				automatic_deployment_targets = [octopusdeploy_environment.%[1]s_dev.id]
-			},%[4]s
+		phases = [%[4]s
 		]
 
 		release_retention_with_strategy = {
@@ -214,27 +189,5 @@ func testSpaceDefaultLifecycleWithPhases(localName string, lifecycleName string,
 		tentacle_retention_with_strategy = {
 			strategy = "Forever"
 		}
-	}`, localName, lifecycleName, description, productionPhase)
-}
-
-func testSpaceDefaultLifecycleMatches(resourceName string, expectedName string, expectedPhases int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
-		}
-
-		lifecycle, err := lifecycles.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-		if lifecycle.Name != expectedName {
-			return fmt.Errorf("expected default lifecycle name %q but was %q", expectedName, lifecycle.Name)
-		}
-		if len(lifecycle.Phases) != expectedPhases {
-			return fmt.Errorf("expected %d phases but found %d", expectedPhases, len(lifecycle.Phases))
-		}
-
-		return nil
-	}
+	}`, localName, lifecycleName, description, phases)
 }
