@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/lifecycles"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -127,47 +126,6 @@ func TestAccOctopusDeploySpaceImport(t *testing.T) {
 	})
 }
 
-func TestAccOctopusDeploySpaceWithDefaultLifecycle(t *testing.T) {
-	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	prefix := "octopusdeploy_space." + localName
-
-	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	slug := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
-
-	resource.Test(t, resource.TestCase{
-		CheckDestroy:             testSpaceCheckDestroy,
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		PreCheck:                 func() { TestAccPreCheck(t) },
-		Steps: []resource.TestStep{
-			{
-				Check: resource.ComposeTestCheckFunc(
-					testSpaceExists(prefix),
-					resource.TestCheckResourceAttrSet(prefix, "default_lifecycle.id"),
-					resource.TestCheckResourceAttr(prefix, "default_lifecycle.name", "Default Lifecycle"),
-					resource.TestCheckNoResourceAttr(prefix, "default_lifecycle.phases"),
-					resource.TestCheckNoResourceAttr(prefix, "default_lifecycle.release_retention_with_strategy"),
-				),
-				Config: testSpaceWithEmptyDefaultLifecycle(localName, name, slug),
-			},
-			{
-				Check: resource.ComposeTestCheckFunc(
-					testSpaceExists(prefix),
-					testSpaceDefaultLifecycleName(prefix, lifecycleName),
-					resource.TestCheckResourceAttr(prefix, "default_lifecycle.name", lifecycleName),
-					resource.TestCheckResourceAttr(prefix, "default_lifecycle.description", description),
-					resource.TestCheckResourceAttr(prefix, "default_lifecycle.release_retention_with_strategy.strategy", "Count"),
-					resource.TestCheckResourceAttr(prefix, "default_lifecycle.release_retention_with_strategy.quantity_to_keep", "15"),
-					resource.TestCheckResourceAttr(prefix, "default_lifecycle.release_retention_with_strategy.unit", "Items"),
-					resource.TestCheckResourceAttr(prefix, "default_lifecycle.tentacle_retention_with_strategy.strategy", "Forever"),
-				),
-				Config: testSpaceWithDefaultLifecycle(localName, name, slug, lifecycleName, description),
-			},
-		},
-	})
-}
-
 func testSpaceBasic(localName string, name string, slug string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_space" "%s" {
 		name = "%s"
@@ -203,60 +161,6 @@ func testSpaceWithTaskQueueStopped(localName string, name string, slug string) s
 	}`, localName, name, slug)
 }
 
-
-func testSpaceWithEmptyDefaultLifecycle(localName string, name string, slug string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_space" "%s" {
-		name = "%s"
-		slug = "%s"
-		space_managers_teams = ["teams-managers"]
-		default_lifecycle = {}
-		lifecycle {
-			ignore_changes = [space_managers_teams]
-		}
-	}`, localName, name, slug)
-}
-
-func testSpaceWithDefaultLifecycle(localName string, name string, slug string, lifecycleName string, description string) string {
-	return fmt.Sprintf(`resource "octopusdeploy_space" "%s" {
-		name = "%s"
-		slug = "%s"
-		space_managers_teams = ["teams-managers"]
-		default_lifecycle = {
-			name        = "%s"
-			description = "%s"
-			release_retention_with_strategy = {
-				strategy         = "Count"
-				quantity_to_keep = 15
-				unit             = "Items"
-			}
-			tentacle_retention_with_strategy = {
-				strategy = "Forever"
-			}
-		}
-		lifecycle {
-			ignore_changes = [space_managers_teams]
-		}
-	}`, localName, name, slug, lifecycleName, description)
-}
-
-func testSpaceDefaultLifecycleName(resourceName string, expectedName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
-		}
-
-		lifecycle, err := lifecycles.GetByID(octoClient, rs.Primary.ID, rs.Primary.Attributes["default_lifecycle.id"])
-		if err != nil {
-			return err
-		}
-		if lifecycle.Name != expectedName {
-			return fmt.Errorf("expected default lifecycle name %q but was %q", expectedName, lifecycle.Name)
-		}
-
-		return nil
-	}
-}
 
 func testSpaceExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

@@ -11,96 +11,176 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// The default lifecycle of a space cannot be created or deleted through the API; Octopus creates it with the space
-// and deletes it with the space. These helpers locate it and apply the configured settings on top of it.
+const spaceDefaultLifecycleResourceName = "space_default_lifecycle"
 
-var spaceDefaultLifecycleObjectType = types.ObjectType{AttrTypes: schemas.SpaceDefaultLifecycleAttrTypes()}
 var spaceDefaultLifecyclePhaseObjectType = types.ObjectType{AttrTypes: schemas.SpaceDefaultLifecyclePhaseAttrTypes()}
 var spaceDefaultLifecycleRetentionObjectType = types.ObjectType{AttrTypes: schemas.SpaceDefaultLifecycleRetentionAttrTypes()}
 
-// applySpaceDefaultLifecycle updates the default lifecycle of the space to match the plan and returns the resulting state value.
-// lifecycleID may be empty, in which case the default lifecycle is looked up in the space.
-func (s *spaceResource) applySpaceDefaultLifecycle(ctx context.Context, spaceID string, lifecycleID string, plan types.Object) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	if plan.IsNull() {
-		return types.ObjectNull(spaceDefaultLifecycleObjectType.AttrTypes), diags
+type spaceDefaultLifecycleResource struct {
+	*Config
+}
+
+var _ resource.Resource = &spaceDefaultLifecycleResource{}
+var _ resource.ResourceWithImportState = &spaceDefaultLifecycleResource{}
+
+func NewSpaceDefaultLifecycleResource() resource.Resource {
+	return &spaceDefaultLifecycleResource{}
+}
+
+func (r *spaceDefaultLifecycleResource) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = util.GetTypeName(spaceDefaultLifecycleResourceName)
+}
+
+func (r *spaceDefaultLifecycleResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schemas.SpaceDefaultLifecycleSchema{}.GetResourceSchema()
+}
+
+func (r *spaceDefaultLifecycleResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	r.Config = ResourceConfiguration(req, resp)
+	if r.Config != nil {
+		resp.Diagnostics.Append(r.Config.EnsureResourceCompatibilityByVersion(spaceDefaultLifecycleResourceName, "2025.3")...)
+	}
+}
+
+// The default lifecycle cannot be created via the API; Octopus creates it with the space.
+// Create adopts the existing lifecycle and updates it to match the plan.
+func (r *spaceDefaultLifecycleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan schemas.SpaceDefaultLifecycleResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	util.Create(ctx, spaceDefaultLifecycleResourceName, plan)
+
+	existing, err := r.findSpaceDefaultLifecycle(plan.SpaceID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("unable to load default lifecycle of space", err.Error())
+		return
 	}
 
-	if !s.Config.IsVersionSameOrGreaterThan("2025.3") {
-		diags.AddError("Octopus Server Upgrade Required.", "default_lifecycle is not supported on this Octopus Server version. Please upgrade to Octopus Server 2025.3 or later.")
-		return plan, diags
+	resp.Diagnostics.Append(r.update(ctx, existing, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	var model schemas.SpaceDefaultLifecycleModel
-	diags.Append(plan.As(ctx, &model, basetypes.ObjectAsOptions{})...)
-	if diags.HasError() {
-		return plan, diags
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	util.Created(ctx, spaceDefaultLifecycleResourceName)
+}
+
+func (r *spaceDefaultLifecycleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state schemas.SpaceDefaultLifecycleResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	var existing *lifecycles.Lifecycle
+	var lifecycle *lifecycles.Lifecycle
 	var err error
-	if lifecycleID != "" {
-		existing, err = lifecycles.GetByID(s.Client, spaceID, lifecycleID)
-		if isNotFound(err) {
-			existing, err = s.findSpaceDefaultLifecycle(spaceID)
-		}
+	if state.ID.IsNull() || state.ID.ValueString() == "" {
+		// imported by space ID
+		lifecycle, err = r.findSpaceDefaultLifecycle(state.SpaceID.ValueString())
 	} else {
-		existing, err = s.findSpaceDefaultLifecycle(spaceID)
+		lifecycle, err = lifecycles.GetByID(r.Client, state.SpaceID.ValueString(), state.ID.ValueString())
 	}
 	if err != nil {
-		diags.AddError("unable to load default lifecycle of space", err.Error())
-		return plan, diags
+		if isNotFound(err) {
+			tflog.Info(ctx, fmt.Sprintf("default lifecycle (%s) of space (%s) not found; removing from state", state.ID.ValueString(), state.SpaceID.ValueString()))
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError("unable to load default lifecycle of space", err.Error())
+		return
 	}
 
-	toUpdate, d := expandSpaceDefaultLifecycle(ctx, existing, model)
-	diags.Append(d...)
+	resp.Diagnostics.Append(flattenSpaceDefaultLifecycle(ctx, lifecycle, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+}
+
+func (r *spaceDefaultLifecycleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state schemas.SpaceDefaultLifecycleResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	existing, err := lifecycles.GetByID(r.Client, state.SpaceID.ValueString(), state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("unable to load default lifecycle of space", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(r.update(ctx, existing, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+}
+
+// The default lifecycle cannot be deleted via the API; it is deleted together with its space.
+// Delete clears the phases so that environments referenced by them can be deleted afterwards.
+func (r *spaceDefaultLifecycleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state schemas.SpaceDefaultLifecycleResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	existing, err := lifecycles.GetByID(r.Client, state.SpaceID.ValueString(), state.ID.ValueString())
+	if err != nil {
+		if isNotFound(err) {
+			return
+		}
+		resp.Diagnostics.AddError("unable to load default lifecycle of space", err.Error())
+		return
+	}
+
+	if len(existing.Phases) == 0 {
+		return
+	}
+
+	existing.Phases = []*lifecycles.Phase{}
+	if _, err := lifecycles.Update(r.Client, existing); err != nil {
+		resp.Diagnostics.AddError("unable to clear phases of default lifecycle of space", err.Error())
+	}
+}
+
+// ImportState accepts the ID of the space; the default lifecycle of that space is looked up on read.
+func (r *spaceDefaultLifecycleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("space_id"), req, resp)
+}
+
+func (r *spaceDefaultLifecycleResource) update(ctx context.Context, existing *lifecycles.Lifecycle, plan *schemas.SpaceDefaultLifecycleResourceModel) diag.Diagnostics {
+	toUpdate, diags := expandSpaceDefaultLifecycle(ctx, existing, plan)
 	if diags.HasError() {
-		return plan, diags
+		return diags
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("updating default lifecycle '%s' of space '%s'", toUpdate.ID, spaceID))
-	updated, err := lifecycles.Update(s.Client, toUpdate)
+	tflog.Debug(ctx, fmt.Sprintf("updating default lifecycle '%s' of space '%s'", toUpdate.ID, plan.SpaceID.ValueString()))
+	updated, err := lifecycles.Update(r.Client, toUpdate)
 	if err != nil {
 		diags.AddError("unable to update default lifecycle of space", err.Error())
-		return plan, diags
+		return diags
 	}
 
-	return flattenSpaceDefaultLifecycle(ctx, updated, model)
+	diags.Append(flattenSpaceDefaultLifecycle(ctx, updated, plan)...)
+	return diags
 }
 
-// readSpaceDefaultLifecycle refreshes the default lifecycle state. It returns a null value when the lifecycle is not managed or no longer exists.
-func (s *spaceResource) readSpaceDefaultLifecycle(ctx context.Context, spaceID string, state types.Object) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	if state.IsNull() || state.IsUnknown() {
-		return types.ObjectNull(spaceDefaultLifecycleObjectType.AttrTypes), diags
-	}
-
-	var model schemas.SpaceDefaultLifecycleModel
-	diags.Append(state.As(ctx, &model, basetypes.ObjectAsOptions{})...)
-	if diags.HasError() {
-		return state, diags
-	}
-
-	lifecycle, err := lifecycles.GetByID(s.Client, spaceID, model.ID.ValueString())
-	if err != nil {
-		if isNotFound(err) {
-			tflog.Info(ctx, fmt.Sprintf("default lifecycle (%s) of space (%s) not found", model.ID.ValueString(), spaceID))
-			return types.ObjectNull(spaceDefaultLifecycleObjectType.AttrTypes), diags
-		}
-		diags.AddError("unable to load default lifecycle of space", err.Error())
-		return state, diags
-	}
-
-	return flattenSpaceDefaultLifecycle(ctx, lifecycle, model)
-}
-
-func (s *spaceResource) findSpaceDefaultLifecycle(spaceID string) (*lifecycles.Lifecycle, error) {
-	all, err := lifecycles.GetAll(s.Client, spaceID)
+func (r *spaceDefaultLifecycleResource) findSpaceDefaultLifecycle(spaceID string) (*lifecycles.Lifecycle, error) {
+	all, err := lifecycles.GetAll(r.Client, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +202,7 @@ func isNotFound(err error) bool {
 	return false
 }
 
-func expandSpaceDefaultLifecycle(ctx context.Context, existing *lifecycles.Lifecycle, model schemas.SpaceDefaultLifecycleModel) (*lifecycles.Lifecycle, diag.Diagnostics) {
+func expandSpaceDefaultLifecycle(ctx context.Context, existing *lifecycles.Lifecycle, model *schemas.SpaceDefaultLifecycleResourceModel) (*lifecycles.Lifecycle, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if isKnown(model.Name) {
@@ -181,56 +261,56 @@ func expandSpaceDefaultLifecycleRetention(ctx context.Context, value types.Objec
 	}
 }
 
-// flattenSpaceDefaultLifecycle converts the lifecycle to its state value. prior is the planned or previous state and is used
+// flattenSpaceDefaultLifecycle writes the lifecycle into model. The values already in model (the plan or prior state) are used
 // to keep optional values null when they were not configured and the server returned the implicit default.
-func flattenSpaceDefaultLifecycle(ctx context.Context, lifecycle *lifecycles.Lifecycle, prior schemas.SpaceDefaultLifecycleModel) (types.Object, diag.Diagnostics) {
+func flattenSpaceDefaultLifecycle(ctx context.Context, lifecycle *lifecycles.Lifecycle, model *schemas.SpaceDefaultLifecycleResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	model := schemas.SpaceDefaultLifecycleModel{
-		ID:                types.StringValue(lifecycle.GetID()),
-		Name:              types.StringValue(lifecycle.Name),
-		Description:       types.StringValue(lifecycle.Description),
-		ReleaseRetention:  flattenSpaceDefaultLifecycleRetention(ctx, lifecycle.ReleaseRetentionPolicy, prior.ReleaseRetention, true, &diags),
-		TentacleRetention: flattenSpaceDefaultLifecycleRetention(ctx, lifecycle.TentacleRetentionPolicy, prior.TentacleRetention, true, &diags),
+	model.ID = types.StringValue(lifecycle.GetID())
+	if lifecycle.SpaceID != "" {
+		model.SpaceID = types.StringValue(lifecycle.SpaceID)
 	}
+	model.Name = types.StringValue(lifecycle.Name)
+	model.Description = types.StringValue(lifecycle.Description)
+	model.ReleaseRetention = flattenSpaceDefaultLifecycleRetention(ctx, lifecycle.ReleaseRetentionPolicy, model.ReleaseRetention, true, &diags)
+	model.TentacleRetention = flattenSpaceDefaultLifecycleRetention(ctx, lifecycle.TentacleRetentionPolicy, model.TentacleRetention, true, &diags)
 
-	if len(lifecycle.Phases) == 0 && prior.Phases.IsNull() {
+	if len(lifecycle.Phases) == 0 && model.Phases.IsNull() {
 		model.Phases = types.ListNull(spaceDefaultLifecyclePhaseObjectType)
-	} else {
-		var priorPhases []schemas.SpaceDefaultLifecyclePhaseModel
-		if !prior.Phases.IsNull() && !prior.Phases.IsUnknown() {
-			diags.Append(prior.Phases.ElementsAs(ctx, &priorPhases, false)...)
-		}
-
-		phases := make([]schemas.SpaceDefaultLifecyclePhaseModel, 0, len(lifecycle.Phases))
-		for i, p := range lifecycle.Phases {
-			priorPhase := schemas.SpaceDefaultLifecyclePhaseModel{
-				ReleaseRetention:  types.ObjectNull(spaceDefaultLifecycleRetentionObjectType.AttrTypes),
-				TentacleRetention: types.ObjectNull(spaceDefaultLifecycleRetentionObjectType.AttrTypes),
-			}
-			if i < len(priorPhases) {
-				priorPhase = priorPhases[i]
-			}
-			phases = append(phases, schemas.SpaceDefaultLifecyclePhaseModel{
-				ID:                                 types.StringValue(p.ID),
-				Name:                               types.StringValue(p.Name),
-				AutomaticDeploymentTargets:         util.FlattenStringList(p.AutomaticDeploymentTargets),
-				OptionalDeploymentTargets:          util.FlattenStringList(p.OptionalDeploymentTargets),
-				MinimumEnvironmentsBeforePromotion: types.Int64Value(int64(p.MinimumEnvironmentsBeforePromotion)),
-				IsOptionalPhase:                    types.BoolValue(p.IsOptionalPhase),
-				IsPriorityPhase:                    types.BoolValue(p.IsPriorityPhase),
-				ReleaseRetention:                   flattenSpaceDefaultLifecycleRetention(ctx, p.ReleaseRetentionPolicy, priorPhase.ReleaseRetention, false, &diags),
-				TentacleRetention:                  flattenSpaceDefaultLifecycleRetention(ctx, p.TentacleRetentionPolicy, priorPhase.TentacleRetention, false, &diags),
-			})
-		}
-		list, d := types.ListValueFrom(ctx, spaceDefaultLifecyclePhaseObjectType, phases)
-		diags.Append(d...)
-		model.Phases = list
+		return diags
 	}
 
-	value, d := types.ObjectValueFrom(ctx, spaceDefaultLifecycleObjectType.AttrTypes, model)
+	var priorPhases []schemas.SpaceDefaultLifecyclePhaseModel
+	if !model.Phases.IsNull() && !model.Phases.IsUnknown() {
+		diags.Append(model.Phases.ElementsAs(ctx, &priorPhases, false)...)
+	}
+
+	phases := make([]schemas.SpaceDefaultLifecyclePhaseModel, 0, len(lifecycle.Phases))
+	for i, p := range lifecycle.Phases {
+		priorPhase := schemas.SpaceDefaultLifecyclePhaseModel{
+			ReleaseRetention:  types.ObjectNull(spaceDefaultLifecycleRetentionObjectType.AttrTypes),
+			TentacleRetention: types.ObjectNull(spaceDefaultLifecycleRetentionObjectType.AttrTypes),
+		}
+		if i < len(priorPhases) {
+			priorPhase = priorPhases[i]
+		}
+		phases = append(phases, schemas.SpaceDefaultLifecyclePhaseModel{
+			ID:                                 types.StringValue(p.ID),
+			Name:                               types.StringValue(p.Name),
+			AutomaticDeploymentTargets:         util.FlattenStringList(p.AutomaticDeploymentTargets),
+			OptionalDeploymentTargets:          util.FlattenStringList(p.OptionalDeploymentTargets),
+			MinimumEnvironmentsBeforePromotion: types.Int64Value(int64(p.MinimumEnvironmentsBeforePromotion)),
+			IsOptionalPhase:                    types.BoolValue(p.IsOptionalPhase),
+			IsPriorityPhase:                    types.BoolValue(p.IsPriorityPhase),
+			ReleaseRetention:                   flattenSpaceDefaultLifecycleRetention(ctx, p.ReleaseRetentionPolicy, priorPhase.ReleaseRetention, false, &diags),
+			TentacleRetention:                  flattenSpaceDefaultLifecycleRetention(ctx, p.TentacleRetentionPolicy, priorPhase.TentacleRetention, false, &diags),
+		})
+	}
+	list, d := types.ListValueFrom(ctx, spaceDefaultLifecyclePhaseObjectType, phases)
 	diags.Append(d...)
-	return value, diags
+	model.Phases = list
+
+	return diags
 }
 
 func flattenSpaceDefaultLifecycleRetention(ctx context.Context, retention *core.RetentionPeriod, prior types.Object, nullWhenSpaceDefault bool, diags *diag.Diagnostics) types.Object {
@@ -263,18 +343,6 @@ func flattenSpaceDefaultLifecycleRetention(ctx context.Context, retention *core.
 	value, d := types.ObjectValueFrom(ctx, spaceDefaultLifecycleRetentionObjectType.AttrTypes, model)
 	diags.Append(d...)
 	return value
-}
-
-// getSpaceDefaultLifecycleID returns the lifecycle ID held in state, or an empty string when the lifecycle is not managed yet.
-func getSpaceDefaultLifecycleID(ctx context.Context, state types.Object) string {
-	if state.IsNull() || state.IsUnknown() {
-		return ""
-	}
-	var model schemas.SpaceDefaultLifecycleModel
-	if diags := state.As(ctx, &model, basetypes.ObjectAsOptions{}); diags.HasError() {
-		return ""
-	}
-	return model.ID.ValueString()
 }
 
 func isKnown(value types.String) bool {

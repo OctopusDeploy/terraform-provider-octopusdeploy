@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -17,13 +18,19 @@ import (
 // SpaceDefaultLifecycleName is the name Octopus gives the lifecycle it creates alongside a new space.
 const SpaceDefaultLifecycleName = "Default Lifecycle"
 
-type SpaceDefaultLifecycleModel struct {
-	ID                types.String `tfsdk:"id"`
+type SpaceDefaultLifecycleSchema struct{}
+
+var _ EntitySchema = SpaceDefaultLifecycleSchema{}
+
+type SpaceDefaultLifecycleResourceModel struct {
+	SpaceID           types.String `tfsdk:"space_id"`
 	Name              types.String `tfsdk:"name"`
 	Description       types.String `tfsdk:"description"`
 	Phases            types.List   `tfsdk:"phases"`
 	ReleaseRetention  types.Object `tfsdk:"release_retention_with_strategy"`
 	TentacleRetention types.Object `tfsdk:"tentacle_retention_with_strategy"`
+
+	ResourceModel
 }
 
 type SpaceDefaultLifecyclePhaseModel struct {
@@ -67,29 +74,18 @@ func SpaceDefaultLifecyclePhaseAttrTypes() map[string]attr.Type {
 	}
 }
 
-func SpaceDefaultLifecycleAttrTypes() map[string]attr.Type {
-	retentionType := types.ObjectType{AttrTypes: SpaceDefaultLifecycleRetentionAttrTypes()}
-	return map[string]attr.Type{
-		"id":                               types.StringType,
-		"name":                             types.StringType,
-		"description":                      types.StringType,
-		"phases":                           types.ListType{ElemType: types.ObjectType{AttrTypes: SpaceDefaultLifecyclePhaseAttrTypes()}},
-		"release_retention_with_strategy":  retentionType,
-		"tentacle_retention_with_strategy": retentionType,
-	}
-}
-
-func getSpaceDefaultLifecycleResourceSchema() resourceSchema.SingleNestedAttribute {
-	return resourceSchema.SingleNestedAttribute{
-		MarkdownDescription: "Configures the `" + SpaceDefaultLifecycleName + "` that Octopus creates automatically with the space. " +
-			"When this attribute is omitted the lifecycle is left unmanaged. Removing it stops managing the lifecycle but does not revert it. " +
-			"The lifecycle is deleted together with the space. Compatible with 2025.3 and later.",
-		Optional: true,
+func (s SpaceDefaultLifecycleSchema) GetResourceSchema() resourceSchema.Schema {
+	return resourceSchema.Schema{
+		MarkdownDescription: "Manages the `" + SpaceDefaultLifecycleName + "` that Octopus creates automatically with a space." +
+			"\n\nThe lifecycle cannot be created or deleted through the API: creating this resource adopts the existing lifecycle of the space, " +
+			"and destroying it removes its phases, so that referenced environments can be deleted, and removes it from the Terraform state. The lifecycle itself is deleted together with the space." +
+			"\n\nCompatible with Octopus 2025.3 and later.",
 		Attributes: map[string]resourceSchema.Attribute{
-			"id": util.ResourceString().
-				Computed().
-				Description("The ID of the default lifecycle.").
-				PlanModifiers(stringplanmodifier.UseStateForUnknown()).
+			"id": GetIdResourceSchema(),
+			"space_id": util.ResourceString().
+				Required().
+				Description("The ID of the space whose default lifecycle is managed.").
+				PlanModifiers(stringplanmodifier.RequiresReplace()).
 				Build(),
 			"name": util.ResourceString().
 				Optional().Computed().
@@ -146,6 +142,10 @@ func getSpaceDefaultLifecycleResourceSchema() resourceSchema.SingleNestedAttribu
 			"tentacle_retention_with_strategy": getSpaceDefaultLifecycleRetentionSchema("Defines the tentacle retention policy of the default lifecycle. When omitted, the space-wide \"Default\" retention policy is used."),
 		},
 	}
+}
+
+func (s SpaceDefaultLifecycleSchema) GetDatasourceSchema() datasourceSchema.Schema {
+	return datasourceSchema.Schema{}
 }
 
 func getSpaceDefaultLifecycleRetentionSchema(description string) resourceSchema.SingleNestedAttribute {

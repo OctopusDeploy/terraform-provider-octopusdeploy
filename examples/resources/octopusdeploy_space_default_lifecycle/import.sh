@@ -1,0 +1,1 @@
+terraform import [options] octopusdeploy_space_default_lifecycle.<name> <space-id>
