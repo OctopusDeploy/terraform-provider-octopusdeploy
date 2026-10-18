@@ -87,7 +87,7 @@ jobs:
           EOT
       - name: Pre-pull container images
         run: |
-          docker pull docker.packages.octopushq.com/octopusdeploy/octopusdeploy
+          docker pull docker.packages.octopushq.com/octopusdeploy/octopusdeploy:2026.4.7291
           docker pull mcr.microsoft.com/mssql/server:2019-latest
       - name: Test
         run: |
@@ -100,7 +100,7 @@ jobs:
           OCTODISABLEOCTOCONTAINERLOGGING: true
           OCTOTESTSKIPINIT: true
           GOMAXPROCS: 3
-          OCTOTESTVERSION: latest
+          OCTOTESTVERSION: 2026.4.7291
           OCTOTESTIMAGEURL: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
           OCTOTESTRETRYCOUNT: 0
       - name: Upload test artifacts
