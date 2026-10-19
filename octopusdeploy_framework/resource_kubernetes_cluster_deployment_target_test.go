@@ -16,7 +16,7 @@ func TestAccOctopusDeployKubernetesClusterDeploymentTargetBasic(t *testing.T) {
 
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	clusterUrl := "https://k8s-cluster.example.com"
-	
+
 	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
@@ -87,7 +87,7 @@ func TestAccOctopusDeployKubernetesClusterDeploymentTargetWithCertAuth(t *testin
 
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	clusterUrl := "https://k8s-cluster.example.com"
-	
+
 	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	certificateLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -116,7 +116,7 @@ func TestAccOctopusDeployKubernetesClusterDeploymentTargetImport(t *testing.T) {
 
 	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	clusterUrl := "https://k8s-cluster.example.com"
-	
+
 	environmentLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	environmentName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 

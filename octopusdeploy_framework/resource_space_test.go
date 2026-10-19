@@ -18,9 +18,9 @@ func TestAccOctopusDeploySpaceBasic(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testSpaceCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testSpaceCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -48,9 +48,9 @@ func TestAccOctopusDeploySpaceUpdate(t *testing.T) {
 	newDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testSpaceCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testSpaceCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -82,9 +82,9 @@ func TestAccOctopusDeploySpaceWithTaskQueueStopped(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testSpaceCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testSpaceCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Check: resource.ComposeTestCheckFunc(
@@ -107,9 +107,9 @@ func TestAccOctopusDeploySpaceImport(t *testing.T) {
 	slug := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 
 	resource.Test(t, resource.TestCase{
-		CheckDestroy:                 testSpaceCheckDestroy,
-		ProtoV6ProviderFactories:     ProtoV6ProviderFactories(),
-		PreCheck:                     func() { TestAccPreCheck(t) },
+		CheckDestroy:             testSpaceCheckDestroy,
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		PreCheck:                 func() { TestAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			{
 				Config: testSpaceBasic(localName, name, slug),
@@ -160,7 +160,6 @@ func testSpaceWithTaskQueueStopped(localName string, name string, slug string) s
 		}
 	}`, localName, name, slug)
 }
-
 
 func testSpaceExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

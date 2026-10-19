@@ -18,15 +18,15 @@ type PlatformHubAzureServicePrincipalAccountSchema struct{}
 var _ EntitySchema = PlatformHubAzureServicePrincipalAccountSchema{}
 
 type PlatformHubAzureServicePrincipalAccountModel struct {
-	Name                        types.String `tfsdk:"name"`
-	Description                 types.String `tfsdk:"description"`
-	SubscriptionID              types.String `tfsdk:"subscription_id"`
-	TenantID                    types.String `tfsdk:"tenant_id"`
-	ApplicationID               types.String `tfsdk:"application_id"`
-	Password                    types.String `tfsdk:"password"`
-	AzureEnvironment            types.String `tfsdk:"azure_environment"`
-	AuthenticationEndpoint      types.String `tfsdk:"authentication_endpoint"`
-	ResourceManagementEndpoint  types.String `tfsdk:"resource_management_endpoint"`
+	Name                       types.String `tfsdk:"name"`
+	Description                types.String `tfsdk:"description"`
+	SubscriptionID             types.String `tfsdk:"subscription_id"`
+	TenantID                   types.String `tfsdk:"tenant_id"`
+	ApplicationID              types.String `tfsdk:"application_id"`
+	Password                   types.String `tfsdk:"password"`
+	AzureEnvironment           types.String `tfsdk:"azure_environment"`
+	AuthenticationEndpoint     types.String `tfsdk:"authentication_endpoint"`
+	ResourceManagementEndpoint types.String `tfsdk:"resource_management_endpoint"`
 
 	ResourceModel
 }

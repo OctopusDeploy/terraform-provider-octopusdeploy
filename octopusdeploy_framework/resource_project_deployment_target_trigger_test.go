@@ -214,7 +214,7 @@ func testAccProjectDeploymentTargetTriggerDependencies(lifecycleLocalName, lifec
 		lifecycle_id     = octopusdeploy_lifecycle.%s.id
 		name             = "%s"
 		project_group_id = octopusdeploy_project_group.%s.id
-	}`, 
+	}`,
 		lifecycleLocalName, lifecycleName,
 		projectGroupLocalName, projectGroupName,
 		projectLocalName, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName)
