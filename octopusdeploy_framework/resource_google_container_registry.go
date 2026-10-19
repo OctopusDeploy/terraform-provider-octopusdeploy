@@ -245,12 +245,12 @@ func updateDataFromDockerContainerRegistryFeedForGCR(data *schemas.GoogleContain
 // has been updated first.
 func ensureFeedIsGCR(ctx context.Context, data *schemas.GoogleContainerRegistryFeedTypeResourceModel, client *client.Client, resp *resource.UpdateResponse) error {
 	currentFeed, err := feeds.GetByID(client, data.SpaceID.ValueString(), data.ID.ValueString())
-	if currentFeed.GetFeedType() == "Docker" {
-		if err != nil {
-			resp.Diagnostics.AddError("unable to load Google Container Registry feed", err.Error())
-			return err
-		}
+	if err != nil {
+		resp.Diagnostics.AddError("unable to load Google Container Registry feed", err.Error())
+		return err
+	}
 
+	if currentFeed.GetFeedType() == "Docker" {
 		newGcrFeed, err := feeds.NewGoogleContainerRegistry(
 			currentFeed.GetName(),
 			currentFeed.GetUsername(),
@@ -274,10 +274,10 @@ func ensureFeedIsGCR(ctx context.Context, data *schemas.GoogleContainerRegistryF
 
 		_, err = feeds.Update(client, newGcrFeed)
 		if err != nil {
-			resp.Diagnostics.AddError("unable to update feed type to Azure Container Registry", err.Error())
+			resp.Diagnostics.AddError("unable to update feed type to Google Container Registry", err.Error())
 			return err
 		}
-		tflog.Info(ctx, fmt.Sprintf("Feed type updated from Docker to Azure Container Registry (%s)", dockerFeed.ID))
+		tflog.Info(ctx, fmt.Sprintf("Feed type updated from Docker to Google Container Registry (%s)", dockerFeed.ID))
 		return nil
 	}
 	return nil
