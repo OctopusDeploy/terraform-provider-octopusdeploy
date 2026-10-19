@@ -3,7 +3,6 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
@@ -40,16 +39,19 @@ func (r *processChildStepResource) Configure(_ context.Context, req resource.Con
 }
 
 func (r *processChildStepResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	identifiers := strings.Split(request.ID, ":")
+	spaceId, identifiers := splitImportSpaceID(request.ID)
 
 	if len(identifiers) != 3 {
 		response.Diagnostics.AddError(
 			"Incorrect Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: ProcessId:ParentStepId:ChildStepId (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000010:00000000-0000-0000-0000-000000000012). Got: %q", request.ID),
+			fmt.Sprintf("Expected import identifier with format: ProcessId:ParentStepId:ChildStepId, optionally prefixed with a space (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000010:00000000-0000-0000-0000-000000000012 or Spaces-2:deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000010:00000000-0000-0000-0000-000000000012). Got: %q", request.ID),
 		)
 		return
 	}
 
+	if spaceId != "" {
+		response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("space_id"), spaceId)...)
+	}
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("process_id"), identifiers[0])...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("parent_id"), identifiers[1])...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), identifiers[2])...)
