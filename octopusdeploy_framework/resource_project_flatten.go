@@ -74,7 +74,7 @@ func flattenProject(ctx context.Context, project *projects.Project, state *proje
 		model.VersioningStrategy = flattenVersioningStrategy(project.VersioningStrategy)
 	}
 
-	model.Template = flattenTemplates(project.Templates)
+	model.Template = flattenTemplates(project.Templates, state.Template)
 
 	diags := processPersistenceSettings(ctx, project, model)
 
@@ -279,30 +279,76 @@ func flattenServiceNowExtensionSettings(settings *projects.ServiceNowExtensionSe
 	return types.ListValueMust(types.ObjectType{AttrTypes: getServiceNowExtensionSettingsAttrTypes()}, []attr.Value{obj})
 }
 
-func flattenTemplates(templates []actiontemplates.ActionTemplateParameter) types.List {
+func flattenTemplates(templates []actiontemplates.ActionTemplateParameter, prior types.List) types.List {
 	if len(templates) == 0 {
 		return types.ListNull(types.ObjectType{AttrTypes: getTemplateAttrTypes()})
 	}
 
+	priorDisplaySettings := priorTemplateDisplaySettings(prior, len(templates))
+
 	templateList := make([]attr.Value, 0, len(templates))
-	for _, template := range templates {
+	for i, template := range templates {
+		displaySettings := types.MapValueMust(
+			types.StringType,
+			util.ConvertMapStringToMapAttrValue(template.DisplaySettings),
+		)
+
+		// display_settings is optional and not computed, so a map the configuration
+		// leaves out has to still be null once the server round trip is done. The
+		// server cannot tell an absent map from an empty one, so the planned (or
+		// previously stored) value decides which of the two to write back.
+		if len(template.DisplaySettings) == 0 && displaySettingsWasNull(priorDisplaySettings, i) {
+			displaySettings = types.MapNull(types.StringType)
+		}
 
 		obj := types.ObjectValueMust(getTemplateAttrTypes(), map[string]attr.Value{
-			"id":            types.StringValue(template.Resource.ID),
-			"name":          types.StringValue(template.Name),
-			"label":         util.StringOrNull(template.Label),
-			"help_text":     util.StringOrNull(template.HelpText),
-			"default_value": util.StringOrNull(template.DefaultValue.Value),
-			"display_settings": types.MapValueMust(
-				types.StringType,
-				util.ConvertMapStringToMapAttrValue(template.DisplaySettings),
-			),
+			"id":               types.StringValue(template.Resource.ID),
+			"name":             types.StringValue(template.Name),
+			"label":            util.StringOrNull(template.Label),
+			"help_text":        util.StringOrNull(template.HelpText),
+			"default_value":    util.StringOrNull(template.DefaultValue.Value),
+			"display_settings": displaySettings,
 		})
 
 		templateList = append(templateList, obj)
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: getTemplateAttrTypes()}, templateList)
+}
+
+// priorTemplateDisplaySettings reads display_settings out of the planned or
+// previously stored template list. It returns nil when that list cannot be lined
+// up element for element with the templates the server returned, which is the case
+// on import and whenever the two lengths differ.
+func priorTemplateDisplaySettings(prior types.List, count int) []types.Map {
+	if prior.IsNull() || prior.IsUnknown() || len(prior.Elements()) != count {
+		return nil
+	}
+
+	displaySettings := make([]types.Map, 0, count)
+	for _, element := range prior.Elements() {
+		object, ok := element.(types.Object)
+		if !ok {
+			return nil
+		}
+
+		value, ok := object.Attributes()["display_settings"].(types.Map)
+		if !ok {
+			return nil
+		}
+
+		displaySettings = append(displaySettings, value)
+	}
+
+	return displaySettings
+}
+
+func displaySettingsWasNull(priorDisplaySettings []types.Map, index int) bool {
+	if index >= len(priorDisplaySettings) {
+		return true
+	}
+
+	return priorDisplaySettings[index].IsNull()
 }
 
 func flattenAutoDeployReleaseOverrides(overrides []projects.AutoDeployReleaseOverride) types.List {

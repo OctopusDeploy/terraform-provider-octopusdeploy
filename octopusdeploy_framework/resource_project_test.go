@@ -155,6 +155,111 @@ func testAccProjectBasic(lifecycleLocalName string, lifecycleName string, projec
 		}`, localName, description, lifecycleLocalName, name, projectGroupLocalName, templates)
 }
 
+func TestAccProjectTemplateWithoutDisplaySettings(t *testing.T) {
+	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	description := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_project." + localName
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccProjectCheckDestroy,
+			testAccProjectGroupCheckDestroy,
+			testAccLifecycleCheckDestroy,
+		),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				// A template that omits display_settings must stay null in state.
+				Config: testAccProjectWithTemplateDisplaySettings(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, localName, name, description, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectCheckExists(),
+					resource.TestCheckResourceAttr(prefix, "template.#", "1"),
+					resource.TestCheckNoResourceAttr(prefix, "template.0.display_settings.%"),
+				),
+			},
+			{
+				// An explicit empty map must stay an empty map.
+				Config: testAccProjectWithTemplateDisplaySettings(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, localName, name, description, "display_settings = {}"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectCheckExists(),
+					resource.TestCheckResourceAttr(prefix, "template.0.display_settings.%", "0"),
+				),
+			},
+			{
+				// Populated display settings are unaffected.
+				Config: testAccProjectWithTemplateDisplaySettings(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, localName, name, description, `display_settings = { "Octopus.ControlType" = "SingleLineText" }`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectCheckExists(),
+					resource.TestCheckResourceAttr(prefix, "template.0.display_settings.Octopus.ControlType", "SingleLineText"),
+				),
+			},
+			{
+				// Back to omitted, this time alongside a dynamic block that also omits it.
+				Config: testAccProjectWithDynamicTemplates(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, localName, name, description),
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectCheckExists(),
+					resource.TestCheckResourceAttr(prefix, "template.#", "3"),
+					resource.TestCheckNoResourceAttr(prefix, "template.0.display_settings.%"),
+					resource.TestCheckNoResourceAttr(prefix, "template.1.display_settings.%"),
+					resource.TestCheckNoResourceAttr(prefix, "template.2.display_settings.%"),
+				),
+			},
+		},
+	})
+}
+
+func testAccProjectWithTemplateDisplaySettings(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, localName string, name string, description string, displaySettings string) string {
+	projectGroup := internaltest.NewProjectGroupTestOptions()
+	projectGroup.LocalName = projectGroupLocalName
+	projectGroup.Resource.Name = projectGroupName
+
+	return fmt.Sprintf(testAccLifecycle(lifecycleLocalName, lifecycleName)+"\n"+
+		internaltest.ProjectGroupConfiguration(projectGroup)+"\n"+
+		`resource "octopusdeploy_project" "%s" {
+			description      = "%s"
+			lifecycle_id     = octopusdeploy_lifecycle.%s.id
+			name             = "%s"
+			project_group_id = octopusdeploy_project_group.%s.id
+
+			template {
+				name = "static"
+				%s
+			}
+		}`, localName, description, lifecycleLocalName, name, projectGroupLocalName, displaySettings)
+}
+
+func testAccProjectWithDynamicTemplates(lifecycleLocalName string, lifecycleName string, projectGroupLocalName string, projectGroupName string, localName string, name string, description string) string {
+	projectGroup := internaltest.NewProjectGroupTestOptions()
+	projectGroup.LocalName = projectGroupLocalName
+	projectGroup.Resource.Name = projectGroupName
+
+	return fmt.Sprintf(testAccLifecycle(lifecycleLocalName, lifecycleName)+"\n"+
+		internaltest.ProjectGroupConfiguration(projectGroup)+"\n"+
+		`resource "octopusdeploy_project" "%s" {
+			description      = "%s"
+			lifecycle_id     = octopusdeploy_lifecycle.%s.id
+			name             = "%s"
+			project_group_id = octopusdeploy_project_group.%s.id
+
+			template {
+				name = "static"
+			}
+
+			dynamic "template" {
+				for_each = ["dynamic-one", "dynamic-two"]
+				content {
+					name = template.value
+				}
+			}
+		}`, localName, description, lifecycleLocalName, name, projectGroupLocalName)
+}
+
 func testAccProjectCheckDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "octopusdeploy_project" {
