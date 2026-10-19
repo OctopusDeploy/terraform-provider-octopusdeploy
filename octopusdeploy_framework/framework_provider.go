@@ -175,6 +175,7 @@ func (p *octopusDeployFrameworkProvider) Resources(ctx context.Context) []func()
 		NewSpaceDefaultLifecycleReleaseRetentionPolicyResource,
 		NewSpaceDefaultLifecycleTentacleRetentionPolicyResource,
 		NewSpaceDefaultRunbookRetentionPolicyResource,
+		NewSpaceDefaultLifecycleResource,
 		NewPlatformHubVersionControlUsernamePasswordSettingsResource,
 		NewPlatformHubVersionControlAnonymousSettingsResource,
 		NewBuiltInRateLimitingPolicyResource,
