@@ -41,6 +41,9 @@ func dataSourceChannelsRead(ctx context.Context, d *schema.ResourceData, m inter
 			Take:        query.Take,
 		}
 		existingChannels, err = channels.GetByProjectID(client, spaceID, queryByProjectID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 		if len(query.IDs) > 0 {
 			filteredChannels := make([]*channels.Channel, 0)
 			for _, channel := range existingChannels.Items {

@@ -101,11 +101,11 @@ func (r *pyPiFeedTypeResource) Update(ctx context.Context, req resource.UpdateRe
 	tflog.Debug(ctx, fmt.Sprintf("updating PyPI feed '%s'", data.ID.ValueString()))
 
 	feed, err := createPyPiResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load PyPI feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating PyPI feed (%s)", data.ID))
 
