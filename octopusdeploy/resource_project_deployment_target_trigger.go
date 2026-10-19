@@ -129,8 +129,14 @@ func resourceProjectDeploymentTargetTriggerRead(ctx context.Context, d *schema.R
 
 	logResource("project_trigger", m)
 
-	action := resource.Action.(*actions.AutoDeployAction)
-	filter := resource.Filter.(*filters.DeploymentTargetFilter)
+	action, ok := resource.Action.(*actions.AutoDeployAction)
+	if !ok {
+		return diag.Errorf("trigger %s is not a deployment target trigger", d.Id())
+	}
+	filter, ok := resource.Filter.(*filters.DeploymentTargetFilter)
+	if !ok {
+		return diag.Errorf("trigger %s has an unexpected filter type", d.Id())
+	}
 
 	d.Set("environment_ids", filter.Environments)
 	d.Set("event_groups", filter.EventGroups)

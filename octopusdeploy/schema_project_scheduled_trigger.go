@@ -35,10 +35,14 @@ func flattenProjectScheduledTrigger(projectScheduledTrigger *triggers.ProjectTri
 	} else if actionType == actions.DeployNewRelease {
 		deployNewReleaseAction := projectScheduledTrigger.Action.(*actions.DeployNewReleaseAction)
 		flattenedProjectScheduledTrigger["tenant_ids"] = deployNewReleaseAction.Tenants
+		gitReference := ""
+		if deployNewReleaseAction.VersionControlReference != nil {
+			gitReference = deployNewReleaseAction.VersionControlReference.GitRef
+		}
 		flattenedProjectScheduledTrigger["deploy_new_release_action"] = []map[string]interface{}{
 			{
 				"destination_environment_id": deployNewReleaseAction.Environment,
-				"git_reference":              deployNewReleaseAction.VersionControlReference.GitRef,
+				"git_reference":              gitReference,
 			},
 		}
 	} else if actionType == actions.RunRunbook {
@@ -79,13 +83,17 @@ func flattenProjectScheduledTrigger(projectScheduledTrigger *triggers.ProjectTri
 		flattenedProjectScheduledTrigger["timezone"] = continuousDailyScheduleFilter.TimeZone
 	} else if filterType == filters.DaysPerMonthSchedule {
 		daysPerMonthScheduleFilter := projectScheduledTrigger.Filter.(*filters.DaysPerMonthScheduledTriggerFilter)
+		dayOfWeek := ""
+		if daysPerMonthScheduleFilter.Day != nil {
+			dayOfWeek = daysPerMonthScheduleFilter.Day.String()
+		}
 		flattenedProjectScheduledTrigger["days_per_month_schedule"] = []map[string]interface{}{
 			{
 				"start_time":            daysPerMonthScheduleFilter.Start.Format(filters.RFC3339NanoNoZone),
 				"monthly_schedule_type": daysPerMonthScheduleFilter.MonthlySchedule.String(),
 				"date_of_month":         daysPerMonthScheduleFilter.DateOfMonth,
 				"day_number_of_month":   daysPerMonthScheduleFilter.DayNumberOfMonth,
-				"day_of_week":           filters.Weekday.String(*daysPerMonthScheduleFilter.Day),
+				"day_of_week":           dayOfWeek,
 			},
 		}
 		flattenedProjectScheduledTrigger["timezone"] = daysPerMonthScheduleFilter.TimeZone

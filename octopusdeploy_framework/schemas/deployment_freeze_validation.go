@@ -41,14 +41,15 @@ func (v daysOfWeekValidator) ValidateList(ctx context.Context, req validator.Lis
 	}
 
 	var days []string
-	req.ConfigValue.ElementsAs(ctx, &days, false)
+	resp.Diagnostics.Append(req.ConfigValue.ElementsAs(ctx, &days, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	for i := 1; i < len(days); i++ {
+	for i := 0; i < len(days); i++ {
 		currentDay := days[i]
-		previousDay := days[i-1]
 
 		currentPos, currentExists := validDays[currentDay]
-		previousPos, previousExists := validDays[previousDay]
 
 		if !currentExists {
 			resp.Diagnostics.AddError(
@@ -58,20 +59,17 @@ func (v daysOfWeekValidator) ValidateList(ctx context.Context, req validator.Lis
 			return
 		}
 
-		if !previousExists {
-			resp.Diagnostics.AddError(
-				"Invalid day of week",
-				fmt.Sprintf("'%s' is not a valid day of week. Must be one of: Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday", previousDay),
-			)
-			return
-		}
+		if i > 0 {
+			previousDay := days[i-1]
+			previousPos := validDays[previousDay]
 
-		if currentPos <= previousPos {
-			resp.Diagnostics.AddError(
-				"Invalid day order",
-				fmt.Sprintf("Days of the week must be in order (Sunday through Saturday). Found '%s' after '%s'", currentDay, previousDay),
-			)
-			return
+			if currentPos <= previousPos {
+				resp.Diagnostics.AddError(
+					"Invalid day order",
+					fmt.Sprintf("Days of the week must be in order (Sunday through Saturday). Found '%s' after '%s'", currentDay, previousDay),
+				)
+				return
+			}
 		}
 	}
 }

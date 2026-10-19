@@ -86,6 +86,10 @@ func (t *tenantProjectResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	bits := util.SplitCompositeId(data.ID.ValueString())
+	if len(bits) != 3 {
+		resp.Diagnostics.AddError("invalid id", "expected SpaceID:TenantID:ProjectID, got "+data.ID.ValueString())
+		return
+	}
 	spaceID := bits[0]
 	tenantID := bits[1]
 	projectID := bits[2]
