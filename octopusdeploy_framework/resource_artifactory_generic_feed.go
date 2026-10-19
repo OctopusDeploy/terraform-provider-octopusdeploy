@@ -48,6 +48,7 @@ func (r *artifactoryGenericFeedTypeResource) Create(ctx context.Context, req res
 
 	artifactoryGenericFeed, err := createArtifactoryGenericResourceFromData(data)
 	if err != nil {
+		resp.Diagnostics.AddError("unable to create artifactoryGeneric feed", err.Error())
 		return
 	}
 
@@ -60,7 +61,12 @@ func (r *artifactoryGenericFeedTypeResource) Create(ctx context.Context, req res
 		return
 	}
 
-	updateDataFromArtifactoryGenericFeed(data, data.SpaceID.ValueString(), createdFeed.(*feeds.ArtifactoryGenericFeed))
+	artifactoryGenericFeed, ok := createdFeed.(*feeds.ArtifactoryGenericFeed)
+	if !ok {
+		resp.Diagnostics.AddError("unexpected feed type", fmt.Sprintf("%s is not an Artifactory Generic feed", createdFeed.GetID()))
+		return
+	}
+	updateDataFromArtifactoryGenericFeed(data, data.SpaceID.ValueString(), artifactoryGenericFeed)
 
 	tflog.Info(ctx, fmt.Sprintf("ArtifactoryGeneric feed created (%s)", data.ID))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -84,7 +90,11 @@ func (r *artifactoryGenericFeedTypeResource) Read(ctx context.Context, req resou
 		return
 	}
 
-	artifactoryGenericFeed := feed.(*feeds.ArtifactoryGenericFeed)
+	artifactoryGenericFeed, ok := feed.(*feeds.ArtifactoryGenericFeed)
+	if !ok {
+		resp.Diagnostics.AddError("unexpected feed type", fmt.Sprintf("%s is not an Artifactory Generic feed", data.ID.ValueString()))
+		return
+	}
 	updateDataFromArtifactoryGenericFeed(data, data.SpaceID.ValueString(), artifactoryGenericFeed)
 
 	tflog.Info(ctx, fmt.Sprintf("ArtifactoryGeneric feed read (%s)", artifactoryGenericFeed.GetID()))
@@ -103,11 +113,11 @@ func (r *artifactoryGenericFeedTypeResource) Update(ctx context.Context, req res
 	tflog.Debug(ctx, fmt.Sprintf("updating artifactoryGeneric feed '%s'", data.ID.ValueString()))
 
 	feed, err := createArtifactoryGenericResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load artifactoryGeneric feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating ArtifactoryGeneric feed (%s)", data.ID))
 
@@ -118,7 +128,12 @@ func (r *artifactoryGenericFeedTypeResource) Update(ctx context.Context, req res
 		return
 	}
 
-	updateDataFromArtifactoryGenericFeed(data, state.SpaceID.ValueString(), updatedFeed.(*feeds.ArtifactoryGenericFeed))
+	artifactoryGenericFeed, ok := updatedFeed.(*feeds.ArtifactoryGenericFeed)
+	if !ok {
+		resp.Diagnostics.AddError("unexpected feed type", fmt.Sprintf("%s is not an Artifactory Generic feed", updatedFeed.GetID()))
+		return
+	}
+	updateDataFromArtifactoryGenericFeed(data, state.SpaceID.ValueString(), artifactoryGenericFeed)
 
 	tflog.Info(ctx, fmt.Sprintf("ArtifactoryGeneric feed updated (%s)", data.ID))
 
@@ -167,13 +182,9 @@ func updateDataFromArtifactoryGenericFeed(data *schemas.ArtifactoryGenericFeedTy
 	data.FeedUri = types.StringValue(feed.FeedURI)
 	data.Name = types.StringValue(feed.Name)
 	data.SpaceID = types.StringValue(spaceId)
-	if feed.Username != "" {
-		data.Username = types.StringValue(feed.Username)
-	}
+	data.Username = util.StringOrNull(feed.Username)
 	data.Repository = types.StringValue(feed.Repository)
-	if feed.LayoutRegex != "" {
-		data.LayoutRegex = types.StringValue(feed.LayoutRegex)
-	}
+	data.LayoutRegex = util.StringOrNull(feed.LayoutRegex)
 
 	packageAcquisitionLocationOptionsList := make([]attr.Value, len(feed.PackageAcquisitionLocationOptions))
 	for i, option := range feed.PackageAcquisitionLocationOptions {

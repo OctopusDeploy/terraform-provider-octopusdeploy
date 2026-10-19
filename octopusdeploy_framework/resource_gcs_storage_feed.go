@@ -99,11 +99,11 @@ func (r *gcsStorageFeedTypeResource) Update(ctx context.Context, req resource.Up
 	tflog.Debug(ctx, fmt.Sprintf("updating GCS feed '%s'", data.ID.ValueString()))
 
 	feed, err := createGcsStorageResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load GCS feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating GCS feed (%s)", data.ID))
 

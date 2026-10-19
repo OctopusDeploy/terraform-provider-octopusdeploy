@@ -47,6 +47,7 @@ func (r *dockerContainerRegistryFeedTypeResource) Create(ctx context.Context, re
 
 	dockerContainerRegistryFeed, err := createDockerContainerRegistryFeedResourceFromData(data)
 	if err != nil {
+		resp.Diagnostics.AddError("unable to create docker container registry feed", err.Error())
 		return
 	}
 
@@ -101,11 +102,11 @@ func (r *dockerContainerRegistryFeedTypeResource) Update(ctx context.Context, re
 	tflog.Debug(ctx, fmt.Sprintf("updating docker container registry feed '%s'", data.ID.ValueString()))
 
 	feed, err := createDockerContainerRegistryFeedResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load docker container registry feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating Docker Container Registry feed (%s)", data.ID))
 
