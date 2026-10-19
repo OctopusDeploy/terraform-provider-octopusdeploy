@@ -246,7 +246,7 @@ func JiraExtensionSettingsObjectType() map[string]attr.Type {
 }
 
 func MapJiraExtensionSettings(jiraExtensionSettings *environments.JiraExtensionSettings) attr.Value {
-	return types.ObjectValueMust(JiraExtensionSettingsObjectType(), map[string]attr.Value{
+	return util.ObjectValue(JiraExtensionSettingsObjectType(), map[string]attr.Value{
 		"environment_type": types.StringValue(jiraExtensionSettings.JiraEnvironmentType),
 	})
 }
@@ -258,7 +258,7 @@ func JiraServiceManagementExtensionSettingsObjectType() map[string]attr.Type {
 }
 
 func MapJiraServiceManagementExtensionSettings(jiraServiceManagementExtensionSettings *environments.JiraServiceManagementExtensionSettings) attr.Value {
-	return types.ObjectValueMust(JiraServiceManagementExtensionSettingsObjectType(), map[string]attr.Value{
+	return util.ObjectValue(JiraServiceManagementExtensionSettingsObjectType(), map[string]attr.Value{
 		"is_enabled": types.BoolValue(jiraServiceManagementExtensionSettings.IsChangeControlled()),
 	})
 }
@@ -270,7 +270,7 @@ func ServiceNowExtensionSettingsObjectType() map[string]attr.Type {
 }
 
 func MapServiceNowExtensionSettings(serviceNowExtensionSettings *environments.ServiceNowExtensionSettings) attr.Value {
-	return types.ObjectValueMust(ServiceNowExtensionSettingsObjectType(), map[string]attr.Value{
+	return util.ObjectValue(ServiceNowExtensionSettingsObjectType(), map[string]attr.Value{
 		"is_enabled": types.BoolValue(serviceNowExtensionSettings.IsChangeControlled()),
 	})
 }

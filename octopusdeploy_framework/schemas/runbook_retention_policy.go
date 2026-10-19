@@ -74,7 +74,7 @@ func MapFromRunbookRetentionPolicy(retentionPolicy *runbooks.RunbookRetentionPol
 			types.StringNull()),
 	}
 
-	return types.ObjectValueMust(GetRunbookRetentionPolicyObjectType(), attrs)
+	return util.ObjectValue(GetRunbookRetentionPolicyObjectType(), attrs)
 }
 
 func MapToRunbookRetentionPolicy(policy types.List) (*runbooks.RunbookRetentionPolicy, error) {

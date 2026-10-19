@@ -66,7 +66,7 @@ func gitCredentialRepositoryRestrictionAttribute() resourceSchema.SingleNestedAt
 		Optional: true,
 		Computed: true,
 		Default: objectdefault.StaticValue(
-			types.ObjectValueMust(
+			util.ObjectValue(
 				map[string]attr.Type{
 					"enabled":              types.BoolType,
 					"allowed_repositories": types.SetType{ElemType: types.StringType},

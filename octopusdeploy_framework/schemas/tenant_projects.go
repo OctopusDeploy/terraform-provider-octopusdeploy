@@ -111,7 +111,7 @@ func MapTenantToTenantProject(tenant *tenants.Tenant, projectID string) attr.Val
 
 	environmentIdList, _ := types.ListValue(types.StringType, environmentIDs)
 
-	return types.ObjectValueMust(TenantProjectType(), map[string]attr.Value{
+	return util.ObjectValue(TenantProjectType(), map[string]attr.Value{
 		"id":              types.StringValue(util.BuildCompositeId(tenant.SpaceID, tenant.ID, projectID)),
 		"tenant_id":       types.StringValue(tenant.ID),
 		"project_id":      types.StringValue(projectID),

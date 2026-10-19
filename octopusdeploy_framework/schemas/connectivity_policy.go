@@ -113,7 +113,7 @@ func MapFromConnectivityPolicy(connectivityPolicy *core.ConnectivityPolicy) attr
 		runbookConnectivityPolicySchemeAttributeNames.TargetRoles:                 util.FlattenStringList(connectivityPolicy.TargetRoles),
 	}
 
-	return types.ObjectValueMust(GetConnectivityPolicyObjectType(), attrs)
+	return util.ObjectValue(GetConnectivityPolicyObjectType(), attrs)
 }
 
 func MapToConnectivityPolicy(flattenedConnectivityPolicy types.List) *core.ConnectivityPolicy {
