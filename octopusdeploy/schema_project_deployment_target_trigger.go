@@ -2,11 +2,23 @@ package octopusdeploy
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func getProjectDeploymentTargetTriggerSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"name": getNameSchema(true),
+		"space_id": {
+			Description: "The space ID associated with the project to attach the trigger. Defaults to the space the provider is configured for.",
+			Optional:    true,
+			// Computed so that omitting the attribute takes the value the
+			// server reports rather than producing a diff on every plan, and
+			// ForceNew because a trigger cannot be moved between spaces.
+			Computed:         true,
+			ForceNew:         true,
+			Type:             schema.TypeString,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.StringIsNotWhiteSpace),
+		},
 		"project_id": {
 			Description: "The ID of the project to attach the trigger.",
 			Required:    true,
