@@ -42,6 +42,10 @@ func expandAzureServicePrincipalAccount(d *schema.ResourceData) *accounts.AzureS
 		account.ResourceManagerEndpoint = v.(string)
 	}
 
+	if v, ok := d.GetOk("azure_environment"); ok {
+		account.AzureEnvironment = v.(string)
+	}
+
 	if v, ok := d.GetOk("space_id"); ok {
 		account.SetSpaceID(v.(string))
 	}

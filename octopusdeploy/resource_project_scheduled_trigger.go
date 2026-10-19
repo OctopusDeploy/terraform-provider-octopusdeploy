@@ -41,9 +41,8 @@ func resourceProjectScheduledTriggerRead(ctx context.Context, d *schema.Resource
 
 	flattenedScheduledTrigger := flattenProjectScheduledTrigger(scheduledTrigger)
 	for key, value := range flattenedScheduledTrigger {
-		err := d.Set(key, value)
-		if err != nil {
-			return nil
+		if err := d.Set(key, value); err != nil {
+			return diag.FromErr(err)
 		}
 	}
 
