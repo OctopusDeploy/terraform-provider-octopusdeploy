@@ -88,7 +88,7 @@ func (r *variableTypeResource) Create(ctx context.Context, req resource.CreateRe
 		newVariable.Value = data.Value.ValueString()
 	}
 
-	tflog.Info(ctx, fmt.Sprintf("creating variable: %#v", newVariable))
+	tflog.Info(ctx, fmt.Sprintf("creating variable: %s (type %s, sensitive %t)", newVariable.Name, newVariable.Type, newVariable.IsSensitive))
 
 	variableSet, err := variables.AddSingle(r.Config.Client, data.SpaceID.ValueString(), variableOwnerId.ValueString(), newVariable)
 	if err != nil {

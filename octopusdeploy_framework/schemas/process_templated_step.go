@@ -148,9 +148,10 @@ func (p ProcessTemplatedStepSchema) GetResourceSchema() resourceSchema.Schema {
 				NestedObject: resourceActionPackageReferenceNestedAttribute(),
 			},
 			"parameters": util.ResourceMap(types.StringType).
-				Description("Parameters required by template. Default value will be assigned when parameter has default value and parameter is not set.").
+				Description("Parameters required by template. Default value will be assigned when parameter has default value and parameter is not set. Marked sensitive because a template may declare sensitive parameters and Terraform cannot mark individual map entries.").
 				Optional().
 				Computed().
+				Sensitive().
 				DefaultEmpty().
 				Build(),
 			"unmanaged_parameters": util.ResourceMap(types.StringType).

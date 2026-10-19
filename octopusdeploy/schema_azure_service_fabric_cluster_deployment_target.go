@@ -100,9 +100,10 @@ func getAzureServiceFabricClusterDeploymentTargetSchema() map[string]*schema.Sch
 	azureServiceFabricClusterDeploymentTargetSchema := getDeploymentTargetSchema()
 
 	azureServiceFabricClusterDeploymentTargetSchema["aad_client_credential_secret"] = &schema.Schema{
-		Computed: true,
-		Optional: true,
-		Type:     schema.TypeString,
+		Computed:  true,
+		Optional:  true,
+		Sensitive: true,
+		Type:      schema.TypeString,
 	}
 
 	azureServiceFabricClusterDeploymentTargetSchema["aad_credential_type"] = &schema.Schema{
