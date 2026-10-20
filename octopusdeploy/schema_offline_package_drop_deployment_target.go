@@ -91,7 +91,7 @@ func getOfflinePackageDropDeploymentTargetSchema() map[string]*schema.Schema {
 
 	offlinePackageDropDeploymentTargetSchema["sensitive_variables_encryption_password"] = &schema.Schema{
 		Description: "The password used to encrypt sensitive variables in the offline package drop. This value is write-only and cannot be read back from the server.",
-		Optional:    false,
+		Optional:    true,
 		Sensitive:   true,
 		Type:        schema.TypeString,
 	}
