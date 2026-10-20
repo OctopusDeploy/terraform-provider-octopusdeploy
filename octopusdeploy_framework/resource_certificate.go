@@ -2,8 +2,11 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/certificates"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/newclient"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -78,10 +81,24 @@ func (r *certificateResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *certificateResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan schemas.CertificateModel
+	var plan, state schemas.CertificateModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// The certificate data and password can't be changed through a regular update,
+	// they must be sent to the replace endpoint
+	if !plan.CertificateData.Equal(state.CertificateData) || !plan.Password.Equal(state.Password) {
+		tflog.Debug(ctx, "Replacing certificate", map[string]interface{}{
+			"id": state.ID.ValueString(),
+		})
+
+		if err := replaceCertificate(r.Client, state.SpaceID.ValueString(), state.ID.ValueString(), plan); err != nil {
+			resp.Diagnostics.AddError("Error replacing certificate", err.Error())
+			return
+		}
 	}
 
 	certificate := expandCertificate(ctx, plan)
@@ -91,7 +108,7 @@ func (r *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	state := flattenCertificate(ctx, updatedCertificate, plan)
+	state = flattenCertificate(ctx, updatedCertificate, plan)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	return
 }
@@ -112,6 +129,17 @@ func (r *certificateResource) Delete(ctx context.Context, req resource.DeleteReq
 
 func (*certificateResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func replaceCertificate(client newclient.Client, spaceID string, certificateID string, plan schemas.CertificateModel) error {
+	if spaceID == "" {
+		spaceID = client.GetSpaceID()
+	}
+
+	replacement := certificates.NewReplacementCertificate(plan.CertificateData.ValueString(), plan.Password.ValueString())
+	path := fmt.Sprintf("/api/%s/certificates/%s/replace", spaceID, certificateID)
+	_, err := newclient.Post[certificates.CertificateResource](client.HttpSession(), path, replacement)
+	return err
 }
 
 func expandCertificate(ctx context.Context, model schemas.CertificateModel) *certificates.CertificateResource {

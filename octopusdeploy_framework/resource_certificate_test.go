@@ -1,8 +1,16 @@
 package octopusdeploy_framework
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
 	"fmt"
+	"math/big"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -33,6 +41,85 @@ func TestAccOctopusDeployCertificateBasic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccOctopusDeployCertificateReplace(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_certificate." + localName
+
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	password := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	originalCommonName := "original-" + acctest.RandStringFromCharSet(10, acctest.CharSetAlpha) + ".example.com"
+	replacementCommonName := "replacement-" + acctest.RandStringFromCharSet(10, acctest.CharSetAlpha) + ".example.com"
+	originalCertificateData := generateTestCertificateData(t, originalCommonName)
+	replacementCertificateData := generateTestCertificateData(t, replacementCommonName)
+
+	var originalID string
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccCertificateCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testCertificateExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "certificate_data", originalCertificateData),
+					resource.TestCheckResourceAttr(prefix, "subject_common_name", originalCommonName),
+					func(s *terraform.State) error {
+						originalID = s.RootModule().Resources[prefix].Primary.ID
+						return nil
+					},
+				),
+				Config: testCertificateReplace(localName, name, originalCertificateData, password),
+			},
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testCertificateExists(prefix),
+					resource.TestCheckResourceAttr(prefix, "certificate_data", replacementCertificateData),
+					resource.TestCheckResourceAttr(prefix, "subject_common_name", replacementCommonName),
+					func(s *terraform.State) error {
+						if id := s.RootModule().Resources[prefix].Primary.ID; id != originalID {
+							return fmt.Errorf("expected certificate to be replaced in place (%s), but got %s", originalID, id)
+						}
+
+						certificate, err := octoClient.Certificates.GetByID(originalID)
+						if err != nil {
+							return err
+						}
+						if certificate.SubjectCommonName != replacementCommonName {
+							return fmt.Errorf("expected server certificate common name %s, but got %s", replacementCommonName, certificate.SubjectCommonName)
+						}
+
+						return nil
+					},
+				),
+				Config: testCertificateReplace(localName, name, replacementCertificateData, password),
+			},
+		},
+	})
+}
+
+// generateTestCertificateData returns a base64 encoded, DER formatted, self-signed certificate
+func generateTestCertificateData(t *testing.T, commonName string) string {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject:      pkix.Name{CommonName: commonName},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(24 * time.Hour),
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return base64.StdEncoding.EncodeToString(der)
 }
 
 func testCertificateBasic(localName string, name string, certificateData string, password string) string {
@@ -84,6 +171,18 @@ resource "octopusdeploy_certificate" "%s" {
       index(local.environments[*].key, scope)
     ].id
   ]
+}
+`, localName, certificateData, name, password)
+}
+
+// testCertificateReplace has no environment scoping: Octopus keeps the replaced certificate as an
+// archived copy that Terraform doesn't manage, and its scoping would block deleting the environments.
+func testCertificateReplace(localName string, name string, certificateData string, password string) string {
+	return fmt.Sprintf(`
+resource "octopusdeploy_certificate" "%s" {
+  certificate_data = "%s"
+  name             = "%s"
+  password         = "%s"
 }
 `, localName, certificateData, name, password)
 }
