@@ -37,6 +37,7 @@ func TestAccOctopusDeployOfflinePackageDropDeploymentTargetBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(prefix, "destination.0.drop_folder_path", dropFolderPath),
 					resource.TestCheckResourceAttr(prefix, "roles.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "roles.0", "offline"),
+					resource.TestCheckResourceAttr(prefix, "sensitive_variables_encryption_password", "Password01!"),
 					resource.TestCheckResourceAttrSet(prefix, "id"),
 				),
 				Config: testAccOfflinePackageDropDeploymentTargetBasic(localName, environmentLocalName, name, environmentName, applicationsDirectory, workingDirectory, dropFolderPath),
@@ -131,7 +132,7 @@ func TestAccOctopusDeployOfflinePackageDropDeploymentTargetImport(t *testing.T) 
 				ResourceName:            resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"has_latest_calamari", "health_status", "status_summary"},
+				ImportStateVerifyIgnore: []string{"has_latest_calamari", "health_status", "status_summary", "sensitive_variables_encryption_password"},
 				ImportStateIdFunc:       testAccOfflinePackageDropDeploymentTargetImportStateIdFunc(resourceName),
 			},
 		},
@@ -151,7 +152,9 @@ func testAccOfflinePackageDropDeploymentTargetBasic(localName, environmentLocalN
 			roles                  = ["offline"]
 			applications_directory = "%s"
 			working_directory      = "%s"
-			
+
+			sensitive_variables_encryption_password = "Password01!"
+
 			destination {
 				destination_type  = "FileSystem"
 				drop_folder_path  = "%s"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/machines"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -17,6 +18,10 @@ func expandOfflinePackageDropDeploymentTarget(d *schema.ResourceData) *machines.
 
 	if v, ok := d.GetOk("destination"); ok {
 		endpoint.Destination = expandOfflinePackageDropDestination(v)
+	}
+
+	if v, ok := d.GetOk("sensitive_variables_encryption_password"); ok {
+		endpoint.SensitiveVariablesEncryptionPassword = core.NewSensitiveValue(v.(string))
 	}
 
 	if v, ok := d.GetOk("working_directory"); ok {
@@ -43,6 +48,7 @@ func flattenOfflinePackageDropDeploymentTarget(deploymentTarget *machines.Deploy
 
 func getOfflinePackageDropDeploymentTargetDataSchema() map[string]*schema.Schema {
 	dataSchema := getOfflinePackageDropDeploymentTargetSchema()
+	delete(dataSchema, "sensitive_variables_encryption_password")
 	setDataSchema(&dataSchema)
 
 	deploymentTargetDataSchema := getDeploymentTargetDataSchema()
@@ -81,6 +87,13 @@ func getOfflinePackageDropDeploymentTargetSchema() map[string]*schema.Schema {
 	offlinePackageDropDeploymentTargetSchema["working_directory"] = &schema.Schema{
 		Required: true,
 		Type:     schema.TypeString,
+	}
+
+	offlinePackageDropDeploymentTargetSchema["sensitive_variables_encryption_password"] = &schema.Schema{
+		Description: "The password used to encrypt sensitive variables in the offline package drop. This value is write-only and cannot be read back from the server.",
+		Optional:    true,
+		Sensitive:   true,
+		Type:        schema.TypeString,
 	}
 
 	return offlinePackageDropDeploymentTargetSchema

@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client/ratelimit"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/spaces"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
@@ -54,7 +55,8 @@ func getClientForSpace(c *Config, spaceID string) (*client.Client, error) {
 		return nil, err
 	}
 
-	return client.NewClientWithCredentials(nil, apiURL, credential, spaceID, "TerraformProvider")
+	httpClient := ratelimit.NewHttpClient(nil, ratelimit.DefaultOptions())
+	return client.NewClientWithCredentials(httpClient, apiURL, credential, spaceID, "TerraformProvider")
 }
 
 func getApiCredential(c *Config) (client.ICredential, error) {

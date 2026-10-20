@@ -8,4 +8,5 @@ resource "octopusdeploy_offline_package_drop_deployment_target" "example" {
   thumbprint                        = "<thumbprint>"
   working_directory                 = "<working directory>"
   applications_directory            = "<applications directory>"
+  sensitive_variables_encryption_password = "<password>"
 }
