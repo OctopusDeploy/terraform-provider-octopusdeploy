@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/machinepolicies"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -183,4 +184,17 @@ func TestFlattenRoundTripsThroughExpand(t *testing.T) {
 			assert.Equal(t, testCase.expectedCron, reExpanded.HealthCheckCron)
 		})
 	}
+}
+
+func TestMachineUpdatePolicyKubernetesAgentUpdateBehaviorValidation(t *testing.T) {
+	validate := getMachineUpdatePolicySchema()["kubernetes_agent_update_behavior"].ValidateDiagFunc
+	path := cty.GetAttrPath("kubernetes_agent_update_behavior")
+
+	for _, value := range []string{"NeverUpdate", "Update", "Block"} {
+		diags := validate(value, path)
+		require.False(t, diags.HasError(), "expected %s to be valid", value)
+	}
+
+	diags := validate("Blocked", path)
+	require.True(t, diags.HasError(), "expected Blocked to be invalid")
 }

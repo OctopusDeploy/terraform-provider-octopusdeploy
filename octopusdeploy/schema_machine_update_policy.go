@@ -86,8 +86,9 @@ func getMachineUpdatePolicySchema() map[string]*schema.Schema {
 			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 				"NeverUpdate",
 				"Update",
+				"Block",
 			}, false)),
-			Description: "The behaviour of how Kubernetes agent machines are updated. Valid values are `NeverUpdate` and `Update`.",
+			Description: "The behaviour of how Kubernetes agent machines are updated. Valid values are `NeverUpdate`, `Update` and `Block`.",
 		},
 	}
 }
