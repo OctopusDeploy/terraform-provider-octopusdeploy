@@ -119,6 +119,37 @@ func TestAccOctopusDeployMachinePolicyImport(t *testing.T) {
 	})
 }
 
+func TestAccOctopusDeployMachinePolicyKubernetesAgentUpdateBehaviorBlock(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_machine_policy." + localName
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	space := NewTestSpace(t)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccMachinePolicyCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccMachinePolicyExists(prefix),
+					resource.TestCheckTypeSetElemNestedAttrs(prefix, "machine_update_policy.*", map[string]string{"kubernetes_agent_update_behavior": "Block"}),
+					testAccMachinePolicyKubernetesAgentUpdateBehavior(prefix, "Block"),
+				),
+				Config: testAccMachinePolicyWithKubernetesAgentUpdateBehavior(localName, name, space.ID, "Block"),
+			},
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccMachinePolicyExists(prefix),
+					resource.TestCheckTypeSetElemNestedAttrs(prefix, "machine_update_policy.*", map[string]string{"kubernetes_agent_update_behavior": "Update"}),
+					testAccMachinePolicyKubernetesAgentUpdateBehavior(prefix, "Update"),
+				),
+				Config: testAccMachinePolicyWithKubernetesAgentUpdateBehavior(localName, name, space.ID, "Update"),
+			},
+		},
+	})
+}
+
 func testAccMachinePolicyBasic(localName, name, spaceID string) string {
 	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
 		name     = "%s"
@@ -143,6 +174,33 @@ func testAccMachinePolicyWithConnectivitySettings(localName, name, spaceID strin
 		connection_retry_sleep_interval = 1000000000
 		connection_retry_time_limit     = 300000000000
 	}`, localName, name, spaceID)
+}
+
+func testAccMachinePolicyWithKubernetesAgentUpdateBehavior(localName, name, spaceID, behavior string) string {
+	return providerSpaceConfig(spaceID) + fmt.Sprintf(`resource "octopusdeploy_machine_policy" "%s" {
+		name     = "%s"
+		space_id = "%s"
+
+		machine_update_policy {
+			kubernetes_agent_update_behavior = "%s"
+		}
+	}`, localName, name, spaceID, behavior)
+}
+
+func testAccMachinePolicyKubernetesAgentUpdateBehavior(prefix string, expected string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs := s.RootModule().Resources[prefix]
+		machinePolicy, err := machinepolicies.GetByID(octoClient, rs.Primary.Attributes["space_id"], rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		if actual := machinePolicy.MachineUpdatePolicy.KubernetesAgentUpdateBehavior; actual != expected {
+			return fmt.Errorf("expected kubernetes agent update behavior to be %s, got %s", expected, actual)
+		}
+
+		return nil
+	}
 }
 
 func testAccMachinePolicyExists(prefix string) resource.TestCheckFunc {
