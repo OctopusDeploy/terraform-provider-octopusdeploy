@@ -101,10 +101,12 @@ func getDynamicWorkerPoolSchema() map[string]*schema.Schema {
 			ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{
 				"Ubuntu1804",
 				"Ubuntu2204",
+				"Ubuntu2404",
 				"UbuntuDefault",
 				"Windows2016",
 				"Windows2019",
 				"Windows2022",
+				"Windows2025",
 				"WindowsDefault",
 			}, false)),
 		},
