@@ -70,7 +70,10 @@ func resourceDynamicWorkerPoolRead(ctx context.Context, d *schema.ResourceData, 
 		return errors.ProcessApiError(ctx, d, err, "dynamic worker pool")
 	}
 
-	dynamicWorkerPool := workerPoolResource.(*workerpools.DynamicWorkerPool)
+	dynamicWorkerPool, ok := workerPoolResource.(*workerpools.DynamicWorkerPool)
+	if !ok {
+		return diag.Errorf("worker pool %s is not a dynamic worker pool", d.Id())
+	}
 	if err := setDynamicWorkerPool(ctx, d, dynamicWorkerPool); err != nil {
 		return diag.FromErr(err)
 	}

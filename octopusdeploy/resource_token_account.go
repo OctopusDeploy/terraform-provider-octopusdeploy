@@ -66,7 +66,11 @@ func resourceTokenAccountRead(ctx context.Context, d *schema.ResourceData, m int
 		return errors.ProcessApiError(ctx, d, err, "token account")
 	}
 
-	if err := setTokenAccount(ctx, d, accountResource.(*accounts.TokenAccount)); err != nil {
+	tokenAccount, ok := accountResource.(*accounts.TokenAccount)
+	if !ok {
+		return diag.Errorf("account %s is not a token account", d.Id())
+	}
+	if err := setTokenAccount(ctx, d, tokenAccount); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -67,7 +67,10 @@ func resourceAzureOpenIDConnectAccountRead(ctx context.Context, d *schema.Resour
 		return errors.ProcessApiError(ctx, d, err, "Azure OpenID Connect account")
 	}
 
-	azureOIDCAccount := accountResource.(*accounts.AzureOIDCAccount)
+	azureOIDCAccount, ok := accountResource.(*accounts.AzureOIDCAccount)
+	if !ok {
+		return diag.Errorf("account %s is not an Azure OIDC account", d.Id())
+	}
 	if err := setAzureOpenIDConnectAccount(ctx, d, azureOIDCAccount); err != nil {
 		return diag.FromErr(err)
 	}

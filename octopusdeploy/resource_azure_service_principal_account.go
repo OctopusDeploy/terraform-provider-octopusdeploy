@@ -67,7 +67,10 @@ func resourceAzureServicePrincipalAccountRead(ctx context.Context, d *schema.Res
 		return errors.ProcessApiError(ctx, d, err, "Azure service principal account")
 	}
 
-	azureServicePrincipalAccount := accountResource.(*accounts.AzureServicePrincipalAccount)
+	azureServicePrincipalAccount, ok := accountResource.(*accounts.AzureServicePrincipalAccount)
+	if !ok {
+		return diag.Errorf("account %s is not an Azure service principal account", d.Id())
+	}
 	if err := setAzureServicePrincipalAccount(ctx, d, azureServicePrincipalAccount); err != nil {
 		return diag.FromErr(err)
 	}
