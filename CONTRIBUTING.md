@@ -36,10 +36,18 @@ Once your pull request is merged, our build and test workflow will execute once 
 
 Our PR checks don't run automatically on pull requests from forks. You can approve the run from the PR, but it won't help: the checks require access to values that GitHub Actions won't expose to a workflow running in the contributor's profile rather than the Octopus organization, so they will always fail and the change can't be validated where it is. To work around this, redirect the change through a branch in this repository so the checks can run before it reaches `main`.
 
-> [!IMPORTANT]
-> Don't merge a fork PR directly into `main`. Follow the steps below to redirect it through a branch in this repository first.
+> [!WARNING]
+> Redirecting a fork PR into a branch in this repository causes the contributor's code to run in workflows that hold repository secrets, including the GitHub App private key (`GH_APP_PRIVATE_KEY`), the App ID, and the Octopus licence. `build.yml` and `docs.yml` run on `push` to any branch, and the test workflow runs on `pull_request`, so any code merged into an in-repo branch executes with those secrets and a `contents: write` token. Treat this as running untrusted code with full access to those secrets.
+>
+> Before you redirect anything, read the entire diff line by line. Pay particular attention to workflow files under `.github/`, `Makefile`, `go.mod`/`go.sum`, `github-app-jwt.py`, and anything that runs during build or test. If the change modifies how CI runs, or you are not certain it is safe, do not redirect it.
 
-1. Create a new branch in this repository with a name similar to the contributor's branch (for example, if their branch is `fix-typo-in-docs`, create `fix-typo-in-docs`).
-2. Edit the contributor's PR and change its base branch from `main` to the new branch you just created.
-3. Squash and merge the PR into the new branch.
-4. Continue as you would for any other change: open a PR from the intermediate branch to `main` and merge it.
+> [!IMPORTANT]
+> Don't merge a fork PR directly into `main`, and never redirect one you have not fully reviewed. Follow the steps below only after completing the review described above.
+
+1. Review the contributor's diff in full and confirm it is safe to execute with repository secrets (see the warning above).
+2. Create a new branch in this repository with a name similar to the contributor's branch (for example, if their branch is `fix-typo-in-docs`, create `fix-typo-in-docs`).
+3. Edit the contributor's PR and change its base branch from `main` to the new branch you just created.
+4. Squash and merge the PR into the new branch.
+5. Continue as you would for any other change: open a PR from the intermediate branch to `main` and merge it.
+
+A more robust alternative to reviewing by eye on every contribution is to move the secret-bearing jobs behind a [protected GitHub Environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#required-reviewers) that requires manual approval before the job with secrets runs. That keeps the secrets from being exposed to a run until a maintainer has explicitly approved it.
