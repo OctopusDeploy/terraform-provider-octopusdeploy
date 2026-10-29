@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/url"
-	"strings"
 )
 
 func expandKubernetesAgentDeploymentTarget(kubernetesAgent *schema.ResourceData) *machines.DeploymentTarget {
@@ -80,11 +79,7 @@ func getKubernetesAgentDeploymentTargetSchemaForDataSource() map[string]*schema.
 }
 
 func getKubernetesAgentDeploymentTargetSchemaForResource() map[string]*schema.Schema {
-	uriDiffSuppress := func(k, old, new string, d *schema.ResourceData) bool {
-		return strings.EqualFold(old, new)
-	}
-
-	return getKubernetesAgentDeploymentTargetSchema(uriDiffSuppress)
+	return getKubernetesAgentDeploymentTargetSchema(getPollingURIDiffSuppressFunc())
 }
 
 func getKubernetesAgentDeploymentTargetSchema(uriDiffSuppress schema.SchemaDiffSuppressFunc) map[string]*schema.Schema {
@@ -128,7 +123,7 @@ func getKubernetesAgentDeploymentTargetSchema(uriDiffSuppress schema.SchemaDiffS
 			Type:        schema.TypeString,
 		},
 		"uri": {
-			Description:           "The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent.",
+			Description:           "The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent. Casing is not significant; Octopus Server stores the URI with a lowercase host.",
 			Required:              true,
 			Type:                  schema.TypeString,
 			DiffSuppressFunc:      uriDiffSuppress,

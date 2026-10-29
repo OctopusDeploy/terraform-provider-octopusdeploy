@@ -31,7 +31,7 @@ resource "octopusdeploy_polling_tentacle_deployment_target" "example" {
 - `environments` (List of String) A list of environment IDs associated with this resource.
 - `name` (String) The name of this resource.
 - `roles` (List of String)
-- `tentacle_url` (String)
+- `tentacle_url` (String) The polling subscription URI that this tentacle uses to queue messages. Casing is not significant; Octopus Server stores the URI with a lowercase host.
 
 ### Optional
 

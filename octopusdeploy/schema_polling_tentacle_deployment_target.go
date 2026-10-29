@@ -42,7 +42,7 @@ func flattenPollingTentacleDeploymentTarget(deploymentTarget *machines.Deploymen
 }
 
 func getPollingTentacleDeploymentTargetDataSchema() map[string]*schema.Schema {
-	dataSchema := getPollingTentacleDeploymentTargetSchema()
+	dataSchema := getPollingTentacleDeploymentTargetSchemaForDataSource()
 	setDataSchema(&dataSchema)
 
 	deploymentTargetDataSchema := getDeploymentTargetDataSchema()
@@ -62,7 +62,15 @@ func getPollingTentacleDeploymentTargetDataSchema() map[string]*schema.Schema {
 	return deploymentTargetDataSchema
 }
 
-func getPollingTentacleDeploymentTargetSchema() map[string]*schema.Schema {
+func getPollingTentacleDeploymentTargetSchemaForDataSource() map[string]*schema.Schema {
+	return getPollingTentacleDeploymentTargetSchema(nil)
+}
+
+func getPollingTentacleDeploymentTargetSchemaForResource() map[string]*schema.Schema {
+	return getPollingTentacleDeploymentTargetSchema(getPollingURIDiffSuppressFunc())
+}
+
+func getPollingTentacleDeploymentTargetSchema(tentacleURLDiffSuppress schema.SchemaDiffSuppressFunc) map[string]*schema.Schema {
 	pollingTentacleDeploymentTargetSchema := getDeploymentTargetSchema()
 
 	pollingTentacleDeploymentTargetSchema["certificate_signature_algorithm"] = &schema.Schema{
@@ -78,8 +86,11 @@ func getPollingTentacleDeploymentTargetSchema() map[string]*schema.Schema {
 	}
 
 	pollingTentacleDeploymentTargetSchema["tentacle_url"] = &schema.Schema{
-		Required: true,
-		Type:     schema.TypeString,
+		Description:           "The polling subscription URI that this tentacle uses to queue messages. Casing is not significant; Octopus Server stores the URI with a lowercase host.",
+		Required:              true,
+		Type:                  schema.TypeString,
+		DiffSuppressFunc:      tentacleURLDiffSuppress,
+		DiffSuppressOnRefresh: tentacleURLDiffSuppress != nil,
 	}
 
 	return pollingTentacleDeploymentTargetSchema
