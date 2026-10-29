@@ -57,3 +57,6 @@ terraform/**/.terraform/*
 results.xml
 
 .DS_Store
+
+# This is a temp file holding the PR template.
+pr.md
