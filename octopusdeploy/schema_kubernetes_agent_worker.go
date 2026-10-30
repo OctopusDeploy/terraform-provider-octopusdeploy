@@ -64,7 +64,15 @@ func flattenKubernetesAgentWorker(Worker *machines.Worker) map[string]interface{
 	return flattenedWorker
 }
 
-func getKubernetesAgentWorkerSchema() map[string]*schema.Schema {
+func getKubernetesAgentWorkerSchemaForDataSource() map[string]*schema.Schema {
+	return getKubernetesAgentWorkerSchema(nil)
+}
+
+func getKubernetesAgentWorkerSchemaForResource() map[string]*schema.Schema {
+	return getKubernetesAgentWorkerSchema(getPollingURIDiffSuppressFunc())
+}
+
+func getKubernetesAgentWorkerSchema(uriDiffSuppress schema.SchemaDiffSuppressFunc) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"id":       getIDSchema(),
 		"space_id": getSpaceIDSchema(),
@@ -88,9 +96,11 @@ func getKubernetesAgentWorkerSchema() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 		},
 		"uri": {
-			Description: "The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent.",
-			Required:    true,
-			Type:        schema.TypeString,
+			Description:           "The URI of the Kubernetes agent's used by the server to queue messages. This is the same subscription uri that was used when installing the agent. Casing is not significant; Octopus Server stores the URI with a lowercase host.",
+			Required:              true,
+			Type:                  schema.TypeString,
+			DiffSuppressFunc:      uriDiffSuppress,
+			DiffSuppressOnRefresh: uriDiffSuppress != nil,
 		},
 		"upgrade_locked": {
 			Description: "If enabled the Kubernetes agent will not automatically upgrade and will stay on the currently installed version, even if the associated machine policy is configured to automatically upgrade.",
@@ -141,7 +151,7 @@ func getKubernetesAgentWorkerSchema() map[string]*schema.Schema {
 }
 
 func getKubernetesAgentWorkerDataSchema() map[string]*schema.Schema {
-	dataSchema := getKubernetesAgentWorkerSchema()
+	dataSchema := getKubernetesAgentWorkerSchemaForDataSource()
 	setDataSchema(&dataSchema)
 
 	WorkerDataSchema := getWorkerDataSchema()

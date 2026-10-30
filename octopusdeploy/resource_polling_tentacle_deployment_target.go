@@ -18,7 +18,7 @@ func resourcePollingTentacleDeploymentTarget() *schema.Resource {
 		Description:   "This resource manages polling tentacle deployment targets in Octopus Deploy.",
 		Importer:      getImporter(),
 		ReadContext:   resourcePollingTentacleDeploymentTargetRead,
-		Schema:        getPollingTentacleDeploymentTargetSchema(),
+		Schema:        getPollingTentacleDeploymentTargetSchemaForResource(),
 		UpdateContext: resourcePollingTentacleDeploymentTargetUpdate,
 	}
 }

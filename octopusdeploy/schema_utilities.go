@@ -2,10 +2,22 @@ package octopusdeploy
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
+
+// getPollingURIDiffSuppressFunc returns a diff suppressor for attributes holding a
+// polling URI. Octopus Server lowercases the host when it stores one, but
+// octopusdeploy_polling_subscription_id only generates uppercase subscription IDs,
+// so a URI fed from that resource would otherwise produce a permanent in-place
+// update. Attach this to every attribute that accepts a `poll://` URI.
+func getPollingURIDiffSuppressFunc() schema.SchemaDiffSuppressFunc {
+	return func(k, old, new string, d *schema.ResourceData) bool {
+		return strings.EqualFold(old, new)
+	}
+}
 
 func getAccountTypeSchema(isRequired bool) *schema.Schema {
 	schema := &schema.Schema{
