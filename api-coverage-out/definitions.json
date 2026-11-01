@@ -1,0 +1,9291 @@
+[
+  {
+    "name": "AccountDetailsResource",
+    "properties": [
+      "AccountType"
+    ],
+    "read_only": [
+      "AccountType"
+    ]
+  },
+  {
+    "name": "AccountResource",
+    "properties": [
+      "AccountType",
+      "Description",
+      "EnvironmentIds",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Slug",
+      "SpaceId",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation"
+    ],
+    "read_only": [
+      "AccountType"
+    ]
+  },
+  {
+    "name": "AccountResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "AccountUsageResource",
+    "properties": [
+      "CommonTenantVariables",
+      "DeploymentProcesses",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LibraryVariableSets",
+      "Links",
+      "ProjectTenantVariables",
+      "ProjectVariableSets",
+      "Releases",
+      "RunbookProcesses",
+      "RunbookSnapshots",
+      "Targets"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActionTemplateCategoryResource",
+    "properties": [
+      "DisplayOrder",
+      "Id",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActionTemplateParameterResource",
+    "properties": [
+      "DefaultValue",
+      "DisplaySettings",
+      "HelpText",
+      "Id",
+      "Label",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActionTemplateResource",
+    "properties": [
+      "ActionType",
+      "CommunityActionTemplateId",
+      "Description",
+      "GitDependencies",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Packages",
+      "Parameters",
+      "Properties",
+      "SpaceId",
+      "Version"
+    ],
+    "read_only": [
+      "Parameters",
+      "Properties"
+    ]
+  },
+  {
+    "name": "ActionTemplateResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ActionTemplateSearchResource",
+    "properties": [
+      "Author",
+      "Categories",
+      "Category",
+      "CommunityActionTemplateId",
+      "Description",
+      "Features",
+      "HasUpdate",
+      "Id",
+      "IsBuiltIn",
+      "IsInstalled",
+      "Keywords",
+      "Links",
+      "Name",
+      "Prerelease",
+      "SpaceId",
+      "Type",
+      "Version",
+      "Website"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActionTemplateUsageResource",
+    "properties": [
+      "ActionId",
+      "ActionName",
+      "ActionTemplateId",
+      "Branch",
+      "DeploymentProcessId",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProcessId",
+      "ProcessType",
+      "ProjectId",
+      "ProjectName",
+      "ProjectSlug",
+      "Release",
+      "RunbookId",
+      "RunbookName",
+      "StepId",
+      "StepName",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActionUpdateRemovedPackageUsage",
+    "properties": [
+      "PackageReference",
+      "UsedBy",
+      "UsedById",
+      "UsedByName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActionUpdateResultResource",
+    "properties": [
+      "Id",
+      "Links",
+      "ManualMergeRequiredReasonsByPropertyName",
+      "NamesOfNewParametersMissingDefaultValue",
+      "Outcome",
+      "RemovedPackageUsages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActionsUpdateProcessResource",
+    "properties": [
+      "ActionIds",
+      "GitRef",
+      "ProcessId",
+      "ProcessType",
+      "ProjectId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActivityLogElement",
+    "properties": [
+      "Category",
+      "Detail",
+      "GapLastNumber",
+      "MessageText",
+      "Number",
+      "OccurredAt"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActivityLogEntry",
+    "properties": [
+      "Category",
+      "Detail",
+      "GapLastNumber",
+      "MessageText",
+      "Number",
+      "OccurredAt"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ActivityLogTreeNode",
+    "properties": [
+      "Children",
+      "Ended",
+      "Id",
+      "LogElements",
+      "Name",
+      "ProgressMessage",
+      "ProgressPercentage",
+      "ShowAtSummaryLevel",
+      "Started",
+      "Status"
+    ],
+    "read_only": [
+      "Children",
+      "LogElements",
+      "ShowAtSummaryLevel"
+    ]
+  },
+  {
+    "name": "ApiKeyCreatedResource",
+    "properties": [
+      "ApiKey",
+      "Created",
+      "Expires",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Purpose",
+      "UserId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ApiKeyResource",
+    "properties": [
+      "ApiKey",
+      "Created",
+      "Expires",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Purpose",
+      "UserId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ApiKeyResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ArchivedEventFileResource",
+    "properties": [
+      "CreatedDate",
+      "FileBytes",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ModifiedDate",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ArchivedEventFileResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ArtifactResource",
+    "properties": [
+      "Created",
+      "Filename",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "LogCorrelationId",
+      "ServerTaskId",
+      "Source",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ArtifactResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "AuditStreamConfigurationResource",
+    "properties": [
+      "Active",
+      "Description",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "StreamConfigurationResource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "AuthenticationProviderElement",
+    "properties": [
+      "CSSLinks",
+      "DisplayName",
+      "FormsLoginEnabled",
+      "IdentityType",
+      "JavascriptLinks",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "AuthenticationProviderThatSupportsGroups",
+    "properties": [
+      "Id",
+      "IsRoleBased",
+      "LookupUri",
+      "Name",
+      "SupportsGroupLookup"
+    ],
+    "read_only": [
+      "Id"
+    ]
+  },
+  {
+    "name": "AuthenticationResource",
+    "properties": [
+      "AnyAuthenticationProvidersSupportPasswordManagement",
+      "ApiKeyDefaultExpiryDays",
+      "ApiKeyMaxExpiryDays",
+      "AuthenticationProviders",
+      "AutoLoginEnabled",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "RememberMeEnabled",
+      "UserApiKeysEnabled"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "AutoDeployReleaseOverrideResource",
+    "properties": [
+      "EnvironmentId",
+      "ReleaseId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "AutomaticDeprovisioningRuleResource",
+    "properties": [
+      "ExpiryDays",
+      "ExpiryHours"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BaseEnvironmentV2Resource",
+    "properties": [
+      "Description",
+      "EnvironmentTags",
+      "Id",
+      "Name",
+      "Slug",
+      "SpaceId",
+      "Type"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "BaseEnvironmentV2ResourcePaginatedCollection",
+    "properties": [
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastPageNumber",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "BeginContainerLogsSessionCommand",
+    "properties": [
+      "ContainerName",
+      "DesiredOrKubernetesMonitoredResourceId",
+      "EnvironmentId",
+      "MachineId",
+      "PodName",
+      "ProjectId",
+      "ShowPreviousContainer",
+      "SpaceId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BeginContainerLogsSessionResponse",
+    "properties": [
+      "SessionId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BeginResourceEventsSessionCommand",
+    "properties": [
+      "DesiredOrKubernetesMonitoredResourceId",
+      "EnvironmentId",
+      "MachineId",
+      "ProjectId",
+      "SpaceId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BeginResourceEventsSessionResponse",
+    "properties": [
+      "SessionId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BuiltInFeedStatsResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "TotalPackages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BulkDeleteBuildInformationCommand",
+    "properties": [
+      "Ids",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BulkDeletePackagesCommand",
+    "properties": [
+      "Ids",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BulkUpdateActionTemplateActionsCommand",
+    "properties": [
+      "ActionsToUpdate",
+      "DefaultPropertyValues",
+      "Id",
+      "Overrides",
+      "SpaceId",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "BulkUpdateActionTemplateActionsResponse",
+    "properties": [
+      "Outcome",
+      "Results",
+      "TaskId",
+      "ValidationFailures"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CertificateConfigurationResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "SignatureAlgorithm",
+      "Thumbprint"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CertificateConfigurationResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "CertificateResource",
+    "properties": [
+      "Archived",
+      "CertificateChain",
+      "CertificateData",
+      "CertificateDataFormat",
+      "EnvironmentIds",
+      "HasPrivateKey",
+      "Id",
+      "IsExpired",
+      "IssuerCommonName",
+      "IssuerDistinguishedName",
+      "IssuerOrganization",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "NotAfter",
+      "NotBefore",
+      "Notes",
+      "Password",
+      "ReplacedBy",
+      "SelfSigned",
+      "SerialNumber",
+      "SignatureAlgorithmName",
+      "SpaceId",
+      "SubjectAlternativeNames",
+      "SubjectCommonName",
+      "SubjectDistinguishedName",
+      "SubjectOrganization",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation",
+      "Thumbprint",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CertificateResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "CertificateUsageResource",
+    "properties": [
+      "DeploymentTargetUsages",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LibraryVariableSetUsages",
+      "Links",
+      "ProjectUsages",
+      "TenantUsages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ChangeDetailsResource",
+    "properties": [
+      "Differences",
+      "DocumentContext"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ChangeRequestSettings",
+    "properties": [
+      "Type"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "ChannelCustomFieldDefinitionResource",
+    "properties": [
+      "Description",
+      "FieldName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ChannelGitResourceRuleResource",
+    "properties": [
+      "GitDependencyActions",
+      "Id",
+      "Rules"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ChannelResource",
+    "properties": [
+      "AutomaticEphemeralEnvironmentDeployments",
+      "CustomFieldDefinitions",
+      "Description",
+      "EphemeralEnvironmentNameTemplate",
+      "GitReferenceRules",
+      "GitResourceRules",
+      "Id",
+      "IsDefault",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LifecycleId",
+      "Links",
+      "Name",
+      "ParentEnvironmentId",
+      "ProjectId",
+      "Rules",
+      "Slug",
+      "SpaceId",
+      "TenantTags",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ChannelResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ChannelVersionRuleResource",
+    "properties": [
+      "ActionPackages",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Tag",
+      "VersionRange"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CheckLoginInitiatedCommand",
+    "properties": [
+      "EncodedQueryString"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ClaimDescriptor",
+    "properties": [
+      "Description",
+      "IsIdentifyingClaim",
+      "Label",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CloudTemplateMetadata",
+    "properties": [
+      "Metadata",
+      "Values"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "Commit",
+    "properties": [
+      "Comment",
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CommitDetails",
+    "properties": [
+      "Comment",
+      "Id",
+      "LinkUrl"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CommonTenantVariableUsage",
+    "properties": [
+      "LibraryVariableSets",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CommonTenantVariableUsageEntry",
+    "properties": [
+      "LibraryVariableSetId",
+      "TenantVariableId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CommonVariableScope",
+    "properties": [
+      "EnvironmentIds"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CommunityActionTemplateResource",
+    "properties": [
+      "Author",
+      "Description",
+      "HistoryUrl",
+      "Id",
+      "Links",
+      "Name",
+      "Packages",
+      "Parameters",
+      "Properties",
+      "Type",
+      "Version",
+      "Website"
+    ],
+    "read_only": [
+      "Parameters",
+      "Properties"
+    ]
+  },
+  {
+    "name": "CommunityActionTemplateResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "CommunityActionTemplateSnapshotResource",
+    "properties": [
+      "Id",
+      "Parameters",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CompliancePolicyResource",
+    "properties": [
+      "ConditionsRego",
+      "Description",
+      "GitRef",
+      "Name",
+      "ScopeRego",
+      "Slug",
+      "ViolationAction",
+      "ViolationReason"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CompliancePolicyVersionResource",
+    "properties": [
+      "Description",
+      "GitCommit",
+      "GitRef",
+      "Id",
+      "IsActive",
+      "Name",
+      "PublishedDate",
+      "RegoConditions",
+      "RegoScope",
+      "Slug",
+      "Version",
+      "ViolationAction",
+      "ViolationReason"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConfigurationSection",
+    "properties": [
+      "Description",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConfigurationSectionCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ConnectivityCheck",
+    "properties": [
+      "DependsOnPropertyNames",
+      "Title",
+      "Url"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConnectivityCheckMessage",
+    "properties": [
+      "Category",
+      "Message"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ContainerLogLineResource",
+    "properties": [
+      "Message",
+      "Timestamp"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "Control",
+    "properties": [
+      "Type"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "ConvertProjectRunbooksToGitCommand",
+    "properties": [
+      "Branch",
+      "CommitMessage",
+      "CreateBranch",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConvertProjectRunbooksToGitResponse",
+    "properties": [
+      "DraftRunbooks",
+      "PublishedRunbooks",
+      "ServerTaskId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConvertProjectToVersionControlledCommand",
+    "properties": [
+      "ChangeDescription",
+      "CommitMessage",
+      "InitialCommitBranchName",
+      "ProjectId",
+      "SpaceId",
+      "VersionControlSettings"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConvertProjectVariablesToGitCommand",
+    "properties": [
+      "Branch",
+      "CommitMessage",
+      "CreateBranch",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConvertProjectVariablesToGitSummaryResponse",
+    "properties": [
+      "SensitiveVariableCount",
+      "TextVariableCount"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ConvertRunbookToGitSummaryResponse",
+    "properties": [
+      "DraftRunbooks",
+      "PublishedRunbooks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateAccountCommand",
+    "properties": [
+      "Description",
+      "Details",
+      "EnvironmentIds",
+      "Name",
+      "Slug",
+      "SpaceId",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateActionTemplateCommand",
+    "properties": [
+      "ActionType",
+      "CommunityActionTemplateId",
+      "Description",
+      "GitDependencies",
+      "Inputs",
+      "Name",
+      "Packages",
+      "Parameters",
+      "Properties",
+      "SpaceId",
+      "StepPackageVersion",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateArtifactCommand",
+    "properties": [
+      "Filename",
+      "LogCorrelationId",
+      "ServerTaskId",
+      "Source",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateBranchCommand",
+    "properties": [
+      "CurrentBranchName",
+      "NewBranchName",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateBranchCommandV2",
+    "properties": [
+      "BaseGitRef",
+      "NewBranchName",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateBuildInformationCommand",
+    "properties": [
+      "OctopusBuildInformation",
+      "OverwriteMode",
+      "PackageId",
+      "Replace",
+      "SpaceId",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateCertificateCommand",
+    "properties": [
+      "CertificateData",
+      "EnvironmentIds",
+      "Name",
+      "Notes",
+      "Password",
+      "SpaceId",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateChannelCommand",
+    "properties": [
+      "AutomaticEphemeralEnvironmentDeployments",
+      "CustomFieldDefinitions",
+      "Description",
+      "EphemeralEnvironmentNameTemplate",
+      "GitReferenceRules",
+      "GitResourceRules",
+      "IsDefault",
+      "LifecycleId",
+      "Name",
+      "ParentEnvironmentId",
+      "ProjectId",
+      "Rules",
+      "Slug",
+      "SpaceId",
+      "TenantTags",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateCompliancePolicyCommand",
+    "properties": [
+      "ChangeDescription",
+      "ConditionsRego",
+      "Description",
+      "GitRef",
+      "Name",
+      "ScopeRego",
+      "Slug",
+      "ViolationAction",
+      "ViolationReason"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentCommand",
+    "properties": [
+      "ChangeRequestSettings",
+      "Changes",
+      "ChangesMarkdown",
+      "ChannelId",
+      "Comments",
+      "Created",
+      "DebugMode",
+      "DeployedBy",
+      "DeployedById",
+      "DeployedToMachineIds",
+      "DeploymentProcessId",
+      "EnvironmentId",
+      "ExcludedMachineIds",
+      "ExecutionPlanLogContext",
+      "FailTargetDiscovery",
+      "FailureEncountered",
+      "ForcePackageDownload",
+      "ForcePackageRedeployment",
+      "FormValues",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ManifestVariableSetId",
+      "Name",
+      "Priority",
+      "ProjectId",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "ReleaseId",
+      "SkipActions",
+      "SpaceId",
+      "SpecificMachineIds",
+      "TaskId",
+      "TenantId",
+      "TentacleRetentionPeriod",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentFreezeCommand",
+    "properties": [
+      "Description",
+      "End",
+      "Name",
+      "ProjectEnvironmentScope",
+      "Start"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentFreezeOverrideCommand",
+    "properties": [
+      "CreateDeploymentCommand",
+      "FreezeIds",
+      "Reason",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentFreezeOverrideResponse",
+    "properties": [
+      "Deployment"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentFreezeResponse",
+    "properties": [
+      "Description",
+      "End",
+      "Id",
+      "Name",
+      "ProjectEnvironmentScope",
+      "RecurringSchedule",
+      "Start",
+      "TenantProjectEnvironmentScope"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentResponse",
+    "properties": [
+      "Deployment"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentTargetCommand",
+    "properties": [
+      "Endpoint",
+      "EnvironmentIds",
+      "IsDisabled",
+      "MachinePolicyId",
+      "Name",
+      "Roles",
+      "SkipInitialHealthCheck",
+      "Slug",
+      "SpaceId",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation",
+      "Thumbprint",
+      "Uri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentTargetTagCommand",
+    "properties": [
+      "SpaceId",
+      "Tag"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentTargetTagResponse",
+    "properties": [
+      "SpaceId",
+      "Tag"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentTenantedCommandV1",
+    "properties": [
+      "DebugMode",
+      "DeploymentFreezeNames",
+      "DeploymentFreezeOverrideReason",
+      "EnvironmentName",
+      "ExcludedMachineNames",
+      "ForcePackageDownload",
+      "ForcePackageRedeployment",
+      "NoRunAfter",
+      "Priority",
+      "ProjectName",
+      "ReleaseVersion",
+      "RunAt",
+      "SkipStepNames",
+      "SpaceId",
+      "SpaceIdOrName",
+      "SpecificMachineNames",
+      "TenantTags",
+      "Tenants",
+      "UpdateVariableSnapshot",
+      "UseGuidedFailure",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentTenantedResponseV1",
+    "properties": [
+      "DeploymentServerTasks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentUntenantedCommandV1",
+    "properties": [
+      "DebugMode",
+      "DeploymentFreezeNames",
+      "DeploymentFreezeOverrideReason",
+      "EnvironmentNames",
+      "ExcludedMachineNames",
+      "ForcePackageDownload",
+      "ForcePackageRedeployment",
+      "NoRunAfter",
+      "Priority",
+      "ProjectName",
+      "ReleaseVersion",
+      "RunAt",
+      "SkipStepNames",
+      "SpaceId",
+      "SpaceIdOrName",
+      "SpecificMachineNames",
+      "UpdateVariableSnapshot",
+      "UseGuidedFailure",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateDeploymentUntenantedResponseV1",
+    "properties": [
+      "DeploymentServerTasks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateEnvironmentCommand",
+    "properties": [
+      "AllowDynamicInfrastructure",
+      "Description",
+      "EnvironmentTags",
+      "ExtensionSettings",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateEphemeralEnvironmentCommand",
+    "properties": [
+      "EnvironmentName",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateEphemeralEnvironmentResponse",
+    "properties": [
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateFeatureToggleCommand",
+    "properties": [
+      "Description",
+      "Environments",
+      "Name",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateFeatureToggleEnvironment",
+    "properties": [
+      "DeploymentEnvironmentId",
+      "ExcludedTenantIds",
+      "ExcludedTenantTags",
+      "IsEnabled",
+      "MinimumVersion",
+      "RolloutPercentage",
+      "Segments",
+      "TenantIds",
+      "TenantTags",
+      "ToggleStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateFeedCommand",
+    "properties": [
+      "ClientVersion",
+      "FeedType",
+      "Name",
+      "PackageAcquisitionLocationOptions",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateGitCredentialCommand",
+    "properties": [
+      "Description",
+      "Details",
+      "Name",
+      "RepositoryRestrictions",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateGitCredentialResponse",
+    "properties": [
+      "Id",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateInsightsReportCommand",
+    "properties": [
+      "ChannelIds",
+      "Description",
+      "EnvironmentGroups",
+      "Name",
+      "ProjectGroupIds",
+      "ProjectIds",
+      "SpaceId",
+      "TenantIds",
+      "TenantMode",
+      "TenantTags",
+      "TimeZone"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateInsightsReportResponse",
+    "properties": [
+      "Report"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateInvitationCommand",
+    "properties": [
+      "AddToTeamIds",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateLibraryVariableSetsCommand",
+    "properties": [
+      "ContentType",
+      "Description",
+      "Name",
+      "SpaceId",
+      "Templates"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateLifecycleCommand",
+    "properties": [
+      "Description",
+      "Name",
+      "Phases",
+      "ReleaseRetentionPolicy",
+      "Slug",
+      "SpaceId",
+      "TentacleRetentionPolicy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateMachinePolicyCommand",
+    "properties": [
+      "ConnectionConnectTimeout",
+      "ConnectionRetryCountLimit",
+      "ConnectionRetrySleepInterval",
+      "ConnectionRetryTimeLimit",
+      "Description",
+      "IsDefault",
+      "MachineCleanupPolicy",
+      "MachineConnectivityPolicy",
+      "MachineHealthCheckPolicy",
+      "MachinePackageCacheRetentionPolicy",
+      "MachineRpcCallRetryPolicy",
+      "MachineUpdatePolicy",
+      "Name",
+      "PollingRequestQueueTimeout",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateMigrationImportTaskCommand",
+    "properties": [
+      "DeletePackageOnCompletion",
+      "FailureCallbackUri",
+      "IsDryRun",
+      "IsEncryptedPackage",
+      "OverwriteExisting",
+      "PackageFeedSpaceId",
+      "PackageId",
+      "PackageVersion",
+      "Password",
+      "SuccessCallbackUri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateMigrationPartialExportTaskCommand",
+    "properties": [
+      "DestinationApiKey",
+      "DestinationPackageFeed",
+      "DestinationPackageFeedSpaceId",
+      "EncryptPackage",
+      "FailureCallbackUri",
+      "IgnoreCertificates",
+      "IgnoreDeployments",
+      "IgnoreMachines",
+      "IgnoreTenants",
+      "IncludeTaskLogs",
+      "PackageId",
+      "PackageVersion",
+      "Password",
+      "Projects",
+      "SpaceId",
+      "SuccessCallbackUri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateOrCloneRunbookInDatabaseCommand",
+    "properties": [
+      "Clone",
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "Description",
+      "EnvironmentScope",
+      "Environments",
+      "ForcePackageDownload",
+      "MultiTenancyMode",
+      "Name",
+      "ProjectId",
+      "PublishedRunbookSnapshotId",
+      "RunRetentionPolicy",
+      "RunbookProcessId",
+      "RunbookTags",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateParentEnvironmentCommand",
+    "properties": [
+      "AutomaticDeprovisioningRule",
+      "Description",
+      "Name",
+      "Slug",
+      "SpaceId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateParentEnvironmentResponse",
+    "properties": [
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreatePlatformHubAccountCommand",
+    "properties": [
+      "Description",
+      "Details",
+      "Name",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreatePlatformHubAccountResponse",
+    "properties": [
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreatePlatformHubBranchCommand",
+    "properties": [
+      "BaseGitRef",
+      "NewBranchName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreatePlatformHubGitCredentialCommand",
+    "properties": [
+      "Description",
+      "Details",
+      "Name",
+      "RepositoryRestrictions"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreatePlatformHubGitCredentialResponse",
+    "properties": [
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateProcessTemplateCommand",
+    "properties": [
+      "ChangeDescription",
+      "Description",
+      "GitRef",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateProcessTemplateVersionCommand",
+    "properties": [
+      "GitRef",
+      "IsPreRelease",
+      "Slug",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateProjectCommand",
+    "properties": [
+      "AllowIgnoreChannelRules",
+      "AutoCreateRelease",
+      "AutoDeployReleaseOverrides",
+      "Clone",
+      "CombineHealthAndSyncStatusInDashboardLiveStatus",
+      "DefaultGuidedFailureMode",
+      "DefaultToSkipIfAlreadyInstalled",
+      "DeploymentChangesTemplate",
+      "Description",
+      "DiscreteChannelRelease",
+      "ExecuteDeploymentsOnResilientPipeline",
+      "ExtensionSettings",
+      "ForcePackageDownload",
+      "IncludedLibraryVariableSetIds",
+      "IsDisabled",
+      "LifecycleId",
+      "Name",
+      "PersistenceSettings",
+      "ProjectConnectivityPolicy",
+      "ProjectGroupId",
+      "ProjectTags",
+      "ReleaseCreationStrategy",
+      "ReleaseNotesTemplate",
+      "Slug",
+      "SpaceId",
+      "Templates",
+      "TenantedDeploymentMode",
+      "VersioningStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateProjectGroupCommand",
+    "properties": [
+      "Description",
+      "Name",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateProjectTriggerCommand",
+    "properties": [
+      "Action",
+      "Description",
+      "Filter",
+      "IsDisabled",
+      "Name",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateProxyCommand",
+    "properties": [
+      "Host",
+      "Name",
+      "Password",
+      "Port",
+      "ProxyType",
+      "SpaceId",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateReleaseCommand",
+    "properties": [
+      "Assembled",
+      "ChannelId",
+      "CustomFields",
+      "IgnoreChannelRules",
+      "ProjectId",
+      "ReleaseNotes",
+      "SelectedGitResources",
+      "SelectedPackages",
+      "SpaceId",
+      "Version",
+      "VersionControlReference"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateReleaseCommandV1",
+    "properties": [
+      "ChannelName",
+      "CustomFields",
+      "GitCommit",
+      "GitRef",
+      "GitResources",
+      "IgnoreChannelRules",
+      "IgnoreIfAlreadyExists",
+      "PackagePrerelease",
+      "PackageVersion",
+      "Packages",
+      "ProjectName",
+      "ReleaseNotes",
+      "ReleaseVersion",
+      "SpaceId",
+      "SpaceIdOrName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateReleaseDefectCommand",
+    "properties": [
+      "Description",
+      "ReleaseId",
+      "SpaceId",
+      "Status"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateReleaseResponseV1",
+    "properties": [
+      "ReleaseId",
+      "ReleaseVersion"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookInDatabaseCommandV2",
+    "properties": [
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "Description",
+      "EnvironmentScope",
+      "Environments",
+      "ForcePackageDownload",
+      "MultiTenancyMode",
+      "Name",
+      "ProjectId",
+      "RunRetentionPolicy",
+      "RunbookTags",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookInDatabaseResponseV2",
+    "properties": [
+      "Id",
+      "Name",
+      "ProjectId",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookInGitCommandV2",
+    "properties": [
+      "ChangeDescription",
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "Description",
+      "EnvironmentScope",
+      "Environments",
+      "ForcePackageDownload",
+      "GitRef",
+      "MultiTenancyMode",
+      "Name",
+      "ProjectId",
+      "RunRetentionPolicy",
+      "RunbookTags",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookInGitResponseV2",
+    "properties": [
+      "GitRef",
+      "Id",
+      "Name",
+      "ProjectId",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookRunCommand",
+    "properties": [
+      "ChangeRequestSettings",
+      "Comments",
+      "DebugMode",
+      "EnvironmentId",
+      "ExcludedMachineIds",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "FormValues",
+      "Priority",
+      "ProjectId",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "RunbookId",
+      "RunbookSnapshotId",
+      "SkipActions",
+      "SpaceId",
+      "SpecificMachineIds",
+      "TenantId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookRunCommandV1",
+    "properties": [
+      "DebugMode",
+      "DeploymentFreezeNames",
+      "DeploymentFreezeOverrideReason",
+      "EnvironmentNames",
+      "ExcludedMachineNames",
+      "ForcePackageDownload",
+      "NoRunAfter",
+      "Priority",
+      "ProjectName",
+      "RunAt",
+      "RunbookName",
+      "SkipStepNames",
+      "Snapshot",
+      "SpaceId",
+      "SpaceIdOrName",
+      "SpecificMachineNames",
+      "TenantTags",
+      "Tenants",
+      "UseGuidedFailure",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookRunResponseV1",
+    "properties": [
+      "RunbookRunServerTasks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateRunbookSnapshotCommand",
+    "properties": [
+      "Name",
+      "Notes",
+      "ProjectId",
+      "Publish",
+      "RunbookId",
+      "SelectedGitResources",
+      "SelectedPackages",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateScopedUserRoleCommand",
+    "properties": [
+      "EnvironmentIds",
+      "ProjectGroupIds",
+      "ProjectIds",
+      "SpaceId",
+      "TeamId",
+      "TenantIds",
+      "UserRoleId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateSelfSignedCertificateCommand",
+    "properties": [
+      "Archived",
+      "CertificateChain",
+      "CertificateData",
+      "CertificateDataFormat",
+      "EnvironmentIds",
+      "HasPrivateKey",
+      "Id",
+      "IsExpired",
+      "IssuerCommonName",
+      "IssuerDistinguishedName",
+      "IssuerOrganization",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "NotAfter",
+      "NotBefore",
+      "Notes",
+      "Password",
+      "ReplacedBy",
+      "SelfSigned",
+      "SelfSignedCertificateCurve",
+      "SerialNumber",
+      "SignatureAlgorithmName",
+      "SpaceId",
+      "SubjectAlternativeNames",
+      "SubjectCommonName",
+      "SubjectDistinguishedName",
+      "SubjectOrganization",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation",
+      "Thumbprint",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateServerTaskCommand",
+    "properties": [
+      "Arguments",
+      "Description",
+      "Name",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "SpaceId"
+    ],
+    "read_only": [
+      "QueueTime"
+    ]
+  },
+  {
+    "name": "CreateServiceAccountOidcIdentityCommandV1",
+    "properties": [
+      "Audience",
+      "Issuer",
+      "Name",
+      "ServiceAccountId",
+      "Subject"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateServiceAccountOidcIdentityResponseV1",
+    "properties": [
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateSpaceCommandV1",
+    "properties": [
+      "Description",
+      "IsDefault",
+      "Name",
+      "Slug",
+      "SpaceManagersTeamMembers",
+      "SpaceManagersTeams",
+      "TaskQueueStopped"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateSpaceResponseV1",
+    "properties": [
+      "Space"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateSubscriptionCommand",
+    "properties": [
+      "EventNotificationSubscription",
+      "IsDisabled",
+      "Name",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateTagSetCommand",
+    "properties": [
+      "Description",
+      "Name",
+      "Scopes",
+      "SortOrder",
+      "SpaceId",
+      "Tags",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateTeamCommand",
+    "properties": [
+      "Description",
+      "ExternalSecurityGroups",
+      "MemberUserIds",
+      "Name",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateTenantCommand",
+    "properties": [
+      "Clone",
+      "Description",
+      "IsDisabled",
+      "Name",
+      "ProjectEnvironments",
+      "Slug",
+      "SpaceId",
+      "TenantTags"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateUserApiKeyCommand",
+    "properties": [
+      "Expires",
+      "Purpose",
+      "UserId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateUserCommand",
+    "properties": [
+      "DisplayName",
+      "EmailAddress",
+      "Identities",
+      "IsActive",
+      "IsService",
+      "Password",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateUserRoleCommand",
+    "properties": [
+      "Description",
+      "GrantedSpacePermissions",
+      "GrantedSystemPermissions",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateWorkerCommand",
+    "properties": [
+      "Endpoint",
+      "IsDisabled",
+      "MachinePolicyId",
+      "Name",
+      "SkipInitialHealthCheck",
+      "Slug",
+      "SpaceId",
+      "WorkerPoolIds"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "CreateWorkerPoolCommand",
+    "properties": [
+      "Description",
+      "IsDefault",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "WorkerPoolType",
+      "WorkerType"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DashboardConfigurationResource",
+    "properties": [
+      "Id",
+      "IncludedEnvironmentIds",
+      "IncludedEnvironmentTags",
+      "IncludedProjectGroupIds",
+      "IncludedProjectIds",
+      "IncludedProjectTags",
+      "IncludedTenantIds",
+      "IncludedTenantTags",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProjectLimit",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DashboardEnvironmentResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DashboardItemResource",
+    "properties": [
+      "ChannelId",
+      "CompletedTime",
+      "Created",
+      "DeploymentId",
+      "Duration",
+      "EnvironmentId",
+      "ErrorMessage",
+      "HasPendingInterruptions",
+      "HasWarningsOrErrors",
+      "Id",
+      "IsCompleted",
+      "IsCurrent",
+      "IsPrevious",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProjectId",
+      "QueueTime",
+      "ReleaseId",
+      "ReleaseVersion",
+      "StartTime",
+      "State",
+      "TaskId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DashboardProjectGroupResource",
+    "properties": [
+      "EnvironmentIds",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DashboardProjectResource",
+    "properties": [
+      "CanPerformUntenantedDeployment",
+      "EnvironmentIds",
+      "Id",
+      "IsDisabled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "ProjectGroupId",
+      "Slug",
+      "TenantedDeploymentMode"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DashboardResource",
+    "properties": [
+      "Environments",
+      "Id",
+      "IsFiltered",
+      "Items",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProjectGroups",
+      "ProjectLimit",
+      "Projects",
+      "Tenants"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DashboardTenantResource",
+    "properties": [
+      "Id",
+      "IsDisabled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "ProjectEnvironments",
+      "TenantTags"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DefectResource",
+    "properties": [
+      "Description",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Status"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DefectResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "DeleteArchivedEventFileResponse",
+    "properties": [
+      "FileName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeleteProcessTemplateCommand",
+    "properties": [
+      "ChangeDescription",
+      "GitRef",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeleteRunbookInGitCommand",
+    "properties": [
+      "ChangeDescription",
+      "GitRef",
+      "Id",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentActionContainerResource",
+    "properties": [
+      "Dockerfile",
+      "FeedId",
+      "GitUrl",
+      "Image"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentActionGitDependencyResource",
+    "properties": [
+      "DeploymentActionSlug",
+      "GitDependencyName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentActionPackageResource",
+    "properties": [
+      "DeploymentAction",
+      "PackageReference"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentActionResource",
+    "properties": [
+      "ActionType",
+      "AvailableStepPackageVersions",
+      "CanBeUsedForProjectVersioning",
+      "Channels",
+      "ChannelsVariable",
+      "CommunityActionTemplateSnapshot",
+      "Condition",
+      "Container",
+      "Environments",
+      "EnvironmentsVariable",
+      "ExcludedEnvironments",
+      "ExcludedEnvironmentsVariable",
+      "GitDependencies",
+      "Id",
+      "Inputs",
+      "IsDisabled",
+      "IsRequired",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastSavedStepPackageVersion",
+      "Links",
+      "Name",
+      "Notes",
+      "Packages",
+      "Properties",
+      "Slug",
+      "StepPackageVersion",
+      "TenantTags",
+      "TenantTagsVariable",
+      "WorkerPoolId",
+      "WorkerPoolVariable"
+    ],
+    "read_only": [
+      "Channels",
+      "Environments",
+      "ExcludedEnvironments",
+      "Properties",
+      "TenantTags"
+    ]
+  },
+  {
+    "name": "DeploymentConnectivityPolicy",
+    "properties": [
+      "AllowDeploymentsToNoTargets",
+      "ExcludeUnhealthyTargets",
+      "SkipMachineBehavior",
+      "TargetRoles"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentEnvironmentSettingsMetadata",
+    "properties": [
+      "ExtensionId",
+      "Metadata"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentFreezeResource",
+    "properties": [
+      "Description",
+      "End",
+      "Id",
+      "Name",
+      "ProjectEnvironmentScope",
+      "RecurringSchedule",
+      "Start",
+      "TenantProjectEnvironmentScope"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentPreviewRequest",
+    "properties": [
+      "EnvironmentId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentPreviewResource",
+    "properties": [
+      "Changes",
+      "ChangesMarkdown",
+      "Form",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "StepsToExecute",
+      "UseGuidedFailureModeByDefault"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentProcessResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastSnapshotId",
+      "Links",
+      "ProjectId",
+      "SpaceId",
+      "Steps",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentProcessResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "DeploymentPromotionTarget",
+    "properties": [
+      "Id",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentPromotionTenant",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "PromoteTo"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentResource",
+    "properties": [
+      "ChangeRequestSettings",
+      "Changes",
+      "ChangesMarkdown",
+      "ChannelId",
+      "Comments",
+      "Created",
+      "DebugMode",
+      "DeployedBy",
+      "DeployedById",
+      "DeployedToMachineIds",
+      "DeploymentProcessId",
+      "EnvironmentId",
+      "ExcludedMachineIds",
+      "ExecutionPlanLogContext",
+      "FailTargetDiscovery",
+      "FailureEncountered",
+      "ForcePackageDownload",
+      "ForcePackageRedeployment",
+      "FormValues",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ManifestVariableSetId",
+      "Name",
+      "Priority",
+      "ProjectId",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "ReleaseId",
+      "SkipActions",
+      "SpaceId",
+      "SpecificMachineIds",
+      "TaskId",
+      "TenantId",
+      "TentacleRetentionPeriod",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "DeploymentServerTask",
+    "properties": [
+      "DeploymentId",
+      "ServerTaskId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentSettingsResource",
+    "properties": [
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "DefaultToSkipIfAlreadyInstalled",
+      "DeploymentChangesTemplate",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProjectId",
+      "ReleaseNotesTemplate",
+      "SpaceId",
+      "VersioningStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentStepResource",
+    "properties": [
+      "Actions",
+      "Condition",
+      "Id",
+      "Name",
+      "PackageRequirement",
+      "Properties",
+      "Slug",
+      "StartTrigger",
+      "Type"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "DeploymentTargetTagResource",
+    "properties": [
+      "SpaceId",
+      "Tag"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentTemplateResource",
+    "properties": [
+      "DeploymentNotes",
+      "Id",
+      "IsDeploymentProcessModified",
+      "IsLibraryVariableSetModified",
+      "IsVariableSetModified",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "PromoteTo",
+      "TenantPromotions"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeploymentTemplateStep",
+    "properties": [
+      "ActionId",
+      "ActionName",
+      "ActionNumber",
+      "CanBeSkipped",
+      "ExcludedMachines",
+      "HasNoApplicableMachines",
+      "IsDisabled",
+      "MachineNames",
+      "Machines",
+      "Roles",
+      "UnavailableMachines"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeprovisionEphemeralEnvironmentForProjectResponse",
+    "properties": [
+      "DeprovisioningRun"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DeprovisionEphemeralEnvironmentResponse",
+    "properties": [
+      "DeprovisioningRuns"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DisplayInfo",
+    "properties": [
+      "Category",
+      "ConnectivityCheck",
+      "Description",
+      "ExtendedDescription",
+      "Label",
+      "ListApi",
+      "Options",
+      "PropertyApplicability",
+      "ReadOnly",
+      "Required",
+      "ShowCopyToClipboard"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DocumentTypeResource",
+    "properties": [
+      "Id",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DoubleMetric",
+    "properties": [
+      "Count",
+      "Max",
+      "Mean",
+      "Median",
+      "Min",
+      "NinetyFifth"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DurationMetric",
+    "properties": [
+      "Count",
+      "Max",
+      "Mean",
+      "Median",
+      "Min",
+      "NinetyFifth"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DynamicExtensionsFeature",
+    "properties": [
+      "Default",
+      "Description",
+      "Key",
+      "Name",
+      "Options"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DynamicExtensionsFeaturesMetadataResource",
+    "properties": [
+      "Features"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DynamicExtensionsFeaturesValuesResource",
+    "properties": [
+      "Values"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "DynamicWorkerType",
+    "properties": [
+      "DeprecationDateUtc",
+      "Description",
+      "EndOfLifeDateUtc",
+      "Id",
+      "StartDateUtc",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EndpointResource",
+    "properties": [
+      "CommunicationStyle",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": [
+      "CommunicationStyle"
+    ]
+  },
+  {
+    "name": "EnvironmentResource",
+    "properties": [
+      "AllowDynamicInfrastructure",
+      "Description",
+      "EnvironmentTags",
+      "ExtensionSettings",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "UseGuidedFailure"
+    ],
+    "read_only": [
+      "ExtensionSettings"
+    ]
+  },
+  {
+    "name": "EnvironmentResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "EnvironmentSummaryResource",
+    "properties": [
+      "DeploymentTargetSummaries",
+      "Environment",
+      "MachineEndpointSummaries",
+      "MachineHealthStatusSummaries",
+      "MachineIdsForCalamariUpgrade",
+      "MachineIdsForTentacleUpgrade",
+      "MachineTenantSummaries",
+      "MachineTenantTagSummaries",
+      "TentacleUpgradesRequired",
+      "TotalDisabledMachines",
+      "TotalMachines"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EnvironmentSummaryV2Resource",
+    "properties": [
+      "DeploymentTargetSummaries",
+      "Environment",
+      "MachineEndpointSummaries",
+      "MachineHealthStatusSummaries",
+      "MachineIdsForCalamariUpgrade",
+      "MachineIdsForTentacleUpgrade",
+      "MachineTenantSummaries",
+      "MachineTenantTagSummaries",
+      "TentacleUpgradesRequired",
+      "TotalDisabledMachines",
+      "TotalMachines"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EnvironmentsSummaryResource",
+    "properties": [
+      "DeploymentTargetSummaries",
+      "EnvironmentSummaries",
+      "MachineEndpointSummaries",
+      "MachineHealthStatusSummaries",
+      "MachineIdsForCalamariUpgrade",
+      "MachineIdsForTentacleUpgrade",
+      "MachineTenantSummaries",
+      "MachineTenantTagSummaries",
+      "TentacleUpgradesRequired",
+      "TotalDisabledMachines",
+      "TotalMachines"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EphemeralEnvironmentRunbookRun",
+    "properties": [
+      "RunbookRunId",
+      "TaskId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "Error",
+    "properties": [
+      "Details",
+      "ErrorMessage",
+      "Errors",
+      "FullException",
+      "HelpLink",
+      "HelpText",
+      "ParsedHelpLinks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EventAgentResource",
+    "properties": [
+      "Id",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EventCategoryResource",
+    "properties": [
+      "Id",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EventGroupResource",
+    "properties": [
+      "EventCategories",
+      "Id",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EventNotificationSubscriptionFilterResource",
+    "properties": [
+      "DocumentTypes",
+      "Environments",
+      "EventAgents",
+      "EventCategories",
+      "EventGroups",
+      "ProjectGroups",
+      "Projects",
+      "Tags",
+      "Tenants",
+      "Users"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EventNotificationSubscriptionResource",
+    "properties": [
+      "EmailDigestLastProcessed",
+      "EmailDigestLastProcessedEventAutoId",
+      "EmailFrequencyPeriod",
+      "EmailPriority",
+      "EmailShowDatesInTimeZoneId",
+      "EmailTeams",
+      "Filter",
+      "WebhookHeaderKey",
+      "WebhookHeaderValue",
+      "WebhookLastProcessed",
+      "WebhookLastProcessedEventAutoId",
+      "WebhookTeams",
+      "WebhookTimeout",
+      "WebhookURI"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EventReference",
+    "properties": [
+      "Length",
+      "ReferencedDocumentId",
+      "StartIndex"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "EventResource",
+    "properties": [
+      "Category",
+      "ChangeDetails",
+      "Comments",
+      "Details",
+      "Id",
+      "IdentityEstablishedWith",
+      "IpAddress",
+      "IsService",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Message",
+      "MessageHtml",
+      "MessageReferences",
+      "Occurred",
+      "RelatedDocumentIds",
+      "SpaceId",
+      "UserAgent",
+      "UserId",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ExchangeOidcTokenForAccessTokenCommandV1",
+    "properties": [
+      "audience",
+      "grant_type",
+      "subject_token",
+      "subject_token_type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ExecutionPlanLogContext",
+    "properties": [
+      "Steps"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ExtensionSettingsValues",
+    "properties": [
+      "ExtensionId",
+      "Values"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ExternalLinkResource",
+    "properties": [
+      "Label",
+      "Uri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ExternalUserLookupResult",
+    "properties": [
+      "Identities"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "FeatureToggleEnvironmentResource",
+    "properties": [
+      "DeploymentEnvironmentId",
+      "ExcludedTenantIds",
+      "ExcludedTenantTags",
+      "FeatureToggleId",
+      "IsEnabled",
+      "MinimumVersion",
+      "RolloutPercentage",
+      "Segments",
+      "TenantIds",
+      "TenantTags",
+      "TenantTargetingStrategy",
+      "ToggleStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "FeatureToggleResource",
+    "properties": [
+      "DefaultIsEnabled",
+      "Description",
+      "Environments",
+      "Id",
+      "Name",
+      "ProjectId",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "FeatureToggleResourcePaginatedCollection",
+    "properties": [
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastPageNumber",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "FeaturesConfigurationResource",
+    "properties": [
+      "DefaultPowerShellEdition",
+      "HelpSidebarSupportLink",
+      "HelpSidebarSupportLinkLabel",
+      "Id",
+      "IsAutomaticStepUpdatesEnabled",
+      "IsBuiltInWorkerEnabled",
+      "IsCommunityActionTemplatesEnabled",
+      "IsCompositeDockerHubRegistryFeedEnabled",
+      "IsConfigureFeedsWithLocalOrSmbPathsEnabled",
+      "IsExperimentalUIFeatureEnabled",
+      "IsHelpSidebarEnabled",
+      "IsKubernetesCloudTargetDiscoveryEnabled",
+      "IsProjectsPageOnboardingEnabled",
+      "IsProjectsPageOptimizationEnabled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "FeedResource",
+    "properties": [
+      "FeedType",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "PackageAcquisitionLocationOptions",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": [
+      "FeedType"
+    ]
+  },
+  {
+    "name": "FeedResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "Form",
+    "properties": [
+      "Elements",
+      "Values"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "FormElement",
+    "properties": [
+      "Control",
+      "IsValueRequired",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GenerateAccessTokenResponse",
+    "properties": [
+      "AccessToken"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GenerateClientIdentifierCommand",
+    "properties": [
+      "EnvironmentId",
+      "ProjectId",
+      "SpaceId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GenerateClientIdentifierResponse",
+    "properties": [
+      "ClientIdentifier"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetActionTemplateByIdResponse",
+    "properties": [
+      "ActionTemplate"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetAllCompliancePoliciesResponse",
+    "properties": [
+      "FilteredItemsCount",
+      "ItemsPerPage",
+      "Policies",
+      "TotalItemsCount"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetAllDeploymentTargetsResponse",
+    "properties": [
+      "DeploymentTargets"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetAllEnvironmentsResponse",
+    "properties": [
+      "Environments"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetAllIconsResponse",
+    "properties": [
+      "icons"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetAllLibraryVariableSetsResponse",
+    "properties": [
+      "LibraryVariableSets"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetAllMachineRolesResponse",
+    "properties": [
+      "MachineRoles"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetAllRunbooksByProjectResponseV2",
+    "properties": [
+      "Runbooks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetArchivedEventFilesResponse",
+    "properties": [
+      "ArchivedFiles"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetCapabilitiesResponseV1",
+    "properties": [
+      "Capabilities"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetCloudTemplateMetadataRequest",
+    "properties": [
+      "FeedId",
+      "Id",
+      "PackageId",
+      "Template"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetCommonVariablesByTenantIdResponse",
+    "properties": [
+      "MissingVariables",
+      "TenantId",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetContainerLogsResponse",
+    "properties": [
+      "Error",
+      "IsSessionCompleted",
+      "Logs"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetCurrentLicenseFeaturesResponse",
+    "properties": [
+      "EnabledFeatures"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetDeploymentFreezeByIdResponse",
+    "properties": [
+      "Description",
+      "End",
+      "Id",
+      "Name",
+      "ProjectEnvironmentScope",
+      "RecurringSchedule",
+      "Start",
+      "TenantProjectEnvironmentScope"
+    ],
+    "read_only": [
+      "TenantProjectEnvironmentScope"
+    ]
+  },
+  {
+    "name": "GetDeploymentFreezesResponse",
+    "properties": [
+      "Count",
+      "DeploymentFreezes"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetDeploymentTargetTagByTagResponse",
+    "properties": [
+      "SpaceId",
+      "Tag"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetDeploymentTargetTagsResponse",
+    "properties": [
+      "Count",
+      "DeploymentTargetTags"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetEnvironmentsResponse",
+    "properties": [
+      "Environments"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetEnvironmentsSummaryResponseV2",
+    "properties": [
+      "DeploymentTargetSummaries",
+      "EnvironmentSummaries",
+      "MachineEndpointSummaries",
+      "MachineHealthStatusSummaries",
+      "MachineIdsForCalamariUpgrade",
+      "MachineTenantSummaries",
+      "MachineTenantTagSummaries",
+      "TentacleUpgradesRequired",
+      "TotalDisabledMachines",
+      "TotalMachines"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetEphemeralEnvironmentProjectStatusResponse",
+    "properties": [
+      "Status"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetGitCredentialByIdResponse",
+    "properties": [
+      "GitCredential"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetGitCredentialUsageByIdResponse",
+    "properties": [
+      "OtherProjects",
+      "Projects"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetGitCredentialUsageByIdResponseProject",
+    "properties": [
+      "Name",
+      "ProjectId",
+      "RepositoryUrl",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetGitCredentialsResponse",
+    "properties": [
+      "GitCredentials"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetIconCategoriesResponse",
+    "properties": [
+      "categories"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetInsightsDeploymentsForProjectResponse",
+    "properties": [
+      "ProjectName",
+      "Streams"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetInsightsDeploymentsForReportResponse",
+    "properties": [
+      "ReportName",
+      "Streams"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetInsightsMetricsSeriesForProjectResponse",
+    "properties": [
+      "Series"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetInsightsMetricsSeriesForReportResponse",
+    "properties": [
+      "Series"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetInsightsReportByIdResponse",
+    "properties": [
+      "Report"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetJsonWebKeysResponse",
+    "properties": [
+      "keys"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetKubernetesMonitorByIdResponse",
+    "properties": [
+      "Resource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetLibraryVariableSetUsageResponse",
+    "properties": [
+      "CountOfProjectsUserCannotSee",
+      "CountOfReleasesUserCannotSee",
+      "CountOfRunbookSnapshotsUserCannotSee",
+      "Projects"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetLiveStatusResponse",
+    "properties": [
+      "MachineStatuses",
+      "Summary"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetMatchingRefsResponseV1",
+    "properties": [
+      "References",
+      "TotalCount"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetMissingPackagesForReleaseResponse",
+    "properties": [
+      "Packages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetOpenIdConfigurationResponse",
+    "properties": [
+      "claims_supported",
+      "id_token_signing_alg_values_supported",
+      "issuer",
+      "jwks_uri",
+      "response_types_supported",
+      "scopes_supported",
+      "subject_types_supported",
+      "token_endpoint"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetParentEnvironmentResponse",
+    "properties": [
+      "AutomaticDeprovisioningRule",
+      "Description",
+      "Id",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetProcessTemplateByVersionMaskResponse",
+    "properties": [
+      "ProcessTemplate",
+      "ProcessTemplateVersion"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetProcessTemplateSharingConfigurationResponse",
+    "properties": [
+      "IndividuallySharedSpaceIds",
+      "SharedToAllSpaces"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetProcessTemplatesResponse",
+    "properties": [
+      "ItemsPerPage",
+      "ProcessTemplates",
+      "TotalResults"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetProjectProgressionResponse",
+    "properties": [
+      "Progression"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetProjectSummaryInDatabaseResponse",
+    "properties": [
+      "HasBeenSuccessfullyDeployed",
+      "HasDeploymentProcess",
+      "HasRunbooks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetProjectSummaryInGitResponse",
+    "properties": [
+      "HasBeenSuccessfullyDeployed",
+      "HasDeploymentProcess",
+      "HasRunbooks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetProjectVariablesByTenantIdResponse",
+    "properties": [
+      "MissingVariables",
+      "TenantId",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetPublishedProcessTemplateByVersionMaskResponse",
+    "properties": [
+      "ProcessTemplate",
+      "ProcessTemplateVersion"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetReleaseDeploymentPreviewsRequest",
+    "properties": [
+      "DeploymentPreviews",
+      "IncludeDisabledSteps",
+      "ReleaseId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetResourceEventsResponse",
+    "properties": [
+      "Error",
+      "Events",
+      "IsSessionCompleted"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetResourceManifestResponse",
+    "properties": [
+      "DesiredManifest",
+      "Diff",
+      "LiveManifest"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetResourceResponse",
+    "properties": [
+      "Resource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetRunbookEnvironmentsInDatabaseResponseV2",
+    "properties": [
+      "Environments"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetRunbookEnvironmentsInGitResponseV2",
+    "properties": [
+      "Environments"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetRunbookProgressionResponse",
+    "properties": [
+      "Progression"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetRunbookRunDetailsResponse",
+    "properties": [
+      "GitResources",
+      "Packages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetRunbookRunPreviewsInDatabaseRequest",
+    "properties": [
+      "DeploymentPreviews",
+      "IncludeDisabledSteps",
+      "ProjectId",
+      "RunbookId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetRunbookRunPreviewsInGitRequest",
+    "properties": [
+      "DeploymentPreviews",
+      "GitRef",
+      "IncludeDisabledSteps",
+      "ProjectId",
+      "RunbookId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetServerTaskStatusMessagesResponse",
+    "properties": [
+      "Messages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetServiceAccountOidcIdentitiesResponseV1",
+    "properties": [
+      "Count",
+      "ExternalId",
+      "OidcIdentities",
+      "ServerUrl"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetServiceAccountOidcIdentityByIdResponseV1",
+    "properties": [
+      "Audience",
+      "Id",
+      "Issuer",
+      "Name",
+      "ServiceAccountId",
+      "Subject"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetSmtpConfigurationResponse",
+    "properties": [
+      "SmtpConfiguration"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetSmtpIsConfiguredResponse",
+    "properties": [
+      "SmtpIsConfigured"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetTasksForDeploymentTargetResponse",
+    "properties": [
+      "ResourceCollection"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetTeamMembershipPreviewRequest",
+    "properties": [
+      "Description",
+      "ExternalSecurityGroups",
+      "Id",
+      "MemberUserIds",
+      "Name",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetUserApiKeysResponse",
+    "properties": [
+      "ApiKeys"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetUserAuthenticationProvidersResponse",
+    "properties": [
+      "AuthenticationProviders",
+      "CanCurrentUserEditIdentitiesForUser",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetUserIdentityMetadataResponse",
+    "properties": [
+      "Links",
+      "Providers"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetVariablesScopedToSingleDeploymentTargetResponse",
+    "properties": [
+      "Resource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GetWorkerTaskLeasesResponse",
+    "properties": [
+      "WorkerTaskLeases"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitBranchResource",
+    "properties": [
+      "CanonicalName",
+      "Id",
+      "IsProtected",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitBranchResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "GitBranchResourcePaginatedCollection",
+    "properties": [
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastPageNumber",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "GitCommitResource",
+    "properties": [
+      "CanonicalName",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitCredentialDetailsResource",
+    "properties": [
+      "Type"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "GitCredentialRepositoryRestrictionsResource",
+    "properties": [
+      "AllowedRepositories",
+      "Enabled"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitCredentialResource",
+    "properties": [
+      "Description",
+      "Details",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "RepositoryRestrictions",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitCredentialResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "GitCredentialUsageResource",
+    "properties": [
+      "Type"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "GitDependencyResource",
+    "properties": [
+      "DefaultBranch",
+      "FilePathFilters",
+      "GitCredentialId",
+      "GitCredentialType",
+      "GitHubConnectionId",
+      "Name",
+      "RepositoryUri",
+      "StepPackageInputsReferenceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitHubConnectivityCheckRequest",
+    "properties": [
+      "BaseUrl",
+      "Password",
+      "UserName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitHubConnectivityCheckResponse",
+    "properties": [
+      "Messages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitNamedRefByNameResource",
+    "properties": [
+      "CanonicalName",
+      "Id",
+      "IsProtected",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitPersistenceSettingsConversionStateResource",
+    "properties": [
+      "RunbooksAreInGit",
+      "VariablesAreInGit"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitPersistenceSettingsResource",
+    "properties": [
+      "BasePath",
+      "ConversionState",
+      "Credentials",
+      "DefaultBranch",
+      "ProtectedBranchNamePatterns",
+      "ProtectedDefaultBranch",
+      "Type",
+      "Url"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitReferenceResource",
+    "properties": [
+      "GitCommit",
+      "GitRef"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitReferenceSatisfiesChannelGitReferenceRulesResponseV1",
+    "properties": [
+      "Errors",
+      "SatisfiesGitReferenceRules"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitReferenceSatisfiesChannelGitResourceRulesResponseV1",
+    "properties": [
+      "Errors",
+      "SatisfiesGitResourceRules"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitSettingsTestMessage",
+    "properties": [
+      "Category",
+      "Message"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitTagResource",
+    "properties": [
+      "CanonicalName",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "GitTagResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "GitTagResourcePaginatedCollection",
+    "properties": [
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastPageNumber",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "GlobalDocumentCounts",
+    "properties": [
+      "Spaces",
+      "Teams",
+      "Users"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ITenantVariableScope",
+    "properties": [
+      "EnvironmentIds"
+    ],
+    "read_only": [
+      "EnvironmentIds"
+    ]
+  },
+  {
+    "name": "IconDetail",
+    "properties": [
+      "iconHeight",
+      "iconPath",
+      "iconWidth",
+      "id",
+      "label",
+      "searchTerms"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "IconResource",
+    "properties": [
+      "Color",
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "IdentityClaimResource",
+    "properties": [
+      "IsIdentifyingClaim",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "IdentityMetadataResource",
+    "properties": [
+      "ClaimDescriptors",
+      "IdentityProviderName",
+      "Links",
+      "ScimEnabled"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "IdentityResource",
+    "properties": [
+      "Claims",
+      "IdentityProviderName"
+    ],
+    "read_only": [
+      "Claims"
+    ]
+  },
+  {
+    "name": "InfrastructureDocumentCounts",
+    "properties": [
+      "DeploymentTargets",
+      "Environments",
+      "Tenants",
+      "WorkerPools",
+      "Workers"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InsightsDataSeriesResource",
+    "properties": [
+      "Intervals",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InsightsDeploymentsForXResponseDeployment",
+    "properties": [
+      "CompletedTime",
+      "DeploymentsUntilRecovery",
+      "HadGuidedFailure",
+      "Id",
+      "LeadTime",
+      "LeadTimeCalculatedFromVersion",
+      "PreviousSuccessfulDeploymentId",
+      "QueueTime",
+      "RecoveredFromFailedDeploymentId",
+      "RecoveredFromFailedReleaseVersion",
+      "ReleaseVersion",
+      "StartTime",
+      "TaskState",
+      "TimeSincePreviouslySuccessfulDeployment",
+      "TimeToRecovery"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InsightsDeploymentsForXResponseDeploymentStream",
+    "properties": [
+      "ChannelId",
+      "ChannelName",
+      "Deployments",
+      "EnvironmentId",
+      "EnvironmentName",
+      "ProjectId",
+      "ProjectName",
+      "TenantId",
+      "TenantName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InsightsEnvironmentGroupResource",
+    "properties": [
+      "Environments",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InsightsFailureRateMetricResource",
+    "properties": [
+      "DeploymentFailure",
+      "Failed",
+      "Rate",
+      "Successful",
+      "SuccessfulButHadGuidedFailure",
+      "Total"
+    ],
+    "read_only": [
+      "Failed",
+      "Rate",
+      "Total"
+    ]
+  },
+  {
+    "name": "InsightsReportResource",
+    "properties": [
+      "ChannelIds",
+      "Description",
+      "EnvironmentGroups",
+      "IconColor",
+      "IconId",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "ProjectGroupIds",
+      "ProjectIds",
+      "SpaceId",
+      "TenantIds",
+      "TenantMode",
+      "TenantTags",
+      "TimeZone"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InsightsReportResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "InterruptionResource",
+    "properties": [
+      "CanTakeResponsibility",
+      "CorrelationId",
+      "Created",
+      "Form",
+      "HasResponsibility",
+      "Id",
+      "IsLinkedToOtherInterruption",
+      "IsPending",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "RelatedDocumentIds",
+      "ResponsibleTeamIds",
+      "ResponsibleUserId",
+      "SpaceId",
+      "TaskId",
+      "Title",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InterruptionResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "Interval",
+    "properties": [
+      "DeploymentFailureRate",
+      "DeploymentQueuedDuration",
+      "DeploymentsUntilRecovery",
+      "LeadTime",
+      "MeanTimeToRecovery",
+      "NumberOfSuccessfulDeployments",
+      "StartOfInterval",
+      "SuccessfulDeploymentDuration",
+      "TimeSincePreviousDeployment"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "InvitationResource",
+    "properties": [
+      "AddToTeamIds",
+      "Expires",
+      "Id",
+      "InvitationCode",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "JiraServiceManagementConnectionCheckRequest",
+    "properties": [
+      "BaseUrl",
+      "Id",
+      "Token",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "JsonWebKey",
+    "properties": [
+      "e",
+      "kid",
+      "kty",
+      "n",
+      "use"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "KubernetesEventResource",
+    "properties": [
+      "Action",
+      "Count",
+      "FirstObservedTime",
+      "LastObservedTime",
+      "Manifest",
+      "Note",
+      "Reason",
+      "ReportingController",
+      "ReportingInstance",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "KubernetesLiveStatusDetailedResource",
+    "properties": [
+      "Children",
+      "DesiredResourceId",
+      "ExternalLink",
+      "HealthStatus",
+      "Kind",
+      "LastUpdated",
+      "ManifestSummary",
+      "Name",
+      "Namespace",
+      "ResourceId",
+      "ResourceSourceId",
+      "SourceType",
+      "SyncStatus"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "KubernetesLiveStatusResource",
+    "properties": [
+      "Children",
+      "DesiredResourceId",
+      "Group",
+      "HealthStatus",
+      "Kind",
+      "LastUpdated",
+      "MachineId",
+      "Name",
+      "Namespace",
+      "ResourceId",
+      "ResourceSourceId",
+      "SourceType",
+      "SyncStatus"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "KubernetesMachineLiveStatusResource",
+    "properties": [
+      "MachineId",
+      "Resources",
+      "Status"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "KubernetesMonitorResource",
+    "properties": [
+      "Id",
+      "InstallationId",
+      "MachineId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LatestProjectDeployment",
+    "properties": [
+      "ProjectId",
+      "ProjectLogo",
+      "ProjectName",
+      "ServerTask"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LatestProjectDeploymentPaginatedCollection",
+    "properties": [
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastPageNumber",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "LetsEncryptConfigurationResource",
+    "properties": [
+      "AcceptLetsEncryptTermsOfService",
+      "CertificateExpiryDate",
+      "CertificateThumbprint",
+      "DnsName",
+      "Enabled",
+      "HttpsPort",
+      "IPAddress",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Path",
+      "RegistrationEmailAddress"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "Library",
+    "properties": [
+      "LibraryVariableSetId",
+      "LibraryVariableSetName",
+      "Links",
+      "Templates",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LibraryDocumentCounts",
+    "properties": [
+      "Certificates",
+      "Packages",
+      "VariableSets"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LibraryVariableSetProjectUsage",
+    "properties": [
+      "IsCurrentlyBeingUsedInProject",
+      "ProjectId",
+      "ProjectName",
+      "ProjectSlug",
+      "Releases",
+      "RunbookSnapshots"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LibraryVariableSetReleaseUsageEntry",
+    "properties": [
+      "ReleaseId",
+      "ReleaseVersion"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LibraryVariableSetResource",
+    "properties": [
+      "ContentType",
+      "Description",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "SpaceId",
+      "Templates",
+      "VariableSetId",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LibraryVariableSetResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "LibraryVariableSetRunbookSnapshotUsageEntry",
+    "properties": [
+      "SnapshotId",
+      "SnapshotName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LibraryVariableSetUsageEntry",
+    "properties": [
+      "LibraryVariableSetId",
+      "LibraryVariableSetName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LicenseLimitStatusResource",
+    "properties": [
+      "CurrentUsage",
+      "Disposition",
+      "EffectiveLimit",
+      "EffectiveLimitDescription",
+      "IsUnlimited",
+      "LicenseLimitDescription",
+      "LicensedLimit",
+      "LimitStatus",
+      "Message",
+      "Name",
+      "TargetTypes"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LicenseLimitUsageResource",
+    "properties": [
+      "CurrentUsage",
+      "Disposition",
+      "EffectiveLimit",
+      "EffectiveLimitDescription",
+      "IsUnlimited",
+      "LicenseLimitDescription",
+      "LicensedLimit",
+      "LimitStatus",
+      "LimitUsageDescription",
+      "Message",
+      "Name",
+      "TargetTypes"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LicenseMessageResource",
+    "properties": [
+      "Disposition",
+      "Message",
+      "MessagePolicy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LicenseResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LicenseText",
+      "Links",
+      "SerialNumber"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LicenseStatusResource",
+    "properties": [
+      "ComplianceSummary",
+      "DaysToEffectiveExpiryDate",
+      "DoesExpiryBlockKeyActivities",
+      "EffectiveClusterTaskLimit",
+      "EffectiveExpiryDate",
+      "EffectiveNodeTaskLimit",
+      "EffectiveStartDate",
+      "HostingEnvironment",
+      "Id",
+      "IsClusterTaskLimitControlledByLicense",
+      "IsCompliant",
+      "IsInitialisationLicense",
+      "IsNodeTaskLimitControlledByLicense",
+      "IsPtm",
+      "IsTrial",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Limits",
+      "Links",
+      "Messages",
+      "PermissionsMode",
+      "SerialNumber"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LicenseUsageResource",
+    "properties": [
+      "Id",
+      "IsPtm",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Limits",
+      "Links",
+      "SpacesUsage"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LifecycleProgressionResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "NextDeployments",
+      "NextDeploymentsMinimumRequired",
+      "Phases"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LifecycleResource",
+    "properties": [
+      "Description",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Phases",
+      "ReleaseRetentionPolicy",
+      "Slug",
+      "SpaceId",
+      "TentacleRetentionPolicy"
+    ],
+    "read_only": [
+      "Phases"
+    ]
+  },
+  {
+    "name": "LifecycleResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ListApiMetadata",
+    "properties": [
+      "ApiEndpoint",
+      "SelectMode"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LiveResourceDiff",
+    "properties": [
+      "Diff",
+      "Left",
+      "Right"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LiveStatusSummaryResource",
+    "properties": [
+      "LastUpdated",
+      "Status"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LoadBalancerPingResource",
+    "properties": [
+      "Id",
+      "IsInMaintenanceMode",
+      "IsOffline",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastSeen",
+      "Links",
+      "MaxConcurrentTasks",
+      "Name",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LoginInitiatedResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProviderName",
+      "WasLoginInitiated"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LoginState",
+    "properties": [
+      "RedirectAfterLoginTo",
+      "UsingSecureConnection"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "LoginUserCommand",
+    "properties": [
+      "Password",
+      "RememberMe",
+      "RemoteIpAddress",
+      "State",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineBasedResource",
+    "properties": [
+      "Architecture",
+      "Endpoint",
+      "HasLatestCalamari",
+      "HealthStatus",
+      "Id",
+      "IsDisabled",
+      "IsInProcess",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MachinePolicyId",
+      "Name",
+      "OperatingSystem",
+      "ShellName",
+      "ShellVersion",
+      "SkipInitialHealthCheck",
+      "Slug",
+      "StatusSummary",
+      "Thumbprint",
+      "Uri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineCleanupPolicyResource",
+    "properties": [
+      "DeleteMachinesBehavior",
+      "DeleteMachinesElapsedTimeSpan"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineConnectionStatus",
+    "properties": [
+      "CurrentTentacleVersion",
+      "Id",
+      "LastChecked",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Logs",
+      "MachineId",
+      "Status"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineConnectivityPolicyResource",
+    "properties": [
+      "MachineConnectivityBehavior"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineDeploymentPreview",
+    "properties": [
+      "HasLatestCalamari",
+      "HealthStatus",
+      "Id",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineHealthCheckPolicyResource",
+    "properties": [
+      "BashHealthCheckPolicy",
+      "HealthCheckCron",
+      "HealthCheckCronTimezone",
+      "HealthCheckInterval",
+      "HealthCheckType",
+      "PowerShellHealthCheckPolicy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachinePackageCacheRetentionPolicyResource",
+    "properties": [
+      "PackageUnit",
+      "QuantityOfPackagesToKeep",
+      "QuantityOfVersionsToKeep",
+      "Strategy",
+      "VersionUnit"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachinePolicyResource",
+    "properties": [
+      "ConnectionConnectTimeout",
+      "ConnectionRetryCountLimit",
+      "ConnectionRetrySleepInterval",
+      "ConnectionRetryTimeLimit",
+      "Description",
+      "Id",
+      "IsDefault",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MachineCleanupPolicy",
+      "MachineConnectivityPolicy",
+      "MachineHealthCheckPolicy",
+      "MachinePackageCacheRetentionPolicy",
+      "MachineRpcCallRetryPolicy",
+      "MachineUpdatePolicy",
+      "Name",
+      "PollingRequestQueueTimeout",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachinePolicyResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "MachineResource",
+    "properties": [
+      "Architecture",
+      "Endpoint",
+      "EnvironmentIds",
+      "HasLatestCalamari",
+      "HealthStatus",
+      "Id",
+      "IsDisabled",
+      "IsInProcess",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MachinePolicyId",
+      "Name",
+      "OperatingSystem",
+      "Roles",
+      "ShellName",
+      "ShellVersion",
+      "SkipInitialHealthCheck",
+      "Slug",
+      "SpaceId",
+      "StatusSummary",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation",
+      "Thumbprint",
+      "Uri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "MachineRpcCallRetryPolicyResource",
+    "properties": [
+      "Enabled",
+      "HealthCheckRetryDuration",
+      "RetryDuration"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineScriptPolicyResource",
+    "properties": [
+      "RunType",
+      "ScriptBody"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MachineUpdatePolicyResource",
+    "properties": [
+      "CalamariUpdateBehavior",
+      "KubernetesAgentUpdateBehavior",
+      "TentacleUpdateAccountId",
+      "TentacleUpdateBehavior"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MaintenanceConfigurationResource",
+    "properties": [
+      "Id",
+      "IsInMaintenanceMode",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ManifestSummaryResource",
+    "properties": [
+      "Annotations",
+      "CreationTimestamp",
+      "Kind",
+      "Labels"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "Metadata",
+    "properties": [
+      "Description",
+      "Types"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MigrationImportResource",
+    "properties": [
+      "DeletePackageOnCompletion",
+      "FailureCallbackUri",
+      "Id",
+      "IsDryRun",
+      "IsEncryptedPackage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "OverwriteExisting",
+      "PackageFeedSpaceId",
+      "PackageId",
+      "PackageVersion",
+      "Password",
+      "SuccessCallbackUri",
+      "TaskId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MigrationPartialExportResource",
+    "properties": [
+      "DestinationApiKey",
+      "DestinationPackageFeed",
+      "DestinationPackageFeedSpaceId",
+      "EncryptPackage",
+      "FailureCallbackUri",
+      "Id",
+      "IgnoreCertificates",
+      "IgnoreDeployments",
+      "IgnoreMachines",
+      "IgnoreTenants",
+      "IncludeTaskLogs",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "PackageId",
+      "PackageVersion",
+      "Password",
+      "Projects",
+      "SpaceId",
+      "SuccessCallbackUri",
+      "TaskId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MissingPackageInfo",
+    "properties": [
+      "Id",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MissingTenantCommonVariable",
+    "properties": [
+      "LibraryVariableSetId",
+      "LibraryVariableSetName",
+      "Scope",
+      "Template",
+      "TemplateId",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MissingTenantProjectVariable",
+    "properties": [
+      "ProjectId",
+      "ProjectName",
+      "Scope",
+      "Template",
+      "TemplateId",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MissingVariableResource",
+    "properties": [
+      "EnvironmentId",
+      "LibraryVariableSetId",
+      "Links",
+      "ProjectId",
+      "VariableTemplateId",
+      "VariableTemplateName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyAccountCommand",
+    "properties": [
+      "AccountId",
+      "Description",
+      "Details",
+      "EnvironmentIds",
+      "Name",
+      "Slug",
+      "SpaceId",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyActionTemplateCommand",
+    "properties": [
+      "Description",
+      "GitDependencies",
+      "Id",
+      "Inputs",
+      "Name",
+      "Packages",
+      "Parameters",
+      "Properties",
+      "SpaceId",
+      "StepPackageVersion"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyAuditStreamConfigurationCommand",
+    "properties": [
+      "Active",
+      "Description",
+      "StreamConfigurationResource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyCertificateCommand",
+    "properties": [
+      "EnvironmentIds",
+      "Id",
+      "Name",
+      "Notes",
+      "SpaceId",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyChannelCommand",
+    "properties": [
+      "AutomaticEphemeralEnvironmentDeployments",
+      "CustomFieldDefinitions",
+      "Description",
+      "EphemeralEnvironmentNameTemplate",
+      "GitReferenceRules",
+      "GitResourceRules",
+      "Id",
+      "IsDefault",
+      "LifecycleId",
+      "Name",
+      "ParentEnvironmentId",
+      "ProjectId",
+      "Rules",
+      "Slug",
+      "SpaceId",
+      "TenantTags"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyCommonVariablesByTenantIdCommand",
+    "properties": [
+      "ConcurrencyToken",
+      "SpaceId",
+      "TenantId",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyCommonVariablesByTenantIdResponse",
+    "properties": [
+      "TenantId",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyCompliancePolicyCommand",
+    "properties": [
+      "ChangeDescription",
+      "ConditionsRego",
+      "Description",
+      "GitRef",
+      "Name",
+      "ScopeRego",
+      "Slug",
+      "ViolationAction",
+      "ViolationReason"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyCompliancePolicyVersionActivationStatusCommand",
+    "properties": [
+      "IsActive",
+      "Slug",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyCurrentLicenseCommand",
+    "properties": [
+      "LicenseText",
+      "SerialNumber"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDashboardConfigurationCommand",
+    "properties": [
+      "IncludedEnvironmentIds",
+      "IncludedEnvironmentTags",
+      "IncludedProjectGroupIds",
+      "IncludedProjectIds",
+      "IncludedProjectTags",
+      "IncludedTenantIds",
+      "IncludedTenantTags",
+      "ProjectLimit",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDefaultRetentionPolicyCommand",
+    "properties": [
+      "Id",
+      "RetentionType",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDeploymentFreezeCommand",
+    "properties": [
+      "Description",
+      "End",
+      "Id",
+      "Name",
+      "ProjectEnvironmentScope",
+      "RecurringSchedule",
+      "Start",
+      "TenantProjectEnvironmentScope"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDeploymentFreezeResponse",
+    "properties": [
+      "Description",
+      "End",
+      "Id",
+      "Name",
+      "ProjectEnvironmentScope",
+      "RecurringSchedule",
+      "Start",
+      "TenantProjectEnvironmentScope"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDeploymentProcessInDatabaseCommand",
+    "properties": [
+      "ChangeDescription",
+      "LastSnapshotId",
+      "ProjectId",
+      "SpaceId",
+      "Steps",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDeploymentProcessInGitCommand",
+    "properties": [
+      "ChangeDescription",
+      "GitRef",
+      "LastSnapshotId",
+      "ProjectId",
+      "SpaceId",
+      "Steps",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDeploymentSettingsInDatabaseCommand",
+    "properties": [
+      "ChangeDescription",
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "DefaultToSkipIfAlreadyInstalled",
+      "DeploymentChangesTemplate",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "ProjectId",
+      "ReleaseNotesTemplate",
+      "SpaceId",
+      "VersioningStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDeploymentSettingsInGitCommand",
+    "properties": [
+      "ChangeDescription",
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "DefaultToSkipIfAlreadyInstalled",
+      "DeploymentChangesTemplate",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "GitRef",
+      "ProjectId",
+      "ReleaseNotesTemplate",
+      "SpaceId",
+      "VersioningStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyDeploymentTargetCommand",
+    "properties": [
+      "Endpoint",
+      "EnvironmentIds",
+      "IsDisabled",
+      "MachineId",
+      "MachinePolicyId",
+      "Name",
+      "Roles",
+      "Slug",
+      "SpaceId",
+      "TenantIds",
+      "TenantTags",
+      "TenantedDeploymentParticipation",
+      "Thumbprint",
+      "Uri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyEnvironmentCommand",
+    "properties": [
+      "AllowDynamicInfrastructure",
+      "Description",
+      "EnvironmentId",
+      "EnvironmentTags",
+      "ExtensionSettings",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyFeatureToggleCommand",
+    "properties": [
+      "DefaultIsEnabled",
+      "Description",
+      "Environments",
+      "Id",
+      "Name",
+      "ProjectId",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyFeatureToggleEnvironment",
+    "properties": [
+      "DeploymentEnvironmentId",
+      "ExcludedTenantIds",
+      "ExcludedTenantTags",
+      "IsEnabled",
+      "MinimumVersion",
+      "RolloutPercentage",
+      "Segments",
+      "TenantIds",
+      "TenantTags",
+      "ToggleStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyFeedCommand",
+    "properties": [
+      "ClientVersion",
+      "FeedType",
+      "Id",
+      "Name",
+      "PackageAcquisitionLocationOptions",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyGitCredentialCommand",
+    "properties": [
+      "Description",
+      "Details",
+      "Id",
+      "Name",
+      "RepositoryRestrictions",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyGitCredentialDetails",
+    "properties": [
+      "Password",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyInsightsReportCommand",
+    "properties": [
+      "ChannelIds",
+      "Description",
+      "EnvironmentGroups",
+      "Id",
+      "Name",
+      "ProjectGroupIds",
+      "ProjectIds",
+      "SpaceId",
+      "TenantIds",
+      "TenantMode",
+      "TenantTags",
+      "TimeZone"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyInsightsReportIconCommand",
+    "properties": [
+      "IconColor",
+      "IconId",
+      "ReportId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyInsightsReportResponse",
+    "properties": [
+      "Report"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyLetsEncryptConfigurationCommand",
+    "properties": [
+      "Enabled"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyLibraryVariableSetCommand",
+    "properties": [
+      "Description",
+      "Id",
+      "Name",
+      "SpaceId",
+      "Templates",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyLifecycleCommand",
+    "properties": [
+      "Description",
+      "Id",
+      "Name",
+      "Phases",
+      "ReleaseRetentionPolicy",
+      "Slug",
+      "SpaceId",
+      "TentacleRetentionPolicy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyMachinePolicyCommand",
+    "properties": [
+      "ConnectionConnectTimeout",
+      "ConnectionRetryCountLimit",
+      "ConnectionRetrySleepInterval",
+      "ConnectionRetryTimeLimit",
+      "Description",
+      "Id",
+      "IsDefault",
+      "MachineCleanupPolicy",
+      "MachineConnectivityPolicy",
+      "MachineHealthCheckPolicy",
+      "MachinePackageCacheRetentionPolicy",
+      "MachineRpcCallRetryPolicy",
+      "MachineUpdatePolicy",
+      "Name",
+      "PollingRequestQueueTimeout",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyMaintenanceConfigurationCommand",
+    "properties": [
+      "IsInMaintenanceMode"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyMaintenanceConfigurationResponse",
+    "properties": [
+      "Resource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyOctopusServerNodeCommand",
+    "properties": [
+      "Id",
+      "IsInMaintenanceMode",
+      "MaxConcurrentTasks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyParentEnvironmentCommand",
+    "properties": [
+      "AutomaticDeprovisioningRule",
+      "Description",
+      "EnvironmentId",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyParentEnvironmentResponse",
+    "properties": [
+      "AutomaticDeprovisioningRule",
+      "Description",
+      "Id",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyPlatformHubAccountCommand",
+    "properties": [
+      "Description",
+      "Details",
+      "Id",
+      "Name",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyPlatformHubGitCredentialCommand",
+    "properties": [
+      "Description",
+      "Details",
+      "Id",
+      "Name",
+      "RepositoryRestrictions"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyPlatformHubVersionControlSettingsCommand",
+    "properties": [
+      "BasePath",
+      "Credentials",
+      "DefaultBranch",
+      "Url"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProcessTemplateCommand",
+    "properties": [
+      "ChangeDescription",
+      "Description",
+      "GitRef",
+      "Icon",
+      "Name",
+      "Parameters",
+      "Slug",
+      "Steps"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectCommand",
+    "properties": [
+      "AllowIgnoreChannelRules",
+      "AutoCreateRelease",
+      "AutoDeployReleaseOverrides",
+      "ChangeDescription",
+      "ClonedFromProjectId",
+      "CombineHealthAndSyncStatusInDashboardLiveStatus",
+      "DefaultGuidedFailureMode",
+      "DefaultPowerShellEdition",
+      "DefaultToSkipIfAlreadyInstalled",
+      "DeploymentChangesTemplate",
+      "DeprovisioningRunbookId",
+      "Description",
+      "DiscreteChannelRelease",
+      "ExecuteDeploymentsOnResilientPipeline",
+      "ExtensionSettings",
+      "ForcePackageDownload",
+      "IncludedLibraryVariableSetIds",
+      "IsDisabled",
+      "LifecycleId",
+      "Name",
+      "PersistenceSettings",
+      "ProjectConnectivityPolicy",
+      "ProjectGroupId",
+      "ProjectId",
+      "ProjectTags",
+      "ProvisioningRunbookId",
+      "ReleaseCreationStrategy",
+      "ReleaseNotesTemplate",
+      "Slug",
+      "SpaceId",
+      "Templates",
+      "TenantedDeploymentMode",
+      "VersioningStrategy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectGroupCommand",
+    "properties": [
+      "Description",
+      "Id",
+      "Name",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectIconCommand",
+    "properties": [
+      "IconColor",
+      "IconId",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectTriggerCommand",
+    "properties": [
+      "Action",
+      "Description",
+      "Filter",
+      "Id",
+      "IsDisabled",
+      "Name",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectVariableSetInDatabaseCommand",
+    "properties": [
+      "ChangeDescription",
+      "ProjectId",
+      "ScopeValues",
+      "SpaceId",
+      "Variables",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectVariableSetInGitCommand",
+    "properties": [
+      "ChangeDescription",
+      "GitRef",
+      "ProjectId",
+      "ScopeValues",
+      "SpaceId",
+      "Variables",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectVariablesByTenantIdCommand",
+    "properties": [
+      "ConcurrencyToken",
+      "SpaceId",
+      "TenantId",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProjectVariablesByTenantIdResponse",
+    "properties": [
+      "TenantId",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyProxyCommand",
+    "properties": [
+      "Host",
+      "Id",
+      "Name",
+      "Password",
+      "Port",
+      "ProxyType",
+      "SpaceId",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyReleaseCommand",
+    "properties": [
+      "ChannelId",
+      "CustomFields",
+      "Id",
+      "IgnoreChannelRules",
+      "ProjectId",
+      "ReleaseNotes",
+      "SelectedGitResources",
+      "SelectedPackages",
+      "SpaceId",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyRetentionDefaultConfigurationCommand",
+    "properties": [
+      "RetentionDays"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyRunbookInDatabaseCommand",
+    "properties": [
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "Description",
+      "EnvironmentScope",
+      "Environments",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "Id",
+      "MultiTenancyMode",
+      "Name",
+      "ProjectId",
+      "PublishedRunbookSnapshotId",
+      "RunRetentionPolicy",
+      "RunbookProcessId",
+      "RunbookTags",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyRunbookInGitCommand",
+    "properties": [
+      "ChangeDescription",
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "Description",
+      "EnvironmentScope",
+      "Environments",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "GitRef",
+      "Id",
+      "MultiTenancyMode",
+      "Name",
+      "ProjectId",
+      "PublishedRunbookSnapshotId",
+      "RunRetentionPolicy",
+      "RunbookProcessId",
+      "RunbookTags",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyRunbookProcessInDatabaseCommand",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastSnapshotId",
+      "Links",
+      "ProjectId",
+      "RunbookId",
+      "SpaceId",
+      "Steps",
+      "Version"
+    ],
+    "read_only": [
+      "Steps"
+    ]
+  },
+  {
+    "name": "ModifyRunbookProcessInGitCommand",
+    "properties": [
+      "ChangeDescription",
+      "GitRef",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastSnapshotId",
+      "Links",
+      "ProjectId",
+      "RunbookId",
+      "SpaceId",
+      "Steps",
+      "Version"
+    ],
+    "read_only": [
+      "Steps"
+    ]
+  },
+  {
+    "name": "ModifyRunbookSnapshotCommand",
+    "properties": [
+      "Id",
+      "Name",
+      "Notes",
+      "ProjectId",
+      "SelectedGitResources",
+      "SelectedPackages",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyScopedUserRoleCommand",
+    "properties": [
+      "EnvironmentIds",
+      "Id",
+      "ProjectGroupIds",
+      "ProjectIds",
+      "SpaceId",
+      "TeamId",
+      "TenantIds",
+      "UserRoleId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyServerTaskStateCommand",
+    "properties": [
+      "Id",
+      "Reason",
+      "SpaceId",
+      "State"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyServiceAccountOidcIdentityCommandV1",
+    "properties": [
+      "Audience",
+      "Id",
+      "Issuer",
+      "Name",
+      "ServiceAccountId",
+      "Subject"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifySmtpConfigurationCommand",
+    "properties": [
+      "Details",
+      "EnableSsl",
+      "SendEmailFrom",
+      "SmtpHost",
+      "SmtpPort",
+      "Timeout"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifySpaceCommandV1",
+    "properties": [
+      "Description",
+      "Id",
+      "IsDefault",
+      "Name",
+      "Slug",
+      "SpaceManagersTeamMembers",
+      "SpaceManagersTeams",
+      "TaskQueueStopped"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifySpaceIconCommand",
+    "properties": [
+      "IconColor",
+      "IconId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifySubscriptionCommand",
+    "properties": [
+      "EventNotificationSubscription",
+      "Id",
+      "IsDisabled",
+      "Name",
+      "SpaceId",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyTagSetCommand",
+    "properties": [
+      "Description",
+      "Id",
+      "Name",
+      "Scopes",
+      "SortOrder",
+      "SpaceId",
+      "Tags",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyTeamCommand",
+    "properties": [
+      "Description",
+      "ExternalSecurityGroups",
+      "Id",
+      "MemberUserIds",
+      "Name",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyTelemetryConfigurationCommand",
+    "properties": [
+      "Enabled",
+      "Id",
+      "IsTelemetryEnforced",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ShowAsNewUntil"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyTenantCommand",
+    "properties": [
+      "Description",
+      "Id",
+      "IsDisabled",
+      "Name",
+      "ProjectEnvironments",
+      "Slug",
+      "SpaceId",
+      "TenantTags"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyTenantIconCommand",
+    "properties": [
+      "IconColor",
+      "IconId",
+      "SpaceId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyUserCommand",
+    "properties": [
+      "DisplayName",
+      "EmailAddress",
+      "Id",
+      "Identities",
+      "IsActive",
+      "Password",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyUserRoleCommand",
+    "properties": [
+      "Description",
+      "GrantedSpacePermissions",
+      "GrantedSystemPermissions",
+      "Id",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyVariableSetCommand",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "OwnerId",
+      "ScopeValues",
+      "SpaceId",
+      "Variables",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyVariablesByTenantIdCommand",
+    "properties": [
+      "ConcurrencyToken",
+      "Id",
+      "LibraryVariables",
+      "ProjectVariables",
+      "SpaceId",
+      "TenantName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyVariablesByTenantIdCommandLibrary",
+    "properties": [
+      "LibraryVariableSetId",
+      "LibraryVariableSetName",
+      "Links",
+      "Templates",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyVariablesByTenantIdCommandProject",
+    "properties": [
+      "Links",
+      "ProjectId",
+      "ProjectName",
+      "Templates",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyWorkerCommand",
+    "properties": [
+      "Endpoint",
+      "Id",
+      "IsDisabled",
+      "MachinePolicyId",
+      "Name",
+      "Slug",
+      "SpaceId",
+      "WorkerPoolIds"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ModifyWorkerPoolCommand",
+    "properties": [
+      "Description",
+      "Id",
+      "IsDefault",
+      "Name",
+      "Slug",
+      "SpaceId",
+      "WorkerType"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MonitorErrorResource",
+    "properties": [
+      "ErrorCode",
+      "ErrorMessage"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "MultiTenancyStatusResource",
+    "properties": [
+      "Enabled",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "NamedReferenceItem",
+    "properties": [
+      "DisplayIdAndName",
+      "DisplayName",
+      "Id"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "NewGitCredentialDetails",
+    "properties": [
+      "Password",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "NewPlatformHubGitCredentialDetails",
+    "properties": [
+      "Password",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "NumericReportData",
+    "properties": [
+      "Labels",
+      "Series"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "NumericReportSeries",
+    "properties": [
+      "Data",
+      "Label"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "OctopusBuildInformation",
+    "properties": [
+      "Branch",
+      "BuildEnvironment",
+      "BuildNumber",
+      "BuildUrl",
+      "Commits",
+      "VcsCommitNumber",
+      "VcsRoot",
+      "VcsType"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "OctopusPackageVersionBuildInformationMappedResource",
+    "properties": [
+      "Branch",
+      "BuildEnvironment",
+      "BuildNumber",
+      "BuildUrl",
+      "Commits",
+      "Created",
+      "Id",
+      "IncompleteDataWarning",
+      "IssueTrackerName",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "PackageId",
+      "VcsCommitNumber",
+      "VcsCommitUrl",
+      "VcsRoot",
+      "VcsType",
+      "Version",
+      "WorkItems"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "OctopusPackageVersionBuildInformationMappedResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "OctopusServerClusterSummaryResource",
+    "properties": [
+      "Links",
+      "Nodes"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "OctopusServerNodeDetailsResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "RunningTasks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "OctopusServerNodeResource",
+    "properties": [
+      "Id",
+      "IsInMaintenanceMode",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MaxConcurrentTasks",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "OctopusServerNodeResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "OctopusServerNodeSummaryResource",
+    "properties": [
+      "Id",
+      "IsInMaintenanceMode",
+      "IsOffline",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastSeen",
+      "Links",
+      "MaxConcurrentTasks",
+      "MaxSqlConnectionPoolSize",
+      "Name",
+      "RecommendedMaxSqlConnectionPoolSize",
+      "RunningTaskCount",
+      "Version"
+    ],
+    "read_only": [
+      "RecommendedMaxSqlConnectionPoolSize"
+    ]
+  },
+  {
+    "name": "OptionsMetadata",
+    "properties": [
+      "SelectMode",
+      "Values"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageDescriptionResource",
+    "properties": [
+      "Description",
+      "Id",
+      "LatestVersion",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageDescriptionResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "PackageFromBuiltInFeedResource",
+    "properties": [
+      "Description",
+      "FeedId",
+      "FileExtension",
+      "Hash",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "NuGetFeedId",
+      "NuGetPackageId",
+      "PackageId",
+      "PackageSizeBytes",
+      "PackageVersionBuildInformation",
+      "Published",
+      "ReleaseNotes",
+      "Summary",
+      "Title",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageFromBuiltInFeedResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "PackageNote",
+    "properties": [
+      "FeedId",
+      "Notes",
+      "PackageId",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageNoteListResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Packages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageNotesResult",
+    "properties": [
+      "DisplayMessage",
+      "FailureReason",
+      "Notes",
+      "Published",
+      "Succeeded"
+    ],
+    "read_only": [
+      "DisplayMessage"
+    ]
+  },
+  {
+    "name": "PackageReferenceResource",
+    "properties": [
+      "AcquisitionLocation",
+      "FeedId",
+      "Id",
+      "Name",
+      "PackageId",
+      "Properties",
+      "StepPackageInputsReferenceId",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageResource",
+    "properties": [
+      "Description",
+      "FeedId",
+      "FileExtension",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "NuGetFeedId",
+      "NuGetPackageId",
+      "PackageId",
+      "PackageVersionBuildInformation",
+      "Published",
+      "ReleaseNotes",
+      "Summary",
+      "Title",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageSignatureResource",
+    "properties": [
+      "BaseVersion",
+      "Signature"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageVersionResource",
+    "properties": [
+      "FeedId",
+      "Id",
+      "Links",
+      "PackageId",
+      "Published",
+      "ReleaseNotes",
+      "SizeBytes",
+      "Title",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PackageVersionResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "PerformanceConfigurationResource",
+    "properties": [
+      "DefaultDashboardRenderMode",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PermissionDescription",
+    "properties": [
+      "CanApplyAtSpaceLevel",
+      "CanApplyAtSystemLevel",
+      "Description",
+      "SupportedRestrictions"
+    ],
+    "read_only": [
+      "CanApplyAtSpaceLevel",
+      "CanApplyAtSystemLevel"
+    ]
+  },
+  {
+    "name": "PersistenceSettingsResource",
+    "properties": [
+      "Type"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "PhaseDeploymentResource",
+    "properties": [
+      "Deployment",
+      "Task"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PhaseProgressionResource",
+    "properties": [
+      "AutomaticDeploymentTargets",
+      "Blocked",
+      "Deployments",
+      "Id",
+      "IsOptionalPhase",
+      "IsPriorityPhase",
+      "MinimumEnvironmentsBeforePromotion",
+      "Name",
+      "OptionalDeploymentTargets",
+      "Progress"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PhaseResource",
+    "properties": [
+      "AutomaticDeploymentTargets",
+      "Id",
+      "IsOptionalPhase",
+      "IsPriorityPhase",
+      "MinimumEnvironmentsBeforePromotion",
+      "Name",
+      "OptionalDeploymentTargets",
+      "ReleaseRetentionPolicy",
+      "TentacleRetentionPolicy"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PlatformHubAccountResource",
+    "properties": [
+      "Description",
+      "Details",
+      "Id",
+      "Name",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PlatformHubAccountResourcePaginatedCollection",
+    "properties": [
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastPageNumber",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "PlatformHubGitCredentialResource",
+    "properties": [
+      "Description",
+      "Details",
+      "Id",
+      "Name",
+      "RepositoryRestrictions"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PlatformHubGitCredentialResourcePaginatedCollection",
+    "properties": [
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastPageNumber",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "PlatformHubVersionControlSettingsResource",
+    "properties": [
+      "BasePath",
+      "Credentials",
+      "DefaultBranch",
+      "Url"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PreconditionStatus",
+    "properties": [
+      "Message",
+      "PreconditionName",
+      "WillFailTask"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProcessReferenceDataItem",
+    "properties": [
+      "Id",
+      "Name",
+      "ProcessType"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProcessTemplateParameterResource",
+    "properties": [
+      "DisplaySettings",
+      "HelpText",
+      "IsOptional",
+      "Label",
+      "Name",
+      "Values"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProcessTemplateResource",
+    "properties": [
+      "Description",
+      "GitRef",
+      "Icon",
+      "Id",
+      "Name",
+      "Parameters",
+      "Slug",
+      "Steps"
+    ],
+    "read_only": [
+      "Id",
+      "Parameters",
+      "Steps"
+    ]
+  },
+  {
+    "name": "ProcessTemplateVersionResource",
+    "properties": [
+      "Description",
+      "GitCommit",
+      "GitRef",
+      "Icon",
+      "Id",
+      "IsPreRelease",
+      "Name",
+      "Parameters",
+      "PublishedDate",
+      "Slug",
+      "Steps",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProgressionResource",
+    "properties": [
+      "ChannelEnvironments",
+      "Environments",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LifecycleEnvironments",
+      "Links",
+      "Releases"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "Project",
+    "properties": [
+      "Links",
+      "ProjectId",
+      "ProjectName",
+      "Templates",
+      "Variables"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectDocumentCounts",
+    "properties": [
+      "Deployments",
+      "Projects",
+      "Releases",
+      "RunbookRuns",
+      "Runbooks"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectGroupResource",
+    "properties": [
+      "Description",
+      "EnvironmentIds",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "RetentionPolicyId",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectGroupResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ProjectResource",
+    "properties": [
+      "AllowIgnoreChannelRules",
+      "AutoCreateRelease",
+      "AutoDeployReleaseOverrides",
+      "ClonedFromProjectId",
+      "CombineHealthAndSyncStatusInDashboardLiveStatus",
+      "DefaultGuidedFailureMode",
+      "DefaultPowerShellEdition",
+      "DefaultToSkipIfAlreadyInstalled",
+      "DeploymentChangesTemplate",
+      "DeploymentProcessId",
+      "DeprovisioningRunbookId",
+      "Description",
+      "DiscreteChannelRelease",
+      "ExecuteDeploymentsOnResilientPipeline",
+      "ExtensionSettings",
+      "ForcePackageDownload",
+      "Icon",
+      "Id",
+      "IncludedLibraryVariableSetIds",
+      "IsDisabled",
+      "IsVersionControlled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LifecycleId",
+      "Links",
+      "Name",
+      "PersistenceSettings",
+      "ProjectConnectivityPolicy",
+      "ProjectGroupId",
+      "ProjectTags",
+      "ProjectTemplateDetails",
+      "ProvisioningRunbookId",
+      "ReleaseCreationStrategy",
+      "ReleaseNotesTemplate",
+      "Slug",
+      "SpaceId",
+      "Templates",
+      "TenantedDeploymentMode",
+      "VariableSetId",
+      "VersioningStrategy"
+    ],
+    "read_only": [
+      "AutoDeployReleaseOverrides",
+      "ExtensionSettings"
+    ]
+  },
+  {
+    "name": "ProjectResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ProjectSettingsMetadata",
+    "properties": [
+      "ExtensionId",
+      "Metadata"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectTenantVariableEntry",
+    "properties": [
+      "ProjectId",
+      "TenantVariableIds"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectTenantVariableUsage",
+    "properties": [
+      "Projects",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectTriggerResource",
+    "properties": [
+      "Action",
+      "Description",
+      "Filter",
+      "Id",
+      "IsDisabled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectTriggerResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ProjectVariableScope",
+    "properties": [
+      "EnvironmentIds"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectVariableSetUsage",
+    "properties": [
+      "IsCurrentlyBeingUsedInProject",
+      "ProjectId",
+      "ProjectName",
+      "ProjectSlug",
+      "Releases",
+      "RunbookSnapshots"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectVariablesResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "OwnerId",
+      "ScopeValues",
+      "SpaceId",
+      "Variables",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProjectedTeamReferenceDataItem",
+    "properties": [
+      "ExternalSecurityGroups",
+      "Id",
+      "IsDirectlyAssigned",
+      "Name",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PropertyApplicability",
+    "properties": [
+      "DependsOnPropertyName",
+      "DependsOnPropertyValue",
+      "Mode"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PropertyMetadata",
+    "properties": [
+      "DisplayInfo",
+      "Name",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "PropertyValueResource",
+    "properties": [
+      "IsSensitive",
+      "SensitiveValue",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProxyResource",
+    "properties": [
+      "Host",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Password",
+      "Port",
+      "ProxyType",
+      "SpaceId",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ProxyResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "PublishCompliancePolicyCommand",
+    "properties": [
+      "GitRef",
+      "Slug",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RecurringScheduleResource",
+    "properties": [
+      "EndAfterOccurrences",
+      "EndDate",
+      "EndOnDate",
+      "EndType",
+      "StartDate",
+      "Type",
+      "Unit",
+      "UserUtcOffsetInMinutes"
+    ],
+    "read_only": [
+      "Type"
+    ]
+  },
+  {
+    "name": "ReferenceDataItem",
+    "properties": [
+      "Id",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RefreshRunbookSnapshotVariablesResponse",
+    "properties": [
+      "Resource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RegisterKubernetesMonitorCommand",
+    "properties": [
+      "InstallationId",
+      "MachineId",
+      "PreserveAuthenticationToken",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RegisterKubernetesMonitorResponse",
+    "properties": [
+      "AuthenticationToken",
+      "CertificateThumbprint",
+      "Resource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RegisterUserCommand",
+    "properties": [
+      "DisplayName",
+      "EmailAddress",
+      "Identities",
+      "InvitationCode",
+      "Password",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseChangesResource",
+    "properties": [
+      "BuildInformation",
+      "Commits",
+      "ReleaseNotes",
+      "Version",
+      "WorkItems"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseCreationStrategyResource",
+    "properties": [
+      "ChannelId",
+      "ReleaseCreationPackage"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleasePackageVersionBuildInformation",
+    "properties": [
+      "Branch",
+      "BuildEnvironment",
+      "BuildNumber",
+      "BuildUrl",
+      "Commits",
+      "PackageId",
+      "VcsCommitNumber",
+      "VcsCommitUrl",
+      "VcsRoot",
+      "VcsType",
+      "Version",
+      "WorkItems"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleasePackageVersionBuildInformationResource",
+    "properties": [
+      "Branch",
+      "BuildEnvironment",
+      "BuildNumber",
+      "BuildUrl",
+      "Commits",
+      "IssueTrackerName",
+      "PackageId",
+      "VcsCommitNumber",
+      "VcsCommitUrl",
+      "VcsRoot",
+      "VcsType",
+      "Version",
+      "WorkItems"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseProgressionResource",
+    "properties": [
+      "Channel",
+      "Deployments",
+      "HasUnresolvedDefect",
+      "NextDeployments",
+      "Release",
+      "ReleaseRetentionPeriod",
+      "TentacleRetentionPeriod"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseResource",
+    "properties": [
+      "Assembled",
+      "BuildInformation",
+      "ChannelId",
+      "CustomFields",
+      "Id",
+      "IgnoreChannelRules",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LibraryVariableSetSnapshotIds",
+      "Links",
+      "ProjectDeploymentProcessSnapshotId",
+      "ProjectId",
+      "ProjectVariableSetSnapshotId",
+      "ReleaseNotes",
+      "SelectedGitResources",
+      "SelectedPackages",
+      "SpaceId",
+      "Version",
+      "VersionControlReference"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ReleaseTemplateGitResource",
+    "properties": [
+      "ActionName",
+      "DefaultBranch",
+      "FilePathFilters",
+      "GitCredentialId",
+      "GitHubConnectionId",
+      "GitResourceSelectedLastRelease",
+      "IsResolvable",
+      "Name",
+      "RepositoryUri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseTemplatePackage",
+    "properties": [
+      "ActionName",
+      "FeedId",
+      "FeedName",
+      "FixedVersion",
+      "IsResolvable",
+      "NuGetFeedId",
+      "NuGetFeedName",
+      "NuGetPackageId",
+      "PackageId",
+      "PackageReferenceName",
+      "ProjectName",
+      "StepName",
+      "VersionSelectedLastRelease"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseTemplateResource",
+    "properties": [
+      "DeploymentProcessId",
+      "GitResources",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastReleaseVersion",
+      "Links",
+      "NextVersionIncrement",
+      "Packages",
+      "VersioningPackageReferenceName",
+      "VersioningPackageStepName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseUsage",
+    "properties": [
+      "ProjectId",
+      "ProjectName",
+      "Releases"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReleaseUsageEntry",
+    "properties": [
+      "ReleaseId",
+      "ReleaseVersion"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReplaceCertificateCommand",
+    "properties": [
+      "CertificateData",
+      "Id",
+      "Password",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ReportDeploymentCountOverTimeResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProjectId",
+      "ReportData"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RequireCapabilityResponseV1",
+    "properties": [
+      "Exists"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ResolvedProjectTemplateDetailsResource",
+    "properties": [
+      "IsShared",
+      "Slug",
+      "Version",
+      "VersionMask"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RetentionDefaultConfigurationResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "RetentionDays"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RetentionPeriod",
+    "properties": [
+      "QuantityToKeep",
+      "ShouldKeepForever",
+      "Strategy",
+      "Unit"
+    ],
+    "read_only": [
+      "ShouldKeepForever"
+    ]
+  },
+  {
+    "name": "RetryDeprovisioningEphemeralEnvironmentResponse",
+    "properties": [
+      "DeprovisioningRun"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RetryGitRunbookRunResponse",
+    "properties": [
+      "Resource"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RetryProvisioningEphemeralEnvironmentResponse",
+    "properties": [
+      "ProvisioningRun"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RootResource",
+    "properties": [
+      "ApiVersion",
+      "Application",
+      "HasLongTermSupport",
+      "Id",
+      "InstallationId",
+      "IsEarlyAccessProgram",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Version"
+    ],
+    "read_only": [
+      "HasLongTermSupport"
+    ]
+  },
+  {
+    "name": "RotateFeatureToggleClientIdentifierSigningKeyCommand",
+    "properties": [
+      "CompleteRotation",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunGitRunbookCommand",
+    "properties": [
+      "GitRef",
+      "Notes",
+      "ProjectId",
+      "RunbookId",
+      "Runs",
+      "SelectedGitResources",
+      "SelectedPackages",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunGitRunbookResponse",
+    "properties": [
+      "Resources"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunGitRunbookRun",
+    "properties": [
+      "ChangeRequestSettings",
+      "Comments",
+      "DebugMode",
+      "EnvironmentId",
+      "ExcludedMachineIds",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "FormValues",
+      "Priority",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "SkipActions",
+      "SpecificMachineIds",
+      "TenantId",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunRunbookCommandV1",
+    "properties": [
+      "ChangeRequestSettings",
+      "Comments",
+      "DebugMode",
+      "EnvironmentId",
+      "EnvironmentIds",
+      "ExcludedMachineIds",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "FormValues",
+      "Priority",
+      "ProjectId",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "RunbookId",
+      "RunbookSnapshotNameOrId",
+      "SkipActions",
+      "SpaceId",
+      "SpecificMachineIds",
+      "TenantId",
+      "TenantIds",
+      "TenantTagNames",
+      "UseDefaultSnapshot",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunRunbookServerTask",
+    "properties": [
+      "RunbookRunId",
+      "ServerTaskId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookProcessResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastSnapshotId",
+      "Links",
+      "ProjectId",
+      "RunbookId",
+      "SpaceId",
+      "Steps",
+      "Version"
+    ],
+    "read_only": [
+      "Steps"
+    ]
+  },
+  {
+    "name": "RunbookProcessResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "RunbookResource",
+    "properties": [
+      "ConnectivityPolicy",
+      "DefaultGuidedFailureMode",
+      "Description",
+      "EnvironmentScope",
+      "Environments",
+      "FailTargetDiscovery",
+      "ForcePackageDownload",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MultiTenancyMode",
+      "Name",
+      "ProjectId",
+      "PublishedRunbookSnapshotId",
+      "RunRetentionPolicy",
+      "RunbookProcessId",
+      "RunbookTags",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": [
+      "Environments"
+    ]
+  },
+  {
+    "name": "RunbookResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "RunbookRetentionPolicy",
+    "properties": [
+      "QuantityToKeep",
+      "ShouldKeepForever",
+      "Strategy",
+      "Unit"
+    ],
+    "read_only": [
+      "ShouldKeepForever"
+    ]
+  },
+  {
+    "name": "RunbookRunPreviewResource",
+    "properties": [
+      "Form",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "StepsToExecute",
+      "UseGuidedFailureModeByDefault"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookRunResource",
+    "properties": [
+      "ChangeRequestSettings",
+      "Comments",
+      "Created",
+      "DebugMode",
+      "DeployedBy",
+      "DeployedById",
+      "DeployedToMachineIds",
+      "EnvironmentId",
+      "ExcludedMachineIds",
+      "ExecutionPlanLogContext",
+      "FailTargetDiscovery",
+      "FailureEncountered",
+      "ForcePackageDownload",
+      "FormValues",
+      "FrozenRunbookProcessId",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ManifestVariableSetId",
+      "Name",
+      "Priority",
+      "ProjectId",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "RunbookId",
+      "RunbookName",
+      "RunbookSnapshotId",
+      "SkipActions",
+      "SpaceId",
+      "SpecificMachineIds",
+      "TaskId",
+      "TenantId",
+      "TentacleRetentionPeriod",
+      "UseGuidedFailure"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookRunResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "RunbookRunTemplateResource",
+    "properties": [
+      "Id",
+      "IsLibraryVariableSetModified",
+      "IsRunbookProcessModified",
+      "IsVariableSetModified",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "PromoteTo",
+      "TenantPromotions"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookSnapshotResource",
+    "properties": [
+      "Assembled",
+      "FrozenProjectVariableSetId",
+      "FrozenRunbookProcessId",
+      "GitReference",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LibraryVariableSetSnapshotIds",
+      "Links",
+      "Name",
+      "Notes",
+      "ProjectId",
+      "ProjectVariableSetSnapshotId",
+      "RunbookId",
+      "SelectedGitResources",
+      "SelectedPackages",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookSnapshotResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "RunbookSnapshotTemplateResource",
+    "properties": [
+      "GitResources",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "NextNameIncrement",
+      "Packages",
+      "RunbookId",
+      "RunbookProcessId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookSnapshotUsage",
+    "properties": [
+      "ProjectId",
+      "ProjectName",
+      "RunbookId",
+      "RunbookName",
+      "Snapshots"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookSnapshotUsageEntry",
+    "properties": [
+      "SnapshotId",
+      "SnapshotName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookStepUsage",
+    "properties": [
+      "ProcessId",
+      "ProjectId",
+      "ProjectName",
+      "ProjectSlug",
+      "RunbookId",
+      "RunbookName",
+      "Steps"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbookSummary",
+    "properties": [
+      "RunbookId",
+      "RunbookName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbooksDashboardItemResource",
+    "properties": [
+      "CompletedTime",
+      "Created",
+      "Duration",
+      "EnvironmentId",
+      "ErrorMessage",
+      "GitReference",
+      "HasPendingInterruptions",
+      "HasWarningsOrErrors",
+      "Id",
+      "IsCompleted",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProjectId",
+      "QueueTime",
+      "RunBy",
+      "RunName",
+      "RunbookId",
+      "RunbookSnapshotId",
+      "RunbookSnapshotName",
+      "RunbookSnapshotNotes",
+      "StartTime",
+      "State",
+      "TaskId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbooksDashboardItemResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "RunbooksDashboardItemResourceGitReference",
+    "properties": [
+      "GitCommit",
+      "GitRef"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "RunbooksProgressionResource",
+    "properties": [
+      "Environments",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "RunbookRuns"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ScheduledTaskDetailsResource",
+    "properties": [
+      "ActivityLog",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ScheduledTaskStatusResource",
+    "properties": [
+      "Id",
+      "IsEnabled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SchedulerStatusResource",
+    "properties": [
+      "Id",
+      "IsRunning",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "TaskStatus"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ScopedUserRoleResource",
+    "properties": [
+      "EnvironmentIds",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ProjectGroupIds",
+      "ProjectIds",
+      "SpaceId",
+      "TeamId",
+      "TenantIds",
+      "UserRoleId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ScopedUserRoleResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "SearchExternalAuthenticationProvidersResponse",
+    "properties": [
+      "Links",
+      "Results"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SelectedGitResource",
+    "properties": [
+      "ActionName",
+      "GitReferenceResource",
+      "GitResourceReferenceName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SelectedPackage",
+    "properties": [
+      "ActionName",
+      "PackageReferenceName",
+      "StepName",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SemanticVersion",
+    "properties": [
+      "Format",
+      "HasMetadata",
+      "IsLegacyVersion",
+      "IsPrerelease",
+      "IsSemVer2",
+      "Major",
+      "Metadata",
+      "Minor",
+      "OriginalString",
+      "Patch",
+      "Release",
+      "ReleaseLabels",
+      "Revision",
+      "Version"
+    ],
+    "read_only": [
+      "Format",
+      "HasMetadata",
+      "IsLegacyVersion",
+      "IsPrerelease",
+      "IsSemVer2",
+      "OriginalString",
+      "Release",
+      "Revision"
+    ]
+  },
+  {
+    "name": "SensitiveValue",
+    "properties": [
+      "HasValue",
+      "Hint",
+      "NewValue"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServerConfigurationResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ServerUri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServerConfigurationSettingsResource",
+    "properties": [
+      "ConfigurationSet",
+      "ConfigurationValues"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServerConfigurationValueResource",
+    "properties": [
+      "Description",
+      "Key",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServerDocumentCounts",
+    "properties": [
+      "Global",
+      "Infrastructure",
+      "Library",
+      "Project"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServerStatusHealthResource",
+    "properties": [
+      "Description",
+      "Id",
+      "IsCompliantWithLicense",
+      "IsEntireClusterDrainingTasks",
+      "IsEntireClusterReadOnly",
+      "IsOperatingNormally",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": [
+      "IsOperatingNormally"
+    ]
+  },
+  {
+    "name": "ServerStatusResource",
+    "properties": [
+      "Id",
+      "IsDatabaseEncrypted",
+      "IsInMaintenanceMode",
+      "IsMajorMinorUpgrade",
+      "IsUpgradeAvailable",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MaintenanceExpires",
+      "MaximumAvailableVersion",
+      "MaximumAvailableVersionCoveredByLicense"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServerTaskStatusMessageResource",
+    "properties": [
+      "Category",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Message",
+      "Title"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServerTimezoneResource",
+    "properties": [
+      "Id",
+      "IsLocal",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServiceAccountOidcIdentityResource",
+    "properties": [
+      "Audience",
+      "Id",
+      "Issuer",
+      "Name",
+      "ServiceAccountId",
+      "Subject"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ServiceNowConnectionCheckRequest",
+    "properties": [
+      "BaseUrl",
+      "Id",
+      "OAuthClientId",
+      "OAuthClientSecret",
+      "UserPassword",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SetDynamicExtensionsFeaturesValuesCommand",
+    "properties": [
+      "Values"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SetPerformanceConfigurationCommand",
+    "properties": [
+      "DefaultDashboardRenderMode"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SetServerConfigurationCommand",
+    "properties": [
+      "ServerUri"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SetSigningKeyConfigurationCommand",
+    "properties": [
+      "ExpireAfterDays",
+      "PublicKeyHostingLocation",
+      "RevokeAfterDays"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SetUpgradeConfigurationCommand",
+    "properties": [
+      "AllowChecking",
+      "IncludeStatistics",
+      "NotificationMode"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ShareProcessTemplateCommand",
+    "properties": [
+      "GitRef",
+      "IndividuallySharedSpaceIds",
+      "ShareToAllSpaces",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ShareProcessTemplateResponse",
+    "properties": [
+      "IndividuallySharedSpaceIds",
+      "IndividuallyUnsharedSpaceIds",
+      "SharedToAllSpaces"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ShareProjectTemplateCommand",
+    "properties": [
+      "GitRef",
+      "IndividuallySharedSpaceIds",
+      "ShareToAllSpaces",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ShareProjectTemplateResponse",
+    "properties": [
+      "IndividuallySharedSpaceIds",
+      "IndividuallyUnsharedSpaceIds",
+      "SharedToAllSpaces"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SigningKeyConfigurationResource",
+    "properties": [
+      "ExpireAfterDays",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "PublicKeyHostingLocation",
+      "RevokeAfterDays"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SmtpConfigurationResource",
+    "properties": [
+      "Details",
+      "EnableSsl",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "SendEmailFrom",
+      "SmtpHost",
+      "SmtpPort",
+      "Timeout"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SmtpCredentialDetailsResource",
+    "properties": [
+      "CredentialType"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SmtpIsConfiguredResource",
+    "properties": [
+      "Id",
+      "IsConfigured",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SnapshotGitReferenceResource",
+    "properties": [
+      "GitCommit",
+      "GitRef",
+      "VariablesGitCommit"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SpaceDefaultRetentionPolicyResource",
+    "properties": [
+      "Id",
+      "Name",
+      "RetentionType",
+      "SpaceId"
+    ],
+    "read_only": [
+      "Id",
+      "Name",
+      "RetentionType",
+      "SpaceId"
+    ]
+  },
+  {
+    "name": "SpaceLicenseUsageResource",
+    "properties": [
+      "MachinesCount",
+      "ProjectsCount",
+      "SpaceName",
+      "TenantsCount"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SpaceResource",
+    "properties": [
+      "Description",
+      "ExtensionSettings",
+      "Icon",
+      "Id",
+      "IsDefault",
+      "IsPrivate",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Slug",
+      "SpaceManagersTeamMembers",
+      "SpaceManagersTeams",
+      "TaskQueueStopped"
+    ],
+    "read_only": [
+      "ExtensionSettings"
+    ]
+  },
+  {
+    "name": "SpaceResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "SpaceRootResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SpaceSearchResult",
+    "properties": [
+      "Id",
+      "Name",
+      "Owner",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SpaceSearchResultOwner",
+    "properties": [
+      "Name",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "StepLogContext",
+    "properties": [
+      "CorrelationId",
+      "Slug"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "StepPackageInputsResource",
+    "properties": [
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "StepUsage",
+    "properties": [
+      "ProjectId",
+      "ProjectName",
+      "ProjectSlug",
+      "Steps"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "StepUsageEntry",
+    "properties": [
+      "StepId",
+      "StepName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "StringStringKeyValuePair",
+    "properties": [
+      "Key",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SubmitInterruptionCommand",
+    "properties": [
+      "Guidance",
+      "Id",
+      "Instructions",
+      "Notes",
+      "Result",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SubscriptionResource",
+    "properties": [
+      "EventNotificationSubscription",
+      "Id",
+      "IsDisabled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "SpaceId",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "SubscriptionResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "SystemInfoResource",
+    "properties": [
+      "ClrVersion",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MinThreadPoolCount",
+      "OSVersion",
+      "ThreadCount",
+      "Uptime",
+      "Version",
+      "WorkingSetBytes"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TagResource",
+    "properties": [
+      "CanonicalTagName",
+      "Color",
+      "Description",
+      "Id",
+      "Name",
+      "SortOrder"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TagSetResource",
+    "properties": [
+      "Description",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Scopes",
+      "SortOrder",
+      "SpaceId",
+      "Tags",
+      "Type"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TagSetResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "TagTestResult",
+    "properties": [
+      "IsDisabled",
+      "IsMatched",
+      "MissingTags",
+      "Reason"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TargetUsageEntry",
+    "properties": [
+      "TargetId",
+      "TargetName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TaskDetailsResource",
+    "properties": [
+      "ActivityLogs",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "PhysicalLogSize",
+      "Progress",
+      "Task"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TaskProgress",
+    "properties": [
+      "EstimatedTimeRemaining",
+      "ProgressPercentage"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TaskResource",
+    "properties": [
+      "Arguments",
+      "CanRerun",
+      "Completed",
+      "CompletedTime",
+      "Description",
+      "Duration",
+      "ErrorMessage",
+      "EstimatedRemainingQueueDurationSeconds",
+      "FinishedSuccessfully",
+      "HasBeenPickedUpByProcessor",
+      "HasPendingInterruptions",
+      "HasWarningsOrErrors",
+      "Id",
+      "IsCompleted",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastUpdatedTime",
+      "Links",
+      "Name",
+      "ProjectId",
+      "QueueTime",
+      "QueueTimeExpiry",
+      "ServerNode",
+      "SpaceId",
+      "StartTime",
+      "State",
+      "UnmetPreconditions"
+    ],
+    "read_only": [
+      "FinishedSuccessfully",
+      "IsCompleted"
+    ]
+  },
+  {
+    "name": "TaskResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "TaskTypeResource",
+    "properties": [
+      "Id",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TeamMembership",
+    "properties": [
+      "ExternalSecurityGroups",
+      "IsDirectlyAssigned",
+      "SpaceId",
+      "TeamId",
+      "TeamName",
+      "UserId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TeamMembershipPreview",
+    "properties": [
+      "ExternalSecurityGroups",
+      "IsDirectlyAssigned",
+      "SpaceId",
+      "TeamId",
+      "TeamName",
+      "UserId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TeamResource",
+    "properties": [
+      "CanBeDeleted",
+      "CanBeRenamed",
+      "CanChangeMembers",
+      "CanChangeRoles",
+      "Description",
+      "ExternalSecurityGroups",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MemberUserIds",
+      "Name",
+      "Slug",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TeamResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "TelemetryConfigurationResource",
+    "properties": [
+      "Enabled",
+      "Id",
+      "IsTelemetryEnforced",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "ShowAsNewUntil"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TemplateParameterValueResource",
+    "properties": [
+      "Scope",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantCommonVariablePayload",
+    "properties": [
+      "Id",
+      "OwnerId",
+      "Scope",
+      "TemplateId",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantCommonVariableV2",
+    "properties": [
+      "Id",
+      "LibraryVariableSetId",
+      "LibraryVariableSetName",
+      "Scope",
+      "Template",
+      "TemplateId",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantProjectEnvironment",
+    "properties": [
+      "EnvironmentId",
+      "ProjectId",
+      "TenantId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantProjectVariablePayload",
+    "properties": [
+      "Id",
+      "OwnerId",
+      "Scope",
+      "TemplateId",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantProjectVariableV2",
+    "properties": [
+      "Id",
+      "ProjectId",
+      "ProjectName",
+      "Scope",
+      "Template",
+      "TemplateId",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantResource",
+    "properties": [
+      "ClonedFromTenantId",
+      "CustomFields",
+      "Description",
+      "Icon",
+      "Id",
+      "IsDisabled",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "ProjectEnvironments",
+      "Slug",
+      "SpaceId",
+      "TenantTags"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "TenantVariableResource",
+    "properties": [
+      "ConcurrencyToken",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LibraryVariables",
+      "Links",
+      "ProjectVariables",
+      "SpaceId",
+      "TenantId",
+      "TenantName"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TenantsMissingVariablesResource",
+    "properties": [
+      "Links",
+      "MissingVariables",
+      "TenantId"
+    ],
+    "read_only": [
+      "Links"
+    ]
+  },
+  {
+    "name": "TestChannelVersionRulesResponse",
+    "properties": [
+      "Errors",
+      "SatisfiesPreReleaseTag",
+      "SatisfiesVersionRange"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TestChannelVersionRulesResponseV1",
+    "properties": [
+      "Errors",
+      "SatisfiesPreReleaseTag",
+      "SatisfiesVersionRange"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TestGitSettingsCommand",
+    "properties": [
+      "BasePath",
+      "Credentials",
+      "DefaultBranch",
+      "ProjectId",
+      "SpaceId",
+      "Url"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TestGitSettingsResponse",
+    "properties": [
+      "Messages"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ToggleDeprecationCommand",
+    "properties": [
+      "Deprecation",
+      "Enabled"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "TriggerActionResource",
+    "properties": [
+      "ActionType",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": [
+      "ActionType"
+    ]
+  },
+  {
+    "name": "TriggerFilterResource",
+    "properties": [
+      "FilterType",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links"
+    ],
+    "read_only": [
+      "FilterType"
+    ]
+  },
+  {
+    "name": "TypeMetadata",
+    "properties": [
+      "Name",
+      "Properties"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UpdateActionTemplateActionsCommand",
+    "properties": [
+      "ActionIdsByProcessId",
+      "ActionsToUpdate",
+      "DefaultPropertyValues",
+      "Id",
+      "Overrides",
+      "SpaceId",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UpdateFeaturesConfigurationCommand",
+    "properties": [
+      "DefaultPowerShellEdition",
+      "HelpSidebarSupportLink",
+      "HelpSidebarSupportLinkLabel",
+      "Id",
+      "IsAutomaticStepUpdatesEnabled",
+      "IsBuiltInWorkerEnabled",
+      "IsCommunityActionTemplatesEnabled",
+      "IsCompositeDockerHubRegistryFeedEnabled",
+      "IsConfigureFeedsWithLocalOrSmbPathsEnabled",
+      "IsExperimentalUIFeatureEnabled",
+      "IsHelpSidebarEnabled",
+      "IsKubernetesCloudTargetDiscoveryEnabled",
+      "IsNavigationVisualUpliftEnabled",
+      "IsProjectsPageOnboardingEnabled",
+      "IsProjectsPageOptimizationEnabled"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UpgradeConfigurationResource",
+    "properties": [
+      "AllowChecking",
+      "Id",
+      "IncludeStatistics",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "NotificationMode"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UserPermissionRestriction",
+    "properties": [
+      "RestrictedToEnvironmentIds",
+      "RestrictedToProjectGroupIds",
+      "RestrictedToProjectIds",
+      "RestrictedToTenantIds",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UserPermissionSetResource",
+    "properties": [
+      "Id",
+      "IsPermissionsComplete",
+      "IsTeamsComplete",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "SpacePermissions",
+      "SystemPermissions",
+      "Teams"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UserResource",
+    "properties": [
+      "CanPasswordBeEdited",
+      "Created",
+      "DisplayName",
+      "EmailAddress",
+      "Id",
+      "Identities",
+      "IsActive",
+      "IsRequestor",
+      "IsService",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Password",
+      "Username"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UserResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "UserRoleResource",
+    "properties": [
+      "CanBeDeleted",
+      "Description",
+      "GrantedSpacePermissions",
+      "GrantedSystemPermissions",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "SpacePermissionDescriptions",
+      "SupportedRestrictions",
+      "SystemPermissionDescriptions"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "UserRoleResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "ValidateDeploymentProcessInDatabaseResponse",
+    "properties": [
+      "Details",
+      "HasWarnings",
+      "TagsWithoutTargetsByStepId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ValidateDeploymentProcessInGitResponse",
+    "properties": [
+      "Details",
+      "HasWarnings",
+      "TagsWithoutTargetsByStepId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ValidateGitRefCommand",
+    "properties": [
+      "GitRef",
+      "ProjectId",
+      "SpaceId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ValidateGitRefResponse",
+    "properties": [
+      "Error",
+      "ValidatedGitRef"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "ValidatedGitReferenceResource",
+    "properties": [
+      "CanonicalName",
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "VariablePromptOptions",
+    "properties": [
+      "Description",
+      "DisplaySettings",
+      "Label",
+      "Required"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "VariableResource",
+    "properties": [
+      "Description",
+      "Id",
+      "IsEditable",
+      "IsSensitive",
+      "Name",
+      "Prompt",
+      "Scope",
+      "Type",
+      "Value"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "VariableScopeValues",
+    "properties": [
+      "Actions",
+      "Channels",
+      "Environments",
+      "Machines",
+      "Processes",
+      "Roles",
+      "TenantTags"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "VariableSetResource",
+    "properties": [
+      "Id",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "OwnerId",
+      "ScopeValues",
+      "SpaceId",
+      "Variables",
+      "Version"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "VariablesScopedToDocumentResource",
+    "properties": [
+      "HasUnauthorizedLibraryVariableSetVariables",
+      "HasUnauthorizedProjectVariables",
+      "VariableMap"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "VersioningStrategyResource",
+    "properties": [
+      "DonorPackage",
+      "Template"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "WorkItemLink",
+    "properties": [
+      "Description",
+      "Id",
+      "LinkUrl",
+      "Source"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "WorkerPoolDynamicWorkerTypesResource",
+    "properties": [
+      "Id",
+      "Links",
+      "WorkerTypes"
+    ],
+    "read_only": [
+      "Id"
+    ]
+  },
+  {
+    "name": "WorkerPoolResource",
+    "properties": [
+      "CanAddWorkers",
+      "Description",
+      "Id",
+      "IsDefault",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "Name",
+      "Slug",
+      "SortOrder",
+      "SpaceId",
+      "WorkerPoolType"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "WorkerPoolResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "WorkerPoolSummaryResource",
+    "properties": [
+      "MachineEndpointSummaries",
+      "MachineHealthStatusSummaries",
+      "MachineIdsForCalamariUpgrade",
+      "MachineIdsForTentacleUpgrade",
+      "TentacleUpgradesRequired",
+      "TotalDisabledMachines",
+      "TotalMachines",
+      "WorkerPool"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "WorkerPoolSupportedTypesResource",
+    "properties": [
+      "Id",
+      "Links",
+      "SupportedPoolTypes"
+    ],
+    "read_only": [
+      "Id"
+    ]
+  },
+  {
+    "name": "WorkerPoolsSummaryResource",
+    "properties": [
+      "MachineEndpointSummaries",
+      "MachineHealthStatusSummaries",
+      "MachineIdsForCalamariUpgrade",
+      "MachineIdsForTentacleUpgrade",
+      "TentacleUpgradesRequired",
+      "TotalDisabledMachines",
+      "TotalMachines",
+      "WorkerPoolSummaries"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "WorkerResource",
+    "properties": [
+      "Architecture",
+      "Endpoint",
+      "HasLatestCalamari",
+      "HealthStatus",
+      "Id",
+      "IsDisabled",
+      "IsInProcess",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "Links",
+      "MachinePolicyId",
+      "Name",
+      "OperatingSystem",
+      "ShellName",
+      "ShellVersion",
+      "SkipInitialHealthCheck",
+      "Slug",
+      "SpaceId",
+      "StatusSummary",
+      "Thumbprint",
+      "Uri",
+      "WorkerPoolIds"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "WorkerResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "WorkerTaskLeaseResource",
+    "properties": [
+      "Exclusive",
+      "Id",
+      "Name",
+      "ServerTaskId",
+      "SpaceId",
+      "TakenAt",
+      "WorkerId",
+      "WorkerPoolId"
+    ],
+    "read_only": []
+  },
+  {
+    "name": "WorkerTaskLeaseResourceCollection",
+    "properties": [
+      "Id",
+      "ItemType",
+      "Items",
+      "ItemsPerPage",
+      "LastModifiedBy",
+      "LastModifiedOn",
+      "LastPageNumber",
+      "Links",
+      "NumberOfPages",
+      "TotalResults"
+    ],
+    "read_only": [
+      "ItemType",
+      "LastPageNumber",
+      "NumberOfPages"
+    ]
+  },
+  {
+    "name": "X509Certificate",
+    "properties": [
+      "IssuerDistinguishedName",
+      "NotAfter",
+      "NotBefore",
+      "SerialNumber",
+      "SignatureAlgorithmName",
+      "SubjectDistinguishedName",
+      "Thumbprint",
+      "Version"
+    ],
+    "read_only": []
+  }
+]
