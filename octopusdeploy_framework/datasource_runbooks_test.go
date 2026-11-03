@@ -2,13 +2,16 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
+	"math"
+	"net/url"
 	"regexp"
 	"testing"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/credentials"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/resources"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/runbooks"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/uritemplates"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
@@ -168,31 +171,117 @@ func TestFilterRunbooksByID(t *testing.T) {
 }
 
 func TestRunbooksByProjectTemplate(t *testing.T) {
-	expand := func(t *testing.T, gitRef string, data runbooksDataSourceModel) string {
-		template, params := runbooksByProjectTemplate("Spaces-1", "Projects-1", gitRef, data)
+	expand := func(t *testing.T, gitRef string, partialName string, skip int64, take int64) string {
+		template, params := runbooksByProjectTemplate("Spaces-1", "Projects-1", gitRef, partialName, skip, take)
 		uri, err := uritemplates.NewUriTemplateCache().Expand(template, params)
 		require.NoError(t, err)
 		return uri
 	}
 
 	t.Run("database stored runbooks without a git ref", func(t *testing.T) {
-		require.Equal(t, "/api/Spaces-1/projects/Projects-1/runbooks", expand(t, "", runbooksDataSourceModel{}))
+		require.Equal(t, "/api/Spaces-1/projects/Projects-1/runbooks", expand(t, "", "", 0, 0))
 	})
 
 	t.Run("git stored runbooks with a branch name", func(t *testing.T) {
-		require.Equal(t, "/api/Spaces-1/projects/Projects-1/main/runbooks", expand(t, "main", runbooksDataSourceModel{}))
+		require.Equal(t, "/api/Spaces-1/projects/Projects-1/main/runbooks", expand(t, "main", "", 0, 0))
 	})
 
 	t.Run("full git ref is encoded as a single path segment", func(t *testing.T) {
-		require.Equal(t, "/api/Spaces-1/projects/Projects-1/refs%2Fheads%2Fmain/runbooks", expand(t, "refs/heads/main", runbooksDataSourceModel{}))
+		require.Equal(t, "/api/Spaces-1/projects/Projects-1/refs%2Fheads%2Fmain/runbooks", expand(t, "refs/heads/main", "", 0, 0))
+	})
+
+	t.Run("query parameters apply to the database endpoint", func(t *testing.T) {
+		require.Equal(t, "/api/Spaces-1/projects/Projects-1/runbooks?skip=5&take=10&partialName=Test", expand(t, "", "Test", 5, 10))
 	})
 
 	t.Run("query parameters apply to the git ref endpoint", func(t *testing.T) {
-		data := runbooksDataSourceModel{
-			PartialName: types.StringValue("Test"),
-			Skip:        types.Int64Value(5),
-			Take:        types.Int64Value(10),
+		require.Equal(t, "/api/Spaces-1/projects/Projects-1/main/runbooks?skip=5&take=10&partialName=Test", expand(t, "main", "Test", 5, 10))
+	})
+}
+
+func TestPageRunbooks(t *testing.T) {
+	all := []*runbooks.Runbook{runbookWithID("Runbooks-1"), runbookWithID("Runbooks-2"), runbookWithID("Runbooks-3")}
+	ids := func(found []*runbooks.Runbook) []string {
+		result := []string{}
+		for _, runbook := range found {
+			result = append(result, runbook.GetID())
 		}
-		require.Equal(t, "/api/Spaces-1/projects/Projects-1/main/runbooks?skip=5&take=10&partialName=Test", expand(t, "main", data))
+		return result
+	}
+
+	t.Run("no skip or take returns everything", func(t *testing.T) {
+		require.Equal(t, []string{"Runbooks-1", "Runbooks-2", "Runbooks-3"}, ids(pageRunbooks(all, 0, 0)))
+	})
+
+	t.Run("skip drops leading runbooks", func(t *testing.T) {
+		require.Equal(t, []string{"Runbooks-2", "Runbooks-3"}, ids(pageRunbooks(all, 1, 0)))
+	})
+
+	t.Run("take limits the result", func(t *testing.T) {
+		require.Equal(t, []string{"Runbooks-1", "Runbooks-2"}, ids(pageRunbooks(all, 0, 2)))
+	})
+
+	t.Run("skip and take together", func(t *testing.T) {
+		require.Equal(t, []string{"Runbooks-2"}, ids(pageRunbooks(all, 1, 1)))
+	})
+
+	t.Run("take larger than the result returns everything after skip", func(t *testing.T) {
+		require.Equal(t, []string{"Runbooks-3"}, ids(pageRunbooks(all, 2, 10)))
+	})
+
+	t.Run("skip past the end returns an empty list", func(t *testing.T) {
+		require.Empty(t, pageRunbooks(all, 3, 0))
+		require.Empty(t, pageRunbooks(all, 10, 1))
+	})
+
+	t.Run("an empty result stays empty", func(t *testing.T) {
+		require.Empty(t, pageRunbooks([]*runbooks.Runbook{}, 0, 0))
+	})
+}
+
+func TestProjectStoresRunbooksInGit(t *testing.T) {
+	gitProject := func(runbooksInGit bool) *projects.Project {
+		repoURL, _ := url.Parse("https://github.com/example/repo")
+		settings := projects.NewGitPersistenceSettings(".octopus", credentials.NewGitHubApp("GitHubAppConnections-1"), "main", []string{}, repoURL)
+		if runbooksInGit {
+			settings.SetRunbooksAreInGit()
+		}
+
+		project := projects.NewProject("test", "Lifecycles-1", "ProjectGroups-1")
+		project.IsVersionControlled = true
+		project.PersistenceSettings = settings
+		return project
+	}
+
+	t.Run("nil project", func(t *testing.T) {
+		require.False(t, projectStoresRunbooksInGit(nil))
+	})
+
+	t.Run("database project", func(t *testing.T) {
+		project := projects.NewProject("test", "Lifecycles-1", "ProjectGroups-1")
+		project.PersistenceSettings = projects.NewDatabasePersistenceSettings()
+		require.False(t, projectStoresRunbooksInGit(project))
+	})
+
+	t.Run("version controlled project with runbooks in the database", func(t *testing.T) {
+		require.False(t, projectStoresRunbooksInGit(gitProject(false)))
+	})
+
+	t.Run("version controlled project with runbooks in Git", func(t *testing.T) {
+		require.True(t, projectStoresRunbooksInGit(gitProject(true)))
+	})
+}
+
+func TestRunbooksTake(t *testing.T) {
+	t.Run("unset take reads every runbook", func(t *testing.T) {
+		require.Equal(t, int64(math.MaxInt32), runbooksTake(0))
+	})
+
+	t.Run("negative take reads every runbook", func(t *testing.T) {
+		require.Equal(t, int64(math.MaxInt32), runbooksTake(-1))
+	})
+
+	t.Run("configured take is kept", func(t *testing.T) {
+		require.Equal(t, int64(10), runbooksTake(10))
 	})
 }
