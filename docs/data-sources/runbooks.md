@@ -3,7 +3,7 @@
 page_title: "octopusdeploy_runbooks Data Source - terraform-provider-octopusdeploy"
 subcategory: ""
 description: |-
-  Provides information about existing Octopus Deploy runbooks. Runbooks stored in a version controlled project are only returned when both `project_id` and `git_ref` are set; space wide queries return database stored runbooks only.
+  Provides information about existing Octopus Deploy runbooks. Runbooks stored in a version controlled project are only returned when both project_id and git_ref are set; space wide queries return database stored runbooks only.
 ---
 
 # octopusdeploy_runbooks (Data Source)
