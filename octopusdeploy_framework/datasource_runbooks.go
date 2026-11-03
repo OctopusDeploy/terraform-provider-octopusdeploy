@@ -27,6 +27,7 @@ type runbooksDataSourceModel struct {
 	ID          types.String                 `tfsdk:"id"`
 	SpaceID     types.String                 `tfsdk:"space_id"`
 	ProjectID   types.String                 `tfsdk:"project_id"`
+	GitRef      types.String                 `tfsdk:"git_ref"`
 	IDs         types.List                   `tfsdk:"ids"`
 	PartialName types.String                 `tfsdk:"partial_name"`
 	Skip        types.Int64                  `tfsdk:"skip"`
@@ -88,15 +89,21 @@ func (r *runbooksDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	// The project scoped endpoint is the only one that filters by project. The
 	// space wide endpoint accepts a projectIds parameter but ignores it.
-	if projectID := data.ProjectID.ValueString(); projectID != "" {
-		found, err = listRunbooksByProject(r.Client, spaceID, projectID, data)
+	projectID := data.ProjectID.ValueString()
+	gitRef := data.GitRef.ValueString()
+	if projectID != "" {
+		found, err = listRunbooksByProject(r.Client, spaceID, projectID, gitRef, data)
 		found = filterRunbooksByID(found, ids)
 	} else {
 		found, err = listRunbooksInSpace(r.Client, spaceID, ids, data)
 	}
 
 	if err != nil {
-		resp.Diagnostics.AddError("Unable to query runbooks", err.Error())
+		detail := err.Error()
+		if projectID != "" && gitRef == "" {
+			detail += fmt.Sprintf("\n\nIf project %s is version controlled and stores its runbooks in Git, set git_ref to the branch, tag or commit to read them from.", projectID)
+		}
+		resp.Diagnostics.AddError("Unable to query runbooks", detail)
 		return
 	}
 
@@ -115,24 +122,33 @@ func (r *runbooksDataSource) Read(ctx context.Context, req datasource.ReadReques
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func listRunbooksByProject(client newclient.Client, spaceID string, projectID string, data runbooksDataSourceModel) ([]*runbooks.Runbook, error) {
-	templateParams := map[string]any{"spaceId": spaceID, "projectId": projectID}
-	addRunbookQueryParams(templateParams, data)
+// listRunbooksByProject expands the project scoped endpoints directly because the
+// client's runbooks.List and runbooks.ListGitRunbooks helpers do not support skip.
+// Runbooks stored in Git are read from the endpoint that includes the git ref.
+func listRunbooksByProject(client newclient.Client, spaceID string, projectID string, gitRef string, data runbooksDataSourceModel) ([]*runbooks.Runbook, error) {
+	template, templateParams := runbooksByProjectTemplate(spaceID, projectID, gitRef, data)
 
-	return getRunbooks(client, uritemplates.RunbooksByProject, templateParams)
-}
-
-func listRunbooksInSpace(client newclient.Client, spaceID string, ids []string, data runbooksDataSourceModel) ([]*runbooks.Runbook, error) {
-	templateParams := map[string]any{"spaceId": spaceID}
-	addRunbookQueryParams(templateParams, data)
-	if len(ids) > 0 {
-		templateParams["ids"] = ids
+	expandedURI, err := client.URITemplateCache().Expand(template, templateParams)
+	if err != nil {
+		return nil, err
 	}
 
-	return getRunbooks(client, uritemplates.Runbooks, templateParams)
+	result, err := newclient.Get[resources.Resources[*runbooks.Runbook]](client.HttpSession(), expandedURI)
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Items, nil
 }
 
-func addRunbookQueryParams(templateParams map[string]any, data runbooksDataSourceModel) {
+// runbooksByProjectTemplate picks the project scoped endpoint and its parameters.
+func runbooksByProjectTemplate(spaceID string, projectID string, gitRef string, data runbooksDataSourceModel) (string, map[string]any) {
+	template := uritemplates.RunbooksByProject
+	templateParams := map[string]any{"spaceId": spaceID, "projectId": projectID}
+	if gitRef != "" {
+		template = uritemplates.GitRunbooksByProject
+		templateParams["gitRef"] = gitRef
+	}
 	if partialName := data.PartialName.ValueString(); partialName != "" {
 		templateParams["partialName"] = partialName
 	}
@@ -142,15 +158,19 @@ func addRunbookQueryParams(templateParams map[string]any, data runbooksDataSourc
 	if take := data.Take.ValueInt64(); take > 0 {
 		templateParams["take"] = take
 	}
+
+	return template, templateParams
 }
 
-func getRunbooks(client newclient.Client, template string, templateParams map[string]any) ([]*runbooks.Runbook, error) {
-	expandedURI, err := client.URITemplateCache().Expand(template, templateParams)
-	if err != nil {
-		return nil, err
+func listRunbooksInSpace(client newclient.Client, spaceID string, ids []string, data runbooksDataSourceModel) ([]*runbooks.Runbook, error) {
+	query := runbooks.RunbooksQuery{
+		IDs:         ids,
+		PartialName: data.PartialName.ValueString(),
+		Skip:        int(data.Skip.ValueInt64()),
+		Take:        int(data.Take.ValueInt64()),
 	}
 
-	result, err := newclient.Get[resources.Resources[*runbooks.Runbook]](client.HttpSession(), expandedURI)
+	result, err := runbooks.Get(client, spaceID, query)
 	if err != nil {
 		return nil, err
 	}

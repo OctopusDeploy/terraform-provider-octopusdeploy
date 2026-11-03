@@ -3,12 +3,12 @@
 page_title: "octopusdeploy_runbooks Data Source - terraform-provider-octopusdeploy"
 subcategory: ""
 description: |-
-  Provides information about existing Octopus Deploy runbooks.
+  Provides information about existing Octopus Deploy runbooks. Runbooks stored in a version controlled project are only returned when both `project_id` and `git_ref` are set; space wide queries return database stored runbooks only.
 ---
 
 # octopusdeploy_runbooks (Data Source)
 
-Provides information about existing Octopus Deploy runbooks.
+Provides information about existing Octopus Deploy runbooks. Runbooks stored in a version controlled project are only returned when both `project_id` and `git_ref` are set; space wide queries return database stored runbooks only.
 
 ## Example Usage
 
@@ -32,6 +32,12 @@ data "octopusdeploy_runbooks" "by_id" {
   ids = ["Runbooks-1", "Runbooks-2"]
 }
 
+# runbooks stored in Git in a version controlled project
+data "octopusdeploy_runbooks" "git" {
+  project_id = "Projects-456"
+  git_ref    = "main"
+}
+
 output "runbook_names" {
   value = [for runbook in data.octopusdeploy_runbooks.project.runbooks : runbook.name]
 }
@@ -42,6 +48,7 @@ output "runbook_names" {
 
 ### Optional
 
+- `git_ref` (String) The Git reference, such as `main` or `refs/heads/main`, to read runbooks from. Required to query a version controlled project that stores its runbooks in Git. Requires `project_id`.
 - `ids` (List of String) A filter to search by a list of IDs.
 - `partial_name` (String) A filter to search by a partial name.
 - `project_id` (String) A project ID to filter by. When set, only runbooks belonging to that project are returned.

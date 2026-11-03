@@ -144,7 +144,7 @@ type RunbookSchema struct{}
 
 func (r RunbookSchema) GetDatasourceSchema() datasourceSchema.Schema {
 	return datasourceSchema.Schema{
-		Description: "Provides information about existing Octopus Deploy runbooks.",
+		Description: "Provides information about existing Octopus Deploy runbooks. Runbooks stored in a version controlled project are only returned when both `project_id` and `git_ref` are set; space wide queries return database stored runbooks only.",
 		Attributes: map[string]datasourceSchema.Attribute{
 			"id": GetIdDatasourceSchema(true),
 			"space_id": util.DataSourceString().
@@ -155,6 +155,13 @@ func (r RunbookSchema) GetDatasourceSchema() datasourceSchema.Schema {
 				Optional().
 				Description("A project ID to filter by. When set, only runbooks belonging to that project are returned.").
 				Build(),
+			"git_ref": datasourceSchema.StringAttribute{
+				Description: "The Git reference, such as `main` or `refs/heads/main`, to read runbooks from. Required to query a version controlled project that stores its runbooks in Git. Requires `project_id`.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(path.MatchRoot(RunbookSchemaAttributeNames.ProjectID)),
+				},
+			},
 			"ids":          GetQueryIDsDatasourceSchema(),
 			"partial_name": GetQueryPartialNameDatasourceSchema(),
 			"skip":         GetQuerySkipDatasourceSchema(),

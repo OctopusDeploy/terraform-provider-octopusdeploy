@@ -17,6 +17,12 @@ data "octopusdeploy_runbooks" "by_id" {
   ids = ["Runbooks-1", "Runbooks-2"]
 }
 
+# runbooks stored in Git in a version controlled project
+data "octopusdeploy_runbooks" "git" {
+  project_id = "Projects-456"
+  git_ref    = "main"
+}
+
 output "runbook_names" {
   value = [for runbook in data.octopusdeploy_runbooks.project.runbooks : runbook.name]
 }
