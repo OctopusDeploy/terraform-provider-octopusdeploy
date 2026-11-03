@@ -26,6 +26,15 @@ description: |-
 ### Read-Only
 
 - `audience` (String) OIDC audience
+- `claim_conditions` (Attributes List) Extra conditions the token's claims must pass before Octopus exchanges the token for an access token. (see [below for nested schema](#nestedatt--claim_conditions))
 - `issuer` (String) OIDC issuer url
 - `name` (String) Name of the user associated to this identity
 - `subject` (String) OIDC subject claims
+
+<a id="nestedatt--claim_conditions"></a>
+### Nested Schema for `claim_conditions`
+
+Read-Only:
+
+- `claim` (String) The name of the token claim to check.
+- `values` (List of String) The values the claim can match.

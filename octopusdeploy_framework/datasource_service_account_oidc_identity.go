@@ -60,4 +60,6 @@ func updateServiceAccountOIDCDataModel(request *serviceaccounts.OIDCIdentity, mo
 	} else {
 		model.Audience = types.StringValue(request.Audience)
 	}
+
+	model.ClaimConditions = mapClaimConditionsToState(request.ClaimConditions)
 }

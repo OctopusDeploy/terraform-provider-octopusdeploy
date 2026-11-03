@@ -119,7 +119,45 @@ func mapServiceAccountOIDCModelToRequest(model *schemas.OIDCServiceAccountSchema
 		identity.Audience = model.Audience.ValueString()
 	}
 
+	identity.ClaimConditions = mapClaimConditionsToRequest(model.ClaimConditions)
+
 	return identity
+}
+
+// mapClaimConditionsToRequest always returns a non-nil slice.
+// Octopus keeps the existing conditions when the field is null, so an empty list is the only way to clear them.
+func mapClaimConditionsToRequest(conditions []schemas.OIDCClaimConditionModel) []serviceaccounts.OIDCIdentityClaimCondition {
+	result := make([]serviceaccounts.OIDCIdentityClaimCondition, 0, len(conditions))
+	for _, condition := range conditions {
+		values := make([]string, 0, len(condition.Values))
+		for _, value := range condition.Values {
+			values = append(values, value.ValueString())
+		}
+		result = append(result, serviceaccounts.OIDCIdentityClaimCondition{
+			Claim:  condition.Claim.ValueString(),
+			Values: values,
+		})
+	}
+	return result
+}
+
+// mapClaimConditionsToState returns nil when there are no conditions, so the attribute stays null in state.
+func mapClaimConditionsToState(conditions []serviceaccounts.OIDCIdentityClaimCondition) []schemas.OIDCClaimConditionModel {
+	if len(conditions) == 0 {
+		return nil
+	}
+	result := make([]schemas.OIDCClaimConditionModel, 0, len(conditions))
+	for _, condition := range conditions {
+		values := make([]types.String, 0, len(condition.Values))
+		for _, value := range condition.Values {
+			values = append(values, types.StringValue(value))
+		}
+		result = append(result, schemas.OIDCClaimConditionModel{
+			Claim:  types.StringValue(condition.Claim),
+			Values: values,
+		})
+	}
+	return result
 }
 
 func updateServiceAccountOIDCModel(request *serviceaccounts.OIDCIdentity, model *schemas.OIDCServiceAccountSchemaModel) {
@@ -134,4 +172,6 @@ func updateServiceAccountOIDCModel(request *serviceaccounts.OIDCIdentity, model 
 	} else {
 		model.Audience = types.StringValue(request.Audience)
 	}
+
+	model.ClaimConditions = mapClaimConditionsToState(request.ClaimConditions)
 }
