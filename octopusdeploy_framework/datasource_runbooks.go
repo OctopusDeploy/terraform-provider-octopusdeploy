@@ -155,6 +155,22 @@ func runbooksTake(take int64) int64 {
 // The project scoped endpoints have no ids parameter. When ids are requested, every
 // runbook is read and filtered locally before skip and take are applied, matching
 // the space wide endpoint, which applies skip and take after filtering by ids.
+//
+// To see that the project scoped endpoint ignores ids, compare these requests. The
+// project's Runbooks link template is {?skip,take,partialName}, the project scoped
+// request returns every runbook in the project, and the space wide request returns
+// only the requested runbook:
+//
+//	curl -s -H "X-Octopus-ApiKey: $OCTOPUS_API_KEY" \
+//	  "$OCTOPUS_URL/api/$SPACE_ID/projects/$PROJECT_ID" | jq -r '.Links.Runbooks'
+//
+//	curl -s -H "X-Octopus-ApiKey: $OCTOPUS_API_KEY" \
+//	  "$OCTOPUS_URL/api/$SPACE_ID/projects/$PROJECT_ID/runbooks?ids=$RUNBOOK_ID" \
+//	  | jq -c '{TotalResults, ids: [.Items[].Id]}'
+//
+//	curl -s -H "X-Octopus-ApiKey: $OCTOPUS_API_KEY" \
+//	  "$OCTOPUS_URL/api/$SPACE_ID/runbooks?ids=$RUNBOOK_ID" \
+//	  | jq -c '{TotalResults, ids: [.Items[].Id]}'
 func listRunbooksByProject(client newclient.Client, spaceID string, projectID string, gitRef string, ids []string, data runbooksDataSourceModel) ([]*runbooks.Runbook, error) {
 	partialName := data.PartialName.ValueString()
 	skip := data.Skip.ValueInt64()
