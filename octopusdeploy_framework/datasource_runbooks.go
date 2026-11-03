@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/newclient"
@@ -185,14 +186,9 @@ func filterRunbooksByID(found []*runbooks.Runbook, ids []string) []*runbooks.Run
 		return found
 	}
 
-	wanted := make(map[string]bool, len(ids))
-	for _, id := range ids {
-		wanted[id] = true
-	}
-
 	filtered := make([]*runbooks.Runbook, 0, len(found))
 	for _, runbook := range found {
-		if wanted[runbook.GetID()] {
+		if slices.Contains(ids, runbook.GetID()) {
 			filtered = append(filtered, runbook)
 		}
 	}
