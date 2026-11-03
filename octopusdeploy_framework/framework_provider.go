@@ -82,6 +82,7 @@ func (p *octopusDeployFrameworkProvider) DataSources(ctx context.Context) []func
 		NewLibraryVariableSetDataSource,
 		NewVariablesDataSource,
 		NewProjectsDataSource,
+		NewRunbooksDataSource,
 		NewMachineProxyDataSource,
 		NewTenantsDataSource,
 		NewTagSetsDataSource,
