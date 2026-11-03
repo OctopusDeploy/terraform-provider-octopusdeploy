@@ -6,6 +6,8 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -37,7 +39,11 @@ func (s *ServiceAccountOIDCIdentity) Create(ctx context.Context, req resource.Cr
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	identityRequest := mapServiceAccountOIDCModelToRequest(&plan)
+	identityRequest, diags := mapServiceAccountOIDCModelToRequest(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	identityCreateResponse, err := serviceaccounts.AddOIDCIdentity(s.Client, identityRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating OIDC identity", err.Error())
@@ -49,8 +55,9 @@ func (s *ServiceAccountOIDCIdentity) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	updateServiceAccountOIDCModel(identityResponse, &plan)
+	resp.Diagnostics.Append(updateServiceAccountOIDCModel(ctx, identityResponse, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(checkClaimConditionsApplied(identityRequest, identityResponse)...)
 }
 
 func (s *ServiceAccountOIDCIdentity) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -68,7 +75,10 @@ func (s *ServiceAccountOIDCIdentity) Read(ctx context.Context, req resource.Read
 		return
 	}
 
-	updateServiceAccountOIDCModel(identityResponse, &state)
+	resp.Diagnostics.Append(updateServiceAccountOIDCModel(ctx, identityResponse, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -79,7 +89,11 @@ func (s *ServiceAccountOIDCIdentity) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	identityRequest := mapServiceAccountOIDCModelToRequest(&plan)
+	identityRequest, diags := mapServiceAccountOIDCModelToRequest(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	err := serviceaccounts.UpdateOIDCIdentity(s.Client, identityRequest)
 	if err != nil {
@@ -92,8 +106,9 @@ func (s *ServiceAccountOIDCIdentity) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	updateServiceAccountOIDCModel(identityResponse, &plan)
+	resp.Diagnostics.Append(updateServiceAccountOIDCModel(ctx, identityResponse, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	resp.Diagnostics.Append(checkClaimConditionsApplied(identityRequest, identityResponse)...)
 }
 
 func (s *ServiceAccountOIDCIdentity) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -110,7 +125,7 @@ func (s *ServiceAccountOIDCIdentity) Delete(ctx context.Context, req resource.De
 	}
 }
 
-func mapServiceAccountOIDCModelToRequest(model *schemas.OIDCServiceAccountSchemaModel) *serviceaccounts.OIDCIdentity {
+func mapServiceAccountOIDCModelToRequest(ctx context.Context, model *schemas.OIDCServiceAccountSchemaModel) (*serviceaccounts.OIDCIdentity, diag.Diagnostics) {
 	identity := serviceaccounts.NewOIDCIdentity(model.ServiceAccountID.ValueString(), model.Name.ValueString(), model.Issuer.ValueString(), model.Subject.ValueString())
 	identity.ID = model.ID.ValueString()
 	identity.Name = model.Name.ValueString()
@@ -119,48 +134,71 @@ func mapServiceAccountOIDCModelToRequest(model *schemas.OIDCServiceAccountSchema
 		identity.Audience = model.Audience.ValueString()
 	}
 
-	identity.ClaimConditions = mapClaimConditionsToRequest(model.ClaimConditions)
+	conditions, diags := mapClaimConditionsToRequest(ctx, model.ClaimConditions)
+	identity.ClaimConditions = conditions
 
-	return identity
+	return identity, diags
 }
 
-// mapClaimConditionsToRequest always returns a non-nil slice.
-// Octopus keeps the existing conditions when the field is null, so an empty list is the only way to clear them.
-func mapClaimConditionsToRequest(conditions []schemas.OIDCClaimConditionModel) []serviceaccounts.OIDCIdentityClaimCondition {
-	result := make([]serviceaccounts.OIDCIdentityClaimCondition, 0, len(conditions))
-	for _, condition := range conditions {
-		values := make([]string, 0, len(condition.Values))
-		for _, value := range condition.Values {
-			values = append(values, value.ValueString())
-		}
+// mapClaimConditionsToRequest returns nil when the list is null or unknown.
+// Octopus keeps the existing conditions when the field is null. An empty list clears them.
+func mapClaimConditionsToRequest(ctx context.Context, list types.List) ([]serviceaccounts.OIDCIdentityClaimCondition, diag.Diagnostics) {
+	if list.IsNull() || list.IsUnknown() {
+		return nil, nil
+	}
+
+	var models []schemas.OIDCClaimConditionModel
+	diags := list.ElementsAs(ctx, &models, false)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]serviceaccounts.OIDCIdentityClaimCondition, 0, len(models))
+	for _, model := range models {
+		values := make([]string, 0, len(model.Values.Elements()))
+		diags.Append(model.Values.ElementsAs(ctx, &values, false)...)
 		result = append(result, serviceaccounts.OIDCIdentityClaimCondition{
-			Claim:  condition.Claim.ValueString(),
+			Claim:  model.Claim.ValueString(),
 			Values: values,
 		})
 	}
-	return result
+	return result, diags
 }
 
-// mapClaimConditionsToState returns nil when there are no conditions, so the attribute stays null in state.
-func mapClaimConditionsToState(conditions []serviceaccounts.OIDCIdentityClaimCondition) []schemas.OIDCClaimConditionModel {
-	if len(conditions) == 0 {
-		return nil
-	}
-	result := make([]schemas.OIDCClaimConditionModel, 0, len(conditions))
+// mapClaimConditionsToState always returns a known list.
+// The list is empty when the server has no conditions.
+func mapClaimConditionsToState(ctx context.Context, conditions []serviceaccounts.OIDCIdentityClaimCondition) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	models := make([]schemas.OIDCClaimConditionModel, 0, len(conditions))
 	for _, condition := range conditions {
-		values := make([]types.String, 0, len(condition.Values))
-		for _, value := range condition.Values {
-			values = append(values, types.StringValue(value))
-		}
-		result = append(result, schemas.OIDCClaimConditionModel{
+		values, valueDiags := types.ListValueFrom(ctx, types.StringType, condition.Values)
+		diags.Append(valueDiags...)
+		models = append(models, schemas.OIDCClaimConditionModel{
 			Claim:  types.StringValue(condition.Claim),
 			Values: values,
 		})
 	}
-	return result
+	list, listDiags := types.ListValueFrom(ctx, schemas.OIDCClaimConditionObjectType(), models)
+	diags.Append(listDiags...)
+	return list, diags
 }
 
-func updateServiceAccountOIDCModel(request *serviceaccounts.OIDCIdentity, model *schemas.OIDCServiceAccountSchemaModel) {
+// checkClaimConditionsApplied reports an error when Octopus drops the claim conditions.
+// Octopus Server versions without claim conditions ignore the field.
+func checkClaimConditionsApplied(request *serviceaccounts.OIDCIdentity, response *serviceaccounts.OIDCIdentity) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if len(request.ClaimConditions) > 0 && len(response.ClaimConditions) == 0 {
+		diags.AddAttributeError(
+			path.Root("claim_conditions"),
+			"Octopus Server didn't save the claim conditions",
+			"This version of Octopus Server doesn't support claim conditions on OIDC identities. "+
+				"Upgrade Octopus Server or remove claim_conditions from the configuration.",
+		)
+	}
+	return diags
+}
+
+func updateServiceAccountOIDCModel(ctx context.Context, request *serviceaccounts.OIDCIdentity, model *schemas.OIDCServiceAccountSchemaModel) diag.Diagnostics {
 	model.Name = types.StringValue(request.Name)
 	model.Issuer = types.StringValue(request.Issuer)
 	model.Subject = types.StringValue(request.Subject)
@@ -173,5 +211,7 @@ func updateServiceAccountOIDCModel(request *serviceaccounts.OIDCIdentity, model 
 		model.Audience = types.StringValue(request.Audience)
 	}
 
-	model.ClaimConditions = mapClaimConditionsToState(request.ClaimConditions)
+	conditions, diags := mapClaimConditionsToState(ctx, request.ClaimConditions)
+	model.ClaimConditions = conditions
+	return diags
 }

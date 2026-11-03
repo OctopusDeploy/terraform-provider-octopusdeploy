@@ -6,6 +6,7 @@ import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -43,12 +44,15 @@ func (s *serviceAccountOIDCIdentityDataSource) Read(ctx context.Context, req dat
 		return
 	}
 
-	updateServiceAccountOIDCDataModel(oidcIdentity, &data)
+	resp.Diagnostics.Append(updateServiceAccountOIDCDataModel(ctx, oidcIdentity, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func updateServiceAccountOIDCDataModel(request *serviceaccounts.OIDCIdentity, model *schemas.OIDCServiceAccountDatasourceSchemaModel) {
+func updateServiceAccountOIDCDataModel(ctx context.Context, request *serviceaccounts.OIDCIdentity, model *schemas.OIDCServiceAccountDatasourceSchemaModel) diag.Diagnostics {
 	model.Name = types.StringValue(request.Name)
 	model.Issuer = types.StringValue(request.Issuer)
 	model.Subject = types.StringValue(request.Subject)
@@ -61,5 +65,7 @@ func updateServiceAccountOIDCDataModel(request *serviceaccounts.OIDCIdentity, mo
 		model.Audience = types.StringValue(request.Audience)
 	}
 
-	model.ClaimConditions = mapClaimConditionsToState(request.ClaimConditions)
+	conditions, diags := mapClaimConditionsToState(ctx, request.ClaimConditions)
+	model.ClaimConditions = conditions
+	return diags
 }

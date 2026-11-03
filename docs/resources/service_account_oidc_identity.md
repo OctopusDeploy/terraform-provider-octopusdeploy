@@ -27,8 +27,8 @@ resource "octopusdeploy_service_account_oidc_identity" "github_actions" {
   issuer             = "https://token.actions.githubusercontent.com"
   subject            = "repo:my-org/my-repo:*"
 
-  # Requires the oidc-claim-conditions feature toggle on the Octopus Server.
   # The token must pass every condition. Each condition passes when the claim matches any one of its values.
+  # Leave this out to keep the existing conditions. Set it to [] to remove them all.
   claim_conditions = [
     {
       claim  = "repository_owner"
@@ -55,7 +55,7 @@ resource "octopusdeploy_service_account_oidc_identity" "github_actions" {
 ### Optional
 
 - `audience` (String) OIDC audience
-- `claim_conditions` (Attributes List) Extra conditions the token's claims must pass before Octopus exchanges the token for an access token. The token must pass every condition. Leave this out to accept any token that matches the issuer, subject, and audience. Requires the `oidc-claim-conditions` feature toggle on the Octopus Server. (see [below for nested schema](#nestedatt--claim_conditions))
+- `claim_conditions` (Attributes List) Extra conditions the token's claims must pass before Octopus exchanges the token for an access token. The token must pass every condition. When you leave this out, Terraform keeps the conditions that are already on the identity. Set it to `[]` to remove every condition. (see [below for nested schema](#nestedatt--claim_conditions))
 
 ### Read-Only
 

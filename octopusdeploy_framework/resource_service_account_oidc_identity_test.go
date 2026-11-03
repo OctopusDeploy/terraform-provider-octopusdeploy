@@ -2,7 +2,6 @@ package octopusdeploy_framework
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -96,13 +95,7 @@ func testServiceAccountIdentityUpdate(localName string, localUserName string, da
 	return testServiceAccountIdentityConfig(localName, localUserName, data, userData)
 }
 
-// The oidc-claim-conditions feature toggle is off by default on Octopus Server.
-// Set OCTOPUS_OIDC_CLAIM_CONDITIONS_ENABLED=true when the target server has the toggle on.
 func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditions(t *testing.T) {
-	if os.Getenv("OCTOPUS_OIDC_CLAIM_CONDITIONS_ENABLED") != "true" {
-		t.Skip("Skipping claim conditions test: set OCTOPUS_OIDC_CLAIM_CONDITIONS_ENABLED=true on a server with the oidc-claim-conditions toggle on")
-	}
-
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_service_account_oidc_identity." + localName
 	localUserName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
@@ -156,10 +149,18 @@ func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditions(t *testing.T)
 				),
 			},
 			{
-				// Removing the attribute must clear the conditions on the server.
+				// Leaving the attribute out keeps the conditions on the server.
 				Config: config(""),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckNoResourceAttr(prefix, "claim_conditions.#"),
+					resource.TestCheckResourceAttr(prefix, "claim_conditions.#", "1"),
+					resource.TestCheckResourceAttr(prefix, "claim_conditions.0.claim", "environment"),
+				),
+			},
+			{
+				// An empty list clears the conditions on the server.
+				Config: config(`claim_conditions = []`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "claim_conditions.#", "0"),
 				),
 			},
 		},
@@ -195,11 +196,6 @@ func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditionsValidation(t *
 				Config:      config(`[{ claim = "ref", values = ["**"] }]`),
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`can't be made only of \* characters`),
-			},
-			{
-				Config:      config(`[]`),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`list must contain at least 1 elements`),
 			},
 		},
 	})
