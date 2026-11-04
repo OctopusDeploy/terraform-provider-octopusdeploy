@@ -64,6 +64,10 @@ func (r *userTypeResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.IsActive.ValueBool() {
 		user.IsActive = data.IsActive.ValueBool()
 		user, err = users.Update(r.Config.Client, user)
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to deactivate created user", err.Error())
+			return
+		}
 	}
 
 	updateUser(&data, user)

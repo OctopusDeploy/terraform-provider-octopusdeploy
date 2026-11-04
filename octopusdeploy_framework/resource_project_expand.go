@@ -352,7 +352,7 @@ func expandReleaseCreationStrategy(model releaseCreationStrategyModel) *projects
 		ChannelID:                    model.ChannelID.ValueString(),
 		ReleaseCreationPackageStepID: model.ReleaseCreationPackageStepID.ValueString(),
 	}
-	if model.ReleaseCreationPackage != nil {
+	if len(model.ReleaseCreationPackage) > 0 {
 		strategy.ReleaseCreationPackage = expandDeploymentActionPackage(model.ReleaseCreationPackage[0])
 	}
 	return strategy

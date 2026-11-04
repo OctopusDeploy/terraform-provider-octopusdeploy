@@ -2,6 +2,7 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deploymentfreezes"
@@ -88,11 +89,13 @@ func (d *deploymentFreezeProjectResource) Read(ctx context.Context, req resource
 
 	freeze, err := deploymentfreezes.GetById(d.Client, freezeId)
 	if err != nil {
-		apiError := err.(*core.APIError)
-		if apiError.StatusCode != http.StatusNotFound {
-			resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		var apiError *core.APIError
+		if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
+			resp.State.RemoveResource(ctx)
 			return
 		}
+		resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		return
 	}
 
 	data.EnvironmentIDs = mapEnvironmentIds(freeze.ProjectEnvironmentScope[projectId])
@@ -119,11 +122,13 @@ func (d *deploymentFreezeProjectResource) Update(ctx context.Context, req resour
 
 	freeze, err := deploymentfreezes.GetById(d.Client, state.DeploymentFreezeID.ValueString())
 	if err != nil {
-		apiError := err.(*core.APIError)
-		if apiError.StatusCode != http.StatusNotFound {
-			resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		var apiError *core.APIError
+		if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
+			resp.State.RemoveResource(ctx)
 			return
 		}
+		resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		return
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("updating project (%s) to deployment freeze (%s)", plan.ProjectID.ValueString(), plan.DeploymentFreezeID.ValueString()))
@@ -156,11 +161,12 @@ func (d *deploymentFreezeProjectResource) Delete(ctx context.Context, req resour
 
 	freeze, err := deploymentfreezes.GetById(d.Client, data.DeploymentFreezeID.ValueString())
 	if err != nil {
-		apiError := err.(*core.APIError)
-		if apiError.StatusCode != http.StatusNotFound {
-			resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		var apiError *core.APIError
+		if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
 			return
 		}
+		resp.Diagnostics.AddError("unable to load deployment freeze", err.Error())
+		return
 	}
 
 	delete(freeze.ProjectEnvironmentScope, data.ProjectID.ValueString())

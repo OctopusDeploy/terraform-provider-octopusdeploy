@@ -81,7 +81,11 @@ func (s *spaceResource) Create(ctx context.Context, req resource.CreateRequest, 
 	tflog.Debug(ctx, fmt.Sprintf("resulting space %#v", createdSpace))
 
 	// the result of a space add operation seems to not return the correct values for teams, but the get does
-	createdSpace, _ = spaces.GetByID(s.Client, createdSpace.ID)
+	createdSpace, err = spaces.GetByID(s.Client, createdSpace.ID)
+	if err != nil {
+		resp.Diagnostics.AddError("unable to read created space", err.Error())
+		return
+	}
 
 	if data.IsTaskQueueStopped.ValueBool() == true {
 		// a space can't have a stopped task queue via the create, need to do a subsequent update
@@ -89,8 +93,13 @@ func (s *spaceResource) Create(ctx context.Context, req resource.CreateRequest, 
 		_, err = spaces.Update(s.Client, createdSpace)
 		if err != nil {
 			resp.Diagnostics.AddError("Error updating space task queue", err.Error())
+			return
 		}
-		createdSpace, _ = spaces.GetByID(s.Client, createdSpace.ID)
+		createdSpace, err = spaces.GetByID(s.Client, createdSpace.ID)
+		if err != nil {
+			resp.Diagnostics.AddError("unable to read created space", err.Error())
+			return
+		}
 		tflog.Debug(ctx, fmt.Sprintf("resulting space after setting task queue stopped %#v", createdSpace))
 	}
 
@@ -234,6 +243,7 @@ func (s *spaceResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	space, err := spaces.GetByID(s.Client, data.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("unable to read space", err.Error())
+		return
 	}
 
 	space.TaskQueueStopped = true

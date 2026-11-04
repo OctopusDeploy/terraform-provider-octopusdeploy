@@ -128,10 +128,12 @@ func dataMachineReadByName(d *schema.ResourceData, m interface{}) error {
 			d.Set("endpoint_communicationstyle", machine.Endpoint.GetCommunicationStyle())
 			d.Set("endpoint_id", endpointResource.GetID())
 			d.Set("endpoint_proxyid", endpointResource.ProxyID)
-			d.Set("endpoint_tentacleversiondetails_upgradelocked", endpointResource.TentacleVersionDetails.UpgradeLocked)
-			d.Set("endpoint_tentacleversiondetails_upgraderequired", endpointResource.TentacleVersionDetails.UpgradeRequired)
-			d.Set("endpoint_tentacleversiondetails_upgradesuggested", endpointResource.TentacleVersionDetails.UpgradeSuggested)
-			d.Set("endpoint_tentacleversiondetails_version", endpointResource.TentacleVersionDetails.Version)
+			if tvd := endpointResource.TentacleVersionDetails; tvd != nil {
+				d.Set("endpoint_tentacleversiondetails_upgradelocked", tvd.UpgradeLocked)
+				d.Set("endpoint_tentacleversiondetails_upgraderequired", tvd.UpgradeRequired)
+				d.Set("endpoint_tentacleversiondetails_upgradesuggested", tvd.UpgradeSuggested)
+				d.Set("endpoint_tentacleversiondetails_version", tvd.Version)
+			}
 			d.Set("endpoint_thumbprint", endpointResource.Thumbprint)
 			d.Set("endpoint_uri", endpointResource.URI)
 			d.Set("environments", machine.EnvironmentIDs)

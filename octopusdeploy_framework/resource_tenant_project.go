@@ -164,15 +164,12 @@ func (t *tenantProjectResource) Delete(ctx context.Context, req resource.DeleteR
 	tenant, err := tenants.GetByID(t.Client, spaceId, data.TenantID.ValueString())
 	if err != nil {
 		var apiError *core.APIError
-		if errors.As(err, &apiError) {
-			if apiError.StatusCode == http.StatusNotFound {
-				tflog.Info(ctx, fmt.Sprintf("tenant (%s) no longer exists", data.TenantID.ValueString()))
-				return
-			}
-		} else {
-			resp.Diagnostics.AddError("cannot load tenant", err.Error())
+		if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
+			tflog.Info(ctx, fmt.Sprintf("tenant (%s) no longer exists", data.TenantID.ValueString()))
 			return
 		}
+		resp.Diagnostics.AddError("cannot load tenant", err.Error())
+		return
 	}
 
 	delete(tenant.ProjectEnvironments, data.ProjectID.ValueString())
