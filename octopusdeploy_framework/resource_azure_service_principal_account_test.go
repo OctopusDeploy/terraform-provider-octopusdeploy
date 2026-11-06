@@ -169,11 +169,11 @@ func TestAccOctopusDeployAzureServicePrincipalAccountImport(t *testing.T) {
 				Config: testAccAzureServicePrincipalAccountBasic(localName, name, description, applicationID, tenantID, subscriptionID, password, tenantedDeploymentParticipation),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"password"}, // sensitive field
-				ImportStateIdFunc: testAccAzureServicePrincipalAccountImportStateIdFunc(resourceName),
+				ImportStateIdFunc:       testAccAzureServicePrincipalAccountImportStateIdFunc(resourceName),
 			},
 		},
 	})

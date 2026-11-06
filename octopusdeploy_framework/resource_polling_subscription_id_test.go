@@ -163,11 +163,11 @@ func testAccPollingSubscriptionIdCheckIdChanged(prefix string, originalId *strin
 		if !ok {
 			return fmt.Errorf("Not found: %s", prefix)
 		}
-		
+
 		if rs.Primary.ID == *originalId {
 			return fmt.Errorf("polling subscription ID should have changed due to dependencies ForceNew, but it didn't")
 		}
-		
+
 		return nil
 	}
 }

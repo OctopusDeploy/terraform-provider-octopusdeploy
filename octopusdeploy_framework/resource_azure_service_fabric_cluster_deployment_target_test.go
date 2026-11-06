@@ -145,7 +145,6 @@ func testAccAzureServiceFabricClusterDeploymentTargetBasic(localName, environmen
 		}`, environmentLocalName, environmentName, localName, name, environmentLocalName, connectionEndpoint)
 }
 
-
 func testAccAzureServiceFabricClusterDeploymentTargetExists(prefix string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		deploymentTargetID := s.RootModule().Resources[prefix].Primary.ID

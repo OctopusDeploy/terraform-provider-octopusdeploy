@@ -156,11 +156,11 @@ func TestAccOctopusDeploySSHKeyAccountImport(t *testing.T) {
 				Config: testAccSSHKeyAccountBasic(localName, name, privateKeyFile, username, passphrase, tenantedDeploymentParticipation),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"private_key_file", "private_key_passphrase"}, // sensitive fields
-				ImportStateIdFunc: testAccSSHKeyAccountImportStateIdFunc(resourceName),
+				ImportStateIdFunc:       testAccSSHKeyAccountImportStateIdFunc(resourceName),
 			},
 		},
 	})
