@@ -8,7 +8,7 @@ import (
 )
 
 func FlattenFeed(feed *feeds.FeedResource) attr.Value {
-	return types.ObjectValueMust(FeedObjectType(), map[string]attr.Value{
+	return util.ObjectValue(FeedObjectType(), map[string]attr.Value{
 		"access_key":                               types.StringValue(feed.AccessKey),
 		"api_version":                              types.StringValue(feed.APIVersion),
 		"delete_unreleased_packages_after_days":    types.Int64Value(int64(feed.DeleteUnreleasedPackagesAfterDays)),

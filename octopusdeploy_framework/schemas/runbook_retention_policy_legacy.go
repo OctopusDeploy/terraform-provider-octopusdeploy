@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/runbooks"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -61,7 +62,7 @@ func MapFromLegacyRunbookRetentionPolicy(retentionPolicy *runbooks.RunbookRetent
 		legacyRunbookRetentionPolicySchemeAttributeNames.ShouldKeepForever: types.BoolValue(retentionPolicy.Strategy == runbooks.RunbookRetentionStrategyForever),
 	}
 
-	return types.ObjectValueMust(GetLegacyRunbookRetentionPolicyObjectType(), attrs)
+	return util.ObjectValue(GetLegacyRunbookRetentionPolicyObjectType(), attrs)
 }
 
 func MapToLegacyRunbookRetentionPolicy(flattenedRunbookRetentionPolicy types.List) *runbooks.RunbookRetentionPolicy {

@@ -62,7 +62,7 @@ func MapFromVariableScope(variableScope variables.VariableScope) attr.Value {
 		variableScopeFieldNames.TenantTags:   util.Ternary(variableScope.TenantTags != nil, util.FlattenStringList(variableScope.TenantTags), types.ListNull(types.StringType)),
 	}
 
-	return types.ObjectValueMust(
+	return util.ObjectValue(
 		VariableScopeObjectType(),
 		flattenedScopes,
 	)

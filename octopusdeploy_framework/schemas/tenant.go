@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/tenants"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -63,7 +64,7 @@ func FlattenTenant(tenant *tenants.Tenant) attr.Value {
 	}
 	var tenantTagsSet, _ = types.SetValue(types.StringType, tenantTags)
 
-	return types.ObjectValueMust(TenantObjectType(), map[string]attr.Value{
+	return util.ObjectValue(TenantObjectType(), map[string]attr.Value{
 		"cloned_from_tenant_id": types.StringValue(tenant.ClonedFromTenantID),
 		"description":           types.StringValue(tenant.Description),
 		"id":                    types.StringValue(tenant.GetID()),
