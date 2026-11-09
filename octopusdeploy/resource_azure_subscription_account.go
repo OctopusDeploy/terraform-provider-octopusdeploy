@@ -67,7 +67,10 @@ func resourceAzureSubscriptionAccountRead(ctx context.Context, d *schema.Resourc
 		return errors.ProcessApiError(ctx, d, err, "Azure subscription account")
 	}
 
-	azureSubscriptionAccount := accountResource.(*accounts.AzureSubscriptionAccount)
+	azureSubscriptionAccount, ok := accountResource.(*accounts.AzureSubscriptionAccount)
+	if !ok {
+		return diag.Errorf("account %s is not an Azure subscription account", d.Id())
+	}
 	if err := setAzureSubscriptionAccount(ctx, d, azureSubscriptionAccount); err != nil {
 		return diag.FromErr(err)
 	}

@@ -2,6 +2,8 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/platformhubaccounts"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -94,7 +96,13 @@ func (a *platformHubAwsAccountResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	setPlatformHubAwsAccount(ctx, &state, account.(*platformhubaccounts.PlatformHubAwsAccount))
+	awsAccount, ok := account.(*platformhubaccounts.PlatformHubAwsAccount)
+	if !ok {
+		resp.Diagnostics.AddError("Error reading Platform Hub AWS account", fmt.Sprintf("account %s is not an AWS account", state.ID.ValueString()))
+		return
+	}
+
+	setPlatformHubAwsAccount(ctx, &state, awsAccount)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 

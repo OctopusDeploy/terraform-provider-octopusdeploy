@@ -67,7 +67,10 @@ func resourceGoogleCloudPlatformAccountRead(ctx context.Context, d *schema.Resou
 		return errors.ProcessApiError(ctx, d, err, "GCP account")
 	}
 
-	amazonWebServicesAccount := accountResource.(*accounts.GoogleCloudPlatformAccount)
+	amazonWebServicesAccount, ok := accountResource.(*accounts.GoogleCloudPlatformAccount)
+	if !ok {
+		return diag.Errorf("account %s is not a GCP account", d.Id())
+	}
 	if err := setGoogleCloudPlatformAccount(ctx, d, amazonWebServicesAccount); err != nil {
 		return diag.FromErr(err)
 	}
