@@ -20,4 +20,6 @@ description: |-
 Import is supported using the following syntax:
 
 {{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+
+The import ID carries no space, so the trigger is looked up in the space the provider is configured for. To import a trigger from another space, configure the provider for that space.
 {{- end }}
