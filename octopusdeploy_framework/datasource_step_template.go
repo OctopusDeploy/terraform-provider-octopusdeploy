@@ -2,9 +2,12 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"fmt"
+	"math"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/newclient"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -12,6 +15,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+// actionTemplatesCollectionUriTemplate is the collection half of the SDK's action template
+// URI template. The SDK's own template also carries a {/id} path segment, which turns the
+// request into a single-resource lookup that cannot be decoded as a collection, so we keep
+// a collection-only copy here. actiontemplates.Query carries the `uri` tags the expansion
+// needs; actiontemplates.ActionTemplateSearch does not, which is why it cannot be used to
+// filter (see TestActionTemplatesCollectionUriTemplate).
+const actionTemplatesCollectionUriTemplate = "/api/{spaceId}/actiontemplates{?skip,take,ids,partialName}"
 
 type stepTemplateDataSource struct {
 	*Config
@@ -33,61 +44,82 @@ func (d *stepTemplateDataSource) Configure(_ context.Context, req datasource.Con
 }
 
 func (d *stepTemplateDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var err error
 	var data schemas.StepTemplateTypeDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	search := actiontemplates.ActionTemplateSearch{
-		ID:   data.ID.ValueString(),
-		Name: data.Name.ValueString(),
-	}
+	id := data.ID.ValueString()
+	name := data.Name.ValueString()
+	spaceID := data.SpaceID.ValueString()
 
-	if (data.ID.IsNull() || data.ID.IsUnknown() || data.ID.ValueString() == "") && (data.Name.IsNull() || data.Name.IsUnknown() || data.Name.ValueString() == "") {
+	if id == "" && name == "" {
 		resp.Diagnostics.AddError("Invalid Step Template", "Either the 'id' or 'name' attribute must be specified.")
 		return
 	}
 
-	util.DatasourceReading(ctx, "step_template", search)
+	util.DatasourceReading(ctx, "step_template", map[string]string{"id": id, "name": name, "space_id": spaceID})
 
-	actionTemplates, err := actiontemplates.Get(d.Config.Client, data.SpaceID.ValueString(), search)
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to load step template", err.Error())
-		return
-	}
-
-	actionTemplateMatch := findActionTemplateByName(actionTemplates.Items, data.Name.ValueString())
-
-	resp.Diagnostics.Append(mapStepTemplateToDatasourceModel(&data, actionTemplateMatch)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func findActionTemplateByName(actionTemplates []*actiontemplates.ActionTemplate, name string) *actiontemplates.ActionTemplate {
-	// If there was no name specified, the ID must have been specified, so return the first match
-	if name == "" {
-		return actionTemplates[0]
-	}
-
-	// Otherwise, find the first match by name
-	for _, at := range actionTemplates {
-		if at.Name == name {
-			return at
+	var actionTemplate *actiontemplates.ActionTemplate
+	var err error
+	if id != "" {
+		actionTemplate, err = actiontemplates.GetByID(d.Config.Client, spaceID, id)
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to load step template", err.Error())
+			return
+		}
+		if name != "" && actionTemplate.Name != name {
+			resp.Diagnostics.AddError(
+				"Step Template not found",
+				fmt.Sprintf("step template '%s' is named '%s', which does not match the requested name '%s'", id, actionTemplate.Name, name))
+			return
+		}
+	} else {
+		actionTemplate, err = findStepTemplateByName(d.Config.Client, spaceID, name)
+		if err != nil {
+			resp.Diagnostics.AddError("Unable to load step template", err.Error())
+			return
+		}
+		if actionTemplate == nil {
+			resp.Diagnostics.AddError("Step Template not found", fmt.Sprintf("no step template found with the name '%s'", name))
+			return
 		}
 	}
 
-	return nil
+	resp.Diagnostics.Append(mapStepTemplateToDatasourceModel(&data, actionTemplate)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// findStepTemplateByName returns the step template with the given name, or nil if the space
+// has none. The API offers no exact-name filter, so the name narrows the result set through
+// partialName and the exact match is made here.
+func findStepTemplateByName(client newclient.Client, spaceID string, name string) (*actiontemplates.ActionTemplate, error) {
+	query := actiontemplates.Query{
+		PartialName: name,
+		Take:        math.MaxInt32,
+	}
+
+	actionTemplates, err := newclient.GetByQuery[actiontemplates.ActionTemplate](client, actionTemplatesCollectionUriTemplate, spaceID, query)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, at := range actionTemplates.Items {
+		if at.Name == name {
+			return at, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func mapStepTemplateToDatasourceModel(data *schemas.StepTemplateTypeDataSourceModel, at *actiontemplates.ActionTemplate) diag.Diagnostics {
 	resp := diag.Diagnostics{}
 
-	if at != nil {
-		stepTemplate, dg := convertStepTemplateAttributes(at)
-		resp.Append(dg...)
-		data.StepTemplate = stepTemplate
-	}
+	stepTemplate, dg := convertStepTemplateAttributes(at)
+	resp.Append(dg...)
+	data.StepTemplate = stepTemplate
 
 	return resp
 }
