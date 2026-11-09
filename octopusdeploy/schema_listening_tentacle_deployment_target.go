@@ -39,11 +39,16 @@ func flattenListeningTentacleDeploymentTarget(deploymentTarget *machines.Deploym
 	}
 
 	flattenedDeploymentTarget := flattenDeploymentTarget(deploymentTarget)
-	endpointResource, _ := machines.ToEndpointResource(deploymentTarget.Endpoint)
+	endpointResource, err := machines.ToEndpointResource(deploymentTarget.Endpoint)
+	if err != nil || endpointResource == nil {
+		return flattenedDeploymentTarget
+	}
 	flattenedDeploymentTarget["certificate_signature_algorithm"] = endpointResource.CertificateSignatureAlgorithm
 	flattenedDeploymentTarget["proxy_id"] = endpointResource.ProxyID
 	flattenedDeploymentTarget["tentacle_version_details"] = flattenTentacleVersionDetails(endpointResource.TentacleVersionDetails)
-	flattenedDeploymentTarget["tentacle_url"] = endpointResource.URI.String()
+	if endpointResource.URI != nil {
+		flattenedDeploymentTarget["tentacle_url"] = endpointResource.URI.String()
+	}
 	return flattenedDeploymentTarget
 }
 
