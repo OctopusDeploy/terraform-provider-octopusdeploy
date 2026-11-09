@@ -585,7 +585,9 @@ func mapTemplatedActionPropertiesFromState(ctx context.Context, template *action
 	for _, parameter := range template.Parameters {
 		value, ok := stateParameters[parameter.Name]
 		if ok {
-			properties[parameter.Name] = util.ConvertToPropertyValue(value, false)
+			sensitive := parameter.DisplaySettings["Octopus.ControlType"] == "Sensitive" ||
+				(parameter.DefaultValue != nil && parameter.DefaultValue.IsSensitive)
+			properties[parameter.Name] = util.ConvertToPropertyValue(value, sensitive)
 			continue
 		}
 

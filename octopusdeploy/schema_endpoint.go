@@ -108,8 +108,9 @@ func flattenEndpointResource(endpoint *machines.EndpointResource) []interface{} 
 func getEndpointSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"aad_client_credential_secret": {
-			Optional: true,
-			Type:     schema.TypeString,
+			Optional:  true,
+			Sensitive: true,
+			Type:      schema.TypeString,
 		},
 		"aad_credential_type": {
 			Optional: true,
