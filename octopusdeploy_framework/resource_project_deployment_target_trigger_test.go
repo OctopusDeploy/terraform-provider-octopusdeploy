@@ -161,6 +161,46 @@ func TestAccOctopusDeployProjectDeploymentTargetTriggerImport(t *testing.T) {
 	})
 }
 
+// Before space_id existed on this resource, every call went to the space the
+// provider was configured for, so a trigger could not be managed anywhere else.
+func TestAccOctopusDeployProjectDeploymentTargetTriggerOutsideProviderSpace(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_project_deployment_target_trigger." + localName
+
+	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	triggerName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	space := NewTestSpace(t)
+
+	config := testAccProjectDeploymentTargetTriggerCrossSpace(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, triggerName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(prefix, "name", triggerName),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
+				),
+				Config: config,
+			},
+			{
+				// The refresh in this step is what used to fail.
+				Config:   config,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func testAccProjectDeploymentTargetTriggerBasic(localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, triggerName string) string {
 	return testAccProjectDeploymentTargetTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription) + fmt.Sprintf(`
 	resource "octopusdeploy_project_deployment_target_trigger" "%s" {
@@ -199,6 +239,41 @@ func testAccProjectDeploymentTargetTriggerWithFilters(localName, lifecycleLocalN
 	}`, environmentLocalName, environmentName, environmentDescription, localName, triggerName, projectLocalName, environmentLocalName)
 }
 
+// testAccProjectDeploymentTargetTriggerCrossSpace puts every resource in
+// spaceID without pinning the provider to it, so the provider stays on the
+// default space.
+func testAccProjectDeploymentTargetTriggerCrossSpace(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, triggerName string) string {
+	return fmt.Sprintf(`
+	resource "octopusdeploy_lifecycle" "%s" {
+		space_id = "%s"
+		name     = "%s"
+	}
+
+	resource "octopusdeploy_project_group" "%s" {
+		space_id = "%s"
+		name     = "%s"
+	}
+
+	resource "octopusdeploy_project" "%s" {
+		space_id         = "%s"
+		description      = "%s"
+		lifecycle_id     = octopusdeploy_lifecycle.%s.id
+		name             = "%s"
+		project_group_id = octopusdeploy_project_group.%s.id
+	}
+
+	resource "octopusdeploy_project_deployment_target_trigger" "%s" {
+		name         = "%s"
+		space_id     = "%s"
+		project_id   = octopusdeploy_project.%s.id
+		event_groups = ["Machine"]
+	}`,
+		lifecycleLocalName, spaceID, lifecycleName,
+		projectGroupLocalName, spaceID, projectGroupName,
+		projectLocalName, spaceID, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName,
+		localName, triggerName, spaceID, projectLocalName)
+}
+
 func testAccProjectDeploymentTargetTriggerDependencies(lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription string) string {
 	return fmt.Sprintf(`
 	resource "octopusdeploy_lifecycle" "%s" {
@@ -214,7 +289,7 @@ func testAccProjectDeploymentTargetTriggerDependencies(lifecycleLocalName, lifec
 		lifecycle_id     = octopusdeploy_lifecycle.%s.id
 		name             = "%s"
 		project_group_id = octopusdeploy_project_group.%s.id
-	}`, 
+	}`,
 		lifecycleLocalName, lifecycleName,
 		projectGroupLocalName, projectGroupName,
 		projectLocalName, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName)
