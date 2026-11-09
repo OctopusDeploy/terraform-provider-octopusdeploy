@@ -47,6 +47,7 @@ func (r *mavenFeedTypeResource) Create(ctx context.Context, req resource.CreateR
 
 	mavenFeed, err := createMavenResourceFromData(data)
 	if err != nil {
+		resp.Diagnostics.AddError("unable to create maven feed", err.Error())
 		return
 	}
 
@@ -101,11 +102,11 @@ func (r *mavenFeedTypeResource) Update(ctx context.Context, req resource.UpdateR
 	tflog.Debug(ctx, fmt.Sprintf("updating maven feed '%s'", data.ID.ValueString()))
 
 	feed, err := createMavenResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load maven feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating Maven feed (%s)", data.ID))
 
