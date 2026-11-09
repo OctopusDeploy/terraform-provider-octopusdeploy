@@ -60,10 +60,7 @@ func (p *projectGroupsDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	var ids = make([]string, 0, len(data.IDs.Elements()))
-	for _, id := range data.IDs.Elements() {
-		ids = append(ids, id.String())
-	}
+	ids := util.GetIds(data.IDs)
 
 	skip := 0
 	if !data.Skip.IsNull() {
