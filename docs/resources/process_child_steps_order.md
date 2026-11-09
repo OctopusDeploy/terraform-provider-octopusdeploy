@@ -106,4 +106,8 @@ Import is supported using the following syntax:
 
 ```shell
 terraform import [options] octopusdeploy_process_child_steps_order.<name> "<process-id>:<parent-step-id>"
+
+# Resources in a space other than the provider's can be imported by prefixing
+# the identifier with that space:
+terraform import [options] octopusdeploy_process_child_steps_order.<name> "<space-id>:<process-id>:<parent-step-id>"
 ```

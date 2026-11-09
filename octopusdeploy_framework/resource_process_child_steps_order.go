@@ -3,6 +3,7 @@ package octopusdeploy_framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/deployments"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
@@ -13,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"strings"
 )
 
 var (
@@ -42,24 +42,27 @@ func (r *processChildStepsOrderResource) Configure(_ context.Context, req resour
 }
 
 func (r *processChildStepsOrderResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	identifiers := strings.Split(request.ID, ":")
+	spaceId, identifiers := splitImportSpaceID(request.ID)
 
 	if len(identifiers) != 2 {
 		response.Diagnostics.AddError(
 			"Incorrect Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: ProcessId:ParentStepId (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000010). Got: %q", request.ID),
+			fmt.Sprintf("Expected import identifier with format: ProcessId:ParentStepId, optionally prefixed with a space (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000010 or Spaces-2:deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000010). Got: %q", request.ID),
 		)
 		return
 	}
 
 	processId := identifiers[0]
 	parentStepId := identifiers[1]
+	if spaceId == "" {
+		spaceId = r.Config.SpaceID
+	}
 
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("process_id"), processId)...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("parent_id"), parentStepId)...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), parentStepId)...)
 
-	process, diags := loadProcessWrapperByProcessId(r.Config.Client, r.Config.SpaceID, processId)
+	process, diags := loadProcessWrapperByProcessId(r.Config.Client, spaceId, processId)
 	if len(diags) > 0 {
 		response.Diagnostics.Append(diags...)
 		return
@@ -81,6 +84,7 @@ func (r *processChildStepsOrderResource) ImportState(ctx context.Context, reques
 	}
 	children, _ := types.ListValue(types.StringType, actions)
 
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("space_id"), process.GetSpaceID())...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("process_id"), processId)...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("parent_id"), parentStepId)...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), parentStepId)...)

@@ -41,9 +41,22 @@ func (r *processStepsOrderResource) Configure(_ context.Context, req resource.Co
 }
 
 func (r *processStepsOrderResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	processId := request.ID
+	spaceId, segments := splitImportSpaceID(request.ID)
 
-	process, diags := loadProcessWrapperByProcessId(r.Config.Client, r.Config.SpaceID, processId)
+	if len(segments) != 1 {
+		response.Diagnostics.AddError(
+			"Incorrect Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: ProcessId or SpaceId:ProcessId (e.g. deploymentprocess-Projects-123 or Spaces-2:deploymentprocess-Projects-123). Got: %q", request.ID),
+		)
+		return
+	}
+
+	processId := segments[0]
+	if spaceId == "" {
+		spaceId = r.Config.SpaceID
+	}
+
+	process, diags := loadProcessWrapperByProcessId(r.Config.Client, spaceId, processId)
 	if len(diags) > 0 {
 		response.Diagnostics.Append(diags...)
 		return
@@ -61,6 +74,7 @@ func (r *processStepsOrderResource) ImportState(ctx context.Context, request res
 	response.Diagnostics.Append(stepDiagnostics...)
 
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), processId)...)
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("space_id"), process.GetSpaceID())...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("process_id"), processId)...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("steps"), importedSteps)...)
 }
