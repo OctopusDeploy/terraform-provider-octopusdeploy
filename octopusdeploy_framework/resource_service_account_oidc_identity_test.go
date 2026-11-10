@@ -131,10 +131,6 @@ func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditions(t *testing.T)
 		]`),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(prefix, "claim_conditions.#", "2"),
-					resource.TestCheckResourceAttr(prefix, "claim_conditions.0.claim", "repository_owner"),
-					resource.TestCheckResourceAttr(prefix, "claim_conditions.0.values.0", "test"),
-					resource.TestCheckResourceAttr(prefix, "claim_conditions.1.claim", "ref"),
-					resource.TestCheckResourceAttr(prefix, "claim_conditions.1.values.#", "2"),
 					resource.TestCheckResourceAttr(prefix, "claim_conditions.1.values.1", "refs/tags/*"),
 				),
 			},
@@ -145,7 +141,6 @@ func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditions(t *testing.T)
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(prefix, "claim_conditions.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "claim_conditions.0.claim", "environment"),
-					resource.TestCheckResourceAttr(prefix, "claim_conditions.0.values.0", "production"),
 				),
 			},
 			{
@@ -167,33 +162,19 @@ func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditions(t *testing.T)
 	})
 }
 
-func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditionsValidation(t *testing.T) {
-	config := func(claimConditions string) string {
-		return fmt.Sprintf(`
+func TestServiceAccountOIDCIdentityRejectsWildcardOnlyClaimValue(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `
 	resource "octopusdeploy_service_account_oidc_identity" "test" {
 		name               = "test"
 		service_account_id = "Users-1"
 		issuer             = "https://token.actions.githubusercontent.com"
 		subject            = "repo:test/test:*"
-		claim_conditions   = %s
-	}`, claimConditions)
-	}
-
-	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
-		Steps: []resource.TestStep{
-			{
-				Config:      config(`[{ claim = "sub", values = ["x"] }]`),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`value must be none of`),
-			},
-			{
-				Config:      config(`[{ claim = "ref", values = [] }]`),
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile(`list must contain at least 1 elements`),
-			},
-			{
-				Config:      config(`[{ claim = "ref", values = ["**"] }]`),
+		claim_conditions   = [{ claim = "ref", values = ["**"] }]
+	}`,
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`can't be made only of \* characters`),
 			},

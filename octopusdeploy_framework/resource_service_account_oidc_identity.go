@@ -165,8 +165,8 @@ func mapClaimConditionsToRequest(ctx context.Context, list types.List) ([]servic
 	return result, diags
 }
 
-// mapClaimConditionsToState always returns a known list.
-// The list is empty when the server has no conditions.
+// mapClaimConditionsToState returns an empty list rather than null when the server has no conditions.
+// A computed attribute must be known after apply.
 func mapClaimConditionsToState(ctx context.Context, conditions []serviceaccounts.OIDCIdentityClaimCondition) (types.List, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	models := make([]schemas.OIDCClaimConditionModel, 0, len(conditions))
