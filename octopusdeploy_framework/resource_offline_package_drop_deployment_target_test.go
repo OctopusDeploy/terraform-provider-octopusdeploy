@@ -175,6 +175,7 @@ func testAccOfflinePackageDropDeploymentTargetMinimal(localName, environmentLoca
 			roles                  = ["offline"]
 			applications_directory = "/tmp/apps"
 			working_directory      = "/tmp/work"
+			sensitive_variables_encryption_password = "Password01!"
 		}`, environmentLocalName, environmentName, localName, name, environmentLocalName)
 }
 
