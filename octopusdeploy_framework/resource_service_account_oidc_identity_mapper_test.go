@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/serviceaccounts"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
@@ -31,13 +30,4 @@ func TestMapServiceAccountOIDCModelToRequest_SendsNullClaimConditionsWhenUnset(t
 			require.Nil(t, identity.ClaimConditions, "a nil slice is sent as null and Octopus keeps the existing conditions")
 		})
 	}
-}
-
-func TestCheckClaimConditionsApplied_ErrorsWhenServerDropsConditions(t *testing.T) {
-	request := serviceaccounts.NewOIDCIdentity("Users-1", "identity", "https://issuer", "subject")
-	request.ClaimConditions = []serviceaccounts.OIDCIdentityClaimCondition{{Claim: "ref", Values: []string{"main"}}}
-	response := serviceaccounts.NewOIDCIdentity("Users-1", "identity", "https://issuer", "subject")
-
-	require.True(t, checkClaimConditionsApplied(request, response).HasError())
-	require.False(t, checkClaimConditionsApplied(response, response).HasError())
 }

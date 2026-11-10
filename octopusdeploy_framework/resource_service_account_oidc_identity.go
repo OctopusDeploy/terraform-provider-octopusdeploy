@@ -44,6 +44,12 @@ func (s *ServiceAccountOIDCIdentity) Create(ctx context.Context, req resource.Cr
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	// Octopus Server versions before 2026.4.9767 ignore claim conditions.
+	if len(identityRequest.ClaimConditions) > 0 && !s.Config.IsVersionSameOrGreaterThan("2026.4.9767") {
+		resp.Diagnostics.AddAttributeError(path.Root("claim_conditions"), "Octopus Server doesn't support claim conditions",
+			"Claim conditions need Octopus Server 2026.4.9767 or later. Upgrade Octopus Server or remove claim_conditions from the configuration.")
+		return
+	}
 	identityCreateResponse, err := serviceaccounts.AddOIDCIdentity(s.Client, identityRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating OIDC identity", err.Error())
@@ -57,7 +63,6 @@ func (s *ServiceAccountOIDCIdentity) Create(ctx context.Context, req resource.Cr
 
 	resp.Diagnostics.Append(updateServiceAccountOIDCModel(ctx, identityResponse, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
-	resp.Diagnostics.Append(checkClaimConditionsApplied(identityRequest, identityResponse)...)
 }
 
 func (s *ServiceAccountOIDCIdentity) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -94,6 +99,12 @@ func (s *ServiceAccountOIDCIdentity) Update(ctx context.Context, req resource.Up
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	// Octopus Server versions before 2026.4.9767 ignore claim conditions.
+	if len(identityRequest.ClaimConditions) > 0 && !s.Config.IsVersionSameOrGreaterThan("2026.4.9767") {
+		resp.Diagnostics.AddAttributeError(path.Root("claim_conditions"), "Octopus Server doesn't support claim conditions",
+			"Claim conditions need Octopus Server 2026.4.9767 or later. Upgrade Octopus Server or remove claim_conditions from the configuration.")
+		return
+	}
 
 	err := serviceaccounts.UpdateOIDCIdentity(s.Client, identityRequest)
 	if err != nil {
@@ -108,7 +119,6 @@ func (s *ServiceAccountOIDCIdentity) Update(ctx context.Context, req resource.Up
 
 	resp.Diagnostics.Append(updateServiceAccountOIDCModel(ctx, identityResponse, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
-	resp.Diagnostics.Append(checkClaimConditionsApplied(identityRequest, identityResponse)...)
 }
 
 func (s *ServiceAccountOIDCIdentity) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -181,21 +191,6 @@ func mapClaimConditionsToState(ctx context.Context, conditions []serviceaccounts
 	list, listDiags := types.ListValueFrom(ctx, schemas.OIDCClaimConditionObjectType(), models)
 	diags.Append(listDiags...)
 	return list, diags
-}
-
-// checkClaimConditionsApplied reports an error when Octopus drops the claim conditions.
-// Octopus Server versions without claim conditions ignore the field.
-func checkClaimConditionsApplied(request *serviceaccounts.OIDCIdentity, response *serviceaccounts.OIDCIdentity) diag.Diagnostics {
-	var diags diag.Diagnostics
-	if len(request.ClaimConditions) > 0 && len(response.ClaimConditions) == 0 {
-		diags.AddAttributeError(
-			path.Root("claim_conditions"),
-			"Octopus Server didn't save the claim conditions",
-			"This version of Octopus Server doesn't support claim conditions on OIDC identities. "+
-				"Upgrade Octopus Server or remove claim_conditions from the configuration.",
-		)
-	}
-	return diags
 }
 
 func updateServiceAccountOIDCModel(ctx context.Context, request *serviceaccounts.OIDCIdentity, model *schemas.OIDCServiceAccountSchemaModel) diag.Diagnostics {
