@@ -144,8 +144,8 @@ func TestAccOctopusDeployServiceAccountOIDCIdentityClaimConditions(t *testing.T)
 				),
 			},
 			{
-				// Leaving the attribute out keeps the conditions on the server.
-				Config: config(""),
+				// Leaving the attribute out during an update keeps the conditions on the server.
+				Config: config(`audience = "updated"`),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(prefix, "claim_conditions.#", "1"),
 					resource.TestCheckResourceAttr(prefix, "claim_conditions.0.claim", "environment"),
