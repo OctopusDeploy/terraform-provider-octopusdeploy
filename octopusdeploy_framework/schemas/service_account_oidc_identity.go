@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -65,7 +67,8 @@ func (d ServiceAccountOIDCIdentitySchema) GetResourceSchema() resourceSchema.Sch
 				Description: claimConditionsDescription,
 				Optional:    true,
 				// Computed keeps conditions set outside Terraform, such as in the Octopus UI, when the config leaves this out.
-				Computed: true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 				NestedObject: resourceSchema.NestedAttributeObject{
 					Attributes: map[string]resourceSchema.Attribute{
 						"claim": resourceSchema.StringAttribute{

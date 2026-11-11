@@ -99,6 +99,18 @@ func (s *ServiceAccountOIDCIdentity) Update(ctx context.Context, req resource.Up
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// The plan copies claim conditions from state when the config leaves them out.
+	// Send null instead so Octopus keeps the conditions it has now.
+	var configClaimConditions types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("claim_conditions"), &configClaimConditions)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if configClaimConditions.IsNull() {
+		identityRequest.ClaimConditions = nil
+	}
+
 	// Octopus Server versions before 2026.4.9767 ignore claim conditions.
 	if len(identityRequest.ClaimConditions) > 0 && !s.Config.IsVersionSameOrGreaterThan("2026.4.9767") {
 		resp.Diagnostics.AddAttributeError(path.Root("claim_conditions"), "Octopus Server doesn't support claim conditions",
