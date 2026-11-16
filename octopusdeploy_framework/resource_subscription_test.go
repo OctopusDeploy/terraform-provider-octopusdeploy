@@ -539,3 +539,65 @@ resource "octopusdeploy_subscription" "%[1]s" {
 }
 `, name)
 }
+
+// The AI filters are Optional+Computed: leaving them out of the config keeps whatever the server has,
+// and setting them to false or [] turns them off.
+func TestAccSubscriptionAiFilters(t *testing.T) {
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	resourceName := "octopusdeploy_subscription." + name
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		CheckDestroy:             testAccSubscriptionCheckDestroy(resourceName),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSubscriptionAiFiltersConfig(name, `ai_events_only = true
+      api_key_ids    = ["apikeys-terraform-test"]`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSubscriptionExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.filter.ai_events_only", "true"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.filter.api_key_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.filter.api_key_ids.0", "apikeys-terraform-test"),
+				),
+			},
+			{
+				Config: testAccSubscriptionAiFiltersConfig(name, ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.filter.ai_events_only", "true"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.filter.api_key_ids.#", "1"),
+				),
+			},
+			{
+				Config: testAccSubscriptionAiFiltersConfig(name, `ai_events_only = false
+      api_key_ids    = []`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.filter.ai_events_only", "false"),
+					resource.TestCheckResourceAttr(resourceName, "event_notification_subscription.filter.api_key_ids.#", "0"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccSubscriptionAiFiltersConfig(name string, aiFilters string) string {
+	return fmt.Sprintf(`
+resource "octopusdeploy_subscription" "%[1]s" {
+  name = "%[1]s"
+
+  event_notification_subscription = {
+    webhook_uri     = "https://example.com/webhook"
+    webhook_timeout = "00:00:10"
+
+    filter = {
+      event_categories = ["Modified"]
+      %[2]s
+    }
+  }
+}`, name, aiFilters)
+}

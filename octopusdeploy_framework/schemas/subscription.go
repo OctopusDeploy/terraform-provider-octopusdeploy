@@ -6,6 +6,7 @@ import (
 	datasourceSchema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -42,6 +43,13 @@ func (s SubscriptionSchema) GetResourceSchema() resourceSchema.Schema {
 		"tenants":          filterList("Filter by tenant IDs."),
 		"tags":             filterList("Filter by tenant tags."),
 		"document_types":   filterList("Filter by document types (e.g. Machines, Projects, Deployments)."),
+		"api_key_ids":      filterList("Filter by the IDs of the API keys that raised the events. Older versions of Octopus Server ignore this filter."),
+		"ai_events_only": util.ResourceBool().
+			Optional().
+			Computed().
+			Description("Only notify about events by AI agents. Older versions of Octopus Server ignore this filter.").
+			PlanModifiers(boolplanmodifier.UseStateForUnknown()).
+			Build(),
 	}
 
 	return resourceSchema.Schema{
