@@ -89,7 +89,10 @@ func (r *tagTypeResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	tagCreate(ctx, data, resp.Diagnostics, r.Client)
+	resp.Diagnostics.Append(tagCreate(ctx, data, resp.Diagnostics, r.Client)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	tflog.Info(ctx, fmt.Sprintf("tag created (%s)", data.ID))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -122,7 +125,7 @@ func (t *tagTypeResource) Update(ctx context.Context, req resource.UpdateRequest
 		if err != nil {
 			// if spaceID has changed, tag has been deleted, recreate required
 			if !targetSpaceId.Equal(state.TagSetSpaceId) {
-				tagCreate(ctx, data, resp.Diagnostics, t.Client)
+				resp.Diagnostics.Append(tagCreate(ctx, data, resp.Diagnostics, t.Client)...)
 				if !resp.Diagnostics.HasError() {
 					resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 				}
@@ -291,8 +294,10 @@ func (r *tagTypeResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 }
 
-func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diag diag.Diagnostics, client *client.Client) diag.Diagnostics {
+func tagCreate(ctx context.Context, data *schemas.TagResourceModel, _ diag.Diagnostics, client *client.Client) diag.Diagnostics {
 	tflog.Info(ctx, "creating tag")
+
+	var diag diag.Diagnostics
 
 	tagSetID := data.TagSetId.ValueString()
 	tagSetSpaceID := data.TagSetSpaceId.ValueString()
@@ -300,15 +305,15 @@ func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diag diag.Di
 	tagSet, err := tagsets.GetByID(client, tagSetSpaceID, tagSetID)
 
 	if err != nil {
-		processUnknownTagSetError(ctx, data, err, diag)
-		return diag
+		return processUnknownTagSetError(ctx, data, err, diag)
 	}
 
 	name := data.Name.ValueString()
 
 	for _, tag := range tagSet.Tags {
 		if tag.Name == name {
-			diag.AddError(`the tag name '%s' is already in use by another tag in this tag set; tag names must be unique`, name)
+			diag.AddError("Tag name already exists", fmt.Sprintf("the tag name '%s' is already in use by another tag in this tag set; tag names must be unique", name))
+			return diag
 		}
 	}
 
@@ -321,6 +326,7 @@ func tagCreate(ctx context.Context, data *schemas.TagResourceModel, diag diag.Di
 	updatedTagSet, err := tagsets.Update(client, tagSet)
 	if err != nil {
 		diag.AddError(`unable to update tag set`, err.Error())
+		return diag
 	}
 
 	return findByIdOrNameAndSetTag(ctx, data, tag, updatedTagSet)
@@ -360,20 +366,21 @@ func findByIdOrNameAndSetTag(ctx context.Context, data *schemas.TagResourceModel
 	return nil
 }
 
-func processUnknownTagSetError(ctx context.Context, data *schemas.TagResourceModel, err error, diag diag.Diagnostics) {
+func processUnknownTagSetError(ctx context.Context, data *schemas.TagResourceModel, err error, diag diag.Diagnostics) diag.Diagnostics {
 	if err == nil {
-		return
+		return diag
 	}
 
 	if apiError, ok := err.(*core.APIError); ok {
 		if apiError.StatusCode == 404 {
 			tflog.Info(ctx, fmt.Sprintf("tag set (%s) not found; deleting tag from state", data.ID))
 			data.ID = types.StringValue("")
-			return
+			return diag
 		}
 	}
 
 	diag.AddError("Processing unknown tag set failed", err.Error())
+	return diag
 }
 
 func (t *tagTypeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
