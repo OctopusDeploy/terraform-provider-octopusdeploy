@@ -64,6 +64,8 @@ type subscriptionFilterModel struct {
 	Tenants         types.List `tfsdk:"tenants"`
 	Tags            types.List `tfsdk:"tags"`
 	DocumentTypes   types.List `tfsdk:"document_types"`
+	ApiKeyIds       types.List `tfsdk:"api_key_ids"`
+	AiEventsOnly    types.Bool `tfsdk:"ai_events_only"`
 }
 
 type subscriptionResource struct {
@@ -217,7 +219,18 @@ func expandSubscriptionFilter(model *subscriptionFilterModel) *subscriptions.Eve
 		Tenants:         util.ExpandStringList(model.Tenants),
 		Tags:            util.ExpandStringList(model.Tags),
 		DocumentTypes:   util.ExpandStringList(model.DocumentTypes),
+		// Left nil when not configured, so the server keeps the value set elsewhere, e.g. in the portal.
+		ApiKeyIds:    util.ExpandStringList(model.ApiKeyIds),
+		AiEventsOnly: expandOptionalBool(model.AiEventsOnly),
 	}
+}
+
+func expandOptionalBool(value types.Bool) *bool {
+	if value.IsNull() || value.IsUnknown() {
+		return nil
+	}
+	b := value.ValueBool()
+	return &b
 }
 
 func flattenSubscription(api *subscriptions.Subscription, model *subscriptionModel) {
@@ -362,7 +375,9 @@ func flattenSubscriptionFilter(api *subscriptions.EventNotificationSubscriptionF
 		len(api.EventAgents) == 0 &&
 		len(api.Tenants) == 0 &&
 		len(api.Tags) == 0 &&
-		len(api.DocumentTypes) == 0
+		len(api.DocumentTypes) == 0 &&
+		len(api.ApiKeyIds) == 0 &&
+		(api.AiEventsOnly == nil || !*api.AiEventsOnly)
 
 	if allEmpty && existing == nil {
 		return nil
@@ -382,6 +397,13 @@ func flattenSubscriptionFilter(api *subscriptions.EventNotificationSubscriptionF
 	existing.Tenants = util.FlattenStringList(api.Tenants)
 	existing.Tags = util.FlattenStringList(api.Tags)
 	existing.DocumentTypes = util.FlattenStringList(api.DocumentTypes)
+	existing.ApiKeyIds = util.FlattenStringList(api.ApiKeyIds)
+	// Older servers don't return this field.
+	if api.AiEventsOnly == nil {
+		existing.AiEventsOnly = types.BoolNull()
+	} else {
+		existing.AiEventsOnly = types.BoolValue(*api.AiEventsOnly)
+	}
 
 	return existing
 }

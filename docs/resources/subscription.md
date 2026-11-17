@@ -56,6 +56,8 @@ Optional:
 
 Optional:
 
+- `ai_events_only` (Boolean) Only notify about events by AI agents. Older versions of Octopus Server ignore this filter.
+- `api_key_ids` (List of String) Filter by the IDs of the API keys that raised the events. Older versions of Octopus Server ignore this filter.
 - `document_types` (List of String) Filter by document types (e.g. Machines, Projects, Deployments).
 - `environments` (List of String) Filter by environment IDs.
 - `event_agents` (List of String) Filter by event agents.
