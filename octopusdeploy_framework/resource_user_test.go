@@ -98,21 +98,7 @@ func testAccUserBasic(localName string, displayName string, isActive bool, isSer
 		is_service    = %v
 		password      = "%s"
 		username      = "%s"
-
-		identity {
-			provider = "Octopus ID"
-			claim {
-				name = "email"
-				is_identifying_claim = true
-				value = "%s"
-			}
-			claim {
-				name = "dn"
-				is_identifying_claim = false
-				value = "%s"
-			}
-		}
-	}`, localName, displayName, emailAddress, isActive, isService, password, username, emailAddress, displayName)
+	}`, localName, displayName, emailAddress, isActive, isService, password, username)
 }
 
 func testUserExists(prefix string) resource.TestCheckFunc {
