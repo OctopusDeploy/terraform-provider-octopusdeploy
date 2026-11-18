@@ -147,11 +147,11 @@ func TestAccOctopusDeployGCPAccountImport(t *testing.T) {
 				Config: testAccGCPAccountBasic(localName, name, description, jsonKey, tenantedDeploymentParticipation),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"json_key"}, // sensitive field
-				ImportStateIdFunc: testAccGCPAccountImportStateIdFunc(resourceName),
+				ImportStateIdFunc:       testAccGCPAccountImportStateIdFunc(resourceName),
 			},
 		},
 	})
