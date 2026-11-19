@@ -100,11 +100,7 @@ jobs:
           OCTODISABLEOCTOCONTAINERLOGGING: true
           OCTOTESTSKIPINIT: true
           GOMAXPROCS: 3
-<<<<<<< HEAD
-          OCTOTESTVERSION: 2026.4.9901
-=======
           OCTOTESTVERSION: 2026.4.12760
->>>>>>> origin/main
           OCTOTESTIMAGEURL: docker.packages.octopushq.com/octopusdeploy/octopusdeploy
           OCTOTESTRETRYCOUNT: 0
       - name: Upload test artifacts
