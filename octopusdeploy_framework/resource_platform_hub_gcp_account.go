@@ -2,6 +2,8 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/platformhubaccounts"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
@@ -94,7 +96,13 @@ func (g *platformHubGcpAccountResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	setPlatformHubGcpAccount(ctx, &state, account.(*platformhubaccounts.PlatformHubGcpAccount))
+	gcpAccount, ok := account.(*platformhubaccounts.PlatformHubGcpAccount)
+	if !ok {
+		resp.Diagnostics.AddError("Error reading Platform Hub GCP account", fmt.Sprintf("account %s is not a GCP account", state.ID.ValueString()))
+		return
+	}
+
+	setPlatformHubGcpAccount(ctx, &state, gcpAccount)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
