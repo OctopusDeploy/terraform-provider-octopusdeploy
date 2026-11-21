@@ -9,6 +9,7 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/users"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
@@ -58,8 +59,24 @@ func TestAccOctopusDeployServiceAccountOIDCIdentity(t *testing.T) {
 					resource.TestCheckResourceAttrSet("octopusdeploy_user."+localUserName, "external_id"),
 				),
 			},
+			{
+				ResourceName:      prefix,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: testServiceAccountIdentityImportStateIdFunc(prefix),
+			},
 		},
 	})
+}
+
+func testServiceAccountIdentityImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return "", fmt.Errorf("resource not found: %s", resourceName)
+		}
+		return fmt.Sprintf("%s:%s", rs.Primary.Attributes["service_account_id"], rs.Primary.ID), nil
+	}
 }
 
 func testServiceAccountIdentityConfig(localName string, localUserName string, data serviceaccounts.OIDCIdentity, userData users.User) string {

@@ -1,0 +1,1 @@
+terraform import [options] octopusdeploy_service_account_oidc_identity.<name> <service-account-id>:<identity-id>
