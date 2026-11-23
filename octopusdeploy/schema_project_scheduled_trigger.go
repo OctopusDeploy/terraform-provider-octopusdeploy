@@ -13,7 +13,9 @@ import (
 
 func flattenProjectScheduledTrigger(projectScheduledTrigger *triggers.ProjectTrigger) map[string]interface{} {
 	flattenedProjectScheduledTrigger := map[string]interface{}{}
-	flattenedProjectScheduledTrigger["id"] = projectScheduledTrigger.GetID()
+	// "id" is intentionally omitted: it is not part of getProjectScheduledTriggerSchema,
+	// and the resource ID is managed separately via d.SetId. Emitting it here made the
+	// read path fail with "Invalid address to set" once d.Set errors are propagated.
 	flattenedProjectScheduledTrigger["name"] = projectScheduledTrigger.Name
 	flattenedProjectScheduledTrigger["description"] = projectScheduledTrigger.Description
 	flattenedProjectScheduledTrigger["project_id"] = projectScheduledTrigger.ProjectID

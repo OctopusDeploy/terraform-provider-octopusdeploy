@@ -68,6 +68,14 @@ func expandAzureOpenIDConnectAccount(d *schema.ResourceData) *accounts.AzureOIDC
 		account.AccountTestSubjectKeys = getSliceFromTerraformTypeList(v)
 	}
 
+	if v, ok := d.GetOk("audience"); ok {
+		account.Audience = v.(string)
+	}
+
+	if v, ok := d.GetOk("azure_environment"); ok {
+		account.AzureEnvironment = v.(string)
+	}
+
 	return account
 }
 
