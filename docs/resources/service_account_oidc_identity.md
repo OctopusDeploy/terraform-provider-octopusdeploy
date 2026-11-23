@@ -68,3 +68,13 @@ Required:
 
 - `claim` (String) The name of the token claim to check.
 - `values` (List of String) The values the claim can match. The claim passes when it matches any one value. Values use the same matching rules as the subject: `*` matches any sequence of characters and `?` matches one character. Matching is case sensitive. A value made only of `*` characters is rejected.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+terraform import [options] octopusdeploy_service_account_oidc_identity.<name> <service-account-id>:<identity-id>
+```

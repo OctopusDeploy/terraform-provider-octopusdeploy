@@ -2,6 +2,9 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"fmt"
+	"strings"
+
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/serviceaccounts"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/internal/errors"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
@@ -13,6 +16,7 @@ import (
 )
 
 var _ resource.Resource = &ServiceAccountOIDCIdentity{}
+var _ resource.ResourceWithImportState = &ServiceAccountOIDCIdentity{}
 
 type ServiceAccountOIDCIdentity struct {
 	*Config
@@ -33,6 +37,22 @@ func (s *ServiceAccountOIDCIdentity) Schema(_ context.Context, _ resource.Schema
 func (s *ServiceAccountOIDCIdentity) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	s.Config = ResourceConfiguration(req, resp)
 }
+
+// ImportState accepts ServiceAccountID:IdentityID. OIDC identities are nested under their service account in the API,
+// so Read needs both IDs.
+func (s *ServiceAccountOIDCIdentity) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.Split(req.ID, ":")
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError(
+			"unexpected import identifier",
+			fmt.Sprintf("%s import must be in the form of ServiceAccountID:IdentityID (e.g. Users-21:ServiceAccountOidcIdentitys-5)", util.GetTypeName(schemas.ServiceAccountOIDCIdentityResourceName)))
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("service_account_id"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), idParts[1])...)
+}
+
 func (s *ServiceAccountOIDCIdentity) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan schemas.OIDCServiceAccountSchemaModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
