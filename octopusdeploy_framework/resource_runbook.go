@@ -236,6 +236,7 @@ func (r *runbookTypeResource) Update(ctx context.Context, req resource.UpdateReq
 	updatedRunbook, err = runbooks.Update(r.Config.Client, updatedRunbook)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update runbook", err.Error())
+		return
 	}
 
 	resp.Diagnostics.Append(plan.RefreshFromApiResponse(ctx, updatedRunbook)...)
