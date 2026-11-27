@@ -130,6 +130,34 @@ func TestFlattenPromptedVariableDisplaySettingsWithNilInput(t *testing.T) {
 	require.Empty(t, result)
 }
 
+func TestFlattenPromptedDisplaySettingsWithSelectAndNoOptions(t *testing.T) {
+	// A "Select" control type carrying no options used to omit the select_option
+	// attribute entirely, panicking in ObjectValueMust. See issue #166.
+	result := MapFromDisplaySettings(resources.NewDisplaySettings(resources.ControlTypeSelect, nil))
+	require.NotNil(t, result)
+
+	obj, ok := result.(types.Object)
+	require.True(t, ok)
+
+	selectOption, ok := obj.Attributes()[VariableSchemaAttributeNames.SelectOption]
+	require.True(t, ok, "select_option must be present even when there are no options")
+	require.True(t, selectOption.IsNull())
+}
+
+func TestFlattenPromptedDisplaySettingsWithSelectAndOptions(t *testing.T) {
+	displaySettings := resources.NewDisplaySettings(resources.ControlTypeSelect, []*resources.SelectOption{
+		{Value: "Value-1", DisplayName: "Name-1"},
+	})
+
+	obj, ok := MapFromDisplaySettings(displaySettings).(types.Object)
+	require.True(t, ok)
+
+	selectOption, ok := obj.Attributes()[VariableSchemaAttributeNames.SelectOption].(types.List)
+	require.True(t, ok)
+	require.False(t, selectOption.IsNull())
+	require.Len(t, selectOption.Elements(), 1)
+}
+
 func TestFlattenPromptedVariableSettingsWithNilInput(t *testing.T) {
 	result := MapFromVariablePromptOptions(nil, types.ListNull(types.ObjectType{AttrTypes: VariablePromptOptionsObjectType()}))
 	require.Empty(t, result)
