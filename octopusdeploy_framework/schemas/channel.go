@@ -3,6 +3,7 @@ package schemas
 import (
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -154,6 +155,17 @@ func (c ChannelSchema) GetResourceSchema() resourceSchema.Schema {
 						},
 						"version_range": resourceSchema.StringAttribute{
 							Optional: true,
+						},
+						"versioning_strategy": resourceSchema.StringAttribute{
+							Description: "The ordering strategy used to determine the latest package version. Valid values are `\"SemVer\"` (the default when omitted) and `\"MostRecentlyPublished\"` (case-insensitive). This only changes how candidate versions are *ordered* — by publish date rather than by Semantic Versioning comparison — it does not change which versions satisfy the rule. Use `\"MostRecentlyPublished\"` for non-SemVer schemes such as date stamps or build numbers. Not supported on container-registry feeds (Docker, DockerHub, GCR/GAR, OCI), which error at version-resolution time. Requires the `non-semver-ordering` feature toggle on the Octopus instance.",
+							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.OneOfCaseInsensitive("SemVer", "MostRecentlyPublished"),
+							},
+						},
+						"version_tag_regex": resourceSchema.StringAttribute{
+							Description: "An optional regular expression matched against the full package version string. Applied together with `version_range` and `tag` (it does not replace them) to determine which versions satisfy the rule, regardless of `versioning_strategy`. A malformed pattern is rejected on write.",
+							Optional:    true,
 						},
 					},
 					Blocks: map[string]resourceSchema.Block{
