@@ -100,11 +100,11 @@ func (r *s3FeedTypeResource) Update(ctx context.Context, req resource.UpdateRequ
 	tflog.Debug(ctx, fmt.Sprintf("updating S3 feed '%s'", data.ID.ValueString()))
 
 	feed, err := createS3ResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load S3 feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating S3 feed (%s)", data.ID))
 

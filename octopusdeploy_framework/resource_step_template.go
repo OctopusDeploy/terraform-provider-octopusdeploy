@@ -420,7 +420,9 @@ func convertStepTemplateParameterAttribute(atp actiontemplates.ActionTemplatePar
 	// because Server never returns sensitive values from the API
 	defaultValue := types.StringValue("")
 	defaultSensitiveValue := types.StringNull()
-	if atp.DefaultValue.IsSensitive && stateParameter != nil {
+	if atp.DefaultValue == nil {
+		defaultValue = types.StringValue("")
+	} else if atp.DefaultValue.IsSensitive && stateParameter != nil {
 		defaultSensitiveValue = stateParameter.DefaultSensitiveValue
 	} else {
 		defaultValue = types.StringValue(atp.DefaultValue.Value)

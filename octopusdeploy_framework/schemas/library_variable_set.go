@@ -135,8 +135,12 @@ func FlattenTemplates(actionTemplateParameters []actiontemplates.ActionTemplateP
 	actionTemplateList := make([]attr.Value, 0, len(actionTemplateParameters))
 
 	for _, actionTemplateParams := range actionTemplateParameters {
+		defaultValue := ""
+		if actionTemplateParams.DefaultValue != nil {
+			defaultValue = actionTemplateParams.DefaultValue.Value
+		}
 		attrs := map[string]attr.Value{
-			"default_value":    types.StringValue(actionTemplateParams.DefaultValue.Value),
+			"default_value":    types.StringValue(defaultValue),
 			"display_settings": flattenDisplaySettingsMap(actionTemplateParams.DisplaySettings),
 			"help_text":        util.Ternary(actionTemplateParams.HelpText != "", types.StringValue(actionTemplateParams.HelpText), types.StringValue("")),
 			"id":               types.StringValue(actionTemplateParams.GetID()),
