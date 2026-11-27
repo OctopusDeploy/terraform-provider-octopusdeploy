@@ -134,7 +134,7 @@ func FlattenWorker(worker *machines.Worker) attr.Value {
 		dotnetPlatform = util.StringOrNull(endpoint.DotNetCorePlatform)
 	}
 
-	return types.ObjectValueMust(WorkerObjectType(), map[string]attr.Value{
+	return util.ObjectValue(WorkerObjectType(), map[string]attr.Value{
 		"id":                  types.StringValue(worker.GetID()),
 		"space_id":            types.StringValue(worker.SpaceID),
 		"name":                types.StringValue(worker.Name),

@@ -351,3 +351,53 @@ func testVariableGenericOidcAccount(
 		environmentLocalName,
 	)
 }
+
+// Regression test for issue #166: a prompted variable whose display settings use the
+// "Select" control type without any select_option blocks used to crash the provider
+// with "ObjectValueMust received error(s): ... Missing Object Attribute Value".
+func TestAccOctopusDeployVariablePromptedSelectWithoutOptions(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	variableLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	variablePrefix := "octopusdeploy_variable." + variableLocalName
+
+	name := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	variableName := "Test.Variable " + name
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testVariablePromptedSelectWithoutOptions(localName, variableLocalName, name, variableName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(variablePrefix, "prompt.0.display_settings.0.control_type", "Select"),
+					resource.TestCheckResourceAttr(variablePrefix, "prompt.0.display_settings.0.select_option.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func testVariablePromptedSelectWithoutOptions(localName string, variableLocalName string, name string, variableName string) string {
+	return fmt.Sprintf(`
+resource "octopusdeploy_library_variable_set" "%s" {
+  name = "%s"
+}
+
+resource "octopusdeploy_variable" "%s" {
+  name     = "%s"
+  type     = "String"
+  owner_id = octopusdeploy_library_variable_set.%s.id
+  value    = "True"
+
+  prompt {
+    description = "test description"
+    label       = "test label"
+    is_required = false
+    display_settings {
+      control_type = "Select"
+    }
+  }
+}
+`, localName, name, variableLocalName, variableName, localName)
+}

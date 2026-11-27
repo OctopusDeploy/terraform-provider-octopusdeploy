@@ -99,7 +99,7 @@ func MapFromVariablePromptOptions(variablePromptOptions *variables.VariablePromp
 		)
 	}
 
-	return types.ObjectValueMust(VariablePromptOptionsObjectType(), attrs)
+	return util.ObjectValue(VariablePromptOptionsObjectType(), attrs)
 }
 
 func MapFromDisplaySettings(displaySettings *resources.DisplaySettings) attr.Value {
@@ -107,21 +107,21 @@ func MapFromDisplaySettings(displaySettings *resources.DisplaySettings) attr.Val
 		return nil
 	}
 
+	// select_option must always be present, even when null. A "Select" control type
+	// carrying no options is valid both in configuration and in server responses, and
+	// omitting the key here makes ObjectValueMust below panic.
 	attrs := map[string]attr.Value{
-		VariableSchemaAttributeNames.ControlType: types.StringValue(string(displaySettings.ControlType)),
+		VariableSchemaAttributeNames.ControlType:  types.StringValue(string(displaySettings.ControlType)),
+		VariableSchemaAttributeNames.SelectOption: types.ListNull(types.ObjectType{AttrTypes: VariableSelectOptionsObjectType()}),
 	}
-	if displaySettings.ControlType == resources.ControlTypeSelect {
-		if len(displaySettings.SelectOptions) > 0 {
-			attrs[VariableSchemaAttributeNames.SelectOption] = types.ListValueMust(
-				types.ObjectType{AttrTypes: VariableSelectOptionsObjectType()},
-				MapFromSelectOptions(displaySettings.SelectOptions),
-			)
-		}
-	} else {
-		attrs[VariableSchemaAttributeNames.SelectOption] = types.ListNull(types.ObjectType{AttrTypes: VariableSelectOptionsObjectType()})
+	if displaySettings.ControlType == resources.ControlTypeSelect && len(displaySettings.SelectOptions) > 0 {
+		attrs[VariableSchemaAttributeNames.SelectOption] = types.ListValueMust(
+			types.ObjectType{AttrTypes: VariableSelectOptionsObjectType()},
+			MapFromSelectOptions(displaySettings.SelectOptions),
+		)
 	}
 
-	return types.ObjectValueMust(
+	return util.ObjectValue(
 		VariableDisplaySettingsObjectType(),
 		attrs,
 	)
@@ -130,7 +130,7 @@ func MapFromDisplaySettings(displaySettings *resources.DisplaySettings) attr.Val
 func MapFromSelectOptions(selectOptions []*resources.SelectOption) []attr.Value {
 	options := make([]attr.Value, 0, len(selectOptions))
 	for _, option := range selectOptions {
-		options = append(options, types.ObjectValueMust(
+		options = append(options, util.ObjectValue(
 			VariableSelectOptionsObjectType(),
 			map[string]attr.Value{
 				VariableSchemaAttributeNames.Value:       types.StringValue(option.Value),
