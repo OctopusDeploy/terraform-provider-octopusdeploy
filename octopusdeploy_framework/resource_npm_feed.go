@@ -47,6 +47,7 @@ func (r *npmFeedTypeResource) Create(ctx context.Context, req resource.CreateReq
 
 	npmFeed, err := createNpmResourceFromData(data)
 	if err != nil {
+		resp.Diagnostics.AddError("unable to create npm feed", err.Error())
 		return
 	}
 
@@ -101,11 +102,11 @@ func (r *npmFeedTypeResource) Update(ctx context.Context, req resource.UpdateReq
 	tflog.Debug(ctx, fmt.Sprintf("updating npm feed '%s'", data.ID.ValueString()))
 
 	feed, err := createNpmResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load npm feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating NPM feed (%s)", data.ID))
 

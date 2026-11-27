@@ -47,6 +47,7 @@ func (r *nugetFeedTypeResource) Create(ctx context.Context, req resource.CreateR
 
 	nugetFeed, err := createNugetResourceFromData(data)
 	if err != nil {
+		resp.Diagnostics.AddError("unable to create nuget feed", err.Error())
 		return
 	}
 
@@ -103,11 +104,11 @@ func (r *nugetFeedTypeResource) Update(ctx context.Context, req resource.UpdateR
 	tflog.Debug(ctx, fmt.Sprintf("updating nuget feed '%s'", data.ID.ValueString()))
 
 	feed, err := createNugetResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load nuget feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating Nuget feed (%s)", data.ID))
 

@@ -103,11 +103,11 @@ func (r *githubRepositoryFeedTypeResource) Update(ctx context.Context, req resou
 	tflog.Debug(ctx, fmt.Sprintf("updating github repository feed '%s'", data.ID.ValueString()))
 
 	feed, err := createGitHubRepositoryResourceFromData(data)
-	feed.ID = state.ID.ValueString()
 	if err != nil {
 		resp.Diagnostics.AddError("unable to load github repository feed", err.Error())
 		return
 	}
+	feed.ID = state.ID.ValueString()
 
 	tflog.Info(ctx, fmt.Sprintf("updating GitHub Repository feed (%s)", data.ID))
 
