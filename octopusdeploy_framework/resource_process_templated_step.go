@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actiontemplates"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
@@ -49,17 +48,17 @@ func (r *processTemplatedStepResource) Configure(_ context.Context, req resource
 }
 
 func (r *processTemplatedStepResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	identifiers := strings.Split(request.ID, ":")
+	spaceId, identifiers := splitImportSpaceID(request.ID)
 
 	if len(identifiers) != 2 {
 		response.Diagnostics.AddError(
 			"Incorrect Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: ProcessId:StepId (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000001). Got: %q", request.ID),
+			fmt.Sprintf("Expected import identifier with format: ProcessId:StepId, optionally prefixed with a space (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000001 or Spaces-2:deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000001). Got: %q", request.ID),
 		)
 		return
 	}
 
-	spaceId := "" // Client's space is used for imported resources
+	// An identifier without a space falls back to the client's space
 	processId := identifiers[0]
 	stepId := identifiers[1]
 	tflog.Info(ctx, fmt.Sprintf("importing templated process step (%s) from process (%s)", stepId, processId))
@@ -101,6 +100,7 @@ func (r *processTemplatedStepResource) ImportState(ctx context.Context, request 
 	}
 
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), stepId)...)
+	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("space_id"), process.GetSpaceID())...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("process_id"), processId)...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("template_id"), templateId.Value)...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("template_version"), version)...)

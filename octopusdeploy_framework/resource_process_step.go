@@ -44,16 +44,19 @@ func (r *processStepResource) Configure(_ context.Context, req resource.Configur
 }
 
 func (r *processStepResource) ImportState(ctx context.Context, request resource.ImportStateRequest, response *resource.ImportStateResponse) {
-	identifiers := strings.Split(request.ID, ":")
+	spaceId, identifiers := splitImportSpaceID(request.ID)
 
 	if len(identifiers) != 2 {
 		response.Diagnostics.AddError(
 			"Incorrect Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: ProcessId:StepId (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000001). Got: %q", request.ID),
+			fmt.Sprintf("Expected import identifier with format: ProcessId:StepId, optionally prefixed with a space (e.g. deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000001 or Spaces-2:deploymentprocess-Projects-123:00000000-0000-0000-0000-000000000001). Got: %q", request.ID),
 		)
 		return
 	}
 
+	if spaceId != "" {
+		response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("space_id"), spaceId)...)
+	}
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("process_id"), identifiers[0])...)
 	response.Diagnostics.Append(response.State.SetAttribute(ctx, path.Root("id"), identifiers[1])...)
 }
