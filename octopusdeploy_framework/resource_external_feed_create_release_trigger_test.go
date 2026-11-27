@@ -94,6 +94,53 @@ func TestAccOctopusDeployExternalFeedCreateReleaseTriggerUpdate(t *testing.T) {
 	})
 }
 
+// Refreshing a trigger that lives outside the provider's space used to fail
+// with "Resource is not found or it doesn't exist in the current space
+// context", because read addressed the provider's space instead of the
+// resource's space_id.
+func TestAccOctopusDeployExternalFeedCreateReleaseTriggerOutsideProviderSpace(t *testing.T) {
+	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	prefix := "octopusdeploy_external_feed_create_release_trigger." + localName
+
+	lifecycleLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectGroupName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	projectDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	channelLocalName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	channelName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	channelDescription := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	triggerName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+
+	space := NewTestSpace(t)
+
+	config := testAccExternalFeedCreateReleaseTriggerCrossSpace(space.ID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName)
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccExternalFeedCreateReleaseTriggerCheckDestroy(space),
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Check: resource.ComposeTestCheckFunc(
+					testAccExternalFeedCreateReleaseTriggerExists(space, prefix),
+					resource.TestCheckResourceAttr(prefix, "name", triggerName),
+					resource.TestCheckResourceAttr(prefix, "space_id", space.ID),
+				),
+				Config: config,
+			},
+			{
+				// The refresh in this step is what used to fail.
+				Config:   config,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func testAccOctopusDeployExternalFeedCreateReleaseTriggerWithPrimaryPackage(t *testing.T) {
 	localName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
 	prefix := "octopusdeploy_external_feed_create_release_trigger." + localName
@@ -205,7 +252,14 @@ func testAccExternalFeedCreateReleaseTriggerWithPrimaryPackage(spaceID, localNam
 }
 
 func testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription string) string {
-	return providerSpaceConfig(spaceID) + fmt.Sprintf(`
+	return providerSpaceConfig(spaceID) + testAccExternalFeedCreateReleaseTriggerDependencyResources(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription)
+}
+
+// testAccExternalFeedCreateReleaseTriggerDependencyResources omits the provider
+// block so a caller can leave the provider on the default space while every
+// resource targets spaceID.
+func testAccExternalFeedCreateReleaseTriggerDependencyResources(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription string) string {
+	return fmt.Sprintf(`
 	resource "octopusdeploy_lifecycle" "%s" {
 		space_id = "%s"
 		name     = "%s"
@@ -235,6 +289,19 @@ func testAccExternalFeedCreateReleaseTriggerDependencies(spaceID, lifecycleLocal
 		projectGroupLocalName, spaceID, projectGroupName,
 		projectLocalName, spaceID, projectDescription, lifecycleLocalName, projectName, projectGroupLocalName,
 		channelLocalName, spaceID, channelDescription, channelName, projectLocalName)
+}
+
+// testAccExternalFeedCreateReleaseTriggerCrossSpace configures the trigger in
+// spaceID without pinning the provider to it, so the provider stays on the
+// default space.
+func testAccExternalFeedCreateReleaseTriggerCrossSpace(spaceID, localName, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription, triggerName string) string {
+	return testAccExternalFeedCreateReleaseTriggerDependencyResources(spaceID, lifecycleLocalName, lifecycleName, projectGroupLocalName, projectGroupName, projectLocalName, projectName, projectDescription, channelLocalName, channelName, channelDescription) + fmt.Sprintf(`
+	resource "octopusdeploy_external_feed_create_release_trigger" "%s" {
+		name       = "%s"
+		space_id   = "%s"
+		project_id = octopusdeploy_project.%s.id
+		channel_id = octopusdeploy_channel.%s.id
+	}`, localName, triggerName, spaceID, projectLocalName, channelLocalName)
 }
 
 func testAccExternalFeedCreateReleaseTriggerExists(space *TestSpace, prefix string) resource.TestCheckFunc {
