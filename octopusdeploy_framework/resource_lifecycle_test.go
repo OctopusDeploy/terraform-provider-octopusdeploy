@@ -301,7 +301,6 @@ func TestAccLifecycleComplex_usingNewRetention(t *testing.T) {
 	})
 }
 
-
 // Setup for testing
 func testAccLifecycleWithPhase(localName string, name string, description string, phaseName string) string {
 	return fmt.Sprintf(`resource "octopusdeploy_lifecycle" "%s" {

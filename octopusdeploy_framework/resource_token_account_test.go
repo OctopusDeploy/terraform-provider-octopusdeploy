@@ -124,11 +124,11 @@ func TestAccOctopusDeployTokenAccountImport(t *testing.T) {
 				Config: testAccTokenAccountBasic(localName, name, description, token, tenantedDeploymentParticipation),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"token"}, // token is sensitive and won't match
-				ImportStateIdFunc: testAccTokenAccountImportStateIdFunc(resourceName),
+				ImportStateIdFunc:       testAccTokenAccountImportStateIdFunc(resourceName),
 			},
 		},
 	})

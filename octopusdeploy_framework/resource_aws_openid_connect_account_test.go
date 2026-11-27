@@ -134,11 +134,11 @@ func TestAccOctopusDeployAWSOpenIDConnectAccountImport(t *testing.T) {
 				Config: testAccAWSOpenIDConnectAccountBasic(localName, name, description, roleArn, space.ID),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"session_duration"},
-				ImportStateIdFunc: testAccAWSOpenIDConnectAccountImportStateIdFunc(resourceName),
+				ImportStateIdFunc:       testAccAWSOpenIDConnectAccountImportStateIdFunc(resourceName),
 			},
 		},
 	})
