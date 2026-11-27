@@ -5,8 +5,10 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccLifecycleRetentionUpdates(t *testing.T) {
@@ -198,6 +200,75 @@ func TestAccLifecycleWithPhaseInheritingRetentions(t *testing.T) {
 			},
 		},
 	})
+}
+
+// Regression test for https://github.com/OctopusDeploy/terraform-provider-octopusdeploy/issues/224.
+// A phase that has a retention policy on the server but none in state used to panic
+// in handleUnitCasing. That combination is what upgrading from v1.14 leaves behind:
+// the old release_retention_policy block is gone from the schema, so state has no
+// phase retention, while the server still holds the policy the old provider wrote.
+func TestAccLifecyclePhaseRetentionMissingFromState(t *testing.T) {
+	lifecycleName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	phaseName := acctest.RandStringFromCharSet(20, acctest.CharSetAlpha)
+	lifecycleResource := "octopusdeploy_lifecycle." + lifecycleName
+
+	var lifecycleID string
+
+	resource.Test(t, resource.TestCase{
+		CheckDestroy:             testAccLifecycleCheckDestroy,
+		PreCheck:                 func() { TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: ProtoV6ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: lifecycle_phaseAndNoRetention(lifecycleName, phaseName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLifecycleExists(lifecycleResource),
+					captureLifecycleID(lifecycleResource, &lifecycleID),
+					resource.TestCheckResourceAttr(lifecycleResource, "phase.0.release_retention_with_strategy.#", "0"),
+					resource.TestCheckResourceAttr(lifecycleResource, "phase.0.tentacle_retention_with_strategy.#", "0"),
+				),
+			},
+			{
+				PreConfig: func() { setPhaseRetentionOutOfBand(t, &lifecycleID) },
+				Config:    lifecycle_phaseAndNoRetention(lifecycleName, phaseName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLifecycleExists(lifecycleResource),
+					resource.TestCheckResourceAttr(lifecycleResource, "phase.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func captureLifecycleID(resourceAddress string, lifecycleID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceAddress]
+		if !ok {
+			return fmt.Errorf("lifecycle resource %q not found in state", resourceAddress)
+		}
+
+		*lifecycleID = rs.Primary.ID
+
+		return nil
+	}
+}
+
+func setPhaseRetentionOutOfBand(t *testing.T, lifecycleID *string) {
+	lifecycle, err := octoClient.Lifecycles.GetByID(*lifecycleID)
+	if err != nil {
+		t.Fatalf("unable to load lifecycle (%s) to change its phase retention out of band: %s", *lifecycleID, err)
+	}
+
+	if len(lifecycle.Phases) == 0 {
+		t.Fatalf("expected lifecycle (%s) to have a phase", *lifecycleID)
+	}
+
+	lifecycle.Phases[0].ReleaseRetentionPolicy = core.CountBasedRetentionPeriod(3, core.RetentionUnitDays)
+	lifecycle.Phases[0].TentacleRetentionPolicy = core.CountBasedRetentionPeriod(3, core.RetentionUnitDays)
+
+	if _, err := octoClient.Lifecycles.Update(lifecycle); err != nil {
+		t.Fatalf("unable to set the phase retention on lifecycle (%s) out of band: %s", *lifecycleID, err)
+	}
 }
 
 func lifecycle_noRetention(lifecycleName string) string {
