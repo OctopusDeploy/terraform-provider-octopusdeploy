@@ -38,23 +38,33 @@ jobs:
       # The first step is to generate a JWT from the GitHub App private key.
       # https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app#example-using-python-to-generate-a-jwt
       - name: Generate a JWT
-        run: ./github-app-jwt.py >> "$GITHUB_ENV"
+        # Capture the script output so the JWT can be registered as a secret with
+        # ::add-mask:: before it is written to $GITHUB_ENV. The script's stdout is
+        # not redirected straight into $GITHUB_ENV, because a mask command written
+        # there would be treated as a malformed environment line.
+        run: |
+          jwt_line="$(./github-app-jwt.py)"
+          echo "::add-mask::${jwt_line#jwt=}"
+          echo "$jwt_line" >> "$GITHUB_ENV"
         env:
           GH_APP_ID: ${{ secrets.GH_APP_ID }}
           GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
       # The next step is to generate an access token from the JWT.
       # https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app#generating-an-installation-access-token
       - name: Generate an access token
+        # JWT is passed through the environment rather than interpolated into the
+        # run script, so the token is not rendered into the command echoed in logs.
         run: |
           curl \
           --silent \
           --request POST \
           --url "https://api.github.com/app/installations/${GH_APP_INSTALLATION_ID}/access_tokens" \
           --header "Accept: application/vnd.github+json" \
-          --header "Authorization: Bearer ${{ env.jwt }}" \
+          --header "Authorization: Bearer $JWT" \
           --header "X-GitHub-Api-Version: 2022-11-28" | jq -r '"GIT_CREDENTIAL=" + .token' > "$GITHUB_ENV"
         env:
           GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
+          JWT: ${{ env.jwt }}
       - name: Download JUnit Summary from Previous Workflow
         id: download-artifact
         uses: dawidd6/action-download-artifact@v2
