@@ -211,6 +211,13 @@ func mapStateToProjectVersioningStrategy(ctx context.Context, state *schemas.Pro
 }
 
 func mapProjectVersioningStrategyToState(versioningStrategy *projects.VersioningStrategy, state *schemas.ProjectVersioningStrategyModel) {
+	if versioningStrategy == nil {
+		state.DonorPackageStepID = types.StringNull()
+		state.Template = types.StringNull()
+		state.DonorPackage = types.ObjectNull(schemas.ProjectVersioningStrategyDonorPackageAttributeTypes())
+		return
+	}
+
 	if versioningStrategy.DonorPackageStepID != nil {
 		state.DonorPackageStepID = types.StringValue(*versioningStrategy.DonorPackageStepID)
 	} else {

@@ -28,7 +28,7 @@ func GenerateRandomCryptoString(length int) string {
 		if j%bufferSize == 0 {
 			randomBytes = generateRandomBytes(bufferSize)
 		}
-		if idx := int(randomBytes[j%length] & letterIdxMask); idx < len(letterBytes) {
+		if idx := int(randomBytes[j%bufferSize] & letterIdxMask); idx < len(letterBytes) {
 			result[i] = letterBytes[idx]
 			i++
 		}
