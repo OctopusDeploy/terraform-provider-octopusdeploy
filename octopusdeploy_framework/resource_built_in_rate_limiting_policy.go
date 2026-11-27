@@ -2,9 +2,11 @@ package octopusdeploy_framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/core"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/ratelimitingpolicies"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/schemas"
 	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
@@ -65,7 +67,14 @@ func (r *builtInRateLimitingPolicyResource) findPolicyBySlug(slug string) (*rate
 
 	list, err := ratelimitingpolicies.List(r.Client, ratelimitingpolicies.ListRateLimitingPoliciesRequest{Take: math.MaxInt32})
 	if err != nil {
-		return nil, err
+		// An instance that does not serve this endpoint answers 404 with no JSON body, which
+		// the client turns into an APIError carrying no message at all. Left alone that reaches
+		// the practitioner as "Octopus API error:  []", so name the likely cause instead.
+		var apiErr *core.APIError
+		if errors.As(err, &apiErr) && apiErr.ErrorMessage == "" && len(apiErr.Errors) == 0 {
+			return nil, fmt.Errorf("the rate limiting policies endpoint is not available on this Octopus instance; it requires Octopus Server 2026.3 or later and is not offered on every hosting type")
+		}
+		return nil, fmt.Errorf("unable to list rate limiting policies: %w", err)
 	}
 
 	for i := range list.Items {
