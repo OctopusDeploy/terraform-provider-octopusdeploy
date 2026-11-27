@@ -8,10 +8,20 @@ import (
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/actions"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/client"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/filters"
+	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/projects"
 	"github.com/OctopusDeploy/go-octopusdeploy/v2/pkg/triggers"
+	"github.com/OctopusDeploy/terraform-provider-octopusdeploy/octopusdeploy_framework/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+// projectDeploymentTargetTriggerSpaceID resolves the space the trigger lives
+// in, falling back to the space the provider was configured for when the
+// resource doesn't set one.
+func projectDeploymentTargetTriggerSpaceID(d *schema.ResourceData, client *client.Client) string {
+	spaceId := d.Get("space_id").(string)
+	return util.Ternary(len(spaceId) > 0, spaceId, client.GetSpaceID())
+}
 
 func resourceProjectDeploymentTargetTrigger() *schema.Resource {
 	return &schema.Resource{
@@ -82,7 +92,7 @@ func buildProjectDeploymentTargetTriggerResource(d *schema.ResourceData, client 
 		filter.Environments = getSliceFromTerraformTypeList(attr)
 	}
 
-	project, err := client.Projects.GetByID(projectID)
+	project, err := projects.GetByID(client, projectDeploymentTargetTriggerSpaceID(d, client), projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +110,12 @@ func resourceProjectDeploymentTargetTriggerCreate(ctx context.Context, d *schema
 		return diag.FromErr(err)
 	}
 
-	resource, err := client.ProjectTriggers.Add(projectTrigger)
+	resource, err := triggers.Add(client, projectTrigger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.Set("space_id", resource.SpaceID)
 
 	if isEmpty(resource.GetID()) {
 		log.Println("ID is nil")
@@ -118,9 +130,11 @@ func resourceProjectDeploymentTargetTriggerRead(ctx context.Context, d *schema.R
 	id := d.Id()
 
 	client := m.(*client.Client)
-	resource, err := client.ProjectTriggers.GetByID(id)
+	spaceId := projectDeploymentTargetTriggerSpaceID(d, client)
+
+	resource, err := triggers.GetById(client, spaceId, id)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("unable to read project deployment target trigger (%s) in space %s: %w", id, spaceId, err))
 	}
 	if resource == nil {
 		d.SetId("")
@@ -129,9 +143,16 @@ func resourceProjectDeploymentTargetTriggerRead(ctx context.Context, d *schema.R
 
 	logResource("project_trigger", m)
 
-	action := resource.Action.(*actions.AutoDeployAction)
-	filter := resource.Filter.(*filters.DeploymentTargetFilter)
+	action, ok := resource.Action.(*actions.AutoDeployAction)
+	if !ok {
+		return diag.Errorf("project trigger (%s) in space %s is not an auto deploy trigger", id, spaceId)
+	}
+	filter, ok := resource.Filter.(*filters.DeploymentTargetFilter)
+	if !ok {
+		return diag.Errorf("project trigger (%s) in space %s is not a deployment target trigger", id, spaceId)
+	}
 
+	d.Set("space_id", resource.SpaceID)
 	d.Set("environment_ids", filter.Environments)
 	d.Set("event_groups", filter.EventGroups)
 	d.Set("event_categories", filter.EventCategories)
@@ -150,11 +171,12 @@ func resourceProjectDeploymentTargetTriggerUpdate(ctx context.Context, d *schema
 	}
 	projectTrigger.ID = d.Id() // set ID so Octopus API knows which project trigger to update
 
-	resource, err := client.ProjectTriggers.Update(projectTrigger)
+	resource, err := triggers.Update(client, projectTrigger)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	d.Set("space_id", resource.SpaceID)
 	d.SetId(resource.GetID())
 
 	return nil
@@ -162,9 +184,11 @@ func resourceProjectDeploymentTargetTriggerUpdate(ctx context.Context, d *schema
 
 func resourceProjectDeploymentTargetTriggerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*client.Client)
-	err := client.ProjectTriggers.DeleteByID(d.Id())
+	spaceId := projectDeploymentTargetTriggerSpaceID(d, client)
+
+	err := triggers.DeleteById(client, spaceId, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("unable to delete project deployment target trigger (%s) in space %s: %w", d.Id(), spaceId, err))
 	}
 
 	d.SetId("")

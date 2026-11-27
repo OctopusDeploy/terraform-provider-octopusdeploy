@@ -35,6 +35,7 @@ resource "octopusdeploy_project_deployment_target_trigger" "example" {
 - `event_groups` (List of String) Apply event group filters to restrict which deployment targets will actually cause the trigger to fire, and consequently, which deployment targets will be automatically deployed to.
 - `roles` (List of String) Apply event role filters to restrict which deployment targets will actually cause the trigger to fire, and consequently, which deployment targets will be automatically deployed to.
 - `should_redeploy` (Boolean) Enable to re-deploy to the deployment targets even if they are already up-to-date with the current deployment.
+- `space_id` (String) The space ID associated with the project to attach the trigger. Defaults to the space the provider is configured for.
 
 ### Read-Only
 
